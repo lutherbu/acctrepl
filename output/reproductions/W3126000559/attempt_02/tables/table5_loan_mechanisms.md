@@ -1,0 +1,51 @@
+
+|                      |          (1)    |          (2)    |          (3)    |
+|                      |      Secured    | General covenants    | Log maturity    |
+|                      |          b/p    |          b/p    |          b/p    |
+| -------------------- | :-------------: | :-------------: | :-------------: |
+| main                 |                 |                 |                 |
+| One for uncorrected ICW period |       -1.170*   |       -0.946    |        0.186    |
+|                      |      (0.066)    |      (0.291)    |      (0.215)    |
+| One for three years after explicit correction |       -1.767*** |       -0.811    |        0.148    |
+|                      |      (0.001)    |      (0.250)    |      (0.217)    |
+| Term loan B, C, or D |        0.508    |        0.117    |        0.270*** |
+|                      |      (0.208)    |      (0.795)    |      (0.001)    |
+| Revolving loan facility |       -0.298    |       -0.081    |                 |
+|                      |      (0.279)    |      (0.745)    |                 |
+| Log of DealScan amount converted to USD millions |        0.079    |       -0.256    |        0.047    |
+|                      |      (0.680)    |      (0.201)    |      (0.156)    |
+| Facility maturity in months |        0.013*   |        0.024**  |                 |
+|                      |      (0.076)    |      (0.028)    |                 |
+| Four-agency senior debt ordinal rating; 28 only when no agency rating was observ |        0.546*** |       -0.412    |       -0.026    |
+|                      |      (0.000)    |      (0.127)    |      (0.742)    |
+| Distinct lender participant IDs |       -0.010    |        0.028    |       -0.001    |
+|                      |      (0.386)    |      (0.659)    |      (0.497)    |
+| Natural log of prior-year USD total assets |       -0.222    |       -0.129    |       -0.032    |
+|                      |      (0.293)    |      (0.445)    |      (0.318)    |
+| Prior-year EBITDA divided by assets |        5.685*   |       -5.275    |        1.698*** |
+|                      |      (0.069)    |      (0.303)    |      (0.003)    |
+| Prior-year long-term debt divided by assets |       -1.497    |        3.467**  |        0.149    |
+|                      |      (0.137)    |      (0.033)    |      (0.527)    |
+| Prior-year net PPE plus inventory divided by assets |       -1.069    |                 |        0.077    |
+|                      |      (0.227)    |                 |      (0.696)    |
+| All-in-drawn spread in basis points over LIBOR |                 |        0.004    |       -0.000    |
+|                      |                 |      (0.256)    |      (0.458)    |
+| secured              |                 |        1.578**  |        0.236**  |
+|                      |                 |      (0.013)    |      (0.021)    |
+| Performance-pricing contract indicator |                 |        0.419    |        0.049    |
+|                      |                 |      (0.183)    |      (0.621)    |
+| Number of financial covenant rows in loan package |                 |                 |        0.048    |
+|                      |                 |                 |      (0.147)    |
+| Square of four-agency senior debt ordinal rating |                 |                 |        0.002    |
+|                      |                 |                 |      (0.659)    |
+| Constant             |       -4.127**  |        5.424*   |        2.820*** |
+|                      |      (0.039)    |      (0.067)    |      (0.000)    |
+| Observations         |          212    |           37    |          223    |
+| *R*<sup>2</sup>      |                 |        0.822    |        0.297    |
+| Adjusted *R*<sup>2</sup> |                 |        0.600    |        0.219    |
+| Pseudo R-squared     |        0.532    |                 |                 |
+| Borrower clusters    |           45    |           17    |           45    |
+
+Loan-year fixed effects included.<br>
+Standard errors clustered by borrower.
+

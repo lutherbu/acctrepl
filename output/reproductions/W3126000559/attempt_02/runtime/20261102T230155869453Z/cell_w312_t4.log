@@ -1,0 +1,132 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3126000559/at
+> tempt_02/runtime/20261102T230155869453Z/cell_w312_t4.do 
+
+. version 18
+
+. set more off
+
+. use "data/icw_loan_facilities/reg.dta", clear
+
+. 
+. global rhs "uncorrected corrected inst_investor revolver financial_covenants 
+> loan_size maturity credit_rating num_lenders pp_indicator firm_size profitabi
+> lity leverage"
+
+. global fe "i.loan_year"
+
+. est clear
+
+. regress interest_rate $rhs $fe, vce(cluster firmid)
+
+Linear regression                               Number of obs     =        223
+                                                F(20, 44)         =      22.06
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.5641
+                                                Root MSE          =     102.25
+
+                                (Std. err. adjusted for 45 clusters in firmid)
+------------------------------------------------------------------------------
+             |               Robust
+interest_r~e | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ uncorrected |  -5.732499   31.48375    -0.18   0.856    -69.18383    57.71883
+   corrected |   8.629302   22.32083     0.39   0.701    -36.35537    53.61397
+inst_inves~r |   1.706071   33.37866     0.05   0.959    -65.56419    68.97634
+    revolver |  -63.06608   27.03405    -2.33   0.024    -117.5496   -8.582537
+financial_~s |  -8.135949   7.230199    -1.13   0.267    -22.70746    6.435561
+   loan_size |  -3.911585   8.920524    -0.44   0.663    -21.88972    14.06655
+    maturity |   .0340298   .6088947     0.06   0.956    -1.193117    1.261176
+credit_rat~g |   28.16437   5.557534     5.07   0.000      16.9639    39.36485
+ num_lenders |  -.6390292   .4731857    -1.35   0.184    -1.592672    .3146139
+pp_indicator |  -68.29933   17.60894    -3.88   0.000    -103.7878   -32.81083
+   firm_size |   8.559235   9.462682     0.90   0.371    -10.51155    27.63002
+profitabil~y |   249.5271   148.7101     1.68   0.100    -50.17834    549.2326
+    leverage |   -87.5123   42.53705    -2.06   0.046    -173.2401   -1.784504
+             |
+   loan_year |
+       2002  |    152.213   96.79398     1.57   0.123    -42.86249    347.2884
+       2003  |   160.5792   86.98058     1.85   0.072    -14.71869     335.877
+       2004  |    48.7613   77.81444     0.63   0.534    -108.0634     205.586
+       2005  |   3.454869   81.32326     0.04   0.966    -160.4414    167.3511
+       2006  |   17.46375   83.30936     0.21   0.835    -150.4352    185.3627
+       2007  |  -1.723877   81.73311    -0.02   0.983    -166.4461    162.9984
+       2008  |   73.18345   89.87534     0.81   0.420    -107.9484    254.3153
+             |
+       _cons |  -117.7056   157.2681    -0.75   0.458    -434.6587    199.2475
+------------------------------------------------------------------------------
+
+. tempvar clustertag
+
+. egen byte `clustertag'=tag(firmid) if e(sample)
+
+. quietly count if `clustertag'==1
+
+. local nclusters=r(N)
+
+. estadd scalar nclusters=`nclusters'
+
+added scalar:
+          e(nclusters) =  45
+
+. est store m1
+
+. esttab m1 using "tables/table4_interest_rate.md", cells(b(star fmt(3)) p(par)
+> ) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_year) s
+> calars("nclusters Borrower clusters") addnotes("Loan-year fixed effects inclu
+> ded." "Standard errors clustered by borrower.")
+(file tables/table4_interest_rate.md not found)
+(output written to tables/table4_interest_rate.md)
+
+. esttab m1 using "tables/table4_interest_rate.rtf", cells(b(star fmt(3)) p(par
+> )) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_year) 
+> scalars("nclusters Borrower clusters") addnotes("Loan-year fixed effects incl
+> uded." "Standard errors clustered by borrower.")
+(file tables/table4_interest_rate.rtf not found)
+(output written to tables/table4_interest_rate.rtf)
+
+. esttab m1 using "tables/table4_interest_rate.csv", cells(b(star fmt(3)) p(par
+> )) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_year) 
+> scalars("nclusters Borrower clusters") addnotes("Loan-year fixed effects incl
+> uded." "Standard errors clustered by borrower.")
+(file tables/table4_interest_rate.csv not found)
+(output written to tables/table4_interest_rate.csv)
+
+. esttab m1 using "tables/table4_interest_rate.tex", cells(b(star fmt(3)) p(par
+> )) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_year) 
+> scalars("nclusters Borrower clusters") addnotes("Loan-year fixed effects incl
+> uded." "Standard errors clustered by borrower.")
+(file tables/table4_interest_rate.tex not found)
+(output written to tables/table4_interest_rate.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

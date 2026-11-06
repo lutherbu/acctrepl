@@ -1,0 +1,2027 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 04:31:00 PM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 04:31:00 PM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+1          options errorabend nonumber nodate;
+2          
+3          libname ibes "/storage/sas/base/ibes" access=readonly;
+NOTE: Libref IBES was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/ibes
+4          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+5          libname compsec "/storage/sas/base/comp/d_na/security" access=readonly;
+NOTE: Libref COMPSEC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+6          libname compfx "/storage/sas/base/comp/d_global/currency" access=readonly;
+NOTE: Libref COMPFX was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_global/currency
+7          libname wrdsapps "/storage/sas/base/wrdsapps/linking/iclink" access=readonly;
+NOTE: Libref WRDSAPPS was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/wrdsapps/linking/iclink
+8          libname crsp "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+9          libname outlib "data/revisions";
+NOTE: Libref OUTLIB was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W1509613660/attempt_02/data/revisions
+10         
+11         %let d0 = '01jan1987'd;
+12         %let d1 = '31dec1997'd;
+13         %let sample0 = '01jan1990'd;
+14         %let sample1 = '31dec1994'd;
+15         %let max_factor_age = 5;
+16         
+                                                           The SAS System
+
+17         /* Detail rows retain the support period and two years of boundary events. */
+18         data det_raw;
+19             set ibes.detu_epsus
+20                 (keep=ticker cusip actdats estimator analys currfl pdf fpi measure value
+21                       curr usfirm fpedats acttims revdats revtims anndats anntims report_curr
+22                  where=(actdats >= &d0 and actdats <= &d1 and measure='EPS'));
+23             rowid + 1;
+24             ticker = upcase(strip(ticker));
+25             cusip = upcase(strip(cusip));
+26             report_curr = upcase(strip(report_curr));
+27             curr = upcase(strip(curr));
+28             fpi = upcase(strip(fpi));
+29             pdf = upcase(strip(pdf));
+30             format actdats fpedats revdats anndats date9.;
+31         run;
+
+NOTE: There were 3463076 observations read from the data set IBES.DETU_EPSUS.
+      WHERE (actdats>='01JAN1987'D and actdats<='31DEC1997'D) and (measure='EPS');
+NOTE: The data set WORK.DET_RAW has 3463076 observations and 20 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.72 seconds
+      cpu time            1.72 seconds
+      
+
+32         proc sql;
+33             select count(*) as n_detail_rows,
+34                    sum(missing(analys)) as n_missing_analys,
+35                    sum(not missing(analys) and analys=0) as n_zero_analys,
+36                    sum(not missing(analys) and analys<0) as n_negative_analys,
+37                    sum(missing(estimator)) as n_missing_estimator
+38             from det_raw;
+39         quit;
+NOTE: The PROCEDURE SQL printed page 1.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.55 seconds
+      cpu time            0.56 seconds
+      
+
+40         
+41         /* Currency and annual-fundamental populations are loaded before rate construction. */
+42         data funda0;
+43             set comp.funda
+44                 (keep=gvkey datadate fyear fyr epspx curcd indfmt consol popsrc datafmt
+45                  where=(datadate >= &d0 and datadate <= &d1 and indfmt='INDL'
+46                         and consol='C' and popsrc='D' and datafmt='STD'));
+47             gvkey=strip(gvkey);
+48             curcd=upcase(strip(curcd));
+49             format datadate date9.;
+50         run;
+
+NOTE: There were 119021 observations read from the data set COMP.FUNDA.
+      WHERE (datadate>='01JAN1987'D and datadate<='31DEC1997'D) and (indfmt='INDL') and (consol='C') and (popsrc='D') and 
+      (datafmt='STD');
+NOTE: The data set WORK.FUNDA0 has 119021 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.47 seconds
+      cpu time            0.46 seconds
+      
+                                                           The SAS System
+
+
+51         proc sql;
+52             create table summ_raw as
+53             select ticker, fpedats, statpers, fpi, fiscalp, estflag,
+54                    upcase(strip(curcode)) as curcode length=3, medest
+55             from ibes.statsumu_epsus
+56             where statpers >= &d0 and statpers <= &d1 and measure='EPS'
+57               and fpi='1' and fiscalp='ANN' and estflag='P' and not missing(medest)
+58               and not missing(curcode);
+NOTE: Table WORK.SUMM_RAW created, with 546875 rows and 8 columns.
+
+59         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.92 seconds
+      cpu time            0.93 seconds
+      
+
+60         
+61         proc sql;
+62             create table links_raw as
+63             select distinct upcase(strip(ticker)) as ticker length=8,
+64                    permno, sdate, edate
+65             from wrdsapps.ibcrsphist
+66             where not missing(ticker) and not missing(permno);
+NOTE: Table WORK.LINKS_RAW created, with 30325 rows and 4 columns.
+
+67         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+68         
+69         /* Preserve ambiguous ticker/date links for the cardinality audit, then use unique links. */
+70         proc sql;
+71             create table det_link_candidates as
+72             select distinct d.rowid, l.permno
+73             from det_raw as d inner join links_raw as l
+74               on d.ticker=l.ticker
+75              and (missing(l.sdate) or l.sdate <= d.actdats)
+76              and (missing(l.edate) or l.edate >= d.actdats);
+NOTE: Table WORK.DET_LINK_CANDIDATES created, with 3360027 rows and 2 columns.
+
+77         
+78             create table det_link_counts as
+79             select rowid, count(distinct permno) as n_permno
+80             from det_link_candidates group by rowid;
+NOTE: Table WORK.DET_LINK_COUNTS created, with 3359155 rows and 2 columns.
+
+81         
+82             create table det_linked0 as
+83             select d.*, l.permno, c.n_permno
+84             from det_raw as d
+85               inner join det_link_candidates as l on d.rowid=l.rowid
+86               inner join det_link_counts as c on d.rowid=c.rowid
+87             where c.n_permno=1;
+NOTE: Table WORK.DET_LINKED0 created, with 3358283 rows and 22 columns.
+
+                                                           The SAS System
+
+88         
+89             create table permno_set as
+90             select distinct permno from det_linked0;
+NOTE: Table WORK.PERMNO_SET created, with 9746 rows and 1 columns.
+
+91         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           5.30 seconds
+      cpu time            6.38 seconds
+      
+
+92         
+93         /* CRSP market sessions define the event calendar and stock/market return alignment. */
+94         data market0;
+95             set crsp.dsi (keep=date vwretd where=(date >= &d0 and date <= &d1));
+96             format date date9.;
+97         run;
+
+NOTE: There were 2782 observations read from the data set CRSP.DSI.
+      WHERE (date>='01JAN1987'D and date<='31DEC1997'D);
+NOTE: The data set WORK.MARKET0 has 2782 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+98         proc sort data=market0; by date; run;
+
+NOTE: There were 2782 observations read from the data set WORK.MARKET0.
+NOTE: The data set WORK.MARKET0 has 2782 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+99         data market;
+100            set market0;
+101            session + 1;
+102        run;
+
+NOTE: There were 2782 observations read from the data set WORK.MARKET0.
+NOTE: The data set WORK.MARKET has 2782 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+103        
+104        data caldays;
+105            do caldate = &d0 to &d1;
+106                output;
+107            end;
+108            format caldate date9.;
+109        run;
+
+NOTE: The data set WORK.CALDAYS has 4018 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+                                                           The SAS System
+
+      cpu time            0.00 seconds
+      
+
+110        proc sql;
+111            create table calmap0 as
+112            select c.caldate, min(m.date) as trade_date format=date9.
+113            from caldays as c left join market as m on m.date >= c.caldate
+114            group by c.caldate;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.CALMAP0 created, with 4018 rows and 2 columns.
+
+115        
+116            create table calmap as
+117            select c.caldate, c.trade_date, m.session
+118            from calmap0 as c left join market as m on c.trade_date=m.date;
+NOTE: Table WORK.CALMAP created, with 4018 rows and 3 columns.
+
+119        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.46 seconds
+      cpu time            1.36 seconds
+      
+
+120        
+121        /* Build documented GBP cross-rates only for currencies used by these source products. */
+122        data fx_curr_detail;
+123            set det_raw (keep=report_curr);
+124            length curr $3;
+125            curr=upcase(strip(report_curr));
+126            if not missing(curr);
+127            keep curr;
+128        run;
+
+NOTE: There were 3463076 observations read from the data set WORK.DET_RAW.
+NOTE: The data set WORK.FX_CURR_DETAIL has 3462205 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.24 seconds
+      
+
+129        data fx_curr_comp;
+130            set funda0 (keep=curcd);
+131            length curr $3;
+132            curr=upcase(strip(curcd));
+133            if not missing(curr);
+134            keep curr;
+135        run;
+
+NOTE: There were 119021 observations read from the data set WORK.FUNDA0.
+NOTE: The data set WORK.FX_CURR_COMP has 119021 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+136        data fx_curr_summary;
+137            set summ_raw (keep=curcode);
+138            length curr $3;
+                                                           The SAS System
+
+139            curr=upcase(strip(curcode));
+140            if not missing(curr);
+141            keep curr;
+142        run;
+
+NOTE: There were 546875 observations read from the data set WORK.SUMM_RAW.
+NOTE: The data set WORK.FX_CURR_SUMMARY has 546875 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+143        data fx_curr_exp;
+144            length curr $3;
+145            set fx_curr_detail fx_curr_comp fx_curr_summary end=eof;
+146            if lengthn(strip(curr))=3 then output;
+147            if eof then do;
+148                curr='USD'; output;
+149                curr='GBP'; output;
+150            end;
+151            keep curr;
+152        run;
+
+NOTE: There were 3462205 observations read from the data set WORK.FX_CURR_DETAIL.
+NOTE: There were 119021 observations read from the data set WORK.FX_CURR_COMP.
+NOTE: There were 546875 observations read from the data set WORK.FX_CURR_SUMMARY.
+NOTE: The data set WORK.FX_CURR_EXP has 4128103 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.13 seconds
+      
+
+153        proc sort data=fx_curr_exp out=fx_currency_set nodupkey;
+154            by curr;
+155        run;
+
+NOTE: There were 4128103 observations read from the data set WORK.FX_CURR_EXP.
+NOTE: 4128100 observations with duplicate key values were deleted.
+NOTE: The data set WORK.FX_CURRENCY_SET has 3 observations and 1 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.17 seconds
+      cpu time            0.50 seconds
+      
+
+156        
+157        proc sql;
+158            create table fx_dly_gbp0 as
+159            select e.datadate as fxdate format=date9.,
+160                   upcase(strip(e.tocurd)) as curr length=3, e.exratd
+161            from compfx.g_exrt_dly as e inner join fx_currency_set as c
+162              on upcase(strip(e.tocurd))=c.curr
+163            where upcase(strip(e.fromcurd))='GBP' and e.datadate<=&d1;
+NOTE: Table WORK.FX_DLY_GBP0 created, with 15973 rows and 3 columns.
+
+164        
+165            create table fx_dly_card as
+166            select fxdate, curr, count(*) as n_rows
+167            from fx_dly_gbp0 group by fxdate, curr;
+                                                           The SAS System
+
+NOTE: Table WORK.FX_DLY_CARD created, with 15973 rows and 3 columns.
+
+168        
+169            create table fx_dly_unique as
+170            select r.fxdate, r.curr, r.exratd
+171            from fx_dly_gbp0 as r inner join fx_dly_card as c
+172              on r.fxdate=c.fxdate and r.curr=c.curr
+173            where c.n_rows=1 and not missing(r.exratd) and r.exratd>0;
+NOTE: Table WORK.FX_DLY_UNIQUE created, with 15973 rows and 3 columns.
+
+174        
+175            create table fx_dly_cross0 as
+176            select a.fxdate, a.curr, u.exratd/a.exratd as usd_rate
+177            from fx_dly_unique as a inner join fx_dly_unique as u
+178              on a.fxdate=u.fxdate and u.curr='USD'
+179            where a.exratd>0 and u.exratd>0;
+NOTE: Table WORK.FX_DLY_CROSS0 created, with 15972 rows and 3 columns.
+
+180        
+181            create table fx_grid0 as
+182            select d.caldate as fxdate format=date9., c.curr
+183            from caldays as d, fx_currency_set as c;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.FX_GRID0 created, with 12054 rows and 2 columns.
+
+184        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.24 seconds
+      
+
+185        proc sort data=fx_grid0; by curr fxdate; run;
+
+NOTE: There were 12054 observations read from the data set WORK.FX_GRID0.
+NOTE: The data set WORK.FX_GRID0 has 12054 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+186        proc sort data=fx_dly_cross0; by curr fxdate; run;
+
+NOTE: There were 15972 observations read from the data set WORK.FX_DLY_CROSS0.
+NOTE: The data set WORK.FX_DLY_CROSS0 has 15972 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+187        data fx_dly_carry;
+188            merge fx_grid0(in=ingrid) fx_dly_cross0(in=inrate);
+189            by curr fxdate;
+190            retain last_usd_rate last_quote_date;
+191            if first.curr then do;
+192                last_usd_rate=.; last_quote_date=.;
+193            end;
+194            if inrate and not missing(usd_rate) and usd_rate>0 then do;
+195                last_usd_rate=usd_rate;
+                                                           The SAS System
+
+196                last_quote_date=fxdate;
+197            end;
+198            if ingrid then do;
+199                fxrate=last_usd_rate;
+200                quote_date=last_quote_date;
+201                output;
+202            end;
+203            format fxdate quote_date date9.;
+204            keep curr fxdate fxrate quote_date;
+205        run;
+
+NOTE: There were 12054 observations read from the data set WORK.FX_GRID0.
+NOTE: There were 15972 observations read from the data set WORK.FX_DLY_CROSS0.
+NOTE: The data set WORK.FX_DLY_CARRY has 12054 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+206        
+207        proc sql;
+208            create table fx_mth_gbp0 as
+209            select year(e.datadate)*100+month(e.datadate) as monthkey,
+210                   upcase(strip(e.tocurm)) as curr length=3, e.exrat12m
+211            from compfx.g_exrt_mth as e inner join fx_currency_set as c
+212              on upcase(strip(e.tocurm))=c.curr
+213            where upcase(strip(e.fromcurm))='GBP' and e.datadate<=&d1;
+NOTE: Table WORK.FX_MTH_GBP0 created, with 576 rows and 3 columns.
+
+214        
+215            create table fx_mth_card as
+216            select monthkey, curr, count(*) as n_rows
+217            from fx_mth_gbp0 group by monthkey, curr;
+NOTE: Table WORK.FX_MTH_CARD created, with 576 rows and 3 columns.
+
+218        
+219            create table fx_mth_unique as
+220            select r.monthkey, r.curr, r.exrat12m
+221            from fx_mth_gbp0 as r inner join fx_mth_card as c
+222              on r.monthkey=c.monthkey and r.curr=c.curr
+223            where c.n_rows=1 and not missing(r.exrat12m) and r.exrat12m>0;
+NOTE: Table WORK.FX_MTH_UNIQUE created, with 576 rows and 3 columns.
+
+224        
+225            create table fx_mth_cross0 as
+226            select a.monthkey, a.curr, u.exrat12m/a.exrat12m as usd_rate
+227            from fx_mth_unique as a inner join fx_mth_unique as u
+228              on a.monthkey=u.monthkey and u.curr='USD'
+229            where a.exrat12m>0 and u.exrat12m>0;
+NOTE: Table WORK.FX_MTH_CROSS0 created, with 576 rows and 3 columns.
+
+230        
+231            create table fx_mth_cross_card as
+232            select monthkey, curr, count(*) as n_rows
+233            from fx_mth_cross0 group by monthkey, curr;
+NOTE: Table WORK.FX_MTH_CROSS_CARD created, with 576 rows and 3 columns.
+
+234        
+                                                           The SAS System
+
+235            create table fx_mth_usd as
+236            select r.monthkey, r.curr, r.usd_rate
+237            from fx_mth_cross0 as r inner join fx_mth_cross_card as c
+238              on r.monthkey=c.monthkey and r.curr=c.curr
+239            where c.n_rows=1;
+NOTE: Table WORK.FX_MTH_USD created, with 576 rows and 3 columns.
+
+240        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+241        proc sql;
+242            select count(*) as n_fx_currencies from fx_currency_set;
+243            select count(*) as n_daily_rate_keys, sum(n_rows>1) as n_duplicate_daily_rate_keys
+244            from fx_dly_card;
+245            select curr, count(*) as n_calendar_days, sum(missing(fxrate)) as n_no_daily_rate,
+246                   max(fxdate-quote_date) as max_quote_age
+247            from fx_dly_carry group by curr;
+248            select count(*) as n_monthly_rate_keys, sum(n_rows>1) as n_duplicate_monthly_rate_keys
+249            from fx_mth_card;
+250            select curr, count(*) as n_monthly_unique_rates
+251            from fx_mth_usd group by curr;
+252        quit;
+NOTE: The PROCEDURE SQL printed pages 2-6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+253        
+254        /* Read only CRSP daily rows for PERMNOs present in the dated I/B/E/S link table. */
+255        data crsp_small;
+256            if _n_=1 then do;
+257                declare hash hp(dataset:"work.permno_set");
+258                hp.defineKey('permno');
+259                hp.defineDone();
+260            end;
+261            set crsp.dsf (keep=permno permco date ret prc cfacshr
+262                          where=(date >= &d0 and date <= &d1));
+263            if hp.check()=0;
+264            format date date9.;
+265        run;
+
+NOTE: There were 9746 observations read from the data set WORK.PERMNO_SET.
+NOTE: There were 21224261 observations read from the data set CRSP.DSF.
+      WHERE (date>='01JAN1987'D and date<='31DEC1997'D);
+NOTE: The data set WORK.CRSP_SMALL has 15002211 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           4.48 seconds
+      cpu time            4.48 seconds
+      
+
+266        proc sql;
+267            create table daily as
+268            select d.permno, d.permco, d.date, m.session, d.ret, d.prc,
+269                   d.cfacshr, m.vwretd
+                                                           The SAS System
+
+270            from crsp_small as d inner join market as m on d.date=m.date;
+NOTE: Table WORK.DAILY created, with 15002211 rows and 8 columns.
+
+271        
+272            create table daily_key_card as
+273            select permno, date, count(*) as n_rows
+274            from daily group by permno, date;
+NOTE: Table WORK.DAILY_KEY_CARD created, with 15002211 rows and 3 columns.
+
+275        
+276            select count(*) as n_daily_keys,
+277                   sum(n_rows>1) as n_duplicate_daily_keys
+278            from daily_key_card;
+279        quit;
+NOTE: The PROCEDURE SQL printed page 7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           4.43 seconds
+      cpu time            6.44 seconds
+      
+
+280        data _null_;
+281            set daily_key_card;
+282            if n_rows>1 then do;
+283                put 'ERROR: Duplicate PERMNO/date key in daily CRSP input.';
+284                abort cancel;
+285            end;
+286        run;
+
+NOTE: There were 15002211 observations read from the data set WORK.DAILY_KEY_CARD.
+NOTE: DATA statement used (Total process time):
+      real time           0.23 seconds
+      cpu time            0.23 seconds
+      
+
+287        
+288        /* Detail VALUE uses ANNDATS (ACTDATS only when ANNDATS is absent). Build
+289           source-date factors from the last supported observation for that PERMNO. */
+290        proc sql;
+291            create table det_basis_req as
+292            select distinct permno,
+293                   case when not missing(anndats) and anndats>0 then anndats
+294                        else actdats end as basis_date format=date9.
+295            from det_linked0;
+NOTE: Table WORK.DET_BASIS_REQ created, with 1217902 rows and 2 columns.
+
+296        
+297            create table det_basis_feed0 as
+298            select permno, date, cfacshr, 0 as req_flag
+299            from daily
+300            union all
+301            select permno, basis_date as date, . as cfacshr, 1 as req_flag
+302            from det_basis_req;
+NOTE: Table WORK.DET_BASIS_FEED0 created, with 16220113 rows and 4 columns.
+
+303        
+304            create table det_basis_feed as
+305            select permno, date, max(cfacshr) as cfacshr,
+306                   max(req_flag) as req_flag
+                                                           The SAS System
+
+307            from det_basis_feed0
+308            group by permno, date;
+NOTE: Table WORK.DET_BASIS_FEED created, with 15012565 rows and 4 columns.
+
+309        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           5.30 seconds
+      cpu time            7.92 seconds
+      
+
+310        proc sort data=det_basis_feed; by permno date; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+311        data det_basis_asof;
+312            set det_basis_feed;
+313            by permno;
+314            retain last_date last_cf;
+315            if first.permno then call missing(last_date,last_cf);
+316            if not missing(cfacshr) and cfacshr>0 then do;
+317                last_date=date;
+318                last_cf=cfacshr;
+319            end;
+320            if req_flag=1 then do;
+321                basis_date=date;
+322                valcf=last_cf;
+323                valcf_date=last_date;
+324                valcf_age=basis_date-valcf_date;
+325                if missing(valcf) or missing(valcf_age) or valcf_age>&max_factor_age
+326                    then valcf=.;
+327                output;
+328            end;
+329            keep permno basis_date valcf valcf_date valcf_age;
+330            format basis_date valcf_date date9.;
+331        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      10 at 324:29   
+NOTE: There were 15012565 observations read from the data set WORK.DET_BASIS_FEED.
+NOTE: The data set WORK.DET_BASIS_ASOF has 1217902 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.48 seconds
+      cpu time            0.48 seconds
+      
+
+332        proc sql;
+333            create table det_basis_card as
+334            select permno, basis_date, count(*) as n_rows
+335            from det_basis_asof group by permno, basis_date;
+NOTE: Table WORK.DET_BASIS_CARD created, with 1217902 rows and 3 columns.
+
+336            select count(*) as n_detail_basis_keys,
+337                   sum(n_rows>1) as n_duplicate_detail_basis_keys
+                                                           The SAS System
+
+338            from det_basis_card;
+339        quit;
+NOTE: The PROCEDURE SQL printed page 8.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.21 seconds
+      cpu time            0.38 seconds
+      
+
+340        data _null_;
+341            set det_basis_card;
+342            if n_rows>1 then do;
+343                put 'ERROR: Duplicate PERMNO/date key in Detail basis map.';
+344                abort cancel;
+345            end;
+346        run;
+
+NOTE: There were 1217902 observations read from the data set WORK.DET_BASIS_CARD.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+347        
+348        /* A non-unit CRSP split-factor change should remove the split from daily prices. */
+349        proc sort data=daily out=daily_ordered; by permno date; run;
+
+NOTE: There were 15002211 observations read from the data set WORK.DAILY.
+NOTE: The data set WORK.DAILY_ORDERED has 15002211 observations and 8 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           1.16 seconds
+      cpu time            3.00 seconds
+      
+
+350        data split_audit;
+351            set daily_ordered;
+352            by permno;
+353            retain prior_date prior_prc prior_cfac;
+354            if first.permno then do;
+355                prior_date=.; prior_prc=.; prior_cfac=.;
+356            end;
+357            else if not missing(prior_cfac) and not missing(cfacshr) then do;
+358                if prior_cfac>0 and cfacshr>0 and cfacshr ne prior_cfac then do;
+359                    if not missing(prior_prc) and not missing(prc) then do;
+360                        if abs(prior_prc)>0 and abs(prc)>0 then do;
+361                            factor_ratio=cfacshr/prior_cfac;
+362                            raw_price_ratio=abs(prior_prc)/abs(prc);
+363                            adjusted_price_ratio=raw_price_ratio*factor_ratio;
+364                            output;
+365                        end;
+366                    end;
+367                end;
+368            end;
+369            prior_date=date; prior_prc=prc; prior_cfac=cfacshr;
+370            format prior_date date9.;
+371            keep permno prior_date date prior_prc prc prior_cfac cfacshr
+372                 factor_ratio raw_price_ratio adjusted_price_ratio;
+373        run;
+
+                                                           The SAS System
+
+NOTE: There were 15002211 observations read from the data set WORK.DAILY_ORDERED.
+NOTE: The data set WORK.SPLIT_AUDIT has 7152 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.49 seconds
+      cpu time            0.50 seconds
+      
+
+374        proc sql;
+375            select count(*) as n_cfac_changes,
+376                   sum(abs(factor_ratio-1)>1e-8) as n_nonunit_cfac_changes,
+377                   min(factor_ratio) as min_cfac_ratio,
+378                   max(factor_ratio) as max_cfac_ratio,
+379                   min(adjusted_price_ratio) as min_split_adj_price_ratio,
+380                   max(adjusted_price_ratio) as max_split_adj_price_ratio
+381            from split_audit;
+382        quit;
+NOTE: The PROCEDURE SQL printed page 9.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+383        proc means data=split_audit n mean median min max;
+384            var factor_ratio raw_price_ratio adjusted_price_ratio;
+385        run;
+
+NOTE: There were 7152 observations read from the data set WORK.SPLIT_AUDIT.
+NOTE: The PROCEDURE MEANS printed page 10.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+386        data split_synthetic;
+387            pre_price=100; post_price=50; pre_cfac=2; post_cfac=1;
+388            factor_ratio=post_cfac/pre_cfac;
+389            raw_price_ratio=pre_price/post_price;
+390            adjusted_price_ratio=raw_price_ratio*factor_ratio;
+391            rebased_pre_price=pre_price*post_cfac/pre_cfac;
+392            output;
+393        run;
+
+NOTE: The data set WORK.SPLIT_SYNTHETIC has 1 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+394        proc print data=split_synthetic noobs;
+395        run;
+
+NOTE: There were 1 observations read from the data set WORK.SPLIT_SYNTHETIC.
+NOTE: The PROCEDURE PRINT printed page 11.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+                                                           The SAS System
+
+396        
+397        /* Event centers remain on/after ACTDATS. Only source VALUE factors use as-of. */
+398        proc sql;
+399            create table det_evt0 as
+400            select d.*, c.trade_date, c.session as evsess,
+401                   x.permco, x.cfacshr as evcf,
+402                   case when not missing(d.analys) and d.analys>0 then d.analys
+403                        else -d.rowid end as seq_analys,
+404                   (not missing(d.analys) and d.analys>0) as analys_valid,
+405                   case when not missing(d.anndats) and d.anndats>0 then d.anndats
+406                        else d.actdats end as value_date format=date9.,
+407                   v.trade_date as value_trade_date,
+408                   z.cfacshr as legacy_valcf,
+409                   y.valcf, y.valcf_date, y.valcf_age,
+410                   fx.fxrate as fx_event,
+411                   fx.quote_date as fx_event_quote
+412            from det_linked0 as d
+413              left join calmap as c on d.actdats=c.caldate
+414              left join daily as x on d.permno=x.permno and c.trade_date=x.date
+415              left join calmap as v
+416                on (case when not missing(d.anndats) and d.anndats>0 then d.anndats
+417                         else d.actdats end)=v.caldate
+418              left join daily as z on d.permno=z.permno and v.trade_date=z.date
+419              left join det_basis_asof as y
+420                on d.permno=y.permno
+421               and y.basis_date=(case when not missing(d.anndats) and d.anndats>0
+422                                      then d.anndats else d.actdats end)
+423              left join fx_dly_carry as fx on fx.curr=d.report_curr and fx.fxdate=d.actdats;
+NOTE: Table WORK.DET_EVT0 created, with 3358283 rows and 36 columns.
+
+424        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           11.61 seconds
+      cpu time            21.00 seconds
+      
+
+425        
+426        proc sql;
+427            select count(*) as n_detail_source_basis_rows,
+428                   sum(value_date ne value_trade_date) as n_detail_nontrading_basis,
+429                   sum(not missing(legacy_valcf) and not missing(valcf)
+430                       and abs(legacy_valcf/valcf-1)>1e-8)
+431                       as n_det_nextcf_diff,
+432                   sum(value_date ne value_trade_date and not missing(legacy_valcf)
+433                       and not missing(valcf) and abs(legacy_valcf/valcf-1)>1e-8)
+434                       as n_det_nontrade_diff,
+435                   sum(missing(valcf)) as n_detail_missing_asof_factors,
+436                   max(valcf_age) as max_detail_factor_age
+437            from det_evt0;
+438        quit;
+NOTE: The PROCEDURE SQL printed page 12.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.55 seconds
+      cpu time            0.56 seconds
+      
+
+439        
+440        /* ANALYS identifies the analyst; ESTIMATOR remains the brokerage-house unit. */
+                                                           The SAS System
+
+441        proc sort data=det_evt0 out=det_ord;
+442            by ticker seq_analys fpi fpedats pdf actdats acttims rowid;
+443        run;
+
+NOTE: There were 3358283 observations read from the data set WORK.DET_EVT0.
+NOTE: The data set WORK.DET_ORD has 3358283 observations and 36 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.83 seconds
+      cpu time            2.17 seconds
+      
+
+444        data det_seq0;
+445            length last_curr prev_curr $3;
+446            set det_ord;
+447            by ticker seq_analys fpi fpedats pdf;
+448            retain last_value last_vcf last_row last_date last_time last_curr
+449                   last_estimator last_permno;
+450            if first.pdf then do;
+451                has_prev=0;
+452                prev_value=.; prev_valcf=.; prev_row=.; prev_date=.; prev_time=.;
+453                prev_curr=''; prev_estimator=.; prev_permno=.;
+454            end;
+455            else do;
+456                has_prev=1;
+457                prev_value=last_value; prev_valcf=last_vcf; prev_row=last_row;
+458                prev_date=last_date; prev_time=last_time;
+459                prev_curr=last_curr; prev_estimator=last_estimator;
+460                prev_permno=last_permno;
+461            end;
+462            last_value=value; last_vcf=valcf; last_row=rowid;
+463            last_date=actdats; last_time=acttims; last_curr=report_curr;
+464            last_estimator=estimator; last_permno=permno;
+465            format prev_date date9.;
+466        run;
+
+NOTE: There were 3358283 observations read from the data set WORK.DET_ORD.
+NOTE: The data set WORK.DET_SEQ0 has 3358283 observations and 53 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.02 seconds
+      cpu time            1.02 seconds
+      
+
+467        proc sql;
+468            create table det_seq_fx as
+469            select s.*, fx.fxrate as prev_fx_event,
+470                   fx.quote_date as prev_fx_event_quote
+471            from det_seq0 as s
+472              left join fx_dly_carry as fx
+473                on fx.curr=s.prev_curr and fx.fxdate=s.actdats;
+NOTE: Table WORK.DET_SEQ_FX created, with 3358283 rows and 55 columns.
+
+474        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.48 seconds
+      cpu time            3.94 seconds
+      
+
+475        data det_seq;
+                                                           The SAS System
+
+476            set det_seq_fx;
+477            changed=.;
+478            if analys_valid and has_prev and permno=prev_permno
+479               and not missing(value) and not missing(prev_value)
+480               and not missing(evcf) and evcf>0
+481               and not missing(valcf) and valcf>0
+482               and not missing(prev_valcf) and prev_valcf>0 then do;
+483                if report_curr=prev_curr then
+484                    changed=(value ne prev_value*valcf/prev_valcf);
+485                else if not missing(fx_event) and fx_event>0
+486                     and not missing(prev_fx_event) and prev_fx_event>0 then
+487                    changed=(value*evcf/valcf*fx_event
+488                             ne prev_value*evcf/prev_valcf*prev_fx_event);
+489            end;
+490            hist_forecast=(analys_valid and (not has_prev or changed=1));
+491            revision_unknown=(not analys_valid or (has_prev and missing(changed)));
+492        run;
+
+NOTE: There were 3358283 observations read from the data set WORK.DET_SEQ_FX.
+NOTE: The data set WORK.DET_SEQ has 3358283 observations and 58 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.00 seconds
+      cpu time            1.00 seconds
+      
+
+493        proc sql;
+494            select count(*) as n_sequences,
+495                   sum(has_prev and permno ne prev_permno) as n_permno_transitions,
+496                   sum(has_prev and permno ne prev_permno and fpi='1' and pdf='P')
+497                       as n_fy1primary_permno_transitions,
+498                   sum(has_prev and permno ne prev_permno and actdats between
+499                       '01jan1990'd and '31dec1994'd) as n_test_period_permno_transitions,
+500                   sum(revision_unknown=1) as n_unknown_after_guards
+501            from det_seq;
+502        quit;
+NOTE: The PROCEDURE SQL printed page 13.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.54 seconds
+      cpu time            0.54 seconds
+      
+
+503        
+504        /* Standardized North American industrial annual fundamentals, including support actuals. */
+505        proc sql;
+506            create table funda_card as
+507            select gvkey, datadate, count(*) as n_rows
+508            from funda0 group by gvkey, datadate;
+NOTE: Table WORK.FUNDA_CARD created, with 119021 rows and 3 columns.
+
+509        
+510            create table funda_unique as
+511            select f.*
+512            from funda0 as f inner join funda_card as c
+513              on f.gvkey=c.gvkey and f.datadate=c.datadate
+514            where c.n_rows=1;
+NOTE: Table WORK.FUNDA_UNIQUE created, with 119021 rows and 10 columns.
+
+515        
+                                                           The SAS System
+
+516            create table sec_cusip0 as
+517            select strip(gvkey) as gvkey, strip(iid) as iid,
+518                   upcase(substr(strip(itemvalue),1,8)) as hist_cusip length=8,
+519                   efffrom, effthru
+520            from compsec.sec_idhist
+521            where upcase(strip(item))='CUSIP' and not missing(itemvalue);
+NOTE: Table WORK.SEC_CUSIP0 created, with 131864 rows and 5 columns.
+
+522        
+523            create table sec_primary0 as
+524            select strip(gvkey) as gvkey, strip(itemvalue) as primary_iid length=4,
+525                   effdate, thrudate
+526            from compsec.sec_history
+527            where upcase(strip(item))='PRIHISTUSA' and not missing(itemvalue);
+NOTE: Table WORK.SEC_PRIMARY0 created, with 53311 rows and 4 columns.
+
+528        
+529            create table crsp_names0 as
+530            select permno, permco, namedt, nameendt,
+531                   upcase(strip(ncusip)) as ncusip length=8
+532            from crsp.dsenames
+533            where not missing(ncusip);
+NOTE: Table WORK.CRSP_NAMES0 created, with 112397 rows and 5 columns.
+
+534        
+535            create table funda_issue0 as
+536            select f.*, i.iid, i.hist_cusip, n.permno, n.permco
+537            from funda_unique as f inner join sec_cusip0 as i
+538              on f.gvkey=i.gvkey
+539             and (missing(i.efffrom) or i.efffrom<=f.datadate)
+540             and (missing(i.effthru) or i.effthru>=f.datadate)
+541              inner join sec_primary0 as p
+542              on i.gvkey=p.gvkey and i.iid=p.primary_iid
+543             and (missing(p.effdate) or p.effdate<=f.datadate)
+544             and (missing(p.thrudate) or p.thrudate>=f.datadate)
+545              inner join crsp_names0 as n
+546              on i.hist_cusip=n.ncusip
+547             and (missing(n.namedt) or n.namedt<=f.datadate)
+548             and (missing(n.nameendt) or n.nameendt>=f.datadate);
+NOTE: Table WORK.FUNDA_ISSUE0 created, with 78249 rows and 14 columns.
+
+549        
+550            create table funda_issue_key as
+551            select gvkey, datadate, iid, hist_cusip,
+552                   count(*) as n_rows, count(distinct permno) as n_permno
+553            from funda_issue0
+554            group by gvkey, datadate, iid, hist_cusip;
+NOTE: Table WORK.FUNDA_ISSUE_KEY created, with 78249 rows and 6 columns.
+
+555        
+556            create table funda_issue_card as
+557            select gvkey, datadate, count(distinct iid) as n_iid,
+558                   count(distinct hist_cusip) as n_cusip
+559            from funda_issue0
+560            group by gvkey, datadate;
+NOTE: Table WORK.FUNDA_ISSUE_CARD created, with 78249 rows and 4 columns.
+
+561        
+                                                           The SAS System
+
+562            create table funda_sec_unique as
+563            select i.*
+564            from funda_issue0 as i inner join funda_issue_key as k
+565              on i.gvkey=k.gvkey and i.datadate=k.datadate
+566             and i.iid=k.iid and i.hist_cusip=k.hist_cusip
+567              inner join funda_issue_card as c
+568              on i.gvkey=c.gvkey and i.datadate=c.datadate
+569            where k.n_rows=k.n_permno and c.n_iid=1 and c.n_cusip=1;
+NOTE: Table WORK.FUNDA_SEC_UNIQUE created, with 78249 rows and 14 columns.
+
+570        
+571            create table funda_perm_card as
+572            select permno, datadate, count(*) as n_rows,
+573                   count(distinct gvkey) as n_gvkey
+574            from funda_sec_unique group by permno, datadate;
+NOTE: Table WORK.FUNDA_PERM_CARD created, with 78249 rows and 4 columns.
+
+575        
+576            create table funda_linked as
+577            select f.*
+578            from funda_sec_unique as f inner join funda_perm_card as c
+579              on f.permno=c.permno and f.datadate=c.datadate
+580            where c.n_rows=1 and c.n_gvkey=1;
+NOTE: Table WORK.FUNDA_LINKED created, with 78249 rows and 14 columns.
+
+581        
+582            create table fyr_card as
+583            select gvkey, min(fyr) as fyr, count(distinct fyr) as n_fyr, count(*) as n_periods
+584            from funda_unique
+585            where year(datadate) between 1988 and 1994 and not missing(fyr)
+586            group by gvkey;
+NOTE: Table WORK.FYR_CARD created, with 14747 rows and 4 columns.
+
+587        
+588            create table stable_fyr as
+589            select gvkey, fyr, n_periods
+590            from fyr_card where n_fyr=1;
+NOTE: Table WORK.STABLE_FYR created, with 14085 rows and 3 columns.
+
+591        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.83 seconds
+      cpu time            0.88 seconds
+      
+
+592        
+593        /* Annual fourth-quarter report date is used for as-of ability accuracy. */
+594        data q4_raw;
+595            set comp.fundq
+596                (keep=gvkey datadate fqtr rdq fyr indfmt consol popsrc datafmt
+597                 where=(datadate >= &d0 and datadate <= &d1 and fqtr=4
+598                        and indfmt='INDL' and consol='C' and popsrc='D' and datafmt='STD'));
+599            format datadate rdq date9.;
+600        run;
+
+NOTE: There were 108294 observations read from the data set COMP.FUNDQ.
+      WHERE (datadate>='01JAN1987'D and datadate<='31DEC1997'D) and (fqtr=4) and (indfmt='INDL') and (consol='C') and (popsrc='D') 
+      and (datafmt='STD');
+                                                           The SAS System
+
+NOTE: The data set WORK.Q4_RAW has 108294 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.71 seconds
+      cpu time            0.71 seconds
+      
+
+601        proc sql;
+602            create table q4_card as
+603            select gvkey, datadate, count(*) as n_rows, count(distinct rdq) as n_rdq
+604            from q4_raw where not missing(rdq)
+605            group by gvkey, datadate;
+NOTE: Table WORK.Q4_CARD created, with 61731 rows and 4 columns.
+
+606        
+607            create table q4_unique as
+608            select q.gvkey, q.datadate, min(q.rdq) as rdq format=date9.
+609            from q4_raw as q inner join q4_card as c
+610              on q.gvkey=c.gvkey and q.datadate=c.datadate
+611            where c.n_rows=1 and c.n_rdq=1
+612            group by q.gvkey, q.datadate;
+NOTE: Table WORK.Q4_UNIQUE created, with 61731 rows and 3 columns.
+
+613        
+614            create table funda_actual as
+615            select f.*, q.rdq
+616            from funda_linked as f left join q4_unique as q
+617              on f.gvkey=q.gvkey and f.datadate=q.datadate;
+NOTE: Table WORK.FUNDA_ACTUAL created, with 78249 rows and 15 columns.
+
+618        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.17 seconds
+      
+
+619        
+620        /* Historical ability forecasts are scoreable only with same-period EPSPX, RDQ and consensus. */
+621        data ib_hist;
+622            set det_seq;
+623            where fpi='1' and pdf='P' and not missing(report_curr)
+624                  and not missing(analys) and analys>0
+625                  and year(actdats) between 1988 and 1994 and hist_forecast=1;
+626        run;
+
+NOTE: There were 465294 observations read from the data set WORK.DET_SEQ.
+      WHERE (fpi='1') and (pdf='P') and (not MISSING(report_curr)) and (not MISSING(analys)) and (analys>0) and 
+      (YEAR(actdats)>=1988 and YEAR(actdats)<=1994) and (hist_forecast=1);
+NOTE: The data set WORK.IB_HIST has 465294 observations and 58 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.48 seconds
+      cpu time            0.49 seconds
+      
+
+627        
+628        proc sql;
+629            create table hist_comp0 as
+630            select h.*, f.gvkey, f.datadate, f.fyr, f.epspx, f.curcd, f.rdq,
+631                   sy.fyr as stable_fyr
+                                                           The SAS System
+
+632            from ib_hist as h
+633              inner join funda_actual as f
+634                on h.permno=f.permno and h.fpedats=f.datadate
+635              left join stable_fyr as sy on f.gvkey=sy.gvkey
+636            where not missing(f.epspx) and not missing(f.curcd);
+NOTE: Table WORK.HIST_COMP0 created, with 442887 rows and 65 columns.
+
+637        
+638            create table hist_comp as
+639            select h.*
+640            from hist_comp0 as h
+641            where not missing(h.rdq) and not missing(h.valcf) and h.valcf>0;
+NOTE: Table WORK.HIST_COMP created, with 425663 rows and 65 columns.
+
+642        
+643            create table summ_card as
+644            select ticker, fpedats, statpers, fpi, fiscalp, estflag, curcode,
+645                   count(*) as n_rows
+646            from summ_raw
+647            group by ticker, fpedats, statpers, fpi, fiscalp, estflag, curcode;
+NOTE: Table WORK.SUMM_CARD created, with 546875 rows and 8 columns.
+
+648        
+649            create table summ0 as
+650            select s.*
+651            from summ_raw as s inner join summ_card as c
+652              on s.ticker=c.ticker and s.fpedats=c.fpedats and s.statpers=c.statpers
+653             and s.fpi=c.fpi and s.fiscalp=c.fiscalp and s.estflag=c.estflag
+654             and s.curcode=c.curcode
+655            where c.n_rows=1;
+NOTE: Table WORK.SUMM0 created, with 546875 rows and 8 columns.
+
+656        
+657            create table hist_sum_date as
+658            select h.rowid, max(s.statpers) as statpers format=date9.
+659            from hist_comp as h inner join summ0 as s
+660              on h.ticker=s.ticker and h.fpedats=s.fpedats
+661             and s.statpers <= h.value_date
+662            group by h.rowid;
+NOTE: Table WORK.HIST_SUM_DATE created, with 383240 rows and 2 columns.
+
+663        
+664            create table hist_sum_candidates as
+665            select h.rowid, s.statpers, s.curcode, s.medest,
+666                   (s.curcode=h.report_curr) as same_currency
+667            from hist_comp as h inner join hist_sum_date as d on h.rowid=d.rowid
+668              inner join summ0 as s on h.ticker=s.ticker and h.fpedats=s.fpedats
+669               and d.statpers=s.statpers;
+NOTE: Table WORK.HIST_SUM_CANDIDATES created, with 383240 rows and 5 columns.
+
+670        
+671            create table hist_sum_pref as
+672            select rowid, count(*) as n_latest_currencies,
+673                   sum(same_currency) as n_same_currency
+674            from hist_sum_candidates group by rowid;
+NOTE: Table WORK.HIST_SUM_PREF created, with 383240 rows and 3 columns.
+
+675        
+                                                           The SAS System
+
+676            create table hist_sum as
+677            select h.*, s.statpers as condate, s.medest, s.curcode,
+678                   p.n_latest_currencies, p.n_same_currency,
+679                   (s.curcode ne h.report_curr) as mixed_consensus_currency
+680            from hist_comp as h inner join hist_sum_date as d on h.rowid=d.rowid
+681              inner join hist_sum_pref as p on h.rowid=p.rowid
+682              inner join hist_sum_candidates as s
+683                on h.rowid=s.rowid and d.statpers=s.statpers
+684            where (p.n_same_currency>0 and s.same_currency=1)
+685               or (p.n_same_currency=0 and p.n_latest_currencies=1);
+NOTE: Table WORK.HIST_SUM created, with 383240 rows and 71 columns.
+
+686        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.51 seconds
+      cpu time            3.16 seconds
+      
+
+687        
+688        /* STATPERS and DATADATE are each mapped to their own same-PERMNO as-of factor. */
+689        proc sql;
+690            create table hist_basis_req as
+691            select distinct permno, condate as basis_date format=date9.
+692            from hist_sum
+693            where not missing(condate)
+694            union
+695            select distinct permno, datadate as basis_date format=date9.
+696            from hist_sum
+697            where not missing(datadate);
+NOTE: Table WORK.HIST_BASIS_REQ created, with 158855 rows and 2 columns.
+
+698        
+699            create table hist_basis_feed0 as
+700            select permno, date, cfacshr, 0 as req_flag
+701            from daily
+702            union all
+703            select permno, basis_date as date, . as cfacshr, 1 as req_flag
+704            from hist_basis_req;
+NOTE: Table WORK.HIST_BASIS_FEED0 created, with 15161066 rows and 4 columns.
+
+705        
+706            create table hist_basis_feed as
+707            select permno, date, max(cfacshr) as cfacshr,
+708                   max(req_flag) as req_flag
+709            from hist_basis_feed0
+710            group by permno, date;
+NOTE: Table WORK.HIST_BASIS_FEED created, with 15009964 rows and 4 columns.
+
+711        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           4.74 seconds
+      cpu time            6.82 seconds
+      
+
+712        proc sort data=hist_basis_feed; by permno date; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+                                                           The SAS System
+
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+713        data hist_basis_asof;
+714            set hist_basis_feed;
+715            by permno;
+716            retain last_date last_cf;
+717            if first.permno then call missing(last_date,last_cf);
+718            if not missing(cfacshr) and cfacshr>0 then do;
+719                last_date=date;
+720                last_cf=cfacshr;
+721            end;
+722            if req_flag=1 then do;
+723                basis_date=date;
+724                basis_cf=last_cf;
+725                basis_cf_date=last_date;
+726                basis_cf_age=basis_date-basis_cf_date;
+727                if missing(basis_cf) or missing(basis_cf_age)
+728                   or basis_cf_age>&max_factor_age then basis_cf=.;
+729                output;
+730            end;
+731            keep permno basis_date basis_cf basis_cf_date basis_cf_age;
+732            format basis_date basis_cf_date date9.;
+733        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      13 at 726:32   
+NOTE: There were 15009964 observations read from the data set WORK.HIST_BASIS_FEED.
+NOTE: The data set WORK.HIST_BASIS_ASOF has 158855 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.43 seconds
+      cpu time            0.45 seconds
+      
+
+734        proc sql;
+735            create table hist_factors0 as
+736            select h.*, cs.trade_date as constrade_date,
+737                   sc.cfacshr as legacy_conscf,
+738                   csf.basis_cf as conscf,
+739                   csf.basis_cf_date as conscf_date,
+740                   csf.basis_cf_age as conscf_age,
+741                   fc.trade_date as fisctdate,
+742                   fd.cfacshr as legacy_fiscf,
+743                   faf.basis_cf as fiscf,
+744                   faf.basis_cf_date as fiscf_date,
+745                   faf.basis_cf_age as fiscf_age,
+746                   fxd.fxrate as detail_usd_rate, fxd.quote_date as detail_fx_quote,
+747                   fxs.fxrate as summary_usd_rate, fxs.quote_date as summary_fx_quote,
+748                   fxm.usd_rate as actual_usd_rate
+749            from hist_sum as h
+750              left join calmap as cs on h.condate=cs.caldate
+751              left join daily as sc on h.permno=sc.permno and cs.trade_date=sc.date
+752              left join calmap as fc on h.datadate=fc.caldate
+753              left join daily as fd on h.permno=fd.permno and fc.trade_date=fd.date
+754              left join hist_basis_asof as csf
+755                on h.permno=csf.permno and h.condate=csf.basis_date
+                                                           The SAS System
+
+756              left join hist_basis_asof as faf
+757                on h.permno=faf.permno and h.datadate=faf.basis_date
+758              left join fx_dly_carry as fxd
+759                on fxd.curr=h.report_curr and fxd.fxdate=h.value_date
+760              left join fx_dly_carry as fxs
+761                on fxs.curr=h.curcode and fxs.fxdate=h.condate
+762              left join fx_mth_usd as fxm
+763                on fxm.curr=h.curcd
+764               and fxm.monthkey=year(h.datadate)*100+month(h.datadate);
+NOTE: Table WORK.HIST_FACTORS0 created, with 383240 rows and 86 columns.
+
+765        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           5.18 seconds
+      cpu time            10.18 seconds
+      
+
+766        proc sql;
+767            select count(*) as n_history_source_basis_rows,
+768                   sum(condate ne constrade_date) as n_summary_nontrading_basis,
+769                   sum(datadate ne fisctdate) as n_actual_nontrading_basis,
+770                   sum(not missing(legacy_conscf) and not missing(conscf)
+771                       and abs(legacy_conscf/conscf-1)>1e-8)
+772                       as n_sum_nextcf_diff,
+773                   sum(not missing(legacy_fiscf) and not missing(fiscf)
+774                       and abs(legacy_fiscf/fiscf-1)>1e-8)
+775                       as n_eps_nextcf_diff,
+776                   sum(condate ne constrade_date and not missing(legacy_conscf)
+777                       and not missing(conscf) and abs(legacy_conscf/conscf-1)>1e-8)
+778                       as n_sum_nontrade_diff,
+779                   sum(datadate ne fisctdate and not missing(legacy_fiscf)
+780                       and not missing(fiscf) and abs(legacy_fiscf/fiscf-1)>1e-8)
+781                       as n_eps_nontrade_diff,
+782                   sum(missing(conscf) or missing(fiscf)) as n_missing_asof_history_factors,
+783                   max(conscf_age) as max_summary_factor_age,
+784                   max(fiscf_age) as max_actual_factor_age
+785            from hist_factors0;
+786        quit;
+NOTE: The PROCEDURE SQL printed page 14.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.09 seconds
+      
+
+787        data hist_scored0;
+788            length currency_route $16;
+789            set hist_factors0;
+790            score_ok=0;
+791            if not missing(rdq) and not missing(valcf) and valcf>0
+792               and not missing(conscf) and conscf>0
+793               and not missing(fiscf) and fiscf>0 then do;
+794                if report_curr=curcode and report_curr=curcd then do;
+795                    currency_route='same_currency';
+796                    forecast_value=value;
+797                    actual_at_forecast=epspx*valcf/fiscf;
+798                    consensus_at_forecast=medest*valcf/conscf;
+799                    score_ok=1;
+800                end;
+                                                           The SAS System
+
+801                else if not missing(detail_usd_rate) and detail_usd_rate>0
+802                     and not missing(summary_usd_rate) and summary_usd_rate>0
+803                     and not missing(actual_usd_rate) and actual_usd_rate>0 then do;
+804                    currency_route='mixed_currency';
+805                    forecast_value=value*detail_usd_rate;
+806                    actual_at_forecast=epspx*actual_usd_rate*valcf/fiscf;
+807                    consensus_at_forecast=medest*summary_usd_rate*valcf/conscf;
+808                    score_ok=1;
+809                end;
+810                else currency_route='fx_missing';
+811            end;
+812            if score_ok then
+813                useful=(abs(forecast_value-actual_at_forecast)
+814                      < abs(consensus_at_forecast-actual_at_forecast));
+815            score_year=year(actdats);
+816        run;
+
+NOTE: There were 383240 observations read from the data set WORK.HIST_FACTORS0.
+NOTE: The data set WORK.HIST_SCORED0 has 383240 observations and 93 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.20 seconds
+      cpu time            0.19 seconds
+      
+
+817        data hist_scored;
+818            set hist_scored0;
+819            where score_ok=1;
+820        run;
+
+NOTE: There were 383215 observations read from the data set WORK.HIST_SCORED0.
+      WHERE score_ok=1;
+NOTE: The data set WORK.HIST_SCORED has 383215 observations and 93 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.18 seconds
+      cpu time            0.20 seconds
+      
+
+821        proc sql;
+822            create table hist_analyst_broker_card as
+823            select gvkey, analys, count(distinct estimator) as n_estimators,
+824                   count(*) as n_scoreable_history
+825            from hist_scored0
+826            where score_ok=1 and not missing(analys) and analys>0
+827            group by gvkey, analys;
+NOTE: Table WORK.HIST_ANALYST_BROKER_CARD created, with 65057 rows and 4 columns.
+
+828            select count(*) as n_gvkey_analyst_pairs,
+829                   sum(n_estimators>1) as n_pairs_multi_estimator,
+830                   sum(case when n_estimators>1 then n_scoreable_history else 0 end)
+831                       as n_scoreable_multi_estimator,
+832                   max(n_estimators) as max_estimators_per_pair
+833            from hist_analyst_broker_card;
+834        
+835            select count(*) as n_scored_history_pairs,
+836                   sum(currency_route='same_currency') as n_same_currency_scores,
+837                   sum(currency_route='mixed_currency') as n_mixed_currency_scores,
+838                   sum(currency_route='fx_missing') as n_fx_missing_scores,
+839                   sum(abs(valcf/conscf-1)>1e-8) as n_consensus_rebased,
+                                                           The SAS System
+
+840                   sum(abs(valcf/fiscf-1)>1e-8) as n_epspx_rebased,
+841                   min(valcf/conscf) as min_consensus_factor_ratio,
+842                   max(valcf/conscf) as max_consensus_factor_ratio,
+843                   min(valcf/fiscf) as min_epspx_factor_ratio,
+844                   max(valcf/fiscf) as max_epspx_factor_ratio
+845            from hist_scored0;
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+846            select sum(n_same_currency=0 and n_latest_currencies>1) as n_ambig_summary,
+847                   sum(n_same_currency=0 and n_latest_currencies=1) as n_mixed_summary
+848            from hist_sum_pref;
+849        quit;
+NOTE: The PROCEDURE SQL printed pages 15-17.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.37 seconds
+      
+
+850        
+851        /* Brokerage houses are distinct estimator codes by Compustat firm/year, before final event screens. */
+852        proc sql;
+853            create table broker_year as
+854            select f.gvkey, year(e.actdats) as calyear,
+855                   count(distinct e.estimator) as n_brokers
+856            from det_seq as e inner join funda_linked as f
+857              on e.permno=f.permno and e.fpedats=f.datadate
+858            where e.fpi='1' and e.pdf='P' and not missing(e.report_curr)
+859              and not missing(f.curcd)
+860              and year(e.actdats) between 1988 and 1994
+861            group by f.gvkey, calculated calyear;
+NOTE: Table WORK.BROKER_YEAR created, with 24429 rows and 3 columns.
+
+862        
+863            create table broker_ok as
+864            select gvkey, count(*) as n_years, min(n_brokers) as min_brokers
+865            from broker_year where n_brokers>=5
+866            group by gvkey having count(*)=7;
+NOTE: Table WORK.BROKER_OK created, with 753 rows and 3 columns.
+
+867        
+868            create table main0 as
+869            select e.*, f.gvkey, f.epspx as target_epspx, f.curcd as target_curcd,
+870                   sy.fyr as stable_fyr, b.n_years as broker_years,
+871                   b.min_brokers
+872            from det_seq as e
+873              inner join funda_linked as f
+874                on e.permno=f.permno and e.fpedats=f.datadate
+875              inner join stable_fyr as sy on f.gvkey=sy.gvkey
+876              inner join broker_ok as b on f.gvkey=b.gvkey
+877            where e.changed=1 and e.fpi='1' and e.pdf='P'
+878              and not missing(e.report_curr) and not missing(e.analys) and e.analys>0
+879              and not missing(f.curcd)
+880              and not missing(f.epspx) and e.actdats between &sample0 and &sample1;
+NOTE: Table WORK.MAIN0 created, with 114406 rows and 64 columns.
+
+881        
+882            create table hist_broker_audit as
+883            select e.rowid,
+884                   count(h.rowid) as n_scored,
+                                                           The SAS System
+
+885                   sum(case when not missing(h.rowid) then h.useful else 0 end) as n_useful,
+886                   sum(case when not missing(h.rowid)
+887                             and year(h.actdats)=year(e.actdats)-2 then 1 else 0 end) as n_y2,
+888                   sum(case when not missing(h.rowid)
+889                             and year(h.actdats)=year(e.actdats)-1 then 1 else 0 end) as n_y1,
+890                   count(distinct h.estimator) as n_history_estimators,
+891                   sum(case when not missing(h.rowid) and h.estimator=e.estimator
+892                            then 1 else 0 end) as n_same_broker_scored,
+893                   sum(case when not missing(h.rowid) and h.estimator=e.estimator
+894                             and year(h.actdats)=year(e.actdats)-2 then 1 else 0 end)
+895                       as n_same_broker_y2,
+896                   sum(case when not missing(h.rowid) and h.estimator=e.estimator
+897                             and year(h.actdats)=year(e.actdats)-1 then 1 else 0 end)
+898                       as n_same_broker_y1
+899            from main0 as e left join hist_scored as h
+900              on e.gvkey=h.gvkey and e.analys=h.analys
+901             and h.actdats >= mdy(1,1,year(e.actdats)-2)
+902             and h.actdats <  mdy(1,1,year(e.actdats))
+903             and h.rdq <= e.actdats
+904            group by e.rowid;
+NOTE: Table WORK.HIST_BROKER_AUDIT created, with 114406 rows and 9 columns.
+
+905        
+906            create table hist_score_counts as
+907            select * from hist_broker_audit;
+NOTE: Table WORK.HIST_SCORE_COUNTS created, with 114406 rows and 9 columns.
+
+908        
+909            select count(*) as n_ability_windows,
+910                   sum(n_history_estimators>1) as n_windows_multi_estimator,
+911                   sum(n_scored>n_same_broker_scored) as n_windows_cross_broker_history,
+912                   sum(n_scored>=5 and n_y2>=1 and n_y1>=1)
+913                       as n_source_eligible_windows,
+914                   sum(n_same_broker_scored>=5 and n_same_broker_y2>=1
+915                       and n_same_broker_y1>=1) as n_broker_key_eligible_windows
+916            from hist_broker_audit;
+917        
+918            create table main_ability as
+919            select m.*, a.n_scored, a.n_useful, a.n_y2, a.n_y1,
+920                   a.n_useful/a.n_scored as ability
+921            from main0 as m inner join hist_score_counts as a on m.rowid=a.rowid
+922            where a.n_scored>=5 and a.n_y2>=1 and a.n_y1>=1;
+NOTE: Table WORK.MAIN_ABILITY created, with 50965 rows and 69 columns.
+
+923        quit;
+NOTE: The PROCEDURE SQL printed page 18.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           3.05 seconds
+      cpu time            3.35 seconds
+      
+
+924        
+925        data main_class;
+926            set main_ability;
+927            superior=(ability >= .80);
+928            inferior=(ability <= .20);
+929            normal=(ability > .20 and ability < .80);
+930        run;
+                                                           The SAS System
+
+
+NOTE: There were 50965 observations read from the data set WORK.MAIN_ABILITY.
+NOTE: The data set WORK.MAIN_CLASS has 50965 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+931        
+932        /* Build broad event and company-confounder populations before analyst/final eligibility. */
+933        data all_revisions;
+934            set det_seq;
+935            where (changed=1 or revision_unknown=1) and measure='EPS'
+936              and actdats between '15dec1989'd and '15jan1995'd
+937              and not missing(evsess);
+938        run;
+
+NOTE: There were 638183 observations read from the data set WORK.DET_SEQ.
+      WHERE ((changed=1) or (revision_unknown=1)) and (measure='EPS') and (actdats>='15DEC1989'D and actdats<='15JAN1995'D) and 
+      (not MISSING(evsess));
+NOTE: The data set WORK.ALL_REVISIONS has 638183 observations and 58 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.51 seconds
+      cpu time            0.51 seconds
+      
+
+939        proc sql;
+940            create table all_rev_exact_card as
+941            select ticker, estimator, analys, fpi, fpedats, pdf, actdats, acttims,
+942                   report_curr, value, count(*) as n_rows
+943            from all_revisions
+944            group by ticker, estimator, analys, fpi, fpedats, pdf, actdats, acttims,
+945                     report_curr, value;
+NOTE: Table WORK.ALL_REV_EXACT_CARD created, with 638183 rows and 11 columns.
+
+946            select count(*) as n_revision_signatures,
+947                   sum(n_rows>1) as n_duplicate_revision_signatures,
+948                   sum(case when n_rows>1 then n_rows-1 else 0 end)
+949                       as n_duplicate_revision_rows
+950            from all_rev_exact_card;
+951        
+952            create table all_rev_sim_card as
+953            select permco, analys, actdats, acttims,
+954                   count(*) as n_rows, count(distinct fpi) as n_fpi,
+955                   count(distinct fpedats) as n_fpedats,
+956                   count(distinct estimator) as n_estimators
+957            from all_revisions
+958            where not missing(analys) and analys>0
+959              and not missing(actdats) and not missing(acttims)
+960            group by permco, analys, actdats, acttims;
+NOTE: Table WORK.ALL_REV_SIM_CARD created, with 459358 rows and 8 columns.
+
+961            select count(*) as n_analyst_time_groups,
+962                   sum(n_rows>1) as n_multirow_groups,
+963                   sum(n_fpi>1) as n_multifpi_groups,
+964                   sum(n_fpedats>1) as n_multifpedats_groups,
+965                   sum(n_estimators>1) as n_multibroker_groups
+966            from all_rev_sim_card;
+                                                           The SAS System
+
+967        quit;
+NOTE: The PROCEDURE SQL printed pages 19-20.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.17 seconds
+      cpu time            1.65 seconds
+      
+
+968        
+969        data earn_raw;
+970            set comp.fundq (keep=gvkey datadate fqtr rdq indfmt consol popsrc datafmt
+971                            where=(rdq >= '15dec1989'd and rdq <= '15jan1995'd
+972                                   and indfmt='INDL' and consol='C'
+973                                   and popsrc='D' and datafmt='STD'));
+974            gvkey=strip(gvkey);
+975            format rdq date9.;
+976        run;
+
+NOTE: There were 101934 observations read from the data set COMP.FUNDQ.
+      WHERE (rdq>='15DEC1989'D and rdq<='15JAN1995'D) and (indfmt='INDL') and (consol='C') and (popsrc='D') and (datafmt='STD');
+NOTE: The data set WORK.EARN_RAW has 101934 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.76 seconds
+      cpu time            0.76 seconds
+      
+
+977        proc sql;
+978            create table earn_dates0 as
+979            select distinct e.gvkey, e.rdq, c.session
+980            from earn_raw as e inner join calmap as c on e.rdq=c.caldate;
+NOTE: Table WORK.EARN_DATES0 created, with 101798 rows and 3 columns.
+
+981        
+982            create table div_raw as
+983            select permno, permco, dclrdt
+984            from crsp.dseall
+985            where not missing(dclrdt) and dclrdt >= '15dec1989'd
+986              and dclrdt <= '15jan1995'd;
+NOTE: Table WORK.DIV_RAW created, with 66865 rows and 3 columns.
+
+987        
+988            create table div_dates0 as
+989            select distinct d.permco, d.dclrdt, c.session
+990            from div_raw as d inner join calmap as c on d.dclrdt=c.caldate;
+NOTE: Table WORK.DIV_DATES0 created, with 61805 rows and 3 columns.
+
+991        
+992            create table rev_overlaps as
+993            select e.rowid, count(r.rowid) as n_rev_centers,
+994                   sum(case when r.rowid=e.rowid then 1 else 0 end)
+995                       as n_self_rev_centers,
+996                   sum(case when not missing(r.rowid) and r.rowid ne e.rowid
+997                            then 1 else 0 end) as n_other_rev_centers,
+998                   sum(case when not missing(r.rowid) and r.rowid ne e.rowid
+999                             and r.analys=e.analys and r.actdats=e.actdats
+1000                            and not missing(r.acttims) and r.acttims=e.acttims
+1001                            and (r.fpi ne e.fpi or r.fpedats ne e.fpedats)
+1002                           then 1 else 0 end) as n_same_time_other_horizon
+1003           from main_class as e left join all_revisions as r
+                                                           The SAS System
+
+1004             on e.permco=r.permco and r.evsess between e.evsess-2 and e.evsess+2
+1005           group by e.rowid;
+NOTE: Table WORK.REV_OVERLAPS created, with 50965 rows and 5 columns.
+
+1006       
+1007           create table earn_overlaps as
+1008           select e.rowid, count(q.rdq) as n_earn_centers
+1009           from main_class as e left join earn_dates0 as q
+1010             on e.gvkey=q.gvkey and q.session between e.evsess-3 and e.evsess+3
+1011           group by e.rowid;
+NOTE: Table WORK.EARN_OVERLAPS created, with 50965 rows and 2 columns.
+
+1012       
+1013           create table div_overlaps as
+1014           select e.rowid, count(d.dclrdt) as n_div_centers
+1015           from main_class as e left join div_dates0 as d
+1016             on e.permco=d.permco and d.session between e.evsess-3 and e.evsess+3
+1017           group by e.rowid;
+NOTE: Table WORK.DIV_OVERLAPS created, with 50965 rows and 2 columns.
+
+1018       
+1019           create table main_screen0 as
+1020           select e.*, r.n_rev_centers, r.n_self_rev_centers,
+1021                  r.n_other_rev_centers, r.n_same_time_other_horizon,
+1022                  q.n_earn_centers, v.n_div_centers
+1023           from main_class as e
+1024             left join rev_overlaps as r on e.rowid=r.rowid
+1025             left join earn_overlaps as q on e.rowid=q.rowid
+1026             left join div_overlaps as v on e.rowid=v.rowid;
+NOTE: Table WORK.MAIN_SCREEN0 created, with 50965 rows and 78 columns.
+
+1027       
+1028           create table ret0 as
+1029           select e.rowid,
+1030             count(d.session) as n_sessions,
+1031             count(d.ret) as n_stock_ret,
+1032             count(d.vwretd) as n_market_ret,
+1033             max(case when d.session=e.evsess-1 then d.ret end) as r_m1,
+1034             max(case when d.session=e.evsess   then d.ret end) as r_0,
+1035             max(case when d.session=e.evsess+1 then d.ret end) as r_p1,
+1036             max(case when d.session=e.evsess-1 then d.vwretd end) as m_m1,
+1037             max(case when d.session=e.evsess   then d.vwretd end) as m_0,
+1038             max(case when d.session=e.evsess+1 then d.vwretd end) as m_p1
+1039           from main_screen0 as e left join daily as d
+1040             on e.permno=d.permno and d.session between e.evsess-1 and e.evsess+1
+1041           group by e.rowid;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+                                                           The SAS System
+
+NOTE: Table WORK.RET0 created, with 50965 rows and 10 columns.
+
+1042       
+1043           create table price0 as
+1044           select e.rowid, p.prc, p.cfacshr as price_cf
+1045           from main_screen0 as e left join daily as p
+1046             on e.permno=p.permno and p.session=e.evsess-2;
+NOTE: Table WORK.PRICE0 created, with 50965 rows and 3 columns.
+
+1047       
+1048           create table main_screen1 as
+1049           select e.*, r.n_sessions, r.n_stock_ret, r.n_market_ret,
+1050                  r.r_m1, r.r_0, r.r_p1, r.m_m1, r.m_0, r.m_p1,
+1051                  p.prc, p.price_cf
+1052           from main_screen0 as e
+1053             left join ret0 as r on e.rowid=r.rowid
+1054             left join price0 as p on e.rowid=p.rowid;
+NOTE: Table WORK.MAIN_SCREEN1 created, with 50965 rows and 89 columns.
+
+1055       quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           9.94 seconds
+      cpu time            13.68 seconds
+      
+
+1056       
+1057       data analysis0;
+1058           set main_screen1;
+1059           if missing(prc) or missing(evcf) or missing(valcf)
+1060              or missing(prev_valcf) or missing(price_cf)
+1061              or missing(fx_event) or missing(prev_fx_event) then delete;
+1062           if n_self_rev_centers ne 1 or n_other_rev_centers ne 0
+1063              or n_earn_centers ne 0 or n_div_centers ne 0
+1064              or n_sessions ne 3 or n_stock_ret ne 3 or n_market_ret ne 3
+1065              or abs(prc)=0 or evcf<=0 or valcf<=0
+1066              or prev_valcf<=0 or price_cf<=0 or fx_event<=0 or prev_fx_event<=0 then delete;
+1067           ret=(1+r_m1)*(1+r_0)*(1+r_p1)-1
+1068               - ((1+m_m1)*(1+m_0)*(1+m_p1)-1);
+1069           fr=(value*evcf/valcf*fx_event-prev_value*evcf/prev_valcf*prev_fx_event)
+1070              /(abs(prc)*evcf/price_cf);
+1071           if missing(ret) or missing(fr) then delete;
+1072       run;
+
+NOTE: There were 50965 observations read from the data set WORK.MAIN_SCREEN1.
+NOTE: The data set WORK.ANALYSIS0 has 4223 observations and 91 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1073       
+1074       /* Footnote 4: pooled 2nd/98th percentile winsorization, with no tail deletion. */
+1075       proc univariate data=analysis0 noprint;
+1076           var ret fr;
+1077           output out=cutoffs pctlpts=2 98 pctlpre=ret_ fr_ pctlname=p2 p98;
+1078       run;
+
+NOTE: The data set WORK.CUTOFFS has 1 observations and 4 variables.
+                                                           The SAS System
+
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1079       data final0;
+1080           if _n_=1 then set cutoffs;
+1081           set analysis0;
+1082           if ret < ret_p2 then ret=ret_p2;
+1083           if ret > ret_p98 then ret=ret_p98;
+1084           if fr < fr_p2 then fr=fr_p2;
+1085           if fr > fr_p98 then fr=fr_p98;
+1086           fr_sup=fr*superior;
+1087           fr_norm=fr*normal;
+1088           fr_inf=fr*inferior;
+1089           event_id=rowid;
+1090           format actdats fpedats date9.;
+1091           label ret='Three-day market-adjusted return'
+1092                 fr='Winsorized forecast revision scaled by price'
+1093                 superior='Superior analyst (80% threshold)'
+1094                 normal='Normal analyst (80% threshold)'
+1095                 inferior='Inferior analyst (80% threshold)'
+1096                 fr_sup='Forecast revision × superior'
+1097                 fr_norm='Forecast revision × normal'
+1098                 fr_inf='Forecast revision × inferior';
+1099           keep event_id ticker gvkey permno estimator analys actdats fpedats
+1100                ability superior normal inferior ret fr fr_sup fr_norm fr_inf;
+1101       run;
+
+NOTE: There were 1 observations read from the data set WORK.CUTOFFS.
+NOTE: There were 4223 observations read from the data set WORK.ANALYSIS0.
+NOTE: The data set WORK.FINAL0 has 4223 observations and 17 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1102       
+1103       data outlib.reg;
+1104           set final0;
+1105       run;
+
+NOTE: There were 4223 observations read from the data set WORK.FINAL0.
+NOTE: The data set OUTLIB.REG has 4223 observations and 17 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1106       
+1107       /* Aggregate source coverage, join, attrition and final-input diagnostics. */
+1108       proc sql;
+1109           select report_curr, count(*) as n_detail_rows,
+1110                  sum(missing(fx_event)) as n_missing_event_fx,
+1111                  max(actdats-fx_event_quote) as max_event_fx_age
+1112           from det_evt0 group by report_curr;
+1113           select count(*) as n_sequenced_rows,
+1114                  sum(changed=1) as n_changed,
+                                                           The SAS System
+
+1115                  sum(revision_unknown=1) as n_revision_unknown,
+1116                  sum(has_prev=1 and report_curr ne prev_curr) as n_currency_changes
+1117           from det_seq;
+1118           select report_curr, prev_curr, count(*) as n_rows
+1119           from det_seq where has_prev=1 and report_curr ne prev_curr
+1120           group by report_curr, prev_curr;
+1121           select count(*) as n_detail_1987_1997,
+1122                  count(distinct ticker) as n_tickers
+1123           from det_raw;
+1124           select count(*) as n_detail_linked,
+1125                  count(distinct rowid) as n_detail_rows,
+1126                  sum(n_permno>1) as n_ambiguous_permno_rows
+1127           from det_linked0;
+1128           select count(*) as n_rows_with_ambiguous_links
+1129           from det_link_counts where n_permno>1;
+1130           select count(*) as n_funda_standard_rows
+1131           from funda0;
+1132           select count(*) as n_funda_unique_company_dates,
+1133                  count(distinct gvkey) as n_gvkey
+1134           from funda_unique;
+1135           select count(*) as n_funda_company_date_keys,
+1136                  sum(n_rows>1) as n_duplicate_funda_keys
+1137           from funda_card;
+1138           select count(*) as n_funda_issue_candidate_rows,
+1139                  count(distinct gvkey) as n_funda_issue_gvkeys
+1140           from funda_issue0;
+1141           select count(*) as n_funda_primary_issue_rows
+1142           from funda_sec_unique;
+1143           select count(*) as n_funda_linked_permno_dates,
+1144                  sum(n_rows>1) as n_ambiguous_permno_dates
+1145           from funda_perm_card;
+1146           select count(*) as n_primary_issue_gvkey_dates,
+1147                  sum(n_iid>1 or n_cusip>1) as n_ambiguous_primary_issue_dates
+1148           from funda_issue_card;
+1149           select count(*) as n_summary_keys, sum(n_rows>1) as n_duplicate_summary_keys
+1150           from summ_card;
+1151           select count(*) as n_broker_eligible_gvkeys
+1152           from broker_ok;
+1153           select count(*) as n_main_comp_link_events
+1154           from main0;
+1155           select count(*) as n_main_with_ability
+1156           from main_class;
+1157           select currency_route, count(*) as n_history_rows
+1158           from hist_scored0 group by currency_route;
+1159           select count(*) as n_latest_summary_candidates,
+1160                  sum(n_same_currency>0) as n_with_same_currency_snapshot,
+1161                  sum(n_same_currency=0 and n_latest_currencies=1) as n_unique_mixed_currency_snapshot,
+1162                  sum(n_same_currency=0 and n_latest_currencies>1) as n_ambiguous_latest_snapshot
+1163           from hist_sum_pref;
+1164           select count(*) as n_after_confounds_and_market
+1165           from analysis0;
+1166           select count(*) as n_pre_final_criteria,
+1167                  sum(n_self_rev_centers ne 1) as n_rev_self_event_mismatch,
+1168                  sum(n_other_rev_centers>0) as n_other_revision_overlap,
+1169                  sum(n_earn_centers ne 0) as n_earn_overlap,
+1170                  sum(n_div_centers ne 0) as n_div_overlap,
+1171                  sum(n_sessions ne 3 or n_stock_ret ne 3 or n_market_ret ne 3) as n_return_gaps,
+1172                  sum(missing(prc) or missing(price_cf)) as n_missing_t2_price,
+                                                           The SAS System
+
+1173                  sum(missing(evcf) or missing(valcf) or missing(prev_valcf)) as n_missing_share_factor,
+1174                  sum(missing(fx_event) or missing(prev_fx_event)) as n_missing_event_fx
+1175           from main_screen1;
+1176           select n_self_rev_centers, n_other_rev_centers, count(*) as n_candidates
+1177           from main_screen1
+1178           group by n_self_rev_centers, n_other_rev_centers
+1179           order by n_self_rev_centers, n_other_rev_centers;
+1180           select sum(n_same_time_other_horizon>0) as n_cand_same_time_other_horiz,
+1181                  max(n_same_time_other_horizon) as max_same_time_other_horizons
+1182           from main_screen1;
+1183           select count(*) as n_final
+1184           from outlib.reg;
+1185           select year(actdats) as event_year, count(*) as n,
+1186                  count(distinct analys) as n_analysts,
+1187                  count(distinct gvkey) as n_firms
+1188           from outlib.reg group by calculated event_year order by calculated event_year;
+1189           select min(ret) as ret_min, mean(ret) as ret_mean, max(ret) as ret_max,
+1190                  min(fr) as fr_min, mean(fr) as fr_mean, max(fr) as fr_max
+1191           from outlib.reg;
+1192           select report_curr, target_curcd, count(*) as n_analysis_rows
+1193           from analysis0 group by report_curr, target_curcd;
+1194       quit;
+NOTE: The PROCEDURE SQL printed pages 21-48.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           3.16 seconds
+      cpu time            3.21 seconds
+      
+
+1195       
+1196       proc freq data=outlib.reg;
+1197           tables superior normal inferior / missing;
+1198       run;
+
+NOTE: There were 4223 observations read from the data set OUTLIB.REG.
+NOTE: The PROCEDURE FREQ printed page 49.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           1:19.80
+      cpu time            1:53.26
+      

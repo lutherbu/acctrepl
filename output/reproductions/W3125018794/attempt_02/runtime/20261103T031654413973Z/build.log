@@ -1,0 +1,1024 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 11:16:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 11:16:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+1          options errorabend nocenter nodate nonumber;
+2          
+3          libname sdc '/storage/sas/base/tfn/sdc_ni' access=readonly;
+NOTE: Libref SDC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/tfn/sdc_ni
+4          libname ibes '/storage/sas/base/ibes' access=readonly;
+NOTE: Libref IBES was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/ibes
+5          libname comp ('/storage/sas/base/comp/d_na'
+6                        '/storage/sas/base/comp/d_na/security') access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Levels:           2
+      Engine(1):        V9 
+      Physical Name(1): /storage/sas/base/comp/d_na
+      Engine(2):        V9 
+      Physical Name(2): /storage/sas/base/comp/d_na/security
+7          libname crsp '/storage/sas/base/crsp/a_stock' access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+8          libname ccm '/storage/sas/base/crsp/a_ccm' access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+9          libname handoff './data/equity_offerings';
+NOTE: Libref HANDOFF was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3125018794/attempt_02/data/equity_offerings
+10         
+11         title 'W3125018794 Table 7 all-deals preparation';
+12         
+13         /* SDC master-deal number is unique in the full 1981-1990 date window. */
+14         data offer_pool;
+15             length offer_id $10 cusip6 $6 cusip_clean $20;
+16             set sdc.wrds_ni_details(
+The SAS System
+
+17                 keep=master_deal_no master_deal_date cusip cusip9 security market
+18                      bfo ipo regrights main_tranche
+19                 where=(master_deal_date >= '01jan1981'd and
+20                        master_deal_date <= '31dec1990'd)
+21             );
+22             if security ne 'Common Shares' or market ne 'U.S. Public' then delete;
+23             offer_id = strip(master_deal_no);
+24             cusip_clean = compress(upcase(cusip),,'kad');
+25             if lengthn(cusip_clean) < 6 then
+26                 cusip_clean = compress(upcase(cusip9),,'kad');
+27             if lengthn(cusip_clean) < 6 then delete;
+28             cusip6 = substr(cusip_clean,1,6);
+29             issue_date = master_deal_date;
+30             offer_year = year(issue_date);
+31             if missing(offer_id) or missing(cusip6) then delete;
+32             format issue_date yymmdd10.;
+33             keep offer_id issue_date offer_year cusip6 ipo bfo regrights main_tranche;
+34         run;
+
+NOTE: There were 68117 observations read from the data set SDC.WRDS_NI_DETAILS.
+      WHERE (master_deal_date>='01JAN1981'D and master_deal_date<='31DEC1990'D);
+NOTE: The data set WORK.OFFER_POOL has 7114 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.54 seconds
+      cpu time            0.56 seconds
+      
+
+35         
+36         proc sql;
+37             title2 'SDC selected source pool and uniqueness';
+38             select count(*) as selected_rows,
+39                    count(distinct offer_id) as distinct_offers,
+40                    sum(missing(bfo)) as bfo_missing,
+41                    sum(upcase(strip(ipo))='YES') as ipo_rows,
+42                    sum(upcase(strip(ipo))='NO') as seasoned_rows
+43             from offer_pool;
+44         quit;
+NOTE: The PROCEDURE SQL printed page 1.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+45         
+46         /* Dated CUSIP-to-GVKEY mapping. Do not use the timeless Funda header CUSIP. */
+47         data sec_cusip;
+48             length cusip6 $6;
+49             set comp.sec_idhist(
+50                 keep=gvkey iid item itemvalue efffrom effthru
+51                 where=(upcase(item)='CUSIP')
+52             );
+53             cusip6 = substr(compress(upcase(itemvalue),,'kad'),1,6);
+54             if lengthn(cusip6) < 6 then delete;
+55         run;
+
+NOTE: There were 131864 observations read from the data set COMP.SEC_IDHIST.
+      WHERE UPCASE(item)='CUSIP';
+NOTE: The data set WORK.SEC_CUSIP has 131864 observations and 7 variables.
+The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.12 seconds
+      
+
+56         
+57         proc sql;
+58             title2 'Offer CUSIP matched to Compustat history at the issue date';
+59             create table cusip_matches as
+60             select distinct o.offer_id, o.issue_date, o.offer_year, o.cusip6,
+61                             h.gvkey
+62             from offer_pool as o
+63             inner join sec_cusip as h
+64               on o.cusip6=h.cusip6
+65              and (missing(h.efffrom) or h.efffrom <= o.issue_date)
+66              and (missing(h.effthru) or h.effthru >= o.issue_date);
+NOTE: Table WORK.CUSIP_MATCHES created, with 4932 rows and 5 columns.
+
+67             create table gvkey_counts as
+68             select o.offer_id, count(distinct m.gvkey) as n_gvkey
+69             from offer_pool as o
+70             left join cusip_matches as m on o.offer_id=m.offer_id
+71             group by o.offer_id;
+NOTE: Table WORK.GVKEY_COUNTS created, with 7114 rows and 2 columns.
+
+72             create table event_gvkey as
+73             select m.offer_id, m.issue_date, m.offer_year, m.cusip6, m.gvkey
+74             from cusip_matches as m
+75             inner join gvkey_counts as c on m.offer_id=c.offer_id
+76             where c.n_gvkey=1;
+NOTE: Table WORK.EVENT_GVKEY created, with 4866 rows and 5 columns.
+
+77         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+78         
+79         proc sql;
+80             title2 'Dated Compustat identifier mapping counts';
+81             select count(*) as sdc_offers,
+82                    sum(n_gvkey=0) as no_cusip_match,
+83                    sum(n_gvkey=1) as one_gvkey,
+84                    sum(n_gvkey>1) as ambiguous_gvkey
+85             from gvkey_counts;
+86         quit;
+NOTE: The PROCEDURE SQL printed page 2.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+87         
+88         /* Dated CCM links and CRSP names validate a common issue at the offer date. */
+89         proc sql;
+90             create table ccm_candidates as
+91             select distinct g.offer_id, g.issue_date, g.offer_year, g.cusip6,
+The SAS System
+
+92                    g.gvkey, l.lpermno as permno, upcase(l.linkprim) as linkprim,
+93                    upcase(l.linktype) as linktype
+94             from event_gvkey as g
+95             inner join ccm.ccmxpf_linktable as l on g.gvkey=l.gvkey
+96             where upcase(l.linktype) in ('LC','LU')
+97               and upcase(l.linkprim) in ('P','C')
+98               and not missing(l.lpermno)
+99               and (missing(l.linkdt) or l.linkdt <= g.issue_date)
+100              and (missing(l.linkenddt) or l.linkenddt >= g.issue_date);
+NOTE: Table WORK.CCM_CANDIDATES created, with 4226 rows and 8 columns.
+
+101        
+102            create table crsp_name_matches as
+103            select distinct c.offer_id, c.issue_date, c.offer_year, c.cusip6,
+104                   c.gvkey, c.permno, c.linkprim, c.linktype,
+105                   n.shrcd, n.ncusip
+106            from ccm_candidates as c
+107            inner join crsp.msenames as n on c.permno=n.permno
+108            where n.shrcd in (10,11)
+109              and n.namedt <= c.issue_date
+110              and (missing(n.nameendt) or n.nameendt >= c.issue_date)
+111              and substr(upcase(n.ncusip),1,6)=c.cusip6;
+NOTE: Table WORK.CRSP_NAME_MATCHES created, with 4016 rows and 10 columns.
+
+112        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+113        
+114        proc sql;
+115            create table link_counts0 as
+116            select offer_id, linkprim, count(distinct permno) as n_permno
+117            from crsp_name_matches
+118            group by offer_id, linkprim;
+NOTE: Table WORK.LINK_COUNTS0 created, with 4016 rows and 3 columns.
+
+119        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+120        
+121        proc sort data=link_counts0 out=link_counts;
+122            by offer_id;
+123        run;
+
+NOTE: Input data set is already sorted; it has been copied to the output data set.
+NOTE: There were 4016 observations read from the data set WORK.LINK_COUNTS0.
+NOTE: The data set WORK.LINK_COUNTS has 4016 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+124        
+The SAS System
+
+125        data link_stats;
+126            set link_counts;
+127            by offer_id;
+128            retain n_primary n_compustat;
+129            if first.offer_id then do;
+130                n_primary=0;
+131                n_compustat=0;
+132            end;
+133            if linkprim='P' then n_primary=n_permno;
+134            else if linkprim='C' then n_compustat=n_permno;
+135            if last.offer_id then output;
+136            keep offer_id n_primary n_compustat;
+137        run;
+
+NOTE: There were 4016 observations read from the data set WORK.LINK_COUNTS.
+NOTE: The data set WORK.LINK_STATS has 4016 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+138        
+139        proc sql;
+140            create table link_stats_all as
+141            select g.offer_id,
+142                   coalesce(s.n_primary,0) as n_primary,
+143                   coalesce(s.n_compustat,0) as n_compustat
+144            from event_gvkey as g
+145            left join link_stats as s on g.offer_id=s.offer_id;
+NOTE: Table WORK.LINK_STATS_ALL created, with 4866 rows and 3 columns.
+
+146        
+147            create table crsp_link as
+148            select distinct c.offer_id, c.issue_date, c.offer_year, c.cusip6,
+149                   c.gvkey, c.permno, c.linkprim
+150            from crsp_name_matches as c
+151            inner join link_stats as s on c.offer_id=s.offer_id
+152            where (s.n_primary=1 and c.linkprim='P') or
+153                  (s.n_primary=0 and s.n_compustat=1 and c.linkprim='C');
+NOTE: Table WORK.CRSP_LINK created, with 4016 rows and 7 columns.
+
+154        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+
+155        
+156        proc sql;
+157            title2 'Dated CCM and CRSP name-link counts';
+158            select count(*) as offers_with_unique_gvkey,
+159                   sum(n_primary=0 and n_compustat=0) as no_primary_or_comp_link,
+160                   sum(n_primary>1 or (n_primary=0 and n_compustat>1)) as ambiguous_links
+161            from link_stats_all;
+162            select count(*) as one_permno_links,
+163                   count(distinct offer_id) as unique_linked_offers
+164            from crsp_link;
+165        quit;
+The SAS System
+
+NOTE: The PROCEDURE SQL printed pages 3-4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+166        
+167        /* Annual Compustat IB observations: INDL / consolidated / domestic / standard. */
+168        data funda_hist;
+169            set comp.funda(
+170                keep=gvkey datadate fyear indfmt consol popsrc datafmt fdate pdate
+171                     ib curcd
+172                where=(fyear >= 1981 and fyear <= 1995 and indfmt='INDL' and
+173                       consol='C' and popsrc='D' and datafmt='STD')
+174            );
+175        run;
+
+NOTE: There were 142616 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1981 and fyear<=1995) and (indfmt='INDL') and (consol='C') and (popsrc='D') and (datafmt='STD');
+NOTE: The data set WORK.FUNDA_HIST has 142616 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.49 seconds
+      cpu time            0.49 seconds
+      
+
+176        
+177        proc sql;
+178            title2 'Compustat selected annual source and remaining duplicate keys';
+179            select count(*) as source_rows,
+180                   count(distinct gvkey) as distinct_gvkeys,
+181                   sum(missing(ib)) as missing_ib
+182            from funda_hist;
+183            select count(*) as duplicate_keys,
+184                   sum(n-1) as excess_rows
+185            from (select gvkey, fyear, count(*) as n
+186                  from funda_hist
+187                  group by gvkey, fyear
+188                  having calculated n > 1);
+189        quit;
+NOTE: The PROCEDURE SQL printed pages 5-6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.06 seconds
+      
+
+190        
+191        proc sort data=funda_hist out=funda_sorted;
+192            by gvkey fyear descending fdate descending pdate descending datadate;
+193        run;
+
+NOTE: There were 142616 observations read from the data set WORK.FUNDA_HIST.
+NOTE: The data set WORK.FUNDA_SORTED has 142616 observations and 11 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+194        
+The SAS System
+
+195        data funda_annual;
+196            set funda_sorted;
+197            by gvkey fyear;
+198            if first.fyear;
+199        run;
+
+NOTE: There were 142616 observations read from the data set WORK.FUNDA_SORTED.
+NOTE: The data set WORK.FUNDA_ANNUAL has 142614 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+200        
+201        /* Six offer-year through offer-year+5 annual positions per uniquely linked GVKEY. */
+202        data earn_grid;
+203            set event_gvkey(keep=offer_id gvkey issue_date offer_year);
+204            do position=0 to 5;
+205                fyear=offer_year+position;
+206                trend=position;
+207                output;
+208            end;
+209            keep offer_id gvkey issue_date offer_year fyear position trend;
+210        run;
+
+NOTE: There were 4866 observations read from the data set WORK.EVENT_GVKEY.
+NOTE: The data set WORK.EARN_GRID has 29196 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+211        
+212        proc sql;
+213            create table earn_long as
+214            select g.offer_id, g.gvkey, g.issue_date, g.offer_year,
+215                   g.fyear, g.position, g.trend, f.ib, f.curcd
+216            from earn_grid as g
+217            left join funda_annual as f
+218              on g.gvkey=f.gvkey and g.fyear=f.fyear;
+NOTE: Table WORK.EARN_LONG created, with 29196 rows and 9 columns.
+
+219        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.06 seconds
+      
+
+220        
+221        data earn_long;
+222            set earn_long;
+223            log_ib=.;
+224            if not missing(ib) and ib>0 then log_ib=log(ib);
+225        run;
+
+NOTE: There were 29196 observations read from the data set WORK.EARN_LONG.
+NOTE: The data set WORK.EARN_LONG has 29196 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+226        
+227        proc sql;
+228            create table growth_meta as
+229            select offer_id,
+230                   sum(case when not missing(log_ib) then 1 else 0 end) as n_positive,
+231                   sum(case when not missing(log_ib) and missing(curcd) then 1 else 0 end) as n_missing_currency,
+232                   count(distinct case when not missing(log_ib) and not missing(curcd)
+233                                       then curcd end) as n_currencies,
+234                   max(case when position=0 and not missing(log_ib) then 1 else 0 end) as first_ok,
+235                   max(case when position=5 and not missing(log_ib) then 1 else 0 end) as last_ok
+236            from earn_long
+237            group by offer_id;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.GROWTH_META created, with 4866 rows and 6 columns.
+
+238        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+239        
+240        proc sort data=earn_long;
+241            by offer_id;
+242        run;
+
+NOTE: There were 29196 observations read from the data set WORK.EARN_LONG.
+NOTE: The data set WORK.EARN_LONG has 29196 observations and 10 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+243        proc sort data=growth_meta;
+244            by offer_id;
+245        run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+246        
+247        data earn_fit;
+248            merge earn_long(in=in_earn) growth_meta(in=in_meta);
+249            by offer_id;
+250            if in_earn and in_meta and first_ok=1 and last_ok=1 and
+251               n_positive>=2 and n_currencies=1 and n_missing_currency=0 and
+252               not missing(log_ib);
+253        run;
+
+NOTE: There were 29196 observations read from the data set WORK.EARN_LONG.
+The SAS System
+
+NOTE: There were 4866 observations read from the data set WORK.GROWTH_META.
+NOTE: The data set WORK.EARN_FIT has 10837 observations and 15 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+254        
+255        proc sort data=earn_fit;
+256            by offer_id;
+257        run;
+
+NOTE: There were 10837 observations read from the data set WORK.EARN_FIT.
+NOTE: The data set WORK.EARN_FIT has 10837 observations and 15 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+258        
+259        proc reg data=earn_fit outest=gr_est noprint;
+260            by offer_id;
+261            model log_ib=trend;
+262        run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+NOTE: The data set WORK.GR_EST has 1948 observations and 8 variables.
+
+263        quit;
+264        
+265        proc sort data=growth_meta;
+266            by offer_id;
+267        run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+268        proc sort data=gr_est;
+269            by offer_id;
+270        run;
+
+NOTE: There were 1948 observations read from the data set WORK.GR_EST.
+NOTE: The data set WORK.GR_EST has 1948 observations and 8 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+271        
+272        data growth_offer;
+273            merge growth_meta(in=in_meta) gr_est(in=in_est);
+The SAS System
+
+274            by offer_id;
+275            if in_meta;
+276            realized_growth=.;
+277            if in_est and not missing(trend) then realized_growth=exp(trend)-1;
+278            label realized_growth='Five-year annualized growth from fitted log earnings slope';
+279        run;
+
+NOTE: There were 4866 observations read from the data set WORK.GROWTH_META.
+NOTE: There were 1948 observations read from the data set WORK.GR_EST.
+NOTE: The data set WORK.GROWTH_OFFER has 4866 observations and 14 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+280        
+281        proc sql;
+282            title2 'Per-offer realized-growth support-fit eligibility and rank inputs';
+283            select count(*) as offers_with_gvkey,
+284                   sum(first_ok=1 and last_ok=1) as endpoints_present,
+285                   sum(first_ok=1 and last_ok=1 and n_currencies=1 and
+286                       n_missing_currency=0 and n_positive>=2) as fit_eligible,
+287                   sum(not missing(realized_growth)) as estimates_returned,
+288                   sum(missing(realized_growth)) as estimates_unavailable
+289            from growth_offer;
+290        quit;
+NOTE: The PROCEDURE SQL printed page 7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+291        
+292        proc means data=growth_meta n mean min p25 p50 p75 max;
+293            title2 'Number of positive annual earnings observations per offer growth fit';
+294            var n_positive;
+295        run;
+
+NOTE: There were 4866 observations read from the data set WORK.GROWTH_META.
+NOTE: The PROCEDURE MEANS printed page 8.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+
+296        
+297        /* Average every nonmissing detail LTG forecast per offer in the exact date window. */
+298        data ibes_ltg;
+299            length cusip6 $6 cusip_clean $20;
+300            set ibes.det_epsus(
+301                keep=ticker cusip analys fpi measure value anndats
+302                where=(anndats >= '01jan1980'd and anndats <= '31dec1991'd and
+303                       fpi='0' and measure='EPS')
+304            );
+305            cusip_clean=compress(upcase(cusip),,'kad');
+306            if lengthn(cusip_clean) < 6 then delete;
+307            cusip6=substr(cusip_clean,1,6);
+308        run;
+The SAS System
+
+
+NOTE: There were 149070 observations read from the data set IBES.DET_EPSUS.
+      WHERE (anndats>='01JAN1980'D and anndats<='31DEC1991'D) and (fpi='0') and (measure='EPS');
+NOTE: The data set WORK.IBES_LTG has 147295 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.23 seconds
+      cpu time            0.22 seconds
+      
+
+309        
+310        proc sql;
+311            create table forecast_matches as
+312            select o.offer_id, o.issue_date, o.offer_year, f.ticker, f.analys,
+313                   f.anndats, f.value
+314            from offer_pool as o
+315            inner join ibes_ltg as f on o.cusip6=f.cusip6
+316            where f.anndats >= intnx('month',o.issue_date,-9,'same')
+317              and f.anndats <= intnx('month',o.issue_date,3,'same');
+NOTE: Table WORK.FORECAST_MATCHES created, with 12820 rows and 7 columns.
+
+318        
+319            create table offer_forecast as
+320            select o.offer_id,
+321                   sum(case when not missing(f.value) then 1 else 0 end)
+322                       as n_forecasts,
+323                   mean(f.value)/100 as forecast_growth,
+324                   sum(case when not missing(f.value) and
+325                                 (f.value < -100 or f.value > 100)
+326                            then 1 else 0 end)
+327                       as n_outside_table3_range
+328            from offer_pool as o
+329            left join forecast_matches as f on o.offer_id=f.offer_id
+330            group by o.offer_id;
+NOTE: Table WORK.OFFER_FORECAST created, with 7114 rows and 4 columns.
+
+331        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+332        
+333        proc sql;
+334            title2 'I/B/E/S window and Table 3 range diagnostics';
+335            select count(*) as matched_detail_rows,
+336                   count(distinct offer_id) as offers_with_any_fpi0,
+337                   sum(value < -100 or value > 100) as out_of_range_detail_rows
+338            from forecast_matches;
+339            select sum(n_forecasts>0) as offers_with_valid_growth,
+340                   sum(n_outside_table3_range) as out_of_range_by_offer
+341            from offer_forecast;
+342        quit;
+NOTE: The PROCEDURE SQL printed pages 9-10.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+The SAS System
+
+343        
+344        /* Return grid spans 60 monthly intervals from t+3 month-end to t+63 month-end. */
+345        data ret_grid;
+346            set crsp_link(keep=offer_id gvkey permno issue_date offer_year);
+347            event_month=intnx('month',issue_date,0,'b');
+348            do month_offset=4 to 63;
+349                month_key=intnx('month',event_month,month_offset,'b');
+350                output;
+351            end;
+352            format event_month month_key yymmdd10.;
+353            keep offer_id gvkey permno issue_date offer_year event_month
+354                 month_offset month_key;
+355        run;
+
+NOTE: There were 4016 observations read from the data set WORK.CRSP_LINK.
+NOTE: The data set WORK.RET_GRID has 240960 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+356        
+357        data stock_month;
+358            set crsp.msf(
+359                keep=permno date ret
+360                where=(date >= '01may1981'd and date <= '31mar1996'd)
+361            );
+362            month_key=intnx('month',date,0,'b');
+363            stock_date=date;
+364            stock_ret=ret;
+365            format month_key stock_date yymmdd10.;
+366            keep permno month_key stock_date stock_ret;
+367        run;
+
+NOTE: There were 1250521 observations read from the data set CRSP.MSF.
+      WHERE (date>='01MAY1981'D and date<='31MAR1996'D);
+NOTE: The data set WORK.STOCK_MONTH has 1250521 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.32 seconds
+      cpu time            0.32 seconds
+      
+
+368        
+369        data market_month;
+370            set crsp.msi(
+371                keep=date vwretd
+372                where=(date >= '01may1981'd and date <= '31mar1996'd)
+373            );
+374            month_key=intnx('month',date,0,'b');
+375            market_date=date;
+376            market_ret=vwretd;
+377            format month_key market_date yymmdd10.;
+378            keep month_key market_date market_ret;
+379        run;
+
+NOTE: There were 179 observations read from the data set CRSP.MSI.
+      WHERE (date>='01MAY1981'D and date<='31MAR1996'D);
+NOTE: The data set WORK.MARKET_MONTH has 179 observations and 3 variables.
+The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+380        
+381        proc sql;
+382            create table ret_panel as
+383            select g.offer_id, g.gvkey, g.permno, g.issue_date, g.offer_year,
+384                   g.month_offset, g.month_key,
+385                   s.stock_date, s.stock_ret, m.market_date, m.market_ret
+386            from ret_grid as g
+387            left join stock_month as s
+388              on g.permno=s.permno and g.month_key=s.month_key
+389            left join market_month as m on g.month_key=m.month_key
+390            order by g.offer_id, g.month_key;
+NOTE: Table WORK.RET_PANEL created, with 240960 rows and 11 columns.
+
+391        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.36 seconds
+      cpu time            0.66 seconds
+      
+
+392        
+393        proc sort data=ret_panel;
+394            by offer_id month_key;
+395        run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+396        
+397        data return_summary;
+398            set ret_panel;
+399            by offer_id;
+400            retain n_months n_stock n_market miss_stock miss_market
+401                   stock_product market_product stock_date_start stock_date_end;
+402            if first.offer_id then do;
+403                n_months=0;
+404                n_stock=0;
+405                n_market=0;
+406                miss_stock=0;
+407                miss_market=0;
+408                stock_product=1;
+409                market_product=1;
+410                stock_date_start=.;
+411                stock_date_end=.;
+412            end;
+413            n_months+1;
+414            if not missing(stock_date) then do;
+415                if missing(stock_date_start) then stock_date_start=stock_date;
+416                stock_date_end=stock_date;
+417            end;
+418            if missing(stock_ret) then miss_stock+1;
+The SAS System
+
+419            else do;
+420                n_stock+1;
+421                stock_product=stock_product*(1+stock_ret);
+422            end;
+423            if missing(market_ret) then miss_market+1;
+424            else do;
+425                n_market+1;
+426                market_product=market_product*(1+market_ret);
+427            end;
+428            if last.offer_id then do;
+429                n_return_months=n_months;
+430                stock_buyhold=stock_product-1;
+431                market_buyhold=market_product-1;
+432                abnormal_return=.;
+433                if n_months=60 and n_stock=60 and n_market=60 and
+434                   miss_stock=0 and miss_market=0 then
+435                    abnormal_return=stock_buyhold-market_buyhold;
+436                output;
+437            end;
+438            format stock_date_start stock_date_end yymmdd10.;
+439            keep offer_id n_return_months n_stock n_market miss_stock miss_market
+440                 stock_buyhold market_buyhold abnormal_return stock_date_start stock_date_end;
+441        run;
+
+NOTE: There were 240960 observations read from the data set WORK.RET_PANEL.
+NOTE: The data set WORK.RETURN_SUMMARY has 4016 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+442        
+443        /* Merge all offering-level constructions and retain only the common baseline sample. */
+444        proc sql;
+445            create table analysis_all0 as
+446            select o.offer_id, o.issue_date, o.offer_year, o.cusip6, o.ipo,
+447                   g.gvkey, r.permno,
+448                   f.n_forecasts, f.forecast_growth, f.n_outside_table3_range,
+449                   gr.n_positive as n_growth_points,
+450                   gr.n_currencies, gr.first_ok, gr.last_ok,
+451                   gr.trend as realized_growth_slope,
+452                   gr.realized_growth,
+453                   ret.n_return_months, ret.n_stock, ret.n_market,
+454                   ret.stock_buyhold, ret.market_buyhold, ret.abnormal_return,
+455                   ret.stock_date_start, ret.stock_date_end
+456            from offer_pool as o
+457            left join event_gvkey as g on o.offer_id=g.offer_id
+458            left join crsp_link as r on o.offer_id=r.offer_id
+459            left join offer_forecast as f on o.offer_id=f.offer_id
+460            left join growth_offer as gr on o.offer_id=gr.offer_id
+461            left join return_summary as ret on o.offer_id=ret.offer_id;
+NOTE: Table WORK.ANALYSIS_ALL0 created, with 7114 rows and 24 columns.
+
+462        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+The SAS System
+
+
+463        
+464        data analysis_all;
+465            set analysis_all0;
+466            if missing(n_forecasts) then n_forecasts=0;
+467            if missing(n_growth_points) then n_growth_points=0;
+468            if missing(n_return_months) then n_return_months=0;
+469            comp_linked=not missing(gvkey);
+470            crsp_linked=not missing(permno);
+471            forecast_ok=(n_forecasts>0 and not missing(forecast_growth));
+472            growth_ok=not missing(realized_growth);
+473            return_ok=(n_return_months=60 and not missing(abnormal_return));
+474            complete_sample=(comp_linked and crsp_linked and forecast_ok and
+475                             growth_ok and return_ok);
+476            forecast_error=realized_growth-forecast_growth;
+477        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      6207 at 476:35   
+NOTE: There were 7114 observations read from the data set WORK.ANALYSIS_ALL0.
+NOTE: The data set WORK.ANALYSIS_ALL has 7114 observations and 31 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+478        
+479        proc sql;
+480            title2 'Offer-level sample construction and retained Table 7 sample';
+481            select count(*) as sdc_offers,
+482                   sum(comp_linked) as compustat_linked,
+483                   sum(crsp_linked) as crsp_linked,
+484                   sum(comp_linked and crsp_linked) as linked_both,
+485                   sum(forecast_ok) as forecast_window_usable,
+486                   sum(growth_ok) as realized_growth_fit,
+487                   sum(return_ok) as complete_60_month_return,
+488                   sum(complete_sample) as final_complete_offers
+489            from analysis_all;
+490            select offer_year, count(*) as sdc_offers,
+491                   sum(complete_sample) as final_complete_offers,
+492                   sum(forecast_ok) as forecast_window_usable,
+493                   sum(growth_ok) as realized_growth_fit,
+494                   sum(return_ok) as complete_60_month_return
+495            from analysis_all
+496            group by offer_year
+497            order by offer_year;
+498        quit;
+NOTE: The PROCEDURE SQL printed pages 11-12.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+499        
+500        data handoff.equity_offerings;
+501            set analysis_all;
+502            where complete_sample=1;
+The SAS System
+
+503            label offer_id='SDC master deal identifier'
+504                  issue_date='SDC issue date'
+505                  offer_year='Calendar year of issue'
+506                  forecast_growth='Mean I/B/E/S long-term forecast growth (decimal)'
+507                  realized_growth='Five-year annualized realized earnings growth (decimal)'
+508                  forecast_error='Realized growth minus forecast growth'
+509                  abnormal_return='Five-year compounded stock minus market return'
+510                  stock_buyhold='Five-year compounded CRSP stock return'
+511                  market_buyhold='Five-year compounded CRSP value-weighted market return'
+512                  n_forecasts='Qualifying I/B/E/S detail forecasts in offer window'
+513                  n_return_months='Observed CRSP monthly return periods';
+514            keep offer_id issue_date offer_year cusip6 gvkey permno forecast_growth
+515                 realized_growth forecast_error abnormal_return stock_buyhold
+516                 market_buyhold n_forecasts n_return_months;
+517        run;
+
+NOTE: There were 818 observations read from the data set WORK.ANALYSIS_ALL.
+      WHERE complete_sample=1;
+NOTE: The data set HANDOFF.EQUITY_OFFERINGS has 818 observations and 14 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+518        
+519        proc sql;
+520            title2 'Final handoff row count and key uniqueness';
+521            select count(*) as final_rows,
+522                   count(distinct offer_id) as distinct_offer_ids,
+523                   sum(missing(forecast_growth)) as missing_forecast_growth,
+524                   sum(missing(realized_growth)) as missing_realized_growth,
+525                   sum(missing(forecast_error)) as missing_forecast_error,
+526                   sum(missing(abnormal_return)) as missing_abnormal_return
+527            from handoff.equity_offerings;
+528        quit;
+NOTE: The PROCEDURE SQL printed page 13.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+529        
+530        proc means data=handoff.equity_offerings n nmiss mean std min p25 p50 p75 max;
+531            title2 'Final per-offer regression-input distributions';
+532            var abnormal_return realized_growth forecast_growth forecast_error
+533                n_forecasts n_return_months;
+534        run;
+
+NOTE: There were 818 observations read from the data set HANDOFF.EQUITY_OFFERINGS.
+NOTE: The PROCEDURE MEANS printed page 14.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           2.57 seconds
+The SAS System
+
+      cpu time            2.87 seconds
+      

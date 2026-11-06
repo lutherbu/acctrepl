@@ -1,0 +1,300 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3125018794/at
+> tempt_02/runtime/20261103T031654413973Z/cell_6756ee91.do 
+
+. version 18
+
+. set more off
+
+. 
+. global fe "forecast_error"
+
+. global ar "abnormal_return"
+
+. global growth "forecast_growth"
+
+. 
+. use "data/equity_offerings/reg.dta", clear
+
+. 
+. est clear
+
+. mlexp (lnnormalden($fe, {a0=0} + {a1=0}*$growth, exp({lnsfe=0})) ///
+>        + lnnormalden($ar, {b1=1}*($fe - {a0star=0} - {a1star=0}*$growth), ///
+>                      exp({lnsar=0}))), variables($fe $ar $growth)
+
+Initial:      Log likelihood = -2447.5264
+Rescale:      Log likelihood = -2378.5581
+Rescale eq:   Log likelihood = -2378.5581
+Iteration 0:  Log likelihood = -2378.5581  (not concave)
+Iteration 1:  Log likelihood = -1704.5556  
+Iteration 2:  Log likelihood = -1563.6322  
+Iteration 3:  Log likelihood = -1419.9242  
+Iteration 4:  Log likelihood = -1403.7114  
+Iteration 5:  Log likelihood = -1403.6798  
+Iteration 6:  Log likelihood = -1403.6798  
+
+Maximum likelihood estimation
+
+Log likelihood = -1403.6798                                Number of obs = 818
+
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         /a0 |   .0322552   .0147979     2.18   0.029      .003252    .0612585
+         /a1 |  -.6071557   .0676302    -8.98   0.000    -.7397083    -.474603
+      /lnsfe |   -1.42292   .0247234   -57.55   0.000    -1.471377   -1.374463
+         /b1 |   3.480003   .1960317    17.75   0.000     3.095788    3.864218
+     /a0star |   .0183303   .0238538     0.77   0.442    -.0284223    .0650828
+     /a1star |  -.7244933   .1091595    -6.64   0.000    -.9384419   -.5105447
+      /lnsar |   .3010326   .0247234    12.18   0.000     .2525756    .3494896
+------------------------------------------------------------------------------
+
+. estimates store unrestricted
+
+. 
+. mlexp (lnnormalden($fe, {a0=0} + {a1=0}*$growth, exp({lnsfe=0})) ///
+>        + lnnormalden($ar, {b1=1}*($fe - {a0} - {a1}*$growth), ///
+>                      exp({lnsar=0}))), variables($fe $ar $growth)
+
+Initial:      Log likelihood = -2447.5264
+Rescale:      Log likelihood = -2378.5581
+Rescale eq:   Log likelihood = -2378.5581
+Iteration 0:  Log likelihood = -2378.5581  (not concave)
+Iteration 1:  Log likelihood =  -1692.131  
+Iteration 2:  Log likelihood = -1408.7881  
+Iteration 3:  Log likelihood =  -1406.497  
+Iteration 4:  Log likelihood = -1406.4917  
+Iteration 5:  Log likelihood = -1406.4917  
+
+Maximum likelihood estimation
+
+Log likelihood = -1406.4917                                Number of obs = 818
+
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         /a0 |   .0283825   .0125747     2.26   0.024     .0037365    .0530285
+         /a1 |  -.6397888   .0574906   -11.13   0.000    -.7524684   -.5271093
+      /lnsfe |  -1.421961   .0247577   -57.44   0.000    -1.470486   -1.373437
+         /b1 |   3.497301   .1964617    17.80   0.000     3.112243    3.882358
+      /lnsar |   .3035118   .0247577    12.26   0.000     .2549875     .352036
+------------------------------------------------------------------------------
+
+. estimates store market_efficiency
+
+. lrtest unrestricted market_efficiency
+
+Likelihood-ratio test
+Assumption: market_effic~y nested within unrestricted
+
+ LR chi2(2) =   5.62
+Prob > chi2 = 0.0601
+
+. local lr_me_chi2 = r(chi2)
+
+. local lr_me_p = r(p)
+
+. 
+. mlexp (lnnormalden($fe, {a0=0} + {a1=0}*$growth, exp({lnsfe=0})) ///
+>        + lnnormalden($ar, {b1=1}*$fe, exp({lnsar=0}))), variables($fe $ar $gr
+> owth)
+
+Initial:      Log likelihood = -2447.5264
+Rescale:      Log likelihood = -2378.5581
+Rescale eq:   Log likelihood = -2378.5581
+Iteration 0:  Log likelihood = -2378.5581  
+Iteration 1:  Log likelihood = -1738.6277  
+Iteration 2:  Log likelihood = -1704.9152  
+Iteration 3:  Log likelihood = -1452.3894  
+Iteration 4:  Log likelihood = -1448.0402  
+Iteration 5:  Log likelihood =  -1448.027  
+Iteration 6:  Log likelihood =  -1448.027  
+
+Maximum likelihood estimation
+
+Log likelihood = -1448.027                                 Number of obs = 818
+
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         /a0 |   .0322552   .0147979     2.18   0.029      .003252    .0612585
+         /a1 |  -.6071557   .0676302    -8.98   0.000    -.7397083    -.474603
+      /lnsfe |   -1.42292   .0247234   -57.55   0.000    -1.471377   -1.374463
+         /b1 |   2.709142   .1888842    14.34   0.000     2.338936    3.079349
+      /lnsar |   .3552468   .0247234    14.37   0.000     .3067898    .4037038
+------------------------------------------------------------------------------
+
+. estimates store naive_expectations
+
+. lrtest unrestricted naive_expectations
+
+Likelihood-ratio test
+Assumption: naive_expect~s nested within unrestricted
+
+ LR chi2(2) =  88.69
+Prob > chi2 = 0.0000
+
+. local lr_naive_chi2 = r(chi2)
+
+. local lr_naive_p = r(p)
+
+. 
+. estimates restore unrestricted
+(results unrestricted are active now)
+
+. regress $fe $growth
+
+      Source |       SS           df       MS      Number of obs   =       818
+-------------+----------------------------------   F(1, 816)       =     80.40
+       Model |  4.68152159         1  4.68152159   Prob > F        =    0.0000
+    Residual |  47.5139259       816   .05822785   R-squared       =    0.0897
+-------------+----------------------------------   Adj R-squared   =    0.0886
+       Total |  52.1954474       817  .063886717   Root MSE        =     .2413
+
+------------------------------------------------------------------------------
+forecast_e~r | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+forecast_g~h |  -.6071557    .067713    -8.97   0.000    -.7400678   -.4742435
+       _cons |   .0322552    .014816     2.18   0.030     .0031733    .0613372
+------------------------------------------------------------------------------
+
+. estimates restore unrestricted
+(results unrestricted are active now)
+
+. nlcom (ols_intercept: -_b[/b1]*_b[/a0star]) ///
+>       (ols_growth_slope: -_b[/b1]*_b[/a1star]) ///
+>       (ols_forecast_error_slope: _b[/b1])
+
+ols_interc~t: -_b[/b1]*_b[/a0star]
+ols_growth~e: -_b[/b1]*_b[/a1star]
+ols_foreca~e: _b[/b1]
+
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ols_interc~t |  -.0637894   .0832069    -0.77   0.443    -.2268719    .0992932
+ols_growth~e |   2.521239   .3974195     6.34   0.000     1.742311    3.300167
+ols_foreca~e |   3.480003   .1960317    17.75   0.000     3.095788    3.864218
+------------------------------------------------------------------------------
+
+. regress $ar $fe $growth
+
+      Source |       SS           df       MS      Number of obs   =       818
+-------------+----------------------------------   F(2, 815)       =    157.57
+       Model |  577.531139         2   288.76557   Prob > F        =    0.0000
+    Residual |  1493.57462       815  1.83260689   R-squared       =    0.2789
+-------------+----------------------------------   Adj R-squared   =    0.2771
+       Total |  2071.10576       817  2.53501317   Root MSE        =    1.3537
+
+------------------------------------------------------------------------------
+abnormal_r~n | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+forecast_e~r |   3.480003   .1963922    17.72   0.000     3.094509    3.865497
+forecast_g~h |   2.521239   .3981503     6.33   0.000     1.739718     3.30276
+       _cons |  -.0637894   .0833599    -0.77   0.444    -.2274148     .099836
+------------------------------------------------------------------------------
+
+. estimates restore unrestricted
+(results unrestricted are active now)
+
+. estadd scalar lr_me_chi2 = `lr_me_chi2'
+
+added scalar:
+         e(lr_me_chi2) =  5.6237653
+
+. estadd scalar lr_me_p = `lr_me_p'
+
+added scalar:
+            e(lr_me_p) =  .06009175
+
+. estadd scalar lr_naive_chi2 = `lr_naive_chi2'
+
+added scalar:
+      e(lr_naive_chi2) =  88.694347
+
+. estadd scalar lr_naive_p = `lr_naive_p'
+
+added scalar:
+         e(lr_naive_p) =  5.499e-20
+
+. 
+. esttab unrestricted using "tables/table7_joint_system.md", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(a0:_cons a1:_cons b1:_cons a0star:_cons a1star:_cons) ///
+>     stats(N ll lr_me_chi2 lr_me_p lr_naive_chi2 lr_naive_p, ///
+>     labels("Observations" "Log likelihood" "Market-efficiency LR chi-square" 
+> ///
+>            "Market-efficiency LR p-value" "Naive-expectations LR chi-square" 
+> ///
+>            "Naive-expectations LR p-value") fmt(0 3 3 3 3 3)) replace label
+(file tables/table7_joint_system.md not found)
+(output written to tables/table7_joint_system.md)
+
+. esttab unrestricted using "tables/table7_joint_system.rtf", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(a0:_cons a1:_cons b1:_cons a0star:_cons a1star:_cons) ///
+>     stats(N ll lr_me_chi2 lr_me_p lr_naive_chi2 lr_naive_p, ///
+>     labels("Observations" "Log likelihood" "Market-efficiency LR chi-square" 
+> ///
+>            "Market-efficiency LR p-value" "Naive-expectations LR chi-square" 
+> ///
+>            "Naive-expectations LR p-value") fmt(0 3 3 3 3 3)) replace label
+(file tables/table7_joint_system.rtf not found)
+(output written to tables/table7_joint_system.rtf)
+
+. esttab unrestricted using "tables/table7_joint_system.csv", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(a0:_cons a1:_cons b1:_cons a0star:_cons a1star:_cons) ///
+>     stats(N ll lr_me_chi2 lr_me_p lr_naive_chi2 lr_naive_p, ///
+>     labels("Observations" "Log likelihood" "Market-efficiency LR chi-square" 
+> ///
+>            "Market-efficiency LR p-value" "Naive-expectations LR chi-square" 
+> ///
+>            "Naive-expectations LR p-value") fmt(0 3 3 3 3 3)) replace label
+(file tables/table7_joint_system.csv not found)
+(output written to tables/table7_joint_system.csv)
+
+. esttab unrestricted using "tables/table7_joint_system.tex", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(a0:_cons a1:_cons b1:_cons a0star:_cons a1star:_cons) ///
+>     stats(N ll lr_me_chi2 lr_me_p lr_naive_chi2 lr_naive_p, ///
+>     labels("Observations" "Log likelihood" "Market-efficiency LR chi-square" 
+> ///
+>            "Market-efficiency LR p-value" "Naive-expectations LR chi-square" 
+> ///
+>            "Naive-expectations LR p-value") fmt(0 3 3 3 3 3)) replace label
+(file tables/table7_joint_system.tex not found)
+(output written to tables/table7_joint_system.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

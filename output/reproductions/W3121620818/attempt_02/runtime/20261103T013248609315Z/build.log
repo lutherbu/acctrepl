@@ -1,0 +1,1884 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 09:32:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 09:32:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.05 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend nonumber nodate;
+2          
+3          libname comp '/storage/sas/base/comp/d_na' access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname sec  '/storage/sas/base/comp/d_na/security' access=readonly;
+NOTE: Libref SEC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+5          libname fx   '/storage/sas/base/comp/d_global/currency' access=readonly;
+NOTE: Libref FX was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_global/currency
+6          libname ccm  '/storage/sas/base/crsp/a_ccm' access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+7          libname crsp '/storage/sas/base/crsp/a_stock' access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+8          libname out 'data';
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3121620818/attempt_02/data
+9          
+10         %macro failif_positive(value,message);
+11           %if &value > 0 %then %do;
+12             %put ERROR: &message;
+13             %abort cancel;
+14           %end;
+15         %mend;
+16         
+17         /* INDL is Compustat's standardized North America format, including financial firms;
+18            FS is supplemental and can disagree materially on a repeated firm-year. */
+19         data raw_all;
+                                                           The SAS System
+
+20           set comp.funda(keep=gvkey datadate fyear indfmt datafmt consol popsrc curcd
+21                sich au auop at act che lct dlc dp revt rect ppegt ceq csho prcc_f dltt ib hiid
+22                where=(fyear >= 1971 and fyear <= 1997 and indfmt='INDL' and datafmt='STD' and
+23                       consol='C' and popsrc='D'));
+24           length sic2 big6 8 sic2_source $24;
+25           if sich >= 100 and sich <= 9999 then do;
+26             sic2=floor(sich/100);
+27             sic2_source='FUNDA_SICH';
+28           end;
+29           else do;
+30             sic2=.;
+31             sic2_source='UNAVAILABLE';
+32           end;
+33           if not missing(strip(au)) and strip(au) ne '0' then do;
+34             if strip(au) in ('1','2','3','4','5','6','7','8') then big6=1;
+35             else big6=0;
+36           end;
+37           else big6=.;
+38         run;
+
+NOTE: There were 229160 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1971 and fyear<=1997) and (indfmt='INDL') and (datafmt='STD') and (consol='C') and (popsrc='D');
+NOTE: The data set WORK.RAW_ALL has 229160 observations and 29 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.55 seconds
+      cpu time            0.54 seconds
+      
+
+39         
+40         proc sql;
+41           create table dup_fyear as
+42           select gvkey, fyear, count(*) as n
+43           from raw_all
+44           group by gvkey, fyear
+45           having calculated n > 1;
+NOTE: Table WORK.DUP_FYEAR created, with 2 rows and 3 columns.
+
+46           select count(*) into :dup_fyear_count trimmed from dup_fyear;
+47           select count(*) as ambiguous_gvkey_fyear_keys from dup_fyear;
+48           select count(*) as excluded_ambiguous_source_rows
+49           from raw_all as a inner join dup_fyear as d
+50             on a.gvkey=d.gvkey and a.fyear=d.fyear;
+51           create table raw as
+52           select a.* from raw_all as a
+53           where not exists
+54             (select 1 from dup_fyear as d where a.gvkey=d.gvkey and a.fyear=d.fyear);
+NOTE: Table WORK.RAW created, with 229156 rows and 29 columns.
+
+55         quit;
+NOTE: The PROCEDURE SQL printed pages 1-3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.31 seconds
+      cpu time            2.33 seconds
+      
+
+56         proc sort data=raw;
+57           by gvkey fyear datadate;
+58         run;
+                                                           The SAS System
+
+
+NOTE: There were 229156 observations read from the data set WORK.RAW.
+NOTE: The data set WORK.RAW has 229156 observations and 29 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.12 seconds
+      
+
+59         proc sql;
+60           create table duplicate_retained_fyear as
+61           select gvkey, fyear, count(*) as n
+62           from raw group by gvkey, fyear having calculated n > 1;
+NOTE: Table WORK.DUPLICATE_RETAINED_FYEAR created, with 0 rows and 3 columns.
+
+63           select count(*) into :duplicate_retained_count trimmed from duplicate_retained_fyear;
+64           select count(*) as retained_dup_keys from duplicate_retained_fyear;
+65         quit;
+NOTE: The PROCEDURE SQL printed pages 4-5.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+66         %failif_positive(&duplicate_retained_count,INDL source remains nonunique after ambiguous firm-years were excluded.)
+67         
+68         /* Fill missing historical SICH only from date-valid CRSP SICs attached through
+69            active primary CCM links. Prefer an exact FUNDA.HIID issue; allow a unique
+70            company SIC only when the exact issue SIC is unavailable. Keep SICH present. */
+71         data crsp_names;
+72           set crsp.dsenames(keep=permno namedt nameendt siccd
+73                where=(namedt <= '31DEC1998'd));
+74         run;
+
+NOTE: There were 53726 observations read from the data set CRSP.DSENAMES.
+      WHERE namedt<='31DEC1998'D;
+NOTE: The data set WORK.CRSP_NAMES has 53726 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+75         proc sql;
+76           create table crsp_sic_source as
+77           select a.gvkey, a.fyear,
+78                  count(distinct case when not missing(a.hiid) and strip(a.hiid)=strip(l.liid) and
+79                                           not missing(n.permno) and not missing(n.siccd) and
+80                                           n.siccd>=100 and n.siccd<10000
+81                                      then floor(n.siccd/100) else . end) as exact_sic2_n,
+82                  max(case when not missing(a.hiid) and strip(a.hiid)=strip(l.liid) and
+83                                not missing(n.permno) and not missing(n.siccd) and
+84                                n.siccd>=100 and n.siccd<10000
+85                           then floor(n.siccd/100) else . end) as exact_sic2,
+86                  count(distinct case when not missing(n.permno) and not missing(n.siccd) and
+87                                           n.siccd>=100 and n.siccd<10000
+88                                      then floor(n.siccd/100) else . end) as company_sic2_n,
+89                  max(case when not missing(n.permno) and not missing(n.siccd) and
+90                                n.siccd>=100 and n.siccd<10000
+91                           then floor(n.siccd/100) else . end) as company_sic2
+                                                           The SAS System
+
+92           from raw as a
+93           left join ccm.ccmxpf_linktable as l
+94             on a.gvkey=l.gvkey and l.linkprim in ('P','C') and l.linktype in ('LC','LU','LS') and
+95                l.lpermno>0 and l.linkdt<=a.datadate and (l.linkenddt>=a.datadate or l.linkenddt=.E)
+96           left join crsp_names as n
+97             on l.lpermno=n.permno and n.namedt<=a.datadate and
+98                (n.nameendt>=a.datadate or n.nameendt=99999999 or n.nameendt=.E)
+99           group by a.gvkey,a.fyear;
+NOTE: Table WORK.CRSP_SIC_SOURCE created, with 229156 rows and 6 columns.
+
+100        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.36 seconds
+      cpu time            0.44 seconds
+      
+
+101        proc sort data=crsp_sic_source;
+102          by gvkey fyear;
+103        run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+104        data raw;
+105          merge raw(in=in_raw) crsp_sic_source;
+106          by gvkey fyear;
+107          if in_raw;
+108          if sic2_source ne 'FUNDA_SICH' then do;
+109            sic2=.;
+110            if exact_sic2_n=1 then do;
+111              sic2=exact_sic2;
+112              sic2_source='CRSP_DATED_HIID';
+113            end;
+114            else if exact_sic2_n=0 and company_sic2_n=1 then do;
+115              sic2=company_sic2;
+116              sic2_source='CRSP_DATED_COMPANY';
+117            end;
+118            else if exact_sic2_n>1 or (exact_sic2_n=0 and company_sic2_n>1) then
+119              sic2_source='AMBIGUOUS_CRSP';
+120            else sic2_source='UNAVAILABLE';
+121          end;
+122          if exact_sic2_n=1 then crsp_chosen_sic2=exact_sic2;
+123          else if exact_sic2_n=0 and company_sic2_n=1 then crsp_chosen_sic2=company_sic2;
+124          else crsp_chosen_sic2=.;
+125        run;
+
+NOTE: There were 229156 observations read from the data set WORK.RAW.
+NOTE: There were 229156 observations read from the data set WORK.CRSP_SIC_SOURCE.
+NOTE: The data set WORK.RAW has 229156 observations and 34 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.10 seconds
+      
+
+126        proc sql;
+                                                           The SAS System
+
+127          select count(*) as sic_source_rows,
+128                 sum(sic2_source='FUNDA_SICH') as funda_sich_rows,
+129                 sum(sic2_source='CRSP_DATED_HIID') as crsp_hiid_fallback_rows,
+130                 sum(sic2_source='CRSP_DATED_COMPANY') as crsp_company_fallback_rows,
+131                 sum(sic2_source='UNAVAILABLE') as rows_without_classification,
+132                 sum(sic2_source='AMBIGUOUS_CRSP') as ambiguous_crsp_sic_rows,
+133                 sum(sic2_source='FUNDA_SICH' and not missing(crsp_chosen_sic2) and sic2=crsp_chosen_sic2) as overlap_same_sic2,
+134                 sum(sic2_source='FUNDA_SICH' and not missing(crsp_chosen_sic2) and sic2 ne crsp_chosen_sic2) as
+134      ! overlap_different_sic2
+135          from raw;
+136        quit;
+NOTE: The PROCEDURE SQL printed page 6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+137        
+138        proc means data=raw n nmiss min max;
+139          class fyear;
+140          var at act che lct dlc dp revt rect ppegt ceq csho prcc_f dltt ib sich;
+141          title 'Annual Compustat source coverage by fiscal year';
+142        run;
+
+NOTE: There were 229156 observations read from the data set WORK.RAW.
+NOTE: The PROCEDURE MEANS printed pages 7-15.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.08 seconds
+      
+
+143        proc freq data=raw;
+144          tables indfmt*curcd / missing;
+145          title 'Included Compustat formats and reporting currencies';
+146        run;
+
+NOTE: There were 229156 observations read from the data set WORK.RAW.
+NOTE: The PROCEDURE FREQ printed page 16.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+147        
+148        /* Actual fiscal-year joins: no row-order lags and no use of later periods. */
+149        proc sql;
+150          create table panel_lag as
+151          select a.*,
+152                 b.fyear as lagyear,
+153                 b.datadate as lagdate,
+154                 b.curcd as lagcurcd,
+155                 b.at as at_lag,
+156                 b.act as act_lag,
+157                 b.che as che_lag,
+158                 b.lct as lct_lag,
+159                 b.dlc as dlc_lag,
+160                 b.revt as revt_lag,
+161                 b.rect as rect_lag,
+                                                           The SAS System
+
+162                 b.ib as ib_lag
+163          from raw as a
+164          left join raw as b
+165            on a.gvkey=b.gvkey and b.fyear=a.fyear-1;
+NOTE: Table WORK.PANEL_LAG created, with 229156 rows and 45 columns.
+
+166        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.34 seconds
+      
+
+167        
+168        data metrics;
+169          set panel_lag;
+170          length ta ta_s inv_at rev_s rec_s ppe_s rev_delta rec_delta perform de 8;
+171          ta=.; ta_s=.; inv_at=.; rev_s=.; rec_s=.; ppe_s=.;
+172          rev_delta=.; rec_delta=.; perform=.; de=.;
+173          if not missing(at) and at>0 and not missing(dltt) then de=dltt/at;
+174          if lagyear=fyear-1 and not missing(curcd) and curcd=lagcurcd then do;
+175            if not missing(at_lag) and at_lag>0 then inv_at=1/at_lag;
+176            if nmiss(act,act_lag,che,che_lag,lct,lct_lag,dlc,dlc_lag,dp)=0 and
+177               not missing(at_lag) and at_lag>0 then do;
+178              ta=(act-act_lag)-(che-che_lag)-(lct-lct_lag)+(dlc-dlc_lag)-dp;
+179              ta_s=ta/at_lag;
+180            end;
+181            if nmiss(revt,revt_lag)=0 then do;
+182              rev_delta=revt-revt_lag;
+183              if not missing(at_lag) and at_lag>0 then rev_s=rev_delta/at_lag;
+184            end;
+185            if nmiss(rect,rect_lag)=0 then do;
+186              rec_delta=rect-rect_lag;
+187              if not missing(at_lag) and at_lag>0 then rec_s=rec_delta/at_lag;
+188            end;
+189            if not missing(ppegt) and not missing(at_lag) and at_lag>0 then ppe_s=ppegt/at_lag;
+190            if nmiss(ib,ib_lag,at_lag)=0 and at_lag>0 then perform=abs(ib-ib_lag)/at_lag;
+191          end;
+192        run;
+
+NOTE: There were 229156 observations read from the data set WORK.PANEL_LAG.
+NOTE: The data set WORK.METRICS has 229156 observations and 55 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.11 seconds
+      
+
+193        
+194        /* A historical primary issue ID is matched directly by GVKEY, HIID and date.
+195           Retain the marker as a diagnostic; its absence is not treated as a conflict. */
+196        data secissue;
+197          set sec.sec_mth(keep=gvkey iid datadate primiss
+198               where=(datadate >= '01JAN1980'd and datadate <= '31DEC1997'd));
+199        run;
+
+NOTE: There were 1780171 observations read from the data set SEC.SEC_MTH.
+      WHERE (datadate>='01JAN1980'D and datadate<='31DEC1997'D);
+NOTE: The data set WORK.SECISSUE has 1780171 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.24 seconds
+      cpu time            0.25 seconds
+      
+
+200        data secprice;
+201          set sec.sec_mthprc(keep=gvkey iid datadate curcdm prccm
+202               where=(datadate >= '01JAN1980'd and datadate <= '31DEC1997'd));
+203        run;
+
+NOTE: There were 1744721 observations read from the data set SEC.SEC_MTHPRC.
+      WHERE (datadate>='01JAN1980'D and datadate<='31DEC1997'D);
+NOTE: The data set WORK.SECPRICE has 1744721 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.23 seconds
+      cpu time            0.22 seconds
+      
+
+204        proc sql;
+205          create table dup_secissue as
+206          select gvkey, iid, datadate, count(*) as n
+207          from secissue group by gvkey, iid, datadate having calculated n>1;
+NOTE: Table WORK.DUP_SECISSUE created, with 0 rows and 4 columns.
+
+208          create table dup_secprice as
+209          select gvkey, iid, datadate, count(*) as n
+210          from secprice group by gvkey, iid, datadate having calculated n>1;
+NOTE: Table WORK.DUP_SECPRICE created, with 0 rows and 4 columns.
+
+211          select count(*) into :dup_secissue_count trimmed from dup_secissue;
+212          select count(*) into :dup_secprice_count trimmed from dup_secprice;
+213        quit;
+NOTE: The PROCEDURE SQL printed pages 17-18.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.38 seconds
+      cpu time            0.86 seconds
+      
+
+214        %failif_positive(&dup_secissue_count,Dated security issue keys are not unique. No issue row is chosen arbitrarily.)
+215        %failif_positive(&dup_secprice_count,Dated security price keys are not unique. No issue row is chosen arbitrarily.)
+216        
+217        proc sql;
+218          create table price_audit as
+219          select a.gvkey, a.fyear, a.datadate, a.curcd, a.hiid, a.au, a.auop,
+220                 a.sich, a.sic2, a.sic2_source, a.big6, a.at, a.ceq, a.csho, a.prcc_f, a.dltt,
+221                 a.perform, a.ta, a.ta_s, a.inv_at, a.rev_s, a.rec_s, a.ppe_s,
+222                 b.iid as primary_iid, b.primiss, c.curcdm, c.prccm
+223          from metrics as a
+224          left join secissue as b
+225            on a.gvkey=b.gvkey and a.datadate=b.datadate and
+226               not missing(a.hiid) and strip(a.hiid)=strip(b.iid)
+227          left join secprice as c
+228            on b.gvkey=c.gvkey and b.iid=c.iid and b.datadate=c.datadate
+229          where a.fyear between 1980 and 1997;
+NOTE: Table WORK.PRICE_AUDIT created, with 174562 rows and 27 columns.
+
+230        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.65 seconds
+                                                           The SAS System
+
+      cpu time            1.19 seconds
+      
+
+231        
+232        data price_audit;
+233          set price_audit;
+234          length issue_match marker_primary price_agree 8 price_curcd $3 price_curcd_basis $20;
+235          issue_match=0; marker_primary=0; price_agree=0;
+236          price_curcd=''; price_curcd_basis='UNAVAILABLE';
+237          if not missing(primary_iid) and not missing(strip(hiid)) and
+238             strip(hiid)=strip(primary_iid) then do;
+239            issue_match=1;
+240            if primiss='P' then marker_primary=1;
+241          end;
+242          if not missing(prcc_f) and not missing(prccm) and abs(prcc_f-prccm)<=0.005 then price_agree=1;
+243          if issue_match=1 and price_agree=1 and (primiss='P' or missing(primiss)) and
+244             not missing(strip(curcdm)) then do;
+245            price_curcd=curcdm;
+246            price_curcd_basis='HIID_CURCDM';
+247          end;
+248          else if not missing(strip(curcd)) then do;
+249            price_curcd=curcd;
+250            price_curcd_basis='CURCD_INFERRED';
+251          end;
+252          if not missing(csho) and csho>0 and not missing(prcc_f) and prcc_f>0
+253             then mve_local=csho*prcc_f;
+254          else mve_local=.;
+255        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      46260 at 242:53   46260 at 242:63   
+NOTE: There were 174562 observations read from the data set WORK.PRICE_AUDIT.
+NOTE: The data set WORK.PRICE_AUDIT has 174562 observations and 33 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+256        proc sql;
+257          select count(*) as event_rows,
+258                 sum(issue_match=1) as exact_hiid_issue_rows,
+259                 sum(marker_primary=1) as exact_hiid_issue_marker_p,
+260                 sum(issue_match=1 and missing(primiss)) as exact_hiid_issue_marker_absent,
+261                 sum(issue_match=1 and not missing(primiss) and primiss ne 'P') as exact_hiid_issue_marker_conflict,
+262                 sum(price_agree=1 and price_curcd_basis='HIID_CURCDM') as direct_price_currency_rows,
+263                 sum(price_curcd_basis='CURCD_INFERRED') as inferred_price_currency_rows,
+264                 sum(price_curcd_basis='UNAVAILABLE') as unavailable_price_currency_rows,
+265                 sum(not missing(mve_local)) as source_price_mve_rows
+266          from price_audit;
+267        quit;
+NOTE: The PROCEDURE SQL printed page 19.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+268        proc freq data=price_audit;
+                                                           The SAS System
+
+269          tables primiss*curcdm price_curcd_basis*curcdm / missing;
+270          title 'Dated HIID issue price agreement and annual/security currency evidence';
+271        run;
+
+NOTE: There were 174562 observations read from the data set WORK.PRICE_AUDIT.
+NOTE: The PROCEDURE FREQ printed page 20.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+272        
+273        /* Xpressfeed GBP-bridge formula: local amount * GBP/USD rate / GBP/local rate.
+274           Keep both rate-type fields for the two legs; do not screen by provenance type. */
+275        data fxraw;
+276          set fx.g_exrt_dly(keep=datadate fromcurd tocurd exratd exrattpd
+277               where=(fromcurd='GBP' and datadate >= '01JAN1980'd and datadate <= '31DEC1997'd));
+278        run;
+
+NOTE: There were 490610 observations read from the data set FX.G_EXRT_DLY.
+      WHERE (fromcurd='GBP') and (datadate>='01JAN1980'D and datadate<='31DEC1997'D);
+NOTE: The data set WORK.FXRAW has 490610 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+279        proc sql;
+280          create table dup_fx as
+281          select datadate, tocurd, count(*) as n
+282          from fxraw group by datadate, tocurd having calculated n>1;
+NOTE: Table WORK.DUP_FX created, with 0 rows and 3 columns.
+
+283          select count(*) into :dup_fx_count trimmed from dup_fx;
+284        quit;
+NOTE: The PROCEDURE SQL printed page 21.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.12 seconds
+      
+
+285        %failif_positive(&dup_fx_count,Xpressfeed GBP cross-rate keys are not unique. No rate row is chosen arbitrarily.)
+286        proc sql;
+287          create table fx_bridge as
+288          select a.datadate, a.tocurd as curcd,
+289                 a.exratd as gbp_to_cur, a.exrattpd as type_cur,
+290                 b.exratd as gbp_to_usd, b.exrattpd as type_usd
+291          from fxraw as a
+292          left join fxraw as b
+293            on a.datadate=b.datadate and b.tocurd='USD';
+NOTE: Table WORK.FX_BRIDGE created, with 490610 rows and 6 columns.
+
+294        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.16 seconds
+      
+
+                                                           The SAS System
+
+295        proc sql;
+296          select count(*) as gbp_rate_rows,
+297                 sum(not missing(exratd) and exratd>0) as positive_rate_rows,
+298                 sum(missing(exratd)) as missing_rate_rows,
+299                 sum(missing(exrattpd)) as missing_provenance_rows
+300          from fxraw;
+301        quit;
+NOTE: The PROCEDURE SQL printed page 22.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+302        data fx_usd_regular;
+303          set fx_bridge;
+304          length fx_mult 8;
+305          fx_mult=.;
+306          if curcd in ('GBP','USD') then delete;
+307          if not missing(gbp_to_cur) and gbp_to_cur>0 and
+308             not missing(gbp_to_usd) and gbp_to_usd>0 then fx_mult=gbp_to_usd/gbp_to_cur;
+309        run;
+
+NOTE: There were 490610 observations read from the data set WORK.FX_BRIDGE.
+NOTE: The data set WORK.FX_USD_REGULAR has 480042 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.04 seconds
+      
+
+310        data fx_usd_gbp;
+311          set fxraw(where=(tocurd='USD'));
+312          length curcd $3 type_cur $2 type_usd $2 gbp_to_cur fx_mult 8;
+313          curcd='GBP'; gbp_to_cur=1; type_cur='ID';
+314          gbp_to_usd=exratd; type_usd=exrattpd; fx_mult=exratd;
+315          keep datadate curcd gbp_to_cur gbp_to_usd type_cur type_usd fx_mult;
+316        run;
+
+NOTE: There were 5405 observations read from the data set WORK.FXRAW.
+      WHERE tocurd='USD';
+NOTE: The data set WORK.FX_USD_GBP has 5405 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+317        /* USD needs no exchange quote; create explicit identity conversions on event dates. */
+318        proc sql;
+319          create table event_dates as
+320          select distinct datadate from price_audit where not missing(datadate);
+NOTE: Table WORK.EVENT_DATES created, with 216 rows and 1 columns.
+
+321        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.06 seconds
+      
+
+322        data fx_usd_usd;
+                                                           The SAS System
+
+323          set event_dates;
+324          length curcd $3 type_cur $2 type_usd $2 gbp_to_cur gbp_to_usd fx_mult 8;
+325          curcd='USD'; type_cur='ID'; type_usd='ID'; fx_mult=1;
+326          gbp_to_cur=.; gbp_to_usd=.;
+327          keep datadate curcd gbp_to_cur gbp_to_usd type_cur type_usd fx_mult;
+328        run;
+
+NOTE: There were 216 observations read from the data set WORK.EVENT_DATES.
+NOTE: The data set WORK.FX_USD_USD has 216 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+329        data fx_usd;
+330          set fx_usd_regular fx_usd_gbp fx_usd_usd;
+331        run;
+
+NOTE: There were 480042 observations read from the data set WORK.FX_USD_REGULAR.
+NOTE: There were 5405 observations read from the data set WORK.FX_USD_GBP.
+NOTE: There were 216 observations read from the data set WORK.FX_USD_USD.
+NOTE: The data set WORK.FX_USD has 485663 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+332        proc sql;
+333          create table dup_fxusd as
+334          select datadate, curcd, count(*) as n
+335          from fx_usd group by datadate, curcd having calculated n>1;
+NOTE: Table WORK.DUP_FXUSD created, with 0 rows and 3 columns.
+
+336          select count(*) into :dup_fxusd_count trimmed from dup_fxusd;
+337        quit;
+NOTE: The PROCEDURE SQL printed page 23.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.12 seconds
+      
+
+338        %failif_positive(&dup_fxusd_count,Derived daily USD conversion keys are not unique.)
+339        
+340        proc sql;
+341          create table event_data0 as
+342          select p.*, f.fx_mult as funda_fx,
+343                 f.type_cur as funda_fx_type, f.type_usd as funda_usd_type,
+344                 q.fx_mult as price_fx,
+345                 q.type_cur as price_fx_type, q.type_usd as price_usd_type
+346          from price_audit as p
+347          left join fx_usd as f
+348            on p.datadate=f.datadate and p.curcd=f.curcd
+349          left join fx_usd as q
+350            on p.datadate=q.datadate and p.price_curcd=q.curcd;
+NOTE: Table WORK.EVENT_DATA0 created, with 174562 rows and 39 columns.
+
+351        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+                                                           The SAS System
+
+      real time           0.31 seconds
+      cpu time            0.54 seconds
+      
+
+352        data event_data;
+353          set event_data0;
+354          length at_usd ceq_usd mve_usd bp mktcap de 8;
+355          at_usd=.; ceq_usd=.; mve_usd=.; bp=.; mktcap=.; de=.;
+356          if not missing(at) and at>0 and not missing(funda_fx) and funda_fx>0 then at_usd=at*funda_fx;
+357          if not missing(ceq) and not missing(funda_fx) and funda_fx>0 then ceq_usd=ceq*funda_fx;
+358          if not missing(mve_local) and not missing(price_fx) and price_fx>0 then mve_usd=mve_local*price_fx;
+359          if not missing(mve_usd) and mve_usd>0 then mktcap=log10(mve_usd);
+360          if not missing(ceq_usd) and ceq_usd>=0 and not missing(mve_usd) and mve_usd>0 then bp=ceq_usd/mve_usd;
+361          if not missing(dltt) and not missing(at) and at>0 then de=dltt/at;
+362        run;
+
+NOTE: There were 174562 observations read from the data set WORK.EVENT_DATA0.
+NOTE: The data set WORK.EVENT_DATA has 174562 observations and 45 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+363        proc freq data=event_data;
+364          tables funda_fx_type*funda_usd_type price_fx_type*price_usd_type
+365                 price_curcd_basis*curcdm / missing;
+366          title 'Daily exchange-rate leg and price-currency provenance';
+367        run;
+
+NOTE: There were 174562 observations read from the data set WORK.EVENT_DATA.
+NOTE: The PROCEDURE FREQ printed pages 24-25.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+368        proc means data=event_data n nmiss min p1 median p99 max;
+369          var bp mktcap de perform at_usd;
+370          title 'Event-year variable coverage and scale before matching';
+371        run;
+
+NOTE: There were 174562 observations read from the data set WORK.EVENT_DATA.
+NOTE: The PROCEDURE MEANS printed page 26.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.21 seconds
+      cpu time            0.54 seconds
+      
+
+372        
+373        /* First qualified opinion by GVKEY in 1980-1997, before completeness screens. */
+374        proc sort data=event_data(where=(strip(auop)='2')) out=qualified_order;
+375          by gvkey fyear datadate;
+376        run;
+
+NOTE: There were 7200 observations read from the data set WORK.EVENT_DATA.
+      WHERE STRIP(auop)='2';
+NOTE: The data set WORK.QUALIFIED_ORDER has 7200 observations and 45 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+                                                           The SAS System
+
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+377        data qualified_first;
+378          set qualified_order;
+379          by gvkey;
+380          if first.gvkey;
+381        run;
+
+NOTE: There were 7200 observations read from the data set WORK.QUALIFIED_ORDER.
+NOTE: The data set WORK.QUALIFIED_FIRST has 3033 observations and 45 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+382        proc sql;
+383          select count(*) as first_qualified_events,
+384                 min(fyear) as first_event_year,
+385                 max(fyear) as last_event_year
+386          from qualified_first;
+387        quit;
+NOTE: The PROCEDURE SQL printed page 27.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+388        
+389        /* Time-series Jones support: exactly the eight consecutive years before the event. */
+390        proc sql;
+391          create table ts_case_train0 as
+392          select e.gvkey, e.fyear as evyr, h.fyear as fit_year,
+393                 h.ta_s, h.inv_at, h.rev_s, h.ppe_s
+394          from qualified_first as e
+395          inner join metrics as h
+396            on e.gvkey=h.gvkey and h.fyear between e.fyear-8 and e.fyear-1;
+NOTE: Table WORK.TS_CASE_TRAIN0 created, with 14041 rows and 7 columns.
+
+397        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+398        data ts_case_train;
+399          set ts_case_train0;
+400          if nmiss(ta_s,inv_at,rev_s,ppe_s)=0;
+401        run;
+
+NOTE: There were 14041 observations read from the data set WORK.TS_CASE_TRAIN0.
+NOTE: The data set WORK.TS_CASE_TRAIN has 10260 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+                                                           The SAS System
+
+402        proc sort data=ts_case_train;
+403          by gvkey evyr fit_year;
+404        run;
+
+NOTE: There were 10260 observations read from the data set WORK.TS_CASE_TRAIN.
+NOTE: The data set WORK.TS_CASE_TRAIN has 10260 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+405        ods select none;
+406        ods output NObs=ts_case_nobs;
+407        proc reg data=ts_case_train outest=ts_case_out edf;
+408          by gvkey evyr;
+409          model ta_s=inv_at rev_s ppe_s / noint;
+410        quit;
+
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=003153 Data Year - Fiscal=1980
+WARNING: R-Square is computed incorrectly. The SINGULAR= value may be too small.
+NOTE: The above message was for the following BY group:
+      Global Company Key=003232 Data Year - Fiscal=1980
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=005868 Data Year - Fiscal=1986
+WARNING: R-Square is computed incorrectly. The SINGULAR= value may be too small.
+NOTE: The above message was for the following BY group:
+      Global Company Key=006255 Data Year - Fiscal=1985
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=007962 Data Year - Fiscal=1980
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=010589 Data Year - Fiscal=1983
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=011183 Data Year - Fiscal=1985
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=015218 Data Year - Fiscal=1995
+NOTE: The data set WORK.TS_CASE_NOBS has 3874 observations and 11 variables.
+NOTE: The data set WORK.TS_CASE_OUT has 1937 observations and 14 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.18 seconds
+      cpu time            0.20 seconds
+      
+
+411        ods output close;
+                                                           The SAS System
+
+412        ods select all;
+413        proc sql;
+414          create table ts_case_ok as
+415          select o.gvkey, o.evyr, o.inv_at as bts_inv, o.rev_s as bts_rev,
+416                 o.ppe_s as bts_ppe, o._P_ as fit_rank, o._IN_ as input_regressors,
+417                 o._EDF_ as error_df, n.NObsUsed as n_used
+418          from ts_case_out as o
+419          inner join ts_case_nobs as n
+420            on o.gvkey=n.gvkey and o.evyr=n.evyr
+421          where o._TYPE_='PARMS' and o._P_=3 and o._IN_=3 and
+422                n.Label='Number of Observations Used' and n.NObsUsed=8;
+NOTE: Table WORK.TS_CASE_OK created, with 735 rows and 9 columns.
+
+423          select count(*) as full_rank_eight_year_case_fits from ts_case_ok;
+424        quit;
+NOTE: The PROCEDURE SQL printed page 28.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+425        
+426        /* Cross-sectional original Jones support uses all firms in each fiscal year/SIC2. */
+427        data cs_train;
+428          set metrics;
+429          if fyear >= 1980 and fyear <= 1997 and not missing(sic2) and sic2 ne 99 and
+430             nmiss(ta_s,inv_at,rev_s,ppe_s)=0;
+431        run;
+
+NOTE: There were 229156 observations read from the data set WORK.METRICS.
+NOTE: The data set WORK.CS_TRAIN has 101843 observations and 55 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+432        proc sort data=cs_train;
+433          by fyear sic2 gvkey;
+434        run;
+
+NOTE: There were 101843 observations read from the data set WORK.CS_TRAIN.
+NOTE: The data set WORK.CS_TRAIN has 101843 observations and 55 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+435        ods select none;
+436        ods output NObs=cs_nobs;
+437        proc reg data=cs_train outest=cs_out edf;
+438          by fyear sic2;
+439          model ta_s=inv_at rev_s ppe_s / noint;
+440        quit;
+
+NOTE: The data set WORK.CS_NOBS has 2532 observations and 11 variables.
+NOTE: The data set WORK.CS_OUT has 1266 observations and 14 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.14 seconds
+                                                           The SAS System
+
+      cpu time            0.15 seconds
+      
+
+441        ods output close;
+442        ods select all;
+443        proc sql;
+444          create table cs_ok as
+445          select o.fyear, o.sic2, o.inv_at as bcs_inv, o.rev_s as bcs_rev,
+446                 o.ppe_s as bcs_ppe, o._P_ as fit_rank, o._IN_ as input_regressors,
+447                 o._EDF_ as error_df, n.NObsUsed as n_used
+448          from cs_out as o
+449          inner join cs_nobs as n
+450            on o.fyear=n.fyear and o.sic2=n.sic2
+451          where o._TYPE_='PARMS' and o._P_=3 and o._IN_=3 and
+452                n.Label='Number of Observations Used';
+NOTE: Table WORK.CS_OK created, with 1187 rows and 9 columns.
+
+453          select fyear, count(*) as full_rank_year_sic_cells,
+454                 min(n_used) as min_cell_n, median(n_used) as median_cell_n,
+455                 max(n_used) as max_cell_n
+456          from cs_ok group by fyear order by fyear;
+457          select count(*) as full_rank_cs_cells,
+458                 sum(error_df=0) as cs_cells_zero_residual_df,
+459                 sum(error_df>0) as cs_cells_positive_residual_df,
+460                 min(error_df) as minimum_cs_residual_df
+461          from cs_ok;
+462        quit;
+NOTE: The PROCEDURE SQL printed pages 29-30.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+463        
+464        proc sql;
+465          create table case_stage0 as
+466          select e.*, t.bts_inv, t.bts_rev, t.bts_ppe,
+467                 c.bcs_inv, c.bcs_rev, c.bcs_ppe
+468          from qualified_first as e
+469          left join ts_case_ok as t
+470            on e.gvkey=t.gvkey and e.fyear=t.evyr
+471          left join cs_ok as c
+472            on e.fyear=c.fyear and e.sic2=c.sic2;
+NOTE: Table WORK.CASE_STAGE0 created, with 3033 rows and 51 columns.
+
+473        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+474        data case_stage;
+475          set case_stage0;
+476          length da_ts_j da_ts_mj da_cs_j da_cs_mj abs_ts_j abs_ts_mj abs_cs_j abs_cs_mj 8;
+477          da_ts_j=.; da_ts_mj=.; da_cs_j=.; da_cs_mj=.;
+478          if nmiss(ta_s,inv_at,rev_s,ppe_s,bts_inv,bts_rev,bts_ppe)=0 then do;
+479            da_ts_j=ta_s-(bts_inv*inv_at+bts_rev*rev_s+bts_ppe*ppe_s);
+480            if not missing(rec_s) then da_ts_mj=ta_s-(bts_inv*inv_at+bts_rev*(rev_s-rec_s)+bts_ppe*ppe_s);
+                                                           The SAS System
+
+481          end;
+482          if nmiss(ta_s,inv_at,rev_s,ppe_s,bcs_inv,bcs_rev,bcs_ppe)=0 then do;
+483            da_cs_j=ta_s-(bcs_inv*inv_at+bcs_rev*rev_s+bcs_ppe*ppe_s);
+484            if not missing(rec_s) then da_cs_mj=ta_s-(bcs_inv*inv_at+bcs_rev*(rev_s-rec_s)+bcs_ppe*ppe_s);
+485          end;
+486          abs_ts_j=abs(da_ts_j);
+487          abs_ts_mj=abs(da_ts_mj);
+488          abs_cs_j=abs(da_cs_j);
+489          abs_cs_mj=abs(da_cs_mj);
+490        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      2308 at 486:12   2308 at 487:13   1589 at 488:12   1591 at 489:13   
+NOTE: There were 3033 observations read from the data set WORK.CASE_STAGE0.
+NOTE: The data set WORK.CASE_STAGE has 3033 observations and 59 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+491        proc sql;
+492          select count(*) as first_qualified_events,
+493                 sum(not missing(abs_ts_j)) as qualified_with_ts_jones,
+494                 sum(not missing(abs_ts_mj)) as qualified_with_ts_modified,
+495                 sum(not missing(abs_cs_j)) as qualified_with_cs_jones,
+496                 sum(not missing(abs_cs_mj)) as qualified_with_cs_modified,
+497                 sum(missing(abs_ts_j)) as qualified_without_ts_jones,
+498                 sum(missing(bp)) as qualified_missing_bp,
+499                 sum(missing(mktcap)) as qualified_missing_mktcap,
+500                 sum(missing(de)) as qualified_missing_de,
+501                 sum(missing(perform)) as qualified_missing_perform,
+502                 sum(missing(at_usd)) as qualified_missing_assets,
+503                 sum(missing(big6)) as qualified_missing_auditor_type,
+504                 sum(missing(sic2) or sic2=99) as qualified_missing_class,
+505                 sum(missing(bp) or missing(mktcap) or missing(de) or missing(perform) or
+506                     missing(at_usd)) as qualified_missing_control_inputs,
+507                 sum(nmiss(abs_ts_j,abs_ts_mj,abs_cs_j,abs_cs_mj)=0) as qualified_with_all_da
+508          from case_stage;
+509        quit;
+NOTE: The PROCEDURE SQL printed page 31.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+510        
+511        /* The source declares one Table 7 sample for all four models. Screen complete
+512           DA/control cases before matching; retain financial SICs and exclude SIC99. */
+513        data cases_matchable;
+514          set case_stage;
+515          if nmiss(bp,mktcap,de,perform,at_usd,abs_ts_j,abs_ts_mj,abs_cs_j,abs_cs_mj)=0 and
+516             at_usd>0 and
+517             not missing(big6) and not missing(sic2) and sic2 ne 99;
+518        run;
+
+NOTE: There were 3033 observations read from the data set WORK.CASE_STAGE.
+NOTE: The data set WORK.CASES_MATCHABLE has 478 observations and 59 variables.
+                                                           The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+519        proc sort data=cases_matchable;
+520          by fyear sic2 big6 gvkey;
+521        run;
+
+NOTE: There were 478 observations read from the data set WORK.CASES_MATCHABLE.
+NOTE: The data set WORK.CASES_MATCHABLE has 478 observations and 59 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+522        data cases_matchable;
+523          set cases_matchable;
+524          caseid=_n_;
+525        run;
+
+NOTE: There were 478 observations read from the data set WORK.CASES_MATCHABLE.
+NOTE: The data set WORK.CASES_MATCHABLE has 478 observations and 60 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+526        proc sql;
+527          select count(*) as complete_classifiable_cases from cases_matchable;
+528        quit;
+NOTE: The PROCEDURE SQL printed page 32.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+529        
+530        /* Candidate controls must meet the same Table 7 common-data screen before
+531           nearest-assets matching, so an incomplete nearest control cannot displace
+532           an eligible complete control. */
+533        proc sql;
+534          create table case_strata as
+535          select distinct fyear, sic2, big6 from cases_matchable;
+NOTE: Table WORK.CASE_STRATA created, with 241 rows and 3 columns.
+
+536          create table control_pool0 as
+537          select c.*
+538          from event_data as c
+539          inner join case_strata as s
+540            on c.fyear=s.fyear and c.sic2=s.sic2 and c.big6=s.big6
+541          where strip(c.auop)='1' and not missing(c.bp) and not missing(c.mktcap) and
+542                not missing(c.de) and not missing(c.perform) and
+543                not missing(c.at_usd) and c.at_usd>0 and
+544                not missing(c.big6) and not missing(c.sic2) and c.sic2 ne 99;
+NOTE: Table WORK.CONTROL_POOL0 created, with 17879 rows and 45 columns.
+
+545          select count(*) as controls_with_common_controls from control_pool0;
+                                                           The SAS System
+
+546        quit;
+NOTE: The PROCEDURE SQL printed page 33.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.08 seconds
+      
+
+547        
+548        /* Estimate control-firm Jones coefficients before matching, on the same full
+549           eight-year history and full-rank rule used for case eligibility. */
+550        proc sql;
+551          create table ts_ctrl_train0 as
+552          select c.gvkey, c.fyear as evyr, h.fyear as fit_year,
+553                 h.ta_s, h.inv_at, h.rev_s, h.ppe_s
+554          from control_pool0 as c
+555          inner join metrics as h
+556            on c.gvkey=h.gvkey and h.fyear between c.fyear-8 and c.fyear-1;
+NOTE: Table WORK.TS_CTRL_TRAIN0 created, with 116885 rows and 7 columns.
+
+557        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+558        data ts_ctrl_train;
+559          set ts_ctrl_train0;
+560          if nmiss(ta_s,inv_at,rev_s,ppe_s)=0;
+561        run;
+
+NOTE: There were 116885 observations read from the data set WORK.TS_CTRL_TRAIN0.
+NOTE: The data set WORK.TS_CTRL_TRAIN has 102488 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+562        proc sort data=ts_ctrl_train;
+563          by gvkey evyr fit_year;
+564        run;
+
+NOTE: There were 102488 observations read from the data set WORK.TS_CTRL_TRAIN.
+NOTE: The data set WORK.TS_CTRL_TRAIN has 102488 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+565        ods select none;
+566        ods output NObs=ts_ctrl_nobs;
+567        proc reg data=ts_ctrl_train outest=ts_ctrl_out edf;
+568          by gvkey evyr;
+569          model ta_s=inv_at rev_s ppe_s / noint;
+570        quit;
+
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+                                                           The SAS System
+
+      Global Company Key=001111 Data Year - Fiscal=1985
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=001274 Data Year - Fiscal=1985
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=002092 Data Year - Fiscal=1985
+WARNING: The range of variable ta_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=002128 Data Year - Fiscal=1987
+WARNING: R-Square is computed incorrectly. The SINGULAR= value may be too small.
+NOTE: The above message was for the following BY group:
+      Global Company Key=002573 Data Year - Fiscal=1985
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=002896 Data Year - Fiscal=1986
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=003115 Data Year - Fiscal=1985
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=003610 Data Year - Fiscal=1982
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=004045 Data Year - Fiscal=1986
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=004781 Data Year - Fiscal=1981
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=004941 Data Year - Fiscal=1985
+WARNING: The range of variable rev_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=005231 Data Year - Fiscal=1982
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=005392 Data Year - Fiscal=1985
+WARNING: The range of variable rev_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=005962 Data Year - Fiscal=1986
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=006129 Data Year - Fiscal=1984
+                                                           The SAS System
+
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=006756 Data Year - Fiscal=1980
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=006781 Data Year - Fiscal=1981
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=007910 Data Year - Fiscal=1984
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=008480 Data Year - Fiscal=1985
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=008940 Data Year - Fiscal=1982
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=009177 Data Year - Fiscal=1984
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=009306 Data Year - Fiscal=1983
+WARNING: R-Square is computed incorrectly. The SINGULAR= value may be too small.
+NOTE: The above message was for the following BY group:
+      Global Company Key=009358 Data Year - Fiscal=1984
+WARNING: R-Square is computed incorrectly. The SINGULAR= value may be too small.
+NOTE: The above message was for the following BY group:
+      Global Company Key=009754 Data Year - Fiscal=1984
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=010152 Data Year - Fiscal=1986
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=010184 Data Year - Fiscal=1985
+WARNING: The range of variable ta_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=010250 Data Year - Fiscal=1985
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=010995 Data Year - Fiscal=1981
+WARNING: The range of variable ppe_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=011039 Data Year - Fiscal=1982
+WARNING: The range of variable rev_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=011076 Data Year - Fiscal=1981
+                                                           The SAS System
+
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=011487 Data Year - Fiscal=1985
+WARNING: The range of variable rev_s is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=012260 Data Year - Fiscal=1987
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=012782 Data Year - Fiscal=1988
+WARNING: R-Square is computed incorrectly. The SINGULAR= value may be too small.
+NOTE: The above message was for the following BY group:
+      Global Company Key=027811 Data Year - Fiscal=1996
+WARNING: The range of variable inv_at is so small relative to its mean that there may be loss of accuracy in the computations. You 
+         may need to rescale the variable to have a larger value of RANGE/abs(MEAN), for example, by using PROC STANDARD M=0;
+NOTE: The above message was for the following BY group:
+      Global Company Key=031475 Data Year - Fiscal=1996
+NOTE: The data set WORK.TS_CTRL_NOBS has 31866 observations and 11 variables.
+NOTE: The data set WORK.TS_CTRL_OUT has 15933 observations and 14 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           1.47 seconds
+      cpu time            1.47 seconds
+      
+
+571        ods output close;
+572        ods select all;
+573        proc sql;
+574          create table ts_ctrl_ok as
+575          select o.gvkey, o.evyr, o.inv_at as bts_inv, o.rev_s as bts_rev,
+576                 o.ppe_s as bts_ppe, o._P_ as fit_rank, o._IN_ as input_regressors,
+577                 o._EDF_ as error_df, n.NObsUsed as n_used
+578          from ts_ctrl_out as o
+579          inner join ts_ctrl_nobs as n
+580            on o.gvkey=n.gvkey and o.evyr=n.evyr
+581          where o._TYPE_='PARMS' and o._P_=3 and o._IN_=3 and
+582                n.Label='Number of Observations Used' and n.NObsUsed=8;
+NOTE: Table WORK.TS_CTRL_OK created, with 10406 rows and 9 columns.
+
+583        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+584        proc sql;
+585          create table control_score0 as
+586          select c.*, t.bts_inv, t.bts_rev, t.bts_ppe,
+587                 s.bcs_inv, s.bcs_rev, s.bcs_ppe
+588          from control_pool0 as c
+589          left join ts_ctrl_ok as t
+590            on c.gvkey=t.gvkey and c.fyear=t.evyr
+591          left join cs_ok as s
+592            on c.fyear=s.fyear and c.sic2=s.sic2;
+NOTE: Table WORK.CONTROL_SCORE0 created, with 17879 rows and 51 columns.
+
+593        quit;
+                                                           The SAS System
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+594        data control_pool;
+595          set control_score0;
+596          length da_ts_j da_ts_mj da_cs_j da_cs_mj 8;
+597          da_ts_j=.; da_ts_mj=.; da_cs_j=.; da_cs_mj=.;
+598          if nmiss(ta_s,inv_at,rev_s,ppe_s,bts_inv,bts_rev,bts_ppe)=0 then do;
+599            da_ts_j=ta_s-(bts_inv*inv_at+bts_rev*rev_s+bts_ppe*ppe_s);
+600            if not missing(rec_s) then da_ts_mj=ta_s-(bts_inv*inv_at+bts_rev*(rev_s-rec_s)+bts_ppe*ppe_s);
+601          end;
+602          if nmiss(ta_s,inv_at,rev_s,ppe_s,bcs_inv,bcs_rev,bcs_ppe)=0 then do;
+603            da_cs_j=ta_s-(bcs_inv*inv_at+bcs_rev*rev_s+bcs_ppe*ppe_s);
+604            if not missing(rec_s) then da_cs_mj=ta_s-(bcs_inv*inv_at+bcs_rev*(rev_s-rec_s)+bcs_ppe*ppe_s);
+605          end;
+606          if nmiss(da_ts_j,da_ts_mj,da_cs_j,da_cs_mj)=0;
+607        run;
+
+NOTE: There were 17879 observations read from the data set WORK.CONTROL_SCORE0.
+NOTE: The data set WORK.CONTROL_POOL has 10367 observations and 55 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+608        proc sql;
+609          select count(*) as controls_with_all_da from control_pool;
+610          create table candidate_pairs as
+611          select a.caseid, a.fyear, a.gvkey as casegvkey,
+612                 c.gvkey as ctrlgvkey, a.sic2, a.big6,
+613                 a.at_usd as case_at_usd, c.at_usd as ctrl_at_usd,
+614                 abs(a.at_usd-c.at_usd) as asset_dist
+615          from cases_matchable as a
+616          inner join control_pool as c
+617            on a.fyear=c.fyear and a.sic2=c.sic2 and a.big6=c.big6;
+NOTE: Table WORK.CANDIDATE_PAIRS created, with 31774 rows and 9 columns.
+
+618          select count(*) as eligible_common_control_rows from control_pool;
+619          select count(*) as candidate_control_pairs,
+620                 count(distinct caseid) as cases_with_candidates
+621          from candidate_pairs;
+622        quit;
+NOTE: The PROCEDURE SQL printed pages 34-36.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+623        proc sort data=candidate_pairs;
+624          by fyear caseid asset_dist ctrlgvkey;
+625        run;
+
+NOTE: There were 31774 observations read from the data set WORK.CANDIDATE_PAIRS.
+NOTE: The data set WORK.CANDIDATE_PAIRS has 31774 observations and 9 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+                                                           The SAS System
+
+      cpu time            0.01 seconds
+      
+
+626        
+627        /* Greedy nearest-asset matching in case order; a control firm-year is used once.
+628           Ties use the lowest character GVKEY. A firm may appear in another event year. */
+629        data matches;
+630          if _n_=1 then do;
+631            declare hash used();
+632            used.defineKey('fyear','ctrlgvkey');
+633            used.defineDone();
+634          end;
+635          set candidate_pairs;
+636          by fyear caseid;
+637          retain chosen;
+638          if first.caseid then chosen=0;
+639          if chosen=0 and used.check() ne 0 then do;
+640            rc=used.add();
+641            chosen=1;
+642            pairid=caseid;
+643            output;
+644          end;
+645          keep pairid caseid fyear casegvkey ctrlgvkey sic2 big6 case_at_usd ctrl_at_usd asset_dist;
+646        run;
+
+NOTE: There were 31774 observations read from the data set WORK.CANDIDATE_PAIRS.
+NOTE: The data set WORK.MATCHES has 475 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+647        proc sql;
+648          select count(*) as matched_pairs,
+649                 count(distinct caseid) as matched_cases,
+650                 sum(asset_dist=0) as exact_asset_matches
+651          from matches;
+652        quit;
+NOTE: The PROCEDURE SQL printed page 37.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+653        
+654        /* Retain both case and control rows; supporting accrual models use full populations. */
+655        proc sql;
+656          create table selected_case as
+657          select m.pairid, m.caseid, m.fyear, e.gvkey, 1 as audit,
+658                 e.sic2, e.sic2_source, e.big6, e.curcd, e.curcdm,
+659                 e.price_curcd, e.price_curcd_basis, e.funda_fx_type, e.funda_usd_type,
+660                 e.price_fx_type, e.price_usd_type,
+661                 e.bp, e.mktcap, e.de, e.perform, e.at_usd,
+662                 e.ta_s, e.inv_at, e.rev_s, e.rec_s, e.ppe_s
+663          from matches as m
+664          inner join cases_matchable as e
+665            on m.caseid=e.caseid;
+NOTE: Table WORK.SELECTED_CASE created, with 475 rows and 26 columns.
+                                                           The SAS System
+
+
+666          create table selected_control as
+667          select m.pairid, m.caseid, m.fyear, e.gvkey, 0 as audit,
+668                 e.sic2, e.sic2_source, e.big6, e.curcd, e.curcdm,
+669                 e.price_curcd, e.price_curcd_basis, e.funda_fx_type, e.funda_usd_type,
+670                 e.price_fx_type, e.price_usd_type,
+671                 e.bp, e.mktcap, e.de, e.perform, e.at_usd,
+672                 e.ta_s, e.inv_at, e.rev_s, e.rec_s, e.ppe_s
+673          from matches as m
+674          inner join control_pool as e
+675            on m.ctrlgvkey=e.gvkey and m.fyear=e.fyear;
+NOTE: Table WORK.SELECTED_CONTROL created, with 475 rows and 26 columns.
+
+676        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+677        data selected_events;
+678          set selected_case selected_control;
+679        run;
+
+NOTE: There were 475 observations read from the data set WORK.SELECTED_CASE.
+NOTE: There were 475 observations read from the data set WORK.SELECTED_CONTROL.
+NOTE: The data set WORK.SELECTED_EVENTS has 950 observations and 26 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+680        
+681        /* Time-series Jones support for all selected analysis firms, still using eight prior years. */
+682        proc sql;
+683          create table ts_final_train0 as
+684          select e.gvkey, e.fyear as evyr, h.fyear as fit_year,
+685                 h.ta_s, h.inv_at, h.rev_s, h.ppe_s
+686          from selected_events as e
+687          inner join metrics as h
+688            on e.gvkey=h.gvkey and h.fyear between e.fyear-8 and e.fyear-1;
+NOTE: Table WORK.TS_FINAL_TRAIN0 created, with 7600 rows and 7 columns.
+
+689        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+690        data ts_final_train;
+691          set ts_final_train0;
+692          if nmiss(ta_s,inv_at,rev_s,ppe_s)=0;
+693        run;
+
+NOTE: There were 7600 observations read from the data set WORK.TS_FINAL_TRAIN0.
+NOTE: The data set WORK.TS_FINAL_TRAIN has 7600 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+                                                           The SAS System
+
+      
+
+694        proc sort data=ts_final_train;
+695          by gvkey evyr fit_year;
+696        run;
+
+NOTE: There were 7600 observations read from the data set WORK.TS_FINAL_TRAIN.
+NOTE: The data set WORK.TS_FINAL_TRAIN has 7600 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+697        ods select none;
+698        ods output NObs=ts_final_nobs;
+699        proc reg data=ts_final_train outest=ts_final_out edf;
+700          by gvkey evyr;
+701          model ta_s=inv_at rev_s ppe_s / noint;
+702        quit;
+
+NOTE: The data set WORK.TS_FINAL_NOBS has 1900 observations and 11 variables.
+NOTE: The data set WORK.TS_FINAL_OUT has 950 observations and 14 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.10 seconds
+      
+
+703        ods output close;
+704        ods select all;
+705        proc sql;
+706          create table ts_final_ok as
+707          select o.gvkey, o.evyr, o.inv_at as bts_inv, o.rev_s as bts_rev,
+708                 o.ppe_s as bts_ppe, o._P_ as fit_rank, o._IN_ as input_regressors,
+709                 o._EDF_ as error_df, n.NObsUsed as n_used
+710          from ts_final_out as o
+711          inner join ts_final_nobs as n
+712            on o.gvkey=n.gvkey and o.evyr=n.evyr
+713          where o._TYPE_='PARMS' and o._P_=3 and o._IN_=3 and
+714                n.Label='Number of Observations Used' and n.NObsUsed=8;
+NOTE: Table WORK.TS_FINAL_OK created, with 950 rows and 9 columns.
+
+715        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+716        
+717        proc sql;
+718          create table score0 as
+719          select e.*, t.bts_inv, t.bts_rev, t.bts_ppe,
+720                 c.bcs_inv, c.bcs_rev, c.bcs_ppe
+721          from selected_events as e
+722          left join ts_final_ok as t
+723            on e.gvkey=t.gvkey and e.fyear=t.evyr
+724          left join cs_ok as c
+725            on e.fyear=c.fyear and e.sic2=c.sic2;
+NOTE: Table WORK.SCORE0 created, with 950 rows and 32 columns.
+                                                           The SAS System
+
+
+726        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+727        data score;
+728          set score0;
+729          length da_tsj da_tsmj da_csj da_csmj abs_tsj abs_tsmj abs_csj abs_csmj 8;
+730          da_tsj=.; da_tsmj=.; da_csj=.; da_csmj=.;
+731          if nmiss(ta_s,inv_at,rev_s,ppe_s,bts_inv,bts_rev,bts_ppe)=0 then do;
+732            da_tsj=ta_s-(bts_inv*inv_at+bts_rev*rev_s+bts_ppe*ppe_s);
+733            if not missing(rec_s) then da_tsmj=ta_s-(bts_inv*inv_at+bts_rev*(rev_s-rec_s)+bts_ppe*ppe_s);
+734          end;
+735          if nmiss(ta_s,inv_at,rev_s,ppe_s,bcs_inv,bcs_rev,bcs_ppe)=0 then do;
+736            da_csj=ta_s-(bcs_inv*inv_at+bcs_rev*rev_s+bcs_ppe*ppe_s);
+737            if not missing(rec_s) then da_csmj=ta_s-(bcs_inv*inv_at+bcs_rev*(rev_s-rec_s)+bcs_ppe*ppe_s);
+738          end;
+739          abs_tsj=abs(da_tsj);
+740          abs_tsmj=abs(da_tsmj);
+741          abs_csj=abs(da_csj);
+742          abs_csmj=abs(da_csmj);
+743        run;
+
+NOTE: There were 950 observations read from the data set WORK.SCORE0.
+NOTE: The data set WORK.SCORE has 950 observations and 40 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+744        
+745        /* Winsorize each continuous explanatory variable at pooled mean +/- 3 SD. */
+746        proc means data=score noprint;
+747          var bp mktcap de perform abs_tsj abs_tsmj abs_csj abs_csmj;
+748          output out=win_stats
+749            n=n_bp n_mktcap n_de n_perform n_tsj n_tsmj n_csj n_csmj
+750            mean=mu_bp mu_mktcap mu_de mu_perform mu_tsj mu_tsmj mu_csj mu_csmj
+751            std=sd_bp sd_mktcap sd_de sd_perform sd_tsj sd_tsmj sd_csj sd_csmj;
+752        run;
+
+NOTE: There were 950 observations read from the data set WORK.SCORE.
+NOTE: The data set WORK.WIN_STATS has 1 observations and 26 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+753        data reg;
+754          if _n_=1 then set win_stats;
+755          set score;
+756          if not missing(bp) and not missing(mu_bp) and not missing(sd_bp) then
+757            bp=min(max(bp,mu_bp-3*sd_bp),mu_bp+3*sd_bp);
+758          if not missing(mktcap) and not missing(mu_mktcap) and not missing(sd_mktcap) then
+759            mktcap=min(max(mktcap,mu_mktcap-3*sd_mktcap),mu_mktcap+3*sd_mktcap);
+760          if not missing(de) and not missing(mu_de) and not missing(sd_de) then
+761            de=min(max(de,mu_de-3*sd_de),mu_de+3*sd_de);
+                                                           The SAS System
+
+762          if not missing(perform) and not missing(mu_perform) and not missing(sd_perform) then
+763            perform=min(max(perform,mu_perform-3*sd_perform),mu_perform+3*sd_perform);
+764          if not missing(abs_tsj) and not missing(mu_tsj) and not missing(sd_tsj) then
+765            abs_tsj=min(max(abs_tsj,mu_tsj-3*sd_tsj),mu_tsj+3*sd_tsj);
+766          if not missing(abs_tsmj) and not missing(mu_tsmj) and not missing(sd_tsmj) then
+767            abs_tsmj=min(max(abs_tsmj,mu_tsmj-3*sd_tsmj),mu_tsmj+3*sd_tsmj);
+768          if not missing(abs_csj) and not missing(mu_csj) and not missing(sd_csj) then
+769            abs_csj=min(max(abs_csj,mu_csj-3*sd_csj),mu_csj+3*sd_csj);
+770          if not missing(abs_csmj) and not missing(mu_csmj) and not missing(sd_csmj) then
+771            abs_csmj=min(max(abs_csmj,mu_csmj-3*sd_csmj),mu_csmj+3*sd_csmj);
+772        run;
+
+NOTE: There were 1 observations read from the data set WORK.WIN_STATS.
+NOTE: There were 950 observations read from the data set WORK.SCORE.
+NOTE: The data set WORK.REG has 950 observations and 66 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+773        
+774        /* Audit each pair's model flags and one common Table 7 sample flag. */
+775        proc sql;
+776          create table pair_fit as
+777          select pairid,
+778            sum(case when audit=1 and nmiss(bp,mktcap,de,perform,abs_tsj)=0 then 1 else 0 end) as n_case_tsj,
+779            sum(case when audit=0 and nmiss(bp,mktcap,de,perform,abs_tsj)=0 then 1 else 0 end) as n_ctrl_tsj,
+780            sum(case when audit=1 and nmiss(bp,mktcap,de,perform,abs_tsmj)=0 then 1 else 0 end) as n_case_tsmj,
+781            sum(case when audit=0 and nmiss(bp,mktcap,de,perform,abs_tsmj)=0 then 1 else 0 end) as n_ctrl_tsmj,
+782            sum(case when audit=1 and nmiss(bp,mktcap,de,perform,abs_csj)=0 then 1 else 0 end) as n_case_csj,
+783            sum(case when audit=0 and nmiss(bp,mktcap,de,perform,abs_csj)=0 then 1 else 0 end) as n_ctrl_csj,
+784            sum(case when audit=1 and nmiss(bp,mktcap,de,perform,abs_csmj)=0 then 1 else 0 end) as n_case_csmj,
+785            sum(case when audit=0 and nmiss(bp,mktcap,de,perform,abs_csmj)=0 then 1 else 0 end) as n_ctrl_csmj
+786          from reg group by pairid;
+NOTE: Table WORK.PAIR_FIT created, with 475 rows and 9 columns.
+
+787          create table pair_fit_flags as
+788          select pairid,
+789            (n_case_tsj=1 and n_ctrl_tsj=1) as fit_tsj,
+790            (n_case_tsmj=1 and n_ctrl_tsmj=1) as fit_tsmj,
+791            (n_case_csj=1 and n_ctrl_csj=1) as fit_csj,
+792            (n_case_csmj=1 and n_ctrl_csmj=1) as fit_csmj,
+793            (n_case_tsj=1 and n_ctrl_tsj=1 and
+794             n_case_tsmj=1 and n_ctrl_tsmj=1 and
+795             n_case_csj=1 and n_ctrl_csj=1 and
+796             n_case_csmj=1 and n_ctrl_csmj=1) as fit_common
+797          from pair_fit;
+NOTE: Table WORK.PAIR_FIT_FLAGS created, with 475 rows and 6 columns.
+
+798        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+799        proc sql;
+800          create table reg_final0 as
+801          select r.*, f.fit_tsj, f.fit_tsmj, f.fit_csj, f.fit_csmj, f.fit_common
+                                                           The SAS System
+
+802          from reg as r left join pair_fit_flags as f
+803            on r.pairid=f.pairid;
+NOTE: Table WORK.REG_FINAL0 created, with 950 rows and 71 columns.
+
+804        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+805        proc sort data=reg_final0;
+806          by pairid audit;
+807        run;
+
+NOTE: There were 950 observations read from the data set WORK.REG_FINAL0.
+NOTE: The data set WORK.REG_FINAL0 has 950 observations and 71 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+808        data reg_final;
+809          set reg_final0;
+810          label audit='Audit Opinion (1=qualified)'
+811                bp='BP' mktcap='MKTCAP' de='DE' perform='PERFORM'
+812                abs_tsj='abs(DA), Time-Series Jones'
+813                abs_tsmj='abs(DA), Time-Series Modified Jones'
+814                abs_csj='abs(DA), Cross-Sectional Jones'
+815                abs_csmj='abs(DA), Cross-Sectional Modified Jones';
+816          keep pairid gvkey fyear audit sic2_source price_curcd_basis bp mktcap de perform
+817               abs_tsj abs_tsmj abs_csj abs_csmj fit_tsj fit_tsmj fit_csj fit_csmj fit_common;
+818        run;
+
+NOTE: There were 950 observations read from the data set WORK.REG_FINAL0.
+NOTE: The data set WORK.REG_FINAL has 950 observations and 19 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+819        
+820        proc sql;
+821          create table dup_final as
+822          select pairid, audit, count(*) as n
+823          from reg_final group by pairid, audit having calculated n>1;
+NOTE: Table WORK.DUP_FINAL created, with 0 rows and 3 columns.
+
+824          select count(*) into :dup_final_count trimmed from dup_final;
+825          select count(*) as rows_in_handoff,
+826                 count(distinct pairid) as matched_pairs,
+827                 sum(fit_common=1 and audit=1) as common_cases,
+828                 sum(fit_common=1 and audit=0) as common_controls,
+829                 sum(audit=1) as qualified_rows,
+830                 sum(audit=0) as clean_control_rows,
+831                 sum(fit_tsj=1 and audit=1) as ts_jones_cases,
+832                 sum(fit_tsj=1 and audit=0) as ts_jones_controls,
+833                 sum(fit_tsmj=1 and audit=1) as ts_modified_cases,
+834                 sum(fit_tsmj=1 and audit=0) as ts_modified_controls,
+                                                           The SAS System
+
+835                 sum(fit_csj=1 and audit=1) as cs_jones_cases,
+836                 sum(fit_csj=1 and audit=0) as cs_jones_controls,
+837                 sum(fit_csmj=1 and audit=1) as cs_modified_cases,
+838                 sum(fit_csmj=1 and audit=0) as cs_modified_controls,
+839                 sum(price_curcd_basis='HIID_CURCDM') as direct_price_currency_rows,
+840                 sum(price_curcd_basis='CURCD_INFERRED') as inferred_price_currency_rows,
+841                 sum(price_curcd_basis='UNAVAILABLE') as unavailable_price_currency_rows,
+842                 sum(sic2_source='CRSP_DATED_HIID') as exact_hiid_sic_fallback_rows,
+843                 sum(sic2_source='CRSP_DATED_COMPANY') as company_link_sic_fallback_rows,
+844                 sum(sic2_source='FUNDA_SICH') as funda_sich_rows,
+845                 sum(fit_tsj=1 and price_curcd_basis='CURCD_INFERRED') as ts_jones_inferred_currency_rows,
+846                 sum(fit_tsmj=1 and price_curcd_basis='CURCD_INFERRED') as tsmod_inf_cur_rows,
+847                 sum(fit_csj=1 and price_curcd_basis='CURCD_INFERRED') as cs_jones_inferred_currency_rows,
+848                 sum(fit_csmj=1 and price_curcd_basis='CURCD_INFERRED') as csmod_inf_cur_rows
+849          from reg_final;
+850        quit;
+NOTE: The PROCEDURE SQL printed pages 38-39.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+851        %failif_positive(&dup_final_count,Matched analysis handoff key pairid-audit is not unique.)
+852        proc freq data=reg_final;
+853          tables fyear*audit fit_tsj fit_tsmj fit_csj fit_csmj fit_common
+854                 price_curcd_basis*audit sic2_source*audit / missing;
+855          title 'Matched sample support and currency/SIC-source provenance';
+856        run;
+
+NOTE: There were 950 observations read from the data set WORK.REG_FINAL.
+NOTE: The PROCEDURE FREQ printed pages 40-43.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+857        proc means data=reg_final n mean std median min max;
+858          class audit;
+859          var bp mktcap de perform abs_tsj abs_tsmj abs_csj abs_csmj;
+860          title 'Matched sample descriptive statistics after pooled three-SD winsorization';
+861        run;
+
+NOTE: There were 950 observations read from the data set WORK.REG_FINAL.
+NOTE: The PROCEDURE MEANS printed page 44.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+
+862        
+863        /* Final bounded scale check reaches the handoff variables after all assignments. */
+864        proc means data=reg_final n mean std min max;
+865          var bp mktcap de perform abs_tsj abs_tsmj abs_csj abs_csmj;
+866          title 'Final regression input scale check';
+867        run;
+
+NOTE: There were 950 observations read from the data set WORK.REG_FINAL.
+NOTE: The PROCEDURE MEANS printed page 45.
+                                                           The SAS System
+
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+868        
+869        data out.reg;
+870          set reg_final;
+871        run;
+
+NOTE: There were 950 observations read from the data set WORK.REG_FINAL.
+NOTE: The data set OUT.REG has 950 observations and 19 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           9.35 seconds
+      cpu time            11.27 seconds
+      

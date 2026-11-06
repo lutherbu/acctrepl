@@ -1,0 +1,149 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3125558500/at
+> tempt_02/runtime/20261104T130017071965Z/cell_eq1_panel_a.do 
+
+. version 18
+
+. set more off
+
+. 
+. global dep "ni_usd"
+
+. global x "pretax_l pretax_sl pretax_sp pretax_p"
+
+. 
+. use "data/reg.dta", clear
+
+. label var ni_usd "Net income (USD millions)"
+
+. label var pretax_l "Pretax income in loss region (USD millions)"
+
+. label var pretax_sl "Pretax income in small-loss region (USD millions)"
+
+. label var pretax_sp "Pretax income in small-profit region (USD millions)"
+
+. label var pretax_p "Pretax income in profit region (USD millions)"
+
+. 
+. est clear
+
+. regress $dep $x if sample_common == 1
+
+      Source |       SS           df       MS      Number of obs   =   124,572
+-------------+----------------------------------   F(4, 124567)    >  99999.00
+       Model |  1.4330e+10         4  3.5825e+09   Prob > F        =    0.0000
+    Residual |  1.1424e+09   124,567  9171.19249   R-squared       =    0.9262
+-------------+----------------------------------   Adj R-squared   =    0.9262
+       Total |  1.5472e+10   124,571  124205.048   Root MSE        =    95.766
+
+------------------------------------------------------------------------------
+      ni_usd | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    pretax_l |   .9696125   .0012508   775.19   0.000     .9671609     .972064
+   pretax_sl |   1.016536   .0204444    49.72   0.000     .9764648    1.056606
+   pretax_sp |   .6979573   .0049525   140.93   0.000     .6882505    .7076642
+    pretax_p |   .6192175   .0006421   964.41   0.000     .6179591     .620476
+       _cons |  -.4606546   .2750673    -1.67   0.094    -.9997819    .0784727
+------------------------------------------------------------------------------
+
+. est store panel_a
+
+. 
+. test pretax_sl = pretax_sp
+
+ ( 1)  pretax_sl - pretax_sp = 0
+
+       F(  1,124567) =  229.28
+            Prob > F =    0.0000
+
+. estadd scalar F_SLSP = r(F)
+
+added scalar:
+             e(F_SLSP) =  229.27638
+
+. estadd scalar P_SLSP = r(p)
+
+added scalar:
+             e(P_SLSP) =  9.535e-52
+
+. test pretax_l = pretax_p
+
+ ( 1)  pretax_l - pretax_p = 0
+
+       F(  1,124567) =61787.61
+            Prob > F =    0.0000
+
+. estadd scalar F_LP = r(F)
+
+added scalar:
+               e(F_LP) =  61787.61
+
+. estadd scalar P_LP = r(p)
+
+added scalar:
+               e(P_LP) =  0
+
+. 
+. esttab panel_a using "tables/table4_panel_a.md", cells(b(star fmt(3)) p(par))
+>  starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 r2_a F_SLSP P_SLSP F_LP
+>  P_LP, labels("Observations" "R-squared" "Adjusted R-squared" "F: beta_SL = b
+> eta_SP" "p: beta_SL = beta_SP" "F: beta_L = beta_P" "p: beta_L = beta_P") fmt
+> (0 3 3 2 3 2 3)) replace label
+(file tables/table4_panel_a.md not found)
+(output written to tables/table4_panel_a.md)
+
+. esttab panel_a using "tables/table4_panel_a.rtf", cells(b(star fmt(3)) p(par)
+> ) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 r2_a F_SLSP P_SLSP F_L
+> P P_LP, labels("Observations" "R-squared" "Adjusted R-squared" "F: beta_SL = 
+> beta_SP" "p: beta_SL = beta_SP" "F: beta_L = beta_P" "p: beta_L = beta_P") fm
+> t(0 3 3 2 3 2 3)) replace label
+(file tables/table4_panel_a.rtf not found)
+(output written to tables/table4_panel_a.rtf)
+
+. esttab panel_a using "tables/table4_panel_a.csv", cells(b(star fmt(3)) p(par)
+> ) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 r2_a F_SLSP P_SLSP F_L
+> P P_LP, labels("Observations" "R-squared" "Adjusted R-squared" "F: beta_SL = 
+> beta_SP" "p: beta_SL = beta_SP" "F: beta_L = beta_P" "p: beta_L = beta_P") fm
+> t(0 3 3 2 3 2 3)) replace label
+(file tables/table4_panel_a.csv not found)
+(output written to tables/table4_panel_a.csv)
+
+. esttab panel_a using "tables/table4_panel_a.tex", cells(b(star fmt(3)) p(par)
+> ) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 r2_a F_SLSP P_SLSP F_L
+> P P_LP, labels("Observations" "R-squared" "Adjusted R-squared" "F: beta_SL = 
+> beta_SP" "p: beta_SL = beta_SP" "F: beta_L = beta_P" "p: beta_L = beta_P") fm
+> t(0 3 3 2 3 2 3)) replace label
+(file tables/table4_panel_a.tex not found)
+(output written to tables/table4_panel_a.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

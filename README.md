@@ -1,162 +1,131 @@
-# Accounting paper candidates and sample extraction
+# Accounting-paper extraction and reproduction
 
-This directory contains **500 empirical papers: 100 each from TAR, JAR, JAE,
-CAR and RAST**, published in journal issue years 2000–2020 inclusive. Selection
-uses total OpenAlex citations within each journal, after empirical screening;
-FWCI is retained separately. The set includes archival, experimental, survey,
-interview and quantitative meta-analysis research. It is not restricted to US
-Compustat studies. Citation counts are the saved search snapshot, not live values.
+This project contains 500 candidate papers, 100 each from TAR, JAR, JAE, CAR
+and RAST, for journal issue years 2000–2020. Selection uses the saved OpenAlex
+total-citation ranking after empirical screening; FWCI is a separate field.
+The source-filtered shortlist has 167 papers. The completed reproduction
+campaign covers 47 selected papers.
 
-## Files
+## Current deliverables
 
-| Path | Contents |
+`output/` contains only the latest accepted publications in four stage folders.
+[The layout manifest](output/manifest.json) identifies the current files, working
+run roots, archive, and relocations of historical artifact references.
+
+| Folder | Current contents |
 | --- | --- |
-| `papers.csv`, `papers.jsonl` | Same 500-paper manifest: journal, rank, title, authors, DOI, year, citations, FWCI, relative file paths and SHA-256 checksums. |
-| `papers/pdf/<OpenAlex-ID>.pdf` | 500 copied PDFs. |
-| `papers/parsed/<OpenAlex-ID>.json` | 500 existing page-addressable reading copies, preserved byte for byte. |
-| `scripts/pdf_to_json.py` | Single-file converter for a PDF or directory; independent of OpenAlexAEF. |
-| `skills/extract-accounting-samples/` | Sample-extraction skill, schema, editable database list, observation-unit vocabulary and validators. |
-| `tests/test_pdf_to_json.py` | Local integrity tests using small synthetic PDFs. |
+| [samples](output/samples/) | `sample_extractions.jsonl` (500 papers) and `sample_extractions.filtered.jsonl` (167 papers). These are distinct views, not competing versions. |
+| [models](output/models/) | Schema-3 `model_results.jsonl`, matching `model_results/` per-paper records, index, review queue and paper input manifest. Specifications, variable definitions, coefficients and descriptive statistics are organized together. |
+| [feasibility](output/feasibility/) | Reviewed schema-1.2 assessments for 167 papers, per-paper copies, index, summary CSVs, resource catalog and validation evidence. |
+| [reproductions](output/reproductions/) | The latest accepted attempt for each of 47 papers, plus current execution summaries, shared ado packages and publication comparisons. |
 
-Manifest paths are relative to this directory. Existing reading JSONs retain
-historical absolute provenance paths because changing them would break byte
-identity. Use the manifest's `pdf_path` and `reading_json` to locate each local
-pair. Five pairs use a different PDF version from the original selection
-manifest, specifically the version named by the cached reading copy. Nine
-legacy copies omit a blank trailing page; all nine were checked to be blank.
-No omitted page with visible content was found. The manifest records version choices and any omitted pages; page numbers have
-not been shifted.
+The manifest `papers.csv` / `papers.jsonl` at the project root describes the 500
+papers, citation snapshot, DOI, year, cached PDF/reading paths and checksums.
+There are 500 PDFs in `papers/pdf/` and 500 original reading JSONs in
+`papers/parsed/`. Current verified reading derivatives are in
+`papers/parsed/verified/`; their byte contents and physical page numbers are
+preserved. Five manifest pairs use the cached reading's matching PDF version;
+nine original readings omit only a verified blank trailing page.
 
-## Environment
+## Reproduction status and comparisons
 
-Use Python 3.12 or later with the pinned requirements (NumPy requires 3.12).
-The tested environment is Python 3.12.14; `requirements.txt` records the tested
-package versions. They are already
-installed on the current machine. On another machine, use an isolated environment:
+The completed campaign has 47 closed independent reviews and 114 assignments.
+Its 178 baseline model definitions expand to 239 model/result-set scopes;
+33 additional model definitions support data construction. Of the 239 scopes,
+235 executed and four remain numerically blocked.
 
-```bash
-python -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-```
+- [Execution summary](output/reproductions/summary.md)
+- [All 47 paper comparisons](output/reproductions/comparison/report.md)
+- [All 239 model/result-set comparisons](output/reproductions/comparison/all_models.md)
+- [Model consistency summary](output/reproductions/comparison/model_consistency_summary.md)
+- [Model consistency CSV](output/reproductions/comparison/model_consistency.csv)
 
-The examples below run from this directory. On this machine, `python` can be
-replaced with `/opt/tljh/user/bin/python`.
+The saved focal-sign/5%-inference assessment counts 152 consistent scopes,
+76 with at least one focal discrepancy, seven lacking sufficient published
+inference targets, and four blocked. All implementations are best effort;
+qualitative consistency does not imply equal coefficients or samples.
 
-## Convert PDFs
-
-Convert one PDF:
-
-```bash
-python scripts/pdf_to_json.py /path/to/paper.pdf -o new_parse/paper.json
-```
-
-Convert the PDFs directly inside a directory. Subdirectories are skipped.
-`--workers` starts separate processes; the default is one.
+Each paper directory retains its accepted `attempt_NN` identifier. It includes
+`build.sas`, SAS/Stata notebooks, `design.md`, `review.md`, `submission.json`,
+`outcome.json`, frozen instructions/template, current datasets, native tables,
+and required execution records. Example read-only validation:
 
 ```bash
-python scripts/pdf_to_json.py /path/to/incoming_pdfs -o new_parse \
-  --workers 2
+/opt/tljh/user/bin/python scripts/reproduction_runs.py validate \
+  --attempt output/reproductions/W3122547505/attempt_03
+/opt/tljh/user/bin/python scripts/reproduction_runs.py summarize
+/opt/tljh/user/bin/python scripts/verify_current_outputs.py
 ```
 
-The default `--ocr auto` extracts healthy selectable text as Markdown, including
-tables, and uses local RapidOCR for pages with sparse or damaged text layers.
-The checks and OCR settings are adapted from
-`OpenAlexAEF/gcloud/build_index.py` and `clean_cache.py`; the converter does not
-import their indexing, embedding or LangChain code. It does not send document
-content to a service. First OCR use downloads missing model weights into
-`OUTPUT_DIRECTORY/.ocr_models`; `--model-dir /path/to/models` selects another
-writable cache. Later use of those cached weights works offline.
+`run --attempt ...` executes SAS/Stata; it is separate from the read-only
+commands above. Follow the reproduction skill and frozen Stata template.
+The shared ado folder is `output/reproductions/ado/`. New work items give its
+absolute path; retained notebooks use their verified relative path.
 
-To extract selectable text with **no OCR**:
+## Skills and tools
+
+| Location | Purpose |
+| --- | --- |
+| [Sample skill](skills/extract-accounting-samples/SKILL.md) | Extract main sample counts, units, periods, sources and data-section text. Editable database names are in its `references/databases.json`. |
+| [Model/results skill](skills/extract-accounting-models/SKILL.md) | Extract baseline regression specifications, focal/control roles, reported results and variable statistics. Current output schema is 3.0; regression methods are an editable vocabulary. Statistical derivations use Python helpers. |
+| [Feasibility skill](skills/check-replication-feasibility/SKILL.md) | Assess independent reconstruction resources, temporal coverage and unresolved implementation gaps. Readable source candidates remain distinct from confirmed coverage. |
+| [Reproduction skill](skills/reproduce-accounting-models/SKILL.md) | Prepare data with SAS and run baseline regressions with template-compliant Stata and documented packages. |
+| `scripts/model_extraction_runs.py`, `scripts/model_results_runs.py` | Manage frozen assignments, quotas, verification and publication. These scripts do not call AI models. |
+| `scripts/validate_feasibility_run.py`, `scripts/summarize_feasibility.py` | Replay frozen feasibility evidence and summarize assessments. Historical runs are resolved through the layout manifest. |
+| `project_layout.py` | Resolve current publications and immutable historical paths; validate the narrow notebook-path relocation proofs. |
+
+New working runs, pilots, specification-only intermediates and superseded
+publications belong under `../candidate_search/runs/`. The original campaign
+quota/history has been retained; reorganizing files does not reset it.
+
+## Manual review and filtering
+
+Open [utils/review.html](utils/review.html) directly in a browser, load
+`output/samples/sample_extractions.jsonl`, edit fields and export the revised
+JSONL. Changes remain in the browser until exported. The utility supports
+session recovery and preserves unchanged record lines.
+
+Open [utils/filter.html](utils/filter.html), load a sample-extraction JSONL,
+select allowed data sources and export papers whose sources satisfy that
+selection. Papers with no observed data are excluded. Both utilities are
+standalone files and require no server or API key.
+
+## PDF conversion and environment
+
+Python dependencies are listed in `requirements.txt`. The single-file converter
+requires no OpenAlex index, API key or language model:
 
 ```bash
-python scripts/pdf_to_json.py /path/to/paper.pdf -o new_parse/paper.json \
-  --ocr never --verbose
+/opt/tljh/user/bin/python scripts/pdf_to_json.py --help
+/opt/tljh/user/bin/python scripts/pdf_to_json.py papers/pdf/example.pdf \
+  --output papers/parsed
 ```
 
-`--format text` uses plain selectable text instead of Markdown.
-`--ocr always` renders and OCRs every nonblank page.
-`--min-selectable-chars` defaults to **400 characters per page**. In automatic
-mode, shorter nonblank pages use OCR. Other checks also detect damaged text
-layers. Disabling OCR retains the available text and flags suspect pages for
-review. Every conversion processes the full PDF, including blank physical pages.
-PDF tables and OCR errors can still require visual inspection.
+The converter accepts one PDF or all PDFs directly in a directory. See its help
+for OCR thresholds and defaults. The project also uses SAS 9.4 and Stata 18;
+shared data catalogs and the Stata template are in the workspace's `../common/`.
 
-**Existing JSON files are overwritten by default.** Use `--no-overwrite` to skip
-existing files as they are, without parsing the PDF or verifying the old JSON:
+## Archives, provenance and Git exclusions
 
-```bash
-python scripts/pdf_to_json.py papers/pdf -o papers/parsed --no-overwrite
-```
+Earlier outputs, schema-2 results, specification-only publications, pilots,
+sweeps, superseded attempts and unreferenced runtime diagnostics were archived
+to `../candidate_search/archive/git-output-20261106T131416Z/`. Loose root SAS/Stata
+logs and listings are in that archive's `root_diagnostics/`.
 
-Writes replace the destination only after conversion succeeds. A failed PDF
-does not stop the other files in a directory, and the process exits with code 1
-when any file fails (0 for successful conversion/skipping, 2 for invalid
-arguments). Per-file outcomes and a final summary are printed as JSON lines on
-stdout; use shell redirection to save them if needed. Inspect each reading JSON's
-`status` and `warnings` for review needs.
+The archive contains the pre-move inventory, checksums, move journal, original
+comparison reports and original executed notebooks. Current sample, model and
+feasibility records retain their original bytes. Their historical path strings
+are resolved through `output/manifest.json`, including paths to archived evidence.
+The narrow ado-path notebook edits preserve all research commands and existing
+console outputs. Validation binds them to the original executed notebook and
+unchanged dataset hashes; it does not claim a fresh estimation run.
 
-Fresh parsing can change text order, OCR output and provenance metadata. It is
-not guaranteed to reproduce an older JSON byte for byte. Manifest hashes describe
-the original imported files; regenerating a JSON changes its checksum.
+Raw/analysis data remain local and Git-ignored: PDFs, parsed readings, SAS/Stata
+and other binary dataset formats, per-paper data directories, row-level audit
+CSVs and working caches. Folder `.gitkeep` placeholders remain trackable.
+Extraction JSON/JSONL, schemas, vocabularies, metadata manifests, numeric result
+CSVs, code and readable reports remain eligible for version control.
 
-## Reading JSON and the extraction skill
-
-The common input interface is:
-
-```json
-{
-  "paper_id": "W123456789",
-  "title": "Paper title",
-  "doi": null,
-  "pdf_path": "../pdf/W123456789.pdf",
-  "pages": [{"page": 1, "text": "Full text of PDF page 1"}]
-}
-```
-
-`page` is the one-based physical PDF page, including cover pages. Fresh output
-also records PDF SHA-256, page extraction methods, warnings, converter settings
-and package versions. Its `pdf_path` is relative to the JSON file's directory.
-The paper ID comes from the PDF filename stem; the title comes from PDF metadata
-or falls back to that stem. Fresh output leaves `doi` null; known bibliographic
-metadata remain in `papers.jsonl`. This reading JSON is the **input** to an agent, not an
-automatically completed sample-extraction result.
-
-Give an agent `skills/extract-accounting-samples/SKILL.md`, the chosen reading
-JSON and its paired PDF. The skill directs it to find the baseline/main test or
-table and return its sample size, standardized unit, period, data sources,
-complete relevant data-section text and page-linked evidence. It stops once that
-information is supported. Auxiliary pilots, robustness checks and secondary
-comparisons are excluded; rare co-primary samples retain separate entries.
-Missing information stays explicit. Save results separately, for example as
-`extractions/<OpenAlex-ID>.json`. Validate one result with:
-
-```bash
-python skills/extract-accounting-samples/scripts/validate_extraction.py \
-  extractions/W2023709878.json --paper-text papers/parsed/W2023709878.json
-```
-
-Edit the `enum` array in
-`skills/extract-accounting-samples/references/databases.json` to change the
-standardized database list. Optional spellings go in that file's `x-aliases`.
-The schema and validator use this one file, so no code or schema changes are
-needed. Other named commercial products belong in `commercial_nonstandardized`.
-The original full SAS data catalog is not required to run the skill.
-
-## Validation performed
-
-At import, all 500 copied PDFs and all 500 copied JSONs were checksum-verified.
-The text/OCR extraction was checked on two native-text pages and one forced-OCR
-page. No full conversion or OCR sweep was run.
-
-Nine current synthetic integrity tests cover full-PDF extraction, blank pages,
-default overwriting, skipping existing files, preservation after conversion
-failure, directory multiprocessing, corrupt-file isolation, output collisions
-and the simplified help message:
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-Package/API references: [PyMuPDF4LLM](https://pymupdf.readthedocs.io/en/latest/pymupdf4llm/api.html)
-and [RapidOCR parameters](https://rapidai.github.io/RapidOCRDocs/main/install_usage/rapidocr/parameters/).
+Tests are under `tests/`. `scripts/reorganize_outputs.py verify --archive PATH`
+checks the archived inventory; `scripts/verify_current_outputs.py` verifies
+current publications and native result/data signatures without rerunning models.

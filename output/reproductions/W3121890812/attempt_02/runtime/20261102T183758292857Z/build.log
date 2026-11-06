@@ -1,0 +1,801 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+1          options errorabend mprint source2;
+2          
+3          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname ccm "/storage/sas/base/crsp/a_ccm" access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+5          libname crspst "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSPST was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+6          libname out "./data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3121890812/attempt_02/data
+7          
+8          title "W3121890812 Table 3 Panel B construction diagnostics";
+9          
+10         data work.comp_all;
+11             set comp.funda(
+12                 keep=gvkey datadate fyear fic sich indfmt consol popsrc datafmt
+13                      curcd upd fdate pdate pi mii at txc txt tlcf txdfed txdfo txdi
+14                 where=(fyear >= 1993 and fyear <= 2001 and
+15                        indfmt = 'INDL' and consol = 'C' and popsrc = 'D' and
+16                        datafmt = 'STD')
+17             );
+18             if missing(gvkey) or missing(datadate) or missing(fyear) then delete;
+19             format datadate fdate pdate yymmdd10.;
+20         run;
+
+NOTE: There were 109696 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1993 and fyear<=2001) and (indfmt='INDL') and (consol='C') and (popsrc='D') and (datafmt='STD');
+NOTE: The data set WORK.COMP_ALL has 109696 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+3                                                          The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+      real time           0.51 seconds
+      cpu time            0.51 seconds
+      
+
+21         
+22         proc freq data=work.comp_all;
+23             title "Update-code distribution before final-report filter";
+24             tables fyear*upd / missing;
+25         run;
+
+NOTE: There were 109696 observations read from the data set WORK.COMP_ALL.
+NOTE: The PROCEDURE FREQ printed pages 1-2.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+26         
+27         proc sql;
+28             title "Effect of selecting final Compustat updates";
+29             select count(*) as standard_rows,
+30                    sum(case when upd = 3 then 1 else 0 end) as upd3_rows,
+31                    sum(case when upd ne 3 or missing(upd) then 1 else 0 end) as other_upd_rows
+32               from work.comp_all;
+33         quit;
+NOTE: The PROCEDURE SQL printed page 3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+34         
+35         data work.comp0;
+36             set work.comp_all;
+37             if upd ne 3 then delete;
+38         run;
+
+NOTE: There were 109696 observations read from the data set WORK.COMP_ALL.
+NOTE: The data set WORK.COMP0 has 103635 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+39         
+40         proc sql;
+41             title "Compustat final standard annual report keys";
+42             select count(*) as report_rows from work.comp0;
+43             select count(*) as duplicate_gvkey_fyear_groups
+44               from (select gvkey, fyear from work.comp0
+45                     group by gvkey, fyear having count(*) > 1) as d;
+46             select count(*) as dup_vintage_ties
+47               from (select gvkey, fyear, datadate, fdate, pdate
+48                       from work.comp0
+49                       group by gvkey, fyear, datadate, fdate, pdate
+50                       having count(*) > 1) as d;
+51         quit;
+NOTE: The PROCEDURE SQL printed pages 4-6.
+4                                                          The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.07 seconds
+      
+
+52         
+53         proc sort data=work.comp0 out=work.comp_order;
+54             by gvkey fyear descending datadate descending fdate descending pdate;
+55         run;
+
+NOTE: There were 103635 observations read from the data set WORK.COMP0.
+NOTE: The data set WORK.COMP_ORDER has 103635 observations and 22 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+56         
+57         data work.comp_year;
+58             set work.comp_order;
+59             by gvkey fyear;
+60             if first.fyear;
+61         run;
+
+NOTE: There were 103635 observations read from the data set WORK.COMP_ORDER.
+NOTE: The data set WORK.COMP_YEAR has 103635 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+62         
+63         data work.tax_compare;
+64             set work.comp_year;
+65             if nmiss(txc, txt, txdi) = 0;
+66             current_tax_from_items = txt - txdi;
+67             tax_diff = txc - current_tax_from_items;
+68             tax_match = (abs(tax_diff) <= 0.0001);
+69         run;
+
+NOTE: There were 103635 observations read from the data set WORK.COMP_YEAR.
+NOTE: The data set WORK.TAX_COMPARE has 69578 observations and 25 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+      
+
+70         
+71         proc freq data=work.tax_compare;
+72             title "Direct current-tax field versus paper item formula";
+73             tables tax_match / missing;
+74         run;
+
+NOTE: There were 69578 observations read from the data set WORK.TAX_COMPARE.
+NOTE: The PROCEDURE FREQ printed page 7.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+5                                                          The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+      
+
+75         
+76         proc means data=work.tax_compare n mean min p25 median p75 max;
+77             var tax_diff;
+78         run;
+
+NOTE: There were 69578 observations read from the data set WORK.TAX_COMPARE.
+NOTE: The PROCEDURE MEANS printed page 8.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+79         
+80         data work.t_base;
+81             set work.comp_year;
+82             if fyear < 1994 or fyear > 2000 then delete;
+83             if fic ne 'USA' then delete;
+84             if missing(sich) or missing(at) then delete;
+85             if (sich >= 4900 and sich <= 4999) or
+86                (sich >= 6000 and sich <= 6999) then delete;
+87             crsp_start = intnx('year', datadate, -1, 'same') + 1;
+88             crsp_end = datadate;
+89             format crsp_start crsp_end yymmdd10.;
+90         run;
+
+NOTE: There were 103635 observations read from the data set WORK.COMP_YEAR.
+NOTE: The data set WORK.T_BASE has 49358 observations and 24 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+91         
+92         proc sql;
+93             title "Source starting population before CRSP intersection";
+94             select count(*) as init_us_nonfin_n,
+95                    count(distinct gvkey) as companies
+96               from work.t_base;
+97         quit;
+NOTE: The PROCEDURE SQL printed page 9.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+98         
+99         proc sql;
+100            create table work.link_fy as
+101            select a.gvkey, a.fyear, a.datadate, a.crsp_start, a.crsp_end,
+102                   b.lpermno, b.linkprim, b.linktype, b.linkdt, b.linkenddt
+103              from work.t_base as a
+104              inner join ccm.ccmxpf_linktable(
+105                  keep=gvkey linkprim linktype lpermno linkdt linkenddt
+106                  where=((missing(linkdt) or linkdt <= '31DEC2001'd) and
+107                         (missing(linkenddt) or linkenddt >= '01JAN1993'd))
+108              ) as b
+6                                                          The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+109                on a.gvkey = b.gvkey
+110             where b.lpermno > 0 and b.linkprim in ('P', 'C') and
+111                   b.linktype in ('LC', 'LU') and
+112                   (missing(b.linkdt) or b.linkdt <= a.crsp_end) and
+113                   (missing(b.linkenddt) or b.linkenddt >= a.crsp_start);
+NOTE: Table WORK.LINK_FY created, with 37806 rows and 10 columns.
+
+114        
+115            create table work.link_perm as
+116            select distinct lpermno as permno from work.link_fy;
+NOTE: Table WORK.LINK_PERM created, with 8474 rows and 1 columns.
+
+117        
+118            title "CRSP link multiplicity before daily-date intersection";
+119            select count(*) as primary_window_link_rows,
+120                   count(distinct lpermno) as distinct_permnos
+121              from work.link_fy;
+122            select count(*) as multi_link_years
+123              from (select gvkey, fyear from work.link_fy
+124                    group by gvkey, fyear having count(*) > 1) as d;
+125            select count(*) as multi_permno_years
+126              from (select gvkey, fyear from work.link_fy
+127                    group by gvkey, fyear having count(distinct lpermno) > 1) as d;
+128        quit;
+NOTE: The PROCEDURE SQL printed pages 10-12.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.09 seconds
+      
+
+129        
+130        data work.dsf_match(keep=permno date);
+131            length permno 8;
+132            if _n_ = 1 then do;
+133                declare hash h(dataset:"work.link_perm");
+134                h.defineKey("permno");
+135                h.defineDone();
+136            end;
+137            set crspst.dsf(
+138                keep=permno date
+139                where=(date >= '01JAN1993'd and date <= '31DEC2001'd)
+140            );
+141            if h.check(key:permno) = 0;
+142            format date yymmdd10.;
+143        run;
+
+NOTE: There were 8474 observations read from the data set WORK.LINK_PERM.
+NOTE: There were 19179418 observations read from the data set CRSPST.DSF.
+      WHERE (date>='01JAN1993'D and date<='31DEC2001'D);
+NOTE: The data set WORK.DSF_MATCH has 11858630 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           4.14 seconds
+      cpu time            4.15 seconds
+      
+
+144        
+145        proc sql;
+146            create table work.crsp_fy as
+7                                                          The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+147            select distinct a.gvkey, a.fyear
+148              from work.link_fy as a
+149              inner join work.dsf_match as d
+150                on a.lpermno = d.permno and
+151                   d.date >= a.crsp_start and d.date <= a.crsp_end and
+152                   (missing(a.linkdt) or d.date >= a.linkdt) and
+153                   (missing(a.linkenddt) or d.date <= a.linkenddt);
+NOTE: Table WORK.CRSP_FY created, with 37521 rows and 2 columns.
+
+154        
+155            title "CRSP daily records and unique firm-year intersection";
+156            select count(*) as candidate_permno_dates from work.dsf_match;
+157            select count(*) as crsp_intersection_firmyears from work.crsp_fy;
+158        quit;
+NOTE: The PROCEDURE SQL printed pages 13-14.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.56 seconds
+      cpu time            3.30 seconds
+      
+
+159        
+160        proc sort data=work.t_base out=work.t_base_s;
+161            by gvkey fyear;
+162        run;
+
+NOTE: There were 49358 observations read from the data set WORK.T_BASE.
+NOTE: The data set WORK.T_BASE_S has 49358 observations and 24 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+163        proc sort data=work.crsp_fy out=work.crsp_fy_s;
+164            by gvkey fyear;
+165        run;
+
+NOTE: Input data set is already sorted; it has been copied to the output data set.
+NOTE: There were 37521 observations read from the data set WORK.CRSP_FY.
+NOTE: The data set WORK.CRSP_FY_S has 37521 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+166        
+167        data work.base;
+168            merge work.t_base_s(in=in_base) work.crsp_fy_s(in=in_crsp);
+169            by gvkey fyear;
+170            if in_base and in_crsp;
+171            crsp_ok = 1;
+172        run;
+
+NOTE: There were 49358 observations read from the data set WORK.T_BASE_S.
+NOTE: There were 37521 observations read from the data set WORK.CRSP_FY_S.
+NOTE: The data set WORK.BASE has 37521 observations and 25 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+8                                                          The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+      
+
+173        
+174        proc sql;
+175            title "Initial sample after date-valid CRSP/Compustat intersection";
+176            select count(*) as initial_firmyears,
+177                   count(distinct gvkey) as initial_companies
+178              from work.base;
+179        quit;
+NOTE: The PROCEDURE SQL printed page 15.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+180        
+181        proc sql;
+182            create table work.panel as
+183            select t.gvkey, t.fyear, t.datadate, t.sich, t.curcd as cur_t,
+184                   t.pi as pi_t, t.mii as mii_t, t.at as at_t,
+185                   t.txt as txt_t, t.tlcf as tlcf_t,
+186                   t.txdfed as txdfed_t, t.txdfo as txdfo_t, t.txdi as txdi_t,
+187                   p.at as at_tm1, p.curcd as cur_tm1,
+188                   n.pi as pi_tp1, n.mii as mii_tp1, n.at as at_tp1,
+189                   n.curcd as cur_tp1
+190              from work.base as t
+191              left join work.comp_year as p
+192                on t.gvkey = p.gvkey and p.fyear = t.fyear - 1
+193              left join work.comp_year as n
+194                on t.gvkey = n.gvkey and n.fyear = t.fyear + 1;
+NOTE: Table WORK.PANEL created, with 37521 rows and 19 columns.
+
+195        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.11 seconds
+      
+
+196        
+197        data work.screen_flags;
+198            set work.panel;
+199            ptbi_amt_t = .;
+200            ptbi_amt_tp1 = .;
+201            if not missing(pi_t) then do;
+202                ptbi_amt_t = pi_t;
+203                if not missing(mii_t) then ptbi_amt_t = pi_t - mii_t;
+204            end;
+205            if not missing(pi_tp1) then do;
+206                ptbi_amt_tp1 = pi_tp1;
+207                if not missing(mii_tp1) then ptbi_amt_tp1 = pi_tp1 - mii_tp1;
+208            end;
+209        
+210            avg_at_t = .;
+211            avg_at_tp1 = .;
+212            if nmiss(at_tm1, at_t) = 0 then avg_at_t = (at_tm1 + at_t) / 2;
+213            if nmiss(at_t, at_tp1) = 0 then avg_at_tp1 = (at_t + at_tp1) / 2;
+214            if avg_at_t <= 0 then avg_at_t = .;
+215            if avg_at_tp1 <= 0 then avg_at_tp1 = .;
+9                                                          The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+216        
+217            ptbi_t = .;
+218            ptbi_tp1 = .;
+219            if not missing(ptbi_amt_t) and not missing(avg_at_t) then
+220                ptbi_t = ptbi_amt_t / avg_at_t;
+221            if not missing(ptbi_amt_tp1) and not missing(avg_at_tp1) then
+222                ptbi_tp1 = ptbi_amt_tp1 / avg_at_tp1;
+223        
+224            dte_tax = .;
+225            if nmiss(txdfed_t, txdfo_t) = 0 then dte_tax = txdfed_t + txdfo_t;
+226            else if not missing(txdi_t) then dte_tax = txdi_t;
+227            btd_scaled = .;
+228            if not missing(dte_tax) and not missing(avg_at_t) then
+229                btd_scaled = (dte_tax / 0.35) / avg_at_t;
+230        
+231            current_tax_t = .;
+232            current_tax_method = 0;
+233            if nmiss(txt_t, txdi_t) = 0 then do;
+234                current_tax_t = txt_t - txdi_t;
+235                current_tax_method = 1;
+236            end;
+237            if missing(current_tax_t) then tax_unknown = 1;
+238            else tax_unknown = 0;
+239            if not missing(current_tax_t) and current_tax_t < 0 then negtax_flag = 1;
+240            else negtax_flag = 0;
+241        
+242            cur_ok = 0;
+243            if not missing(cur_tm1) and not missing(cur_t) and not missing(cur_tp1) then do;
+244                if cur_tm1 = cur_t and cur_t = cur_tp1 then cur_ok = 1;
+245            end;
+246        
+247            miss_core = 0;
+248            if missing(ptbi_t) or missing(ptbi_tp1) or missing(btd_scaled) or
+249               missing(avg_at_t) or missing(avg_at_tp1) then miss_core = 1;
+250        
+251            mii_missing_t = missing(mii_t);
+252            mii_missing_tp1 = missing(mii_tp1);
+253            mii_zero_t = (not missing(mii_t) and mii_t = 0);
+254            if not missing(ptbi_t) and ptbi_t < 0 then loss_flag = 1;
+255            else loss_flag = 0;
+256            if not missing(pi_t) and pi_t < 0 then raw_pi_loss_flag = 1;
+257            else raw_pi_loss_flag = 0;
+258            if not missing(ptbi_amt_t) and ptbi_amt_t = 0 then zero_ptbi_flag = 1;
+259            else zero_ptbi_flag = 0;
+260            if missing(tlcf_t) then nol_unknown = 1;
+261            else nol_unknown = 0;
+262            if not missing(tlcf_t) and tlcf_t > 0 then nol_flag = 1;
+263            else nol_flag = 0;
+264        run;
+
+NOTE: There were 37521 observations read from the data set WORK.PANEL.
+NOTE: The data set WORK.SCREEN_FLAGS has 37521 observations and 41 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+265        
+10                                                         The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+266        proc sql;
+267            title "Sequential sample-screen counts";
+268            select count(*) as crsp_intersection_firmyears,
+269                   sum(case when miss_core = 1 then 1 else 0 end) as missing_regression_construction,
+270                   sum(case when miss_core = 0 and cur_ok = 0 then 1 else 0 end) as currency_mismatch,
+271                   sum(case when miss_core = 0 and cur_ok = 1 and tax_unknown = 1 then 1 else 0 end) as missing_current_tax,
+272                   sum(case when miss_core = 0 and cur_ok = 1 then 1 else 0 end) as after_reg_cur,
+273                   sum(case when miss_core = 0 and cur_ok = 1 and raw_pi_loss_flag = 1 then 1 else 0 end) as raw_pi_losses,
+274                   sum(case when miss_core = 0 and cur_ok = 1 and zero_ptbi_flag = 1 then 1 else 0 end) as zero_ptbi_rows,
+275                   sum(case when miss_core = 0 and cur_ok = 1 and loss_flag = 1 then 1 else 0 end) as current_ptbi_losses,
+276                   sum(case when miss_core = 0 and cur_ok = 1 and loss_flag = 0 and negtax_flag = 1 then 1 else 0 end) as
+276      ! negative_current_tax,
+277                   sum(case when miss_core = 0 and cur_ok = 1 and loss_flag = 0 and negtax_flag = 0 and nol_flag = 1 then 1 else
+277      ! 0 end) as positive_tlcf_nol,
+278                   sum(case when miss_core = 0 and cur_ok = 1 and loss_flag = 0 and negtax_flag = 0 and nol_flag = 0 then 1 else
+278      ! 0 end) as final_firmyears,
+279                   sum(case when miss_core = 0 and cur_ok = 1 and loss_flag = 0 and negtax_flag = 0 and nol_flag = 0 and
+279      ! nol_unknown = 1 then 1 else 0 end) as final_nol_unknown,
+280                   sum(case when miss_core = 0 and cur_ok = 1 and loss_flag = 0 and negtax_flag = 0 and nol_flag = 0 and
+280      ! tax_unknown = 1 then 1 else 0 end) as final_tax_unknown
+281              from work.screen_flags;
+282        quit;
+NOTE: The PROCEDURE SQL printed page 16.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+283        
+284        data work.eligible;
+285            set work.screen_flags;
+286            if miss_core ne 0 then delete;
+287            if cur_ok ne 1 then delete;
+288            if loss_flag ne 0 then delete;
+289            if negtax_flag ne 0 then delete;
+290            if nol_flag ne 0 then delete;
+291        run;
+
+NOTE: There were 37521 observations read from the data set WORK.SCREEN_FLAGS.
+NOTE: The data set WORK.ELIGIBLE has 15609 observations and 41 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+292        
+293        proc freq data=work.eligible;
+294            title "Annual observations available for Equation (2) BTD ranks";
+295            tables fyear / missing;
+296        run;
+
+NOTE: There were 15609 observations read from the data set WORK.ELIGIBLE.
+NOTE: The PROCEDURE FREQ printed page 17.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+11                                                         The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+297        
+298        proc sort data=work.eligible out=work.eligible_s;
+299            by fyear;
+300        run;
+
+NOTE: There were 15609 observations read from the data set WORK.ELIGIBLE.
+NOTE: The data set WORK.ELIGIBLE_S has 15609 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+301        proc rank data=work.eligible_s out=work.ranked groups=5;
+302            by fyear;
+303            var btd_scaled;
+304            ranks btd_rank;
+305        run;
+
+NOTE: There were 15609 observations read from the data set WORK.ELIGIBLE_S.
+NOTE: The data set WORK.RANKED has 15609 observations and 42 variables.
+NOTE: PROCEDURE RANK used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+306        
+307        data work.ranked;
+308            set work.ranked;
+309            lnbtd = (btd_rank = 0);
+310            lpbtd = (btd_rank = 4);
+311        run;
+
+NOTE: There were 15609 observations read from the data set WORK.RANKED.
+NOTE: The data set WORK.RANKED has 15609 observations and 44 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+312        
+313        proc freq data=work.ranked;
+314            title "Annual bottom/top temporary-BTD quintile group sizes";
+315            tables fyear*btd_rank fyear*lnbtd fyear*lpbtd / missing;
+316        run;
+
+NOTE: There were 15609 observations read from the data set WORK.RANKED.
+NOTE: The PROCEDURE FREQ printed pages 18-20.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+317        
+318        proc univariate data=work.ranked noprint;
+319            var ptbi_t ptbi_tp1 btd_scaled;
+320            output out=work.win_limits
+321                pctlpts=1 99
+322                pctlpre=ptbit_ ptbin_ btd_
+12                                                         The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+323                pctlname=p1 p99;
+324        run;
+
+NOTE: The data set WORK.WIN_LIMITS has 1 observations and 6 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+325        
+326        proc print data=work.win_limits noobs;
+327            title "Pooled 1st and 99th percentile reset cutoffs";
+328        run;
+
+NOTE: There were 1 observations read from the data set WORK.WIN_LIMITS.
+NOTE: The PROCEDURE PRINT printed page 21.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+329        
+330        data work.final;
+331            if _n_ = 1 then set work.win_limits;
+332            set work.ranked;
+333            ptbi_t_raw = ptbi_t;
+334            ptbi_tp1_raw = ptbi_tp1;
+335            btd_raw = btd_scaled;
+336            ptbi_t = max(ptbit_p1, min(ptbi_t, ptbit_p99));
+337            ptbi_tp1 = max(ptbin_p1, min(ptbi_tp1, ptbin_p99));
+338            btd_scaled = max(btd_p1, min(btd_scaled, btd_p99));
+339            ptbi_lnbtd = ptbi_t * lnbtd;
+340            ptbi_lpbtd = ptbi_t * lpbtd;
+341            if missing(tlcf_t) then nol_unknown = 1;
+342            else nol_unknown = 0;
+343            mii_missing_t = missing(mii_t);
+344            mii_missing_tp1 = missing(mii_tp1);
+345            mii_zero_t = (not missing(mii_t) and mii_t = 0);
+346            label ptbi_t = "PTBI at t scaled by average assets"
+347                  ptbi_tp1 = "PTBI at t+1 scaled by average assets"
+348                  btd_scaled = "Scaled temporary book-tax difference"
+349                  lnbtd = "Large negative temporary BTD"
+350                  lpbtd = "Large positive temporary BTD"
+351                  ptbi_lnbtd = "PTBI at t x LNBTD"
+352                  ptbi_lpbtd = "PTBI at t x LPBTD"
+353                  cur_t = "Compustat reporting currency at t"
+354                  nol_unknown = "TLCF status missing; not coded as zero";
+355            label tax_unknown = "Current tax could not be computed from available items"
+356                  current_tax_method = "1=TXT-TXDI, 0=unknown"
+357                  mii_missing_t = "MII at t not reported"
+358                  mii_missing_tp1 = "MII at t+1 not reported"
+359                  mii_zero_t = "MII at t reported as zero";
+360            keep gvkey fyear datadate sich cur_t ptbi_t ptbi_tp1 btd_scaled
+361                 lnbtd lpbtd ptbi_lnbtd ptbi_lpbtd btd_rank ptbi_t_raw
+362                 ptbi_tp1_raw btd_raw nol_unknown tax_unknown current_tax_method
+363                 mii_missing_t mii_missing_tp1 mii_zero_t;
+364        run;
+
+13                                                         The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+NOTE: There were 1 observations read from the data set WORK.WIN_LIMITS.
+NOTE: There were 15609 observations read from the data set WORK.RANKED.
+NOTE: The data set WORK.FINAL has 15609 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+365        
+366        proc sort data=work.final out=out.book_tax_firm_years;
+367            by gvkey fyear;
+368        run;
+
+NOTE: There were 15609 observations read from the data set WORK.FINAL.
+NOTE: The data set OUT.BOOK_TAX_FIRM_YEARS has 15609 observations and 22 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+369        
+370        proc sql;
+371            title "Final SAS handoff checks";
+372            select count(*) as final_firmyears,
+373                   count(distinct gvkey) as final_companies,
+374                   sum(nol_unknown) as unknown_tlcf_status,
+375                   sum(tax_unknown) as unknown_current_tax_status,
+376                   sum(mii_missing_t) as missing_mii_t,
+377                   sum(mii_zero_t) as observed_zero_mii_t,
+378                   sum(case when cur_t = 'USD' then 1 else 0 end) as usd_firmyears,
+379                   sum(case when cur_t ne 'USD' then 1 else 0 end) as nonusd_firmyears
+380              from out.book_tax_firm_years;
+381            select count(*) as dup_final_keys
+382              from (select gvkey, fyear from out.book_tax_firm_years
+383                    group by gvkey, fyear having count(*) > 1) as d;
+384        quit;
+NOTE: The PROCEDURE SQL printed pages 22-23.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+385        
+386        proc means data=out.book_tax_firm_years n nmiss min p1 p25 median p75 p99 max;
+387            title "Final analysis-variable distribution check";
+388            var ptbi_t ptbi_tp1 btd_scaled;
+389        run;
+
+NOTE: There were 15609 observations read from the data set OUT.BOOK_TAX_FIRM_YEARS.
+NOTE: The PROCEDURE MEANS printed page 24.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+390        
+391        proc freq data=out.book_tax_firm_years;
+392            title "Final analysis groups and currencies";
+14                                                         The SAS System                     Tuesday, November  3, 2026 02:37:00 AM
+
+393            tables lnbtd lpbtd cur_t nol_unknown tax_unknown current_tax_method
+394                   mii_missing_t mii_missing_tp1 mii_zero_t / missing;
+395        run;
+
+NOTE: There were 15609 observations read from the data set OUT.BOOK_TAX_FIRM_YEARS.
+NOTE: The PROCEDURE FREQ printed pages 25-26.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+396        
+397        title;
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           7.81 seconds
+      cpu time            8.60 seconds
+      

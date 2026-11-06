@@ -1,0 +1,517 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3124763333/at
+> tempt_02/runtime/20261104T125009715611Z/cell_mishkin_joint.do 
+
+. version 18
+
+. set more off
+
+. 
+. use "data/order_backlog_firm_years/reg.dta", clear
+
+. est clear
+
+. 
+. count if missing(earn_lead, sar, earn_t, bklg)
+  0
+
+. if r(N) != 0 {
+.     display as error "The declared common sample contains missing system inpu
+> ts."
+.     exit 459
+. }
+
+. count
+  24,696
+
+. local commonN = r(N)
+
+. display as text "Common Table 2 sample N = " `commonN'
+Common Table 2 sample N = 24696
+
+. 
+. mlexp (lnnormalden(earn_lead, {omega0=0} + {omega1=0}*earn_t + {omega2=0}*bkl
+> g, exp({lnsige=0})) ///
+>        + lnnormalden(sar, {beta0=0} + {beta1=1}*(earn_lead - {omega0} - {omeg
+> a1star=0}*earn_t - {omega2star=0}*bklg), ///
+>                      exp({lnsigsar=0}))), variables(earn_lead sar earn_t bklg
+> )
+
+Initial:      Log likelihood = -58380.673
+Rescale:      Log likelihood = -58022.024
+Rescale eq:   Log likelihood = -58022.024
+Iteration 0:  Log likelihood = -58022.024  (not concave)
+Iteration 1:  Log likelihood = -37105.196  
+Iteration 2:  Log likelihood = -34216.075  (not concave)
+Iteration 3:  Log likelihood = -33870.542  
+Iteration 4:  Log likelihood = -33841.702  
+Iteration 5:  Log likelihood = -33841.267  
+Iteration 6:  Log likelihood = -33841.266  
+
+Maximum likelihood estimation
+
+Log likelihood = -33841.266                             Number of obs = 24,696
+
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     /omega0 |  -.0198273    .002012    -9.85   0.000    -.0237708   -.0158837
+     /omega1 |   .6847837   .0081865    83.65   0.000     .6687385    .7008289
+     /omega2 |    .014594   .0026645     5.48   0.000     .0093717    .0198164
+     /lnsige |  -1.439331   .0044996  -319.88   0.000     -1.44815   -1.430512
+      /beta0 |   .0134639   .0083097     1.62   0.105    -.0028227    .0297506
+      /beta1 |   .4928803   .0260927    18.89   0.000     .4417395    .5440211
+ /omega1star |   .8282122   .0685284    12.09   0.000     .6938991    .9625253
+ /omega2star |   .0135607   .0221671     0.61   0.541     -.029886    .0570074
+   /lnsigsar |  -.0282327   .0044996    -6.27   0.000    -.0370517   -.0194136
+------------------------------------------------------------------------------
+
+. if e(converged) != 1 {
+.     display as error "Unrestricted independent-error Gaussian likelihood did 
+> not converge."
+.     exit 498
+. }
+
+. estimates store unrestricted
+
+. local fitN = e(N)
+
+. if `fitN' != `commonN' {
+.     display as error "Unrestricted likelihood changed the common sample."
+.     exit 459
+. }
+
+. scalar ll_unrestricted = e(ll)
+
+. 
+. mlexp (lnnormalden(earn_lead, {omega0=0} + {omega1=0}*earn_t + {omega2=0}*bkl
+> g, exp({lnsige=0})) ///
+>        + lnnormalden(sar, {beta0=0} + {beta1=1}*(earn_lead - {omega0} - {omeg
+> a1}*earn_t - {omega2star=0}*bklg), ///
+>                      exp({lnsigsar=0}))), variables(earn_lead sar earn_t bklg
+> )
+
+Initial:      Log likelihood = -58380.673
+Rescale:      Log likelihood = -58022.024
+Rescale eq:   Log likelihood = -58022.024
+Iteration 0:  Log likelihood = -58022.024  
+Iteration 1:  Log likelihood = -51586.315  (not concave)
+Iteration 2:  Log likelihood = -34094.735  
+Iteration 3:  Log likelihood = -33846.854  
+Iteration 4:  Log likelihood = -33843.452  
+Iteration 5:  Log likelihood = -33843.451  
+
+Maximum likelihood estimation
+
+Log likelihood = -33843.451                             Number of obs = 24,696
+
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     /omega0 |  -.0198175    .002012    -9.85   0.000     -.023761   -.0158739
+     /omega1 |   .6868264   .0081287    84.49   0.000     .6708945    .7027584
+     /omega2 |   .0145498   .0026644     5.46   0.000     .0093276     .019772
+     /lnsige |   -1.43933   .0044996  -319.88   0.000    -1.448149   -1.430511
+      /beta0 |   .0138028   .0083088     1.66   0.097    -.0024822    .0300878
+      /beta1 |    .492966   .0260971    18.89   0.000     .4418166    .5441154
+ /omega2star |   .0166217   .0221169     0.75   0.452    -.0267267    .0599702
+   /lnsigsar |  -.0281454   .0044996    -6.26   0.000    -.0369644   -.0193264
+------------------------------------------------------------------------------
+
+. if e(converged) != 1 {
+.     display as error "The omega1 efficiency restriction did not converge."
+.     exit 498
+. }
+
+. estimates store constrained_omega1
+
+. if e(N) != `commonN' {
+.     display as error "The omega1 restriction changed the common sample."
+.     exit 459
+. }
+
+. lrtest unrestricted constrained_omega1, df(1)
+
+Likelihood-ratio test
+Assumption: constrained_~1 nested within unrestricted
+
+ LR chi2(1) =   4.37
+Prob > chi2 = 0.0366
+
+. scalar LR_omega1 = r(chi2)
+
+. scalar p_omega1 = r(p)
+
+. 
+. mlexp (lnnormalden(earn_lead, {omega0=0} + {omega1=0}*earn_t + {omega2=0}*bkl
+> g, exp({lnsige=0})) ///
+>        + lnnormalden(sar, {beta0=0} + {beta1=1}*(earn_lead - {omega0} - {omeg
+> a1star=0}*earn_t - {omega2}*bklg), ///
+>                      exp({lnsigsar=0}))), variables(earn_lead sar earn_t bklg
+> )
+
+Initial:      Log likelihood = -58380.673
+Rescale:      Log likelihood = -58022.024
+Rescale eq:   Log likelihood = -58022.024
+Iteration 0:  Log likelihood = -58022.024  (not concave)
+Iteration 1:  Log likelihood = -37105.199  
+Iteration 2:  Log likelihood = -34225.746  (not concave)
+Iteration 3:  Log likelihood = -33864.806  
+Iteration 4:  Log likelihood = -33841.417  
+Iteration 5:  Log likelihood = -33841.267  
+Iteration 6:  Log likelihood = -33841.267  
+
+Maximum likelihood estimation
+
+Log likelihood = -33841.267                             Number of obs = 24,696
+
+------------------------------------------------------------------------------
+             | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     /omega0 |  -.0198199   .0020058    -9.88   0.000    -.0237511   -.0158887
+     /omega1 |   .6847867   .0081862    83.65   0.000      .668742    .7008314
+     /omega2 |   .0145793   .0026455     5.51   0.000     .0093943    .0197643
+     /lnsige |  -1.439331   .0044996  -319.88   0.000     -1.44815   -1.430512
+      /beta0 |   .0137183   .0062341     2.20   0.028     .0014997    .0259369
+      /beta1 |     .49288   .0260927    18.89   0.000     .4417392    .5440207
+ /omega1star |   .8280002   .0683792    12.11   0.000     .6939795     .962021
+   /lnsigsar |  -.0282326   .0044996    -6.27   0.000    -.0370516   -.0194136
+------------------------------------------------------------------------------
+
+. if e(converged) != 1 {
+.     display as error "The omega2 efficiency restriction did not converge."
+.     exit 498
+. }
+
+. estimates store constrained_omega2
+
+. if e(N) != `commonN' {
+.     display as error "The omega2 restriction changed the common sample."
+.     exit 459
+. }
+
+. lrtest unrestricted constrained_omega2, df(1)
+
+Likelihood-ratio test
+Assumption: constrained_~2 nested within unrestricted
+
+ LR chi2(1) =   0.00
+Prob > chi2 = 0.9631
+
+. scalar LR_omega2 = r(chi2)
+
+. scalar p_omega2 = r(p)
+
+. 
+. display as text "Independent-error conditional Gaussian likelihoods: unrestri
+> cted=" %12.3f scalar(ll_unrestricted)
+Independent-error conditional Gaussian likelihoods: unrestricted=  -33841.266
+
+. 
+. display as text "Native likelihood-ratio restrictions each have one degree of
+>  freedom."
+Native likelihood-ratio restrictions each have one degree of freedom.
+
+. 
+. regress earn_lead earn_t bklg
+
+      Source |       SS           df       MS      Number of obs   =    24,696
+-------------+----------------------------------   F(2, 24693)     =   3559.33
+       Model |  400.188525         2  200.094263   Prob > F        =    0.0000
+    Residual |  1388.16078    24,693  .056216773   R-squared       =    0.2238
+-------------+----------------------------------   Adj R-squared   =    0.2237
+       Total |  1788.34931    24,695  .072417465   Root MSE        =     .2371
+
+------------------------------------------------------------------------------
+   earn_lead | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      earn_t |   .6847837    .008187    83.64   0.000     .6687368    .7008307
+        bklg |   .0145941   .0026647     5.48   0.000     .0093711     .019817
+       _cons |  -.0198273   .0020122    -9.85   0.000    -.0237712   -.0158833
+------------------------------------------------------------------------------
+
+. scalar ols_omega0 = _b[_cons]
+
+. scalar ols_omega1 = _b[earn_t]
+
+. scalar ols_omega2 = _b[bklg]
+
+. scalar ols_sigma_forecast = sqrt(e(rss)/e(N))
+
+. 
+. regress sar earn_lead earn_t bklg
+
+      Source |       SS           df       MS      Number of obs   =    24,696
+-------------+----------------------------------   F(3, 24692)     =    120.40
+       Model |  341.426326         3  113.808775   Prob > F        =    0.0000
+    Residual |   23340.173    24,692  .945252429   R-squared       =    0.0144
+-------------+----------------------------------   Adj R-squared   =    0.0143
+       Total |  23681.5993    24,695  .958963324   Root MSE        =    .97224
+
+------------------------------------------------------------------------------
+         sar | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   earn_lead |   .4928799   .0260948    18.89   0.000     .4417325    .5440273
+      earn_t |  -.4082073   .0380306   -10.73   0.000    -.4827495   -.3336651
+        bklg |  -.0066833   .0109332    -0.61   0.541    -.0281131    .0147464
+       _cons |   .0232363   .0082671     2.81   0.005     .0070322    .0394404
+------------------------------------------------------------------------------
+
+. scalar ols_reduced_intercept = _b[_cons]
+
+. scalar ols_beta1 = _b[earn_lead]
+
+. if abs(scalar(ols_beta1)) < 1e-10 {
+.     display as error "Conditional return coefficient is zero; structural repa
+> rameterization is undefined."
+.     exit 459
+. }
+
+. scalar ols_omega1star = -_b[earn_t]/_b[earn_lead]
+
+. scalar ols_omega2star = -_b[bklg]/_b[earn_lead]
+
+. scalar ols_beta0 = _b[_cons] + _b[earn_lead]*scalar(ols_omega0)
+
+. scalar ols_sigma_return = sqrt(e(rss)/e(N))
+
+. 
+. estimates restore unrestricted
+(results unrestricted are active now)
+
+. scalar gap_omega0 = _b[/omega0] - scalar(ols_omega0)
+
+. scalar gap_omega1 = _b[/omega1] - scalar(ols_omega1)
+
+. scalar gap_omega2 = _b[/omega2] - scalar(ols_omega2)
+
+. scalar gap_beta0 = _b[/beta0] - scalar(ols_beta0)
+
+. scalar gap_beta1 = _b[/beta1] - scalar(ols_beta1)
+
+. scalar gap_omega1star = _b[/omega1star] - scalar(ols_omega1star)
+
+. scalar gap_omega2star = _b[/omega2star] - scalar(ols_omega2star)
+
+. scalar gap_sigma_forecast = exp(_b[/lnsige]) - scalar(ols_sigma_forecast)
+
+. scalar gap_sigma_return = exp(_b[/lnsigsar]) - scalar(ols_sigma_return)
+
+. scalar gap_abs = max(abs(scalar(gap_omega0)), abs(scalar(gap_omega1)), abs(sc
+> alar(gap_omega2)), ///
+>     abs(scalar(gap_beta0)), abs(scalar(gap_beta1)), abs(scalar(gap_omega1star
+> )), ///
+>     abs(scalar(gap_omega2star)), abs(scalar(gap_sigma_forecast)), abs(scalar(
+> gap_sigma_return)))
+
+. scalar gap_rel = max(abs(scalar(gap_omega0))/(1+abs(scalar(ols_omega0))), ///
+>     abs(scalar(gap_omega1))/(1+abs(scalar(ols_omega1))), ///
+>     abs(scalar(gap_omega2))/(1+abs(scalar(ols_omega2))), ///
+>     abs(scalar(gap_beta0))/(1+abs(scalar(ols_beta0))), ///
+>     abs(scalar(gap_beta1))/(1+abs(scalar(ols_beta1))), ///
+>     abs(scalar(gap_omega1star))/(1+abs(scalar(ols_omega1star))), ///
+>     abs(scalar(gap_omega2star))/(1+abs(scalar(ols_omega2star))), ///
+>     abs(scalar(gap_sigma_forecast))/(1+abs(scalar(ols_sigma_forecast))), ///
+>     abs(scalar(gap_sigma_return))/(1+abs(scalar(ols_sigma_return))))
+
+. display as text "Unrestricted structural-to-OLS mapping: max absolute gap = "
+>  %12.8g scalar(gap_abs) ///
+>     "; max scale-relative gap = " %12.8g scalar(gap_rel)
+Unrestricted structural-to-OLS mapping: max absolute gap =  3.83196e-06; max sc
+> ale-relative gap =  2.09602e-06
+
+. display as text "Estimated positive error SDs: forecast=" %10.6g exp(_b[/lnsi
+> ge]) ///
+>     " return=" %10.6g exp(_b[/lnsigsar])
+Estimated positive error SDs: forecast=   .237086 return=   .972162
+
+. 
+. estadd scalar LR_omega1 = scalar(LR_omega1)
+
+added scalar:
+          e(LR_omega1) =  4.3712241
+
+. estadd scalar p_omega1 = scalar(p_omega1)
+
+added scalar:
+           e(p_omega1) =  .03655073
+
+. estadd scalar LR_omega2 = scalar(LR_omega2)
+
+added scalar:
+          e(LR_omega2) =  .00214594
+
+. estadd scalar p_omega2 = scalar(p_omega2)
+
+added scalar:
+           e(p_omega2) =  .96305177
+
+. estadd scalar sigma_forecast = exp(_b[/lnsige])
+
+added scalar:
+     e(sigma_forecast) =  .23708637
+
+. estadd scalar sigma_return = exp(_b[/lnsigsar])
+
+added scalar:
+       e(sigma_return) =  .97216216
+
+. est store m_table2
+
+. 
+. esttab m_table2 using "tables/table2_forecasting_equation.md", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(omega0:_cons omega1:_cons omega2:_cons) ///
+>     coeflabels(omega0:_cons "omega0 (shared intercept)" omega1:_cons "omega1"
+>  omega2:_cons "omega2 (order backlog)") ///
+>     stats(N ll LR_omega1 p_omega1 LR_omega2 p_omega2 sigma_forecast sigma_ret
+> urn, ///
+>     labels("N" "Log likelihood" "LR: omega1 = omega1*" "p-value" ///
+>            "LR: omega2 = omega2*" "p-value" "Forecast error SD" "Return error
+>  SD") ///
+>     fmt(0 3 2 4 2 4 3 3)) eqlabels(none) replace label
+(file tables/table2_forecasting_equation.md not found)
+(output written to tables/table2_forecasting_equation.md)
+
+. esttab m_table2 using "tables/table2_forecasting_equation.rtf", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(omega0:_cons omega1:_cons omega2:_cons) ///
+>     coeflabels(omega0:_cons "omega0 (shared intercept)" omega1:_cons "omega1"
+>  omega2:_cons "omega2 (order backlog)") ///
+>     stats(N ll LR_omega1 p_omega1 LR_omega2 p_omega2 sigma_forecast sigma_ret
+> urn, ///
+>     labels("N" "Log likelihood" "LR: omega1 = omega1*" "p-value" ///
+>            "LR: omega2 = omega2*" "p-value" "Forecast error SD" "Return error
+>  SD") ///
+>     fmt(0 3 2 4 2 4 3 3)) eqlabels(none) replace label
+(file tables/table2_forecasting_equation.rtf not found)
+(output written to tables/table2_forecasting_equation.rtf)
+
+. esttab m_table2 using "tables/table2_forecasting_equation.csv", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(omega0:_cons omega1:_cons omega2:_cons) ///
+>     coeflabels(omega0:_cons "omega0 (shared intercept)" omega1:_cons "omega1"
+>  omega2:_cons "omega2 (order backlog)") ///
+>     stats(N ll LR_omega1 p_omega1 LR_omega2 p_omega2 sigma_forecast sigma_ret
+> urn, ///
+>     labels("N" "Log likelihood" "LR: omega1 = omega1*" "p-value" ///
+>            "LR: omega2 = omega2*" "p-value" "Forecast error SD" "Return error
+>  SD") ///
+>     fmt(0 3 2 4 2 4 3 3)) eqlabels(none) replace label
+(file tables/table2_forecasting_equation.csv not found)
+(output written to tables/table2_forecasting_equation.csv)
+
+. esttab m_table2 using "tables/table2_forecasting_equation.tex", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(omega0:_cons omega1:_cons omega2:_cons) ///
+>     coeflabels(omega0:_cons "omega0 (shared intercept)" omega1:_cons "omega1"
+>  omega2:_cons "omega2 (order backlog)") ///
+>     stats(N ll LR_omega1 p_omega1 LR_omega2 p_omega2 sigma_forecast sigma_ret
+> urn, ///
+>     labels("N" "Log likelihood" "LR: omega1 = omega1*" "p-value" ///
+>            "LR: omega2 = omega2*" "p-value" "Forecast error SD" "Return error
+>  SD") ///
+>     fmt(0 3 2 4 2 4 3 3)) eqlabels(none) replace label
+(file tables/table2_forecasting_equation.tex not found)
+(output written to tables/table2_forecasting_equation.tex)
+
+. 
+. esttab m_table2 using "tables/table2_returns_equation.md", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(omega0:_cons omega1star:_cons omega2star:_cons beta0:_cons beta1:_co
+> ns) ///
+>     coeflabels(omega0:_cons "omega0 (shared intercept)" omega1star:_cons "ome
+> ga1*" ///
+>                omega2star:_cons "omega2* (order backlog)" beta0:_cons "beta0"
+>  beta1:_cons "beta1") ///
+>     stats(N ll LR_omega1 p_omega1 LR_omega2 p_omega2 sigma_forecast sigma_ret
+> urn, ///
+>     labels("N" "Log likelihood" "LR: omega1 = omega1*" "p-value" ///
+>            "LR: omega2 = omega2*" "p-value" "Forecast error SD" "Return error
+>  SD") ///
+>     fmt(0 3 2 4 2 4 3 3)) eqlabels(none) replace label
+(file tables/table2_returns_equation.md not found)
+(output written to tables/table2_returns_equation.md)
+
+. esttab m_table2 using "tables/table2_returns_equation.rtf", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(omega0:_cons omega1star:_cons omega2star:_cons beta0:_cons beta1:_co
+> ns) ///
+>     coeflabels(omega0:_cons "omega0 (shared intercept)" omega1star:_cons "ome
+> ga1*" ///
+>                omega2star:_cons "omega2* (order backlog)" beta0:_cons "beta0"
+>  beta1:_cons "beta1") ///
+>     stats(N ll LR_omega1 p_omega1 LR_omega2 p_omega2 sigma_forecast sigma_ret
+> urn, ///
+>     labels("N" "Log likelihood" "LR: omega1 = omega1*" "p-value" ///
+>            "LR: omega2 = omega2*" "p-value" "Forecast error SD" "Return error
+>  SD") ///
+>     fmt(0 3 2 4 2 4 3 3)) eqlabels(none) replace label
+(file tables/table2_returns_equation.rtf not found)
+(output written to tables/table2_returns_equation.rtf)
+
+. esttab m_table2 using "tables/table2_returns_equation.csv", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(omega0:_cons omega1star:_cons omega2star:_cons beta0:_cons beta1:_co
+> ns) ///
+>     coeflabels(omega0:_cons "omega0 (shared intercept)" omega1star:_cons "ome
+> ga1*" ///
+>                omega2star:_cons "omega2* (order backlog)" beta0:_cons "beta0"
+>  beta1:_cons "beta1") ///
+>     stats(N ll LR_omega1 p_omega1 LR_omega2 p_omega2 sigma_forecast sigma_ret
+> urn, ///
+>     labels("N" "Log likelihood" "LR: omega1 = omega1*" "p-value" ///
+>            "LR: omega2 = omega2*" "p-value" "Forecast error SD" "Return error
+>  SD") ///
+>     fmt(0 3 2 4 2 4 3 3)) eqlabels(none) replace label
+(file tables/table2_returns_equation.csv not found)
+(output written to tables/table2_returns_equation.csv)
+
+. esttab m_table2 using "tables/table2_returns_equation.tex", ///
+>     cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) ///
+>     keep(omega0:_cons omega1star:_cons omega2star:_cons beta0:_cons beta1:_co
+> ns) ///
+>     coeflabels(omega0:_cons "omega0 (shared intercept)" omega1star:_cons "ome
+> ga1*" ///
+>                omega2star:_cons "omega2* (order backlog)" beta0:_cons "beta0"
+>  beta1:_cons "beta1") ///
+>     stats(N ll LR_omega1 p_omega1 LR_omega2 p_omega2 sigma_forecast sigma_ret
+> urn, ///
+>     labels("N" "Log likelihood" "LR: omega1 = omega1*" "p-value" ///
+>            "LR: omega2 = omega2*" "p-value" "Forecast error SD" "Return error
+>  SD") ///
+>     fmt(0 3 2 4 2 4 3 3)) eqlabels(none) replace label
+(file tables/table2_returns_equation.tex not found)
+(output written to tables/table2_returns_equation.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

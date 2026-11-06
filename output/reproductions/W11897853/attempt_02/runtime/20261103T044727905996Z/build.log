@@ -1,0 +1,1859 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend;
+2          options validvarname=any;
+                   ____________
+                   36
+WARNING 36-12: SAS option VALIDVARNAME is restricted by your Site Administrator and cannot be updated.
+
+3          
+4          libname comp ("/storage/sas/base/comp/d_na"
+5                        "/storage/sas/base/comp/d_na/security"
+6                        "/storage/sas/base/comp/d_global/currency") access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Levels:           3
+      Engine(1):        V9 
+      Physical Name(1): /storage/sas/base/comp/d_na
+      Engine(2):        V9 
+      Physical Name(2): /storage/sas/base/comp/d_na/security
+      Engine(3):        V9 
+      Physical Name(3): /storage/sas/base/comp/d_global/currency
+7          libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W11897853/attempt_02/data
+8          
+9          %let first_fy=1968;
+10         %let last_fy=1997;
+11         
+12         data work.core_all;
+13             set comp.funda(where=(fyear >= &first_fy and fyear <= &last_fy and
+14                                  indfmt='INDL' and datafmt='STD' and
+15                                  consol='C' and popsrc='D'));
+16             keep gvkey datadate fyear fyr pddur indfmt datafmt consol popsrc
+17                  conm tic fic
+18                  curcd curncd iid hiid ajex cshpri csho prcc_f
+19                  act lct at re ebit sale lt pstk
+20                  capx xrd xad dp seq ppent dltt dlc epspx;
+21         run;
+
+3                                                          The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+NOTE: There were 241550 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1968 and fyear<=1997) and (indfmt='INDL') and (datafmt='STD') and (consol='C') and (popsrc='D');
+NOTE: The data set WORK.CORE_ALL has 241550 observations and 37 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.57 seconds
+      cpu time            0.59 seconds
+      
+
+22         
+23         proc sql;
+24             create table work.dup_funda as
+25             select gvkey, fyear, count(*) as n_rows
+26             from work.core_all
+27             group by gvkey, fyear
+28             having count(*) > 1;
+NOTE: Table WORK.DUP_FUNDA created, with 2 rows and 3 columns.
+
+29             select count(*) into :n_dup_funda trimmed from work.dup_funda;
+30         quit;
+NOTE: The PROCEDURE SQL printed page 1.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.09 seconds
+      
+
+31         
+32         %put NOTE: FUNDA duplicate GVKEY/FYEAR keys under source filters = &n_dup_funda.;
+NOTE: FUNDA duplicate GVKEY/FYEAR keys under source filters = 2
+33         proc sql;
+34             create table work.duplicate_funda_rows as
+35             select a.gvkey, a.fyear, a.datadate, a.fyr, a.pddur, a.conm, a.tic,
+36                    a.fic, a.iid, a.hiid, a.curcd, a.curncd, a.ajex, a.cshpri, a.csho,
+37                    a.prcc_f, a.at, a.seq, a.ppent, a.dltt, a.dlc, a.capx, a.xrd, a.xad
+38             from work.core_all as a inner join work.dup_funda as b
+39               on a.gvkey=b.gvkey and a.fyear=b.fyear
+40             order by a.gvkey, a.fyear, a.datadate;
+NOTE: Table WORK.DUPLICATE_FUNDA_ROWS created, with 4 rows and 24 columns.
+
+41         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+42         proc print data=work.duplicate_funda_rows noobs;
+43             format datadate yymmdd10.;
+44         run;
+
+NOTE: There were 4 observations read from the data set WORK.DUPLICATE_FUNDA_ROWS.
+NOTE: The PROCEDURE PRINT printed page 2.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+45         
+46         data work.core_rank;
+47             set work.core_all;
+4                                                          The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+48             core_quality=n(of act lct at re ebit sale lt capx xrd xad dp seq ppent
+49                              dltt dlc epspx cshpri csho);
+50         run;
+
+NOTE: There were 241550 observations read from the data set WORK.CORE_ALL.
+NOTE: The data set WORK.CORE_RANK has 241550 observations and 38 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+51         
+52         proc sql;
+53             create table work.duplicate_best as
+54             select a.gvkey, a.fyear, a.core_quality
+55             from work.core_rank as a
+56             inner join
+57                 (select gvkey, fyear, max(core_quality) as max_quality
+58                  from work.core_rank group by gvkey, fyear) as b
+59               on a.gvkey=b.gvkey and a.fyear=b.fyear and a.core_quality=b.max_quality
+60             inner join work.dup_funda as d
+61               on a.gvkey=d.gvkey and a.fyear=d.fyear;
+NOTE: Table WORK.DUPLICATE_BEST created, with 2 rows and 3 columns.
+
+62             create table work.duplicate_quality_ties as
+63             select gvkey, fyear, count(*) as n_best
+64             from work.duplicate_best
+65             group by gvkey, fyear
+66             having count(*) > 1;
+NOTE: Table WORK.DUPLICATE_QUALITY_TIES created, with 0 rows and 3 columns.
+
+67             select count(*) into :n_duplicate_quality_ties trimmed
+68             from work.duplicate_quality_ties;
+69         quit;
+NOTE: The PROCEDURE SQL printed page 3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.15 seconds
+      cpu time            0.19 seconds
+      
+
+70         
+71         %put NOTE: Duplicate keys with tied maximum financial completeness = &n_duplicate_quality_ties.;
+NOTE: Duplicate keys with tied maximum financial completeness = 0
+72         %macro stop_quality_ties;
+73             %if %sysevalf(&n_duplicate_quality_ties > 0) %then %do;
+74                 %put ERROR: Duplicate Compustat keys have tied financial-record completeness.;
+75                 %abort cancel;
+76             %end;
+77         %mend;
+78         %stop_quality_ties;
+79         
+80         proc sort data=work.core_rank out=work.core_rank_sort;
+81             by gvkey fyear descending core_quality descending datadate;
+82         run;
+
+NOTE: There were 241550 observations read from the data set WORK.CORE_RANK.
+NOTE: The data set WORK.CORE_RANK_SORT has 241550 observations and 38 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+5                                                          The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+      real time           0.12 seconds
+      cpu time            0.12 seconds
+      
+
+83         data work.core_unique;
+84             set work.core_rank_sort;
+85             by gvkey fyear;
+86             if first.fyear;
+87         run;
+
+NOTE: There were 241550 observations read from the data set WORK.CORE_RANK_SORT.
+NOTE: The data set WORK.CORE_UNIQUE has 241548 observations and 38 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.08 seconds
+      
+
+88         proc sql;
+89             select count(*) as selected_annual_rows,
+90                    count(distinct gvkey) as selected_firms,
+91                    count(*)-count(distinct cats(gvkey,'|',put(fyear,4.))) as duplicate_selected_keys
+92             from work.core_unique;
+93         quit;
+NOTE: The PROCEDURE SQL printed page 4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.13 seconds
+      
+
+94         
+95         proc sql;
+96             select count(*) as core_rows,
+97                    count(distinct gvkey) as core_firms,
+98                    min(fyear) as first_fyear,
+99                    max(fyear) as last_fyear,
+100                   min(datadate) format=yymmdd10. as first_datadate,
+101                   max(datadate) format=yymmdd10. as last_datadate
+102            from work.core_unique;
+103        quit;
+NOTE: The PROCEDURE SQL printed page 5.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+104        
+105        proc freq data=work.core_unique;
+106            tables curcd*curncd / missing;
+107        run;
+
+NOTE: There were 241548 observations read from the data set WORK.CORE_UNIQUE.
+NOTE: The PROCEDURE FREQ printed pages 6-7.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+108        
+6                                                          The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+109        data work.fx_dly_sum;
+110            set comp.g_exrt_dly(where=(datadate >= '01JAN1968'd and
+111                                        datadate <= '31MAY1998'd));
+112            keep fromcurd tocurd datadate exratd exrattpd;
+113        run;
+
+NOTE: There were 515289 observations read from the data set COMP.G_EXRT_DLY.
+      WHERE (datadate>='01JAN1968'D and datadate<='31MAY1998'D);
+NOTE: The data set WORK.FX_DLY_SUM has 515289 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+114        
+115        proc sql;
+116            create table work.fx_dly_a as
+117            select fromcurd, tocurd, datadate,
+118                   count(*) as n_rows,
+119                   count(exratd) as n_rate,
+120                   min(exratd) as rate_min,
+121                   max(exratd) as rate_max,
+122                   min(exrattpd) as type_min length=3,
+123                   max(exrattpd) as type_max length=3
+124            from work.fx_dly_sum
+125            group by fromcurd, tocurd, datadate;
+NOTE: Table WORK.FX_DLY_A created, with 515289 rows and 9 columns.
+
+126        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.24 seconds
+      
+
+127        
+128        data work.fx_dly;
+129            set work.fx_dly_a;
+130            length rate_type $3;
+131            fx_rate=.;
+132            if n_rate > 0 and rate_min > 0 and rate_min=rate_max then fx_rate=rate_min;
+133            if type_min=type_max then rate_type=type_min;
+134            else rate_type='MX';
+135            keep fromcurd tocurd datadate fx_rate rate_type n_rows n_rate;
+136        run;
+
+NOTE: There were 515289 observations read from the data set WORK.FX_DLY_A.
+NOTE: The data set WORK.FX_DLY has 515289 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+137        
+138        data work.fx_mth_raw;
+139            set comp.g_exrt_mth(where=(datadate >= '01JAN1968'd and
+140                                        datadate <= '31MAY1998'd));
+141            keep fromcurm tocurm datadate exrat12m;
+142        run;
+7                                                          The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+
+NOTE: There were 18632 observations read from the data set COMP.G_EXRT_MTH.
+      WHERE (datadate>='01JAN1968'D and datadate<='31MAY1998'D);
+NOTE: The data set WORK.FX_MTH_RAW has 18632 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+143        
+144        proc sql;
+145            create table work.fx_mth_a as
+146            select fromcurm, tocurm, datadate,
+147                   count(*) as n_rows,
+148                   count(exrat12m) as n_rate,
+149                   min(exrat12m) as rate_min,
+150                   max(exrat12m) as rate_max
+151            from work.fx_mth_raw
+152            group by fromcurm, tocurm, datadate;
+NOTE: Table WORK.FX_MTH_A created, with 18632 rows and 7 columns.
+
+153        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+154        
+155        data work.fx_mth;
+156            set work.fx_mth_a;
+157            fx_rate=.;
+158            if n_rate > 0 and rate_min > 0 and rate_min=rate_max then fx_rate=rate_min;
+159            keep fromcurm tocurm datadate fx_rate n_rows n_rate;
+160        run;
+
+NOTE: There were 18632 observations read from the data set WORK.FX_MTH_A.
+NOTE: The data set WORK.FX_MTH has 18632 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+161        
+162        data work.sec_desc_raw;
+163            set comp.sec_mth(where=(datadate >= '01JAN1968'd and
+164                                    datadate <= '31MAY1998'd));
+165            keep gvkey iid datadate primiss;
+166        run;
+
+NOTE: There were 2409393 observations read from the data set COMP.SEC_MTH.
+      WHERE (datadate>='01JAN1968'D and datadate<='31MAY1998'D);
+NOTE: The data set WORK.SEC_DESC_RAW has 2409393 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.27 seconds
+      
+
+167        
+8                                                          The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+168        data work.sec_px_raw;
+169            set comp.sec_mthprc(where=(datadate >= '01JAN1968'd and
+170                                       datadate <= '31MAY1998'd));
+171            keep gvkey iid datadate curcdm prccm;
+172        run;
+
+NOTE: There were 2348698 observations read from the data set COMP.SEC_MTHPRC.
+      WHERE (datadate>='01JAN1968'D and datadate<='31MAY1998'D);
+NOTE: The data set WORK.SEC_PX_RAW has 2348698 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.27 seconds
+      cpu time            0.27 seconds
+      
+
+173        
+174        proc sql noprint;
+175            select count(*) into :n_sec_desc_dups trimmed
+176            from (select gvkey,iid,datadate,count(*) as n
+177                  from work.sec_desc_raw group by gvkey,iid,datadate
+178                  having calculated n > 1);
+179            select count(*) into :n_sec_px_dups trimmed
+180            from (select gvkey,iid,datadate,count(*) as n
+181                  from work.sec_px_raw group by gvkey,iid,datadate
+182                  having calculated n > 1);
+183        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.62 seconds
+      cpu time            1.22 seconds
+      
+
+184        %put NOTE: Duplicate COMP.SEC_MTH issue-date keys = &n_sec_desc_dups.;
+NOTE: Duplicate COMP.SEC_MTH issue-date keys = 0
+185        %put NOTE: Duplicate COMP.SEC_MTHPRC issue-date keys = &n_sec_px_dups.;
+NOTE: Duplicate COMP.SEC_MTHPRC issue-date keys = 0
+186        %macro stop_sec_dups;
+187            %if %sysevalf((&n_sec_desc_dups > 0) or (&n_sec_px_dups > 0)) %then %do;
+188                %put ERROR: Duplicate Compustat security issue-date keys require review.;
+189                %abort cancel;
+190            %end;
+191        %mend;
+192        %stop_sec_dups;
+193        
+194        proc sql;
+195            create table work.sec_issue_price as
+196            select p.gvkey, p.iid, p.datadate, d.primiss, p.curcdm, p.prccm
+197            from work.sec_px_raw as p
+198            left join work.sec_desc_raw as d
+199              on p.gvkey=d.gvkey and p.iid=d.iid and p.datadate=d.datadate;
+NOTE: Table WORK.SEC_ISSUE_PRICE created, with 2348698 rows and 6 columns.
+
+200        
+201            create table work.sec_primary_count as
+202            select gvkey, datadate, count(*) as p_count, min(iid) as p_iid length=4
+203            from work.sec_desc_raw
+204            where strip(upcase(primiss))='P'
+205            group by gvkey, datadate;
+NOTE: Table WORK.SEC_PRIMARY_COUNT created, with 2324399 rows and 4 columns.
+
+9                                                          The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+206        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.56 seconds
+      cpu time            2.43 seconds
+      
+
+207        
+208        /* Match each annual price to its full historic issue at the exact fiscal
+209           date. A unique dated primary issue is a fallback only when HIID is absent. */
+210        proc sql;
+211            create table work.price_evidence as
+212            select a.gvkey, a.fyear, a.datadate, a.iid as header_iid,
+213                   a.hiid, a.prcc_f,
+214                   h.primiss as hiid_primiss,
+215                   h.curcdm as hiid_quote_cur,
+216                   h.prccm as hiid_quote_px,
+217                   c.p_count, c.p_iid,
+218                   p.primiss as p_primiss,
+219                   p.curcdm as p_quote_cur,
+220                   p.prccm as p_quote_px
+221            from work.core_unique as a
+222            left join work.sec_issue_price as h
+223              on not missing(a.hiid) and a.gvkey=h.gvkey and a.datadate=h.datadate and
+224                 strip(a.hiid)=strip(h.iid)
+225            left join work.sec_primary_count as c
+226              on a.gvkey=c.gvkey and a.datadate=c.datadate
+227            left join work.sec_issue_price as p
+228              on c.p_count=1 and a.gvkey=p.gvkey and a.datadate=p.datadate and
+229                 c.p_iid=p.iid
+230            where a.fyear between &first_fy and &last_fy;
+NOTE: Table WORK.PRICE_EVIDENCE created, with 241548 rows and 14 columns.
+
+231        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.90 seconds
+      cpu time            1.60 seconds
+      
+
+232        
+233        data work.price_routes;
+234            set work.price_evidence;
+235            length quote_cur $4 price_route $32 price_issue $21
+236                   hiid_marker $2;
+237            quote_cur=''; price_route='NO_SUPPORTED_ROUTE'; price_issue='';
+238            quote_px=.; price_abs_diff=.; hiid_marker=strip(upcase(hiid_primiss));
+239            annual_price_ok=0; hiid_p_count=.;
+240            if not missing(p_count) then hiid_p_count=p_count;
+241        
+242            /* SEC_MTHPRC stores four decimals. Do not test both AJEX directions. */
+243            if not missing(hiid) then do;
+244                if hiid_marker='J' or (hiid_marker ne '' and hiid_marker ne 'P') then
+245                    price_route='HIID_EXPLICIT_NONP';
+246                else if not missing(hiid_quote_px) and hiid_quote_px>0 and
+247                        hiid_quote_cur ne '' then do;
+248                    price_abs_diff=abs(prcc_f-hiid_quote_px);
+249                    if not missing(prcc_f) and prcc_f>0 and
+250                       price_abs_diff <= 0.00005 then do;
+251                        quote_cur=hiid_quote_cur;
+10                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+252                        quote_px=hiid_quote_px;
+253                        price_issue=strip(hiid);
+254                        annual_price_ok=1;
+255                        if hiid_marker='P' then price_route='HIID_DATED_P';
+256                        else price_route='HIID_NO_MARKER';
+257                    end;
+258                    else price_route='HIID_PRICE_MISMATCH';
+259                end;
+260                else price_route='HIID_NO_DATED_QUOTE';
+261            end;
+262            else if p_count=1 then do;
+263                if strip(upcase(p_primiss))='P' and p_quote_cur ne '' and
+264                   not missing(p_quote_px) and p_quote_px>0 then do;
+265                    price_abs_diff=abs(prcc_f-p_quote_px);
+266                    if not missing(prcc_f) and prcc_f>0 and
+267                       price_abs_diff <= 0.00005 then do;
+268                        quote_cur=p_quote_cur;
+269                        quote_px=p_quote_px;
+270                        price_issue=strip(p_iid);
+271                        annual_price_ok=1;
+272                        price_route='UNIQUE_DATED_P';
+273                    end;
+274                    else price_route='UNIQUE_P_PRICE_MISMATCH';
+275                end;
+276                else price_route='UNIQUE_P_NO_QUOTE';
+277            end;
+278            else if p_count > 1 then price_route='MULTIPLE_DATED_P';
+279            else if missing(hiid) then price_route='NO_HIID_NO_DATED_P';
+280        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      69 at 248:28   69 at 248:38   9 at 265:28    9 at 265:38    
+NOTE: There were 241548 observations read from the data set WORK.PRICE_EVIDENCE.
+NOTE: The data set WORK.PRICE_ROUTES has 241548 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+281        
+282        proc freq data=work.price_routes;
+283            tables price_route*annual_price_ok / missing;
+284        run;
+
+NOTE: There were 241548 observations read from the data set WORK.PRICE_ROUTES.
+NOTE: The PROCEDURE FREQ printed page 8.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+285        
+286        proc sql;
+287            create table work.annual_join as
+288            select a.*, s.annual_price_ok, s.price_route, s.price_issue,
+289                   s.quote_cur, s.quote_px, s.price_abs_diff, s.hiid_p_count,
+290                   s.hiid_primiss,
+11                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+291                   d1.fx_rate as gbp_cur_spot,
+292                   d1.rate_type as gbp_cur_spot_type,
+293                   d2.fx_rate as gbp_usd_spot,
+294                   d2.rate_type as gbp_usd_spot_type,
+295                   m1.fx_rate as gbp_cur_flow,
+296                   m2.fx_rate as gbp_usd_flow,
+297                   d3.fx_rate as gbp_price_cur_spot,
+298                   d3.rate_type as gbp_price_cur_spot_type,
+299                   d4.fx_rate as gbp_price_usd_spot,
+300                   d4.rate_type as gbp_price_usd_spot_type
+301            from work.core_unique as a
+302            left join work.price_routes as s
+303              on a.gvkey=s.gvkey and a.fyear=s.fyear
+304            left join work.fx_dly as d1
+305              on d1.fromcurd='GBP' and a.curcd=d1.tocurd and a.datadate=d1.datadate
+306            left join work.fx_dly as d2
+307              on d2.fromcurd='GBP' and d2.tocurd='USD' and a.datadate=d2.datadate
+308            left join work.fx_mth as m1
+309              on m1.fromcurm='GBP' and a.curcd=m1.tocurm and
+310                 intnx('month', a.datadate, 0, 'end')=m1.datadate
+311            left join work.fx_mth as m2
+312              on m2.fromcurm='GBP' and m2.tocurm='USD' and
+313                 intnx('month', a.datadate, 0, 'end')=m2.datadate
+314            left join work.fx_dly as d3
+315              on d3.fromcurd='GBP' and s.quote_cur=d3.tocurd and a.datadate=d3.datadate
+316            left join work.fx_dly as d4
+317              on d4.fromcurd='GBP' and d4.tocurd='USD' and a.datadate=d4.datadate
+318            where a.fyear between &first_fy and &last_fy;
+NOTE: Table WORK.ANNUAL_JOIN created, with 241548 rows and 56 columns.
+
+319        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.48 seconds
+      cpu time            2.18 seconds
+      
+
+320        
+321        data work.annual;
+322            set work.annual_join;
+323            length source_cv_stock source_cv_flow price_cv_usd 8;
+324            source_cv_stock=.;
+325            source_cv_flow=.;
+326            price_cv_usd=.;
+327        
+328            /* Xpressfeed's primary/intermediate currency is GBP. CURNCD is not the
+329               FROM currency. Apply the provider's amount/rate formula using CURCD. */
+330            if curcd='USD' then do;
+331                source_cv_stock=1;
+332                source_cv_flow=1;
+333            end;
+334            else if curcd='GBP' then do;
+335                source_cv_stock=gbp_usd_spot;
+336                source_cv_flow=gbp_usd_flow;
+337            end;
+338            else if not missing(curcd) then do;
+339                if gbp_cur_spot>0 and gbp_usd_spot>0 then
+340                    source_cv_stock=gbp_usd_spot/gbp_cur_spot;
+341                if gbp_cur_flow>0 and gbp_usd_flow>0 then
+12                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+342                    source_cv_flow=gbp_usd_flow/gbp_cur_flow;
+343            end;
+344        
+345            if annual_price_ok=1 then do;
+346                if quote_cur='USD' then price_cv_usd=1;
+347                else if quote_cur='GBP' then price_cv_usd=gbp_price_usd_spot;
+348                else if quote_cur ne '' and gbp_price_cur_spot>0 and
+349                        gbp_price_usd_spot>0 then do;
+350                    price_cv_usd=gbp_price_usd_spot/gbp_price_cur_spot;
+351                end;
+352            end;
+353        
+354            if not missing(act) then do;
+355                if act=0 then act_usd=0;
+356                else if source_cv_stock>0 then act_usd=act*source_cv_stock;
+357            end;
+358            if not missing(lct) then do;
+359                if lct=0 then lct_usd=0;
+360                else if source_cv_stock>0 then lct_usd=lct*source_cv_stock;
+361            end;
+362            if not missing(at) then do;
+363                if at=0 then at_usd=0;
+364                else if source_cv_stock>0 then at_usd=at*source_cv_stock;
+365            end;
+366            if not missing(re) then do;
+367                if re=0 then re_usd=0;
+368                else if source_cv_stock>0 then re_usd=re*source_cv_stock;
+369            end;
+370            if not missing(lt) then do;
+371                if lt=0 then lt_usd=0;
+372                else if source_cv_stock>0 then lt_usd=lt*source_cv_stock;
+373            end;
+374            if not missing(seq) then do;
+375                if seq=0 then seq_usd=0;
+376                else if source_cv_stock>0 then seq_usd=seq*source_cv_stock;
+377            end;
+378            if not missing(ppent) then do;
+379                if ppent=0 then ppent_usd=0;
+380                else if source_cv_stock>0 then ppent_usd=ppent*source_cv_stock;
+381            end;
+382            if not missing(dltt) then do;
+383                if dltt=0 then dltt_usd=0;
+384                else if source_cv_stock>0 then dltt_usd=dltt*source_cv_stock;
+385            end;
+386            if not missing(dlc) then do;
+387                if dlc=0 then dlc_usd=0;
+388                else if source_cv_stock>0 then dlc_usd=dlc*source_cv_stock;
+389            end;
+390        
+391            if not missing(ebit) then do;
+392                if ebit=0 then ebit_usd=0;
+393                else if source_cv_flow>0 then ebit_usd=ebit*source_cv_flow;
+394            end;
+395            if not missing(sale) then do;
+396                if sale=0 then sale_usd=0;
+397                else if source_cv_flow>0 then sale_usd=sale*source_cv_flow;
+398            end;
+399            if not missing(capx) then do;
+13                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+400                if capx=0 then capx_usd=0;
+401                else if source_cv_flow>0 then capx_usd=capx*source_cv_flow;
+402            end;
+403            if not missing(xrd) then do;
+404                if xrd=0 then xrd_usd=0;
+405                else if source_cv_flow>0 then xrd_usd=xrd*source_cv_flow;
+406            end;
+407            if not missing(xad) then do;
+408                if xad=0 then xad_usd=0;
+409                else if source_cv_flow>0 then xad_usd=xad*source_cv_flow;
+410            end;
+411            if not missing(dp) then do;
+412                if dp=0 then dp_usd=0;
+413                else if source_cv_flow>0 then dp_usd=dp*source_cv_flow;
+414            end;
+415            if not missing(epspx) then do;
+416                if epspx=0 then epspx_usd=0;
+417                else if source_cv_flow>0 then epspx_usd=epspx*source_cv_flow;
+418            end;
+419            if annual_price_ok=1 and not missing(prcc_f) then do;
+420                if prcc_f=0 then prccf_usd=0;
+421                else if price_cv_usd>0 then prccf_usd=prcc_f*price_cv_usd;
+422            end;
+423        
+424            if nmiss(act_usd,lct_usd,at_usd,re_usd,ebit_usd,sale_usd,lt_usd,
+425                     prccf_usd,csho)=0 and at_usd>0 and lt_usd>0 and
+426                     csho>0 and prccf_usd>0 then do;
+427                mve_z_usd=prccf_usd*csho;
+428                zscore=1.2*((act_usd-lct_usd)/at_usd) +
+429                       1.4*(re_usd/at_usd) +
+430                       3.3*(ebit_usd/at_usd) +
+431                       0.6*(mve_z_usd/lt_usd) +
+432                       0.999*(sale_usd/at_usd);
+433            end;
+434        run;
+
+NOTE: There were 241548 observations read from the data set WORK.ANNUAL_JOIN.
+NOTE: The data set WORK.ANNUAL has 241548 observations and 78 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.14 seconds
+      
+
+435        
+436        proc freq data=work.annual;
+437            tables annual_price_ok*curcd*quote_cur / missing;
+438        run;
+
+NOTE: There were 241548 observations read from the data set WORK.ANNUAL.
+NOTE: The PROCEDURE FREQ printed page 9.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+439        
+440        proc sql;
+441            select fyear,
+14                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+442                   count(*) as source_rows,
+443                   sum(annual_price_ok=1) as supported_issue_prices,
+444                   sum(price_route='HIID_DATED_P') as hiid_dated_p,
+445                   sum(price_route='HIID_NO_MARKER') as hiid_no_marker,
+446                   sum(price_route='UNIQUE_DATED_P') as unique_p_fallback,
+447                   sum(price_route='MULTIPLE_DATED_P') as multiple_dated_p,
+448                   sum(price_route='HIID_EXPLICIT_NONP') as explicit_hiid_nonp,
+449                   sum(not missing(source_cv_stock)) as usd_stock_conversion,
+450                   sum(not missing(source_cv_flow)) as usd_flow_conversion,
+451                   sum(not missing(prccf_usd)) as usd_annual_price,
+452                   sum(curcd='USD' and curncd ne 'USD') as usd_report_curncd_diff
+453            from work.annual
+454            group by fyear
+455            order by fyear;
+456        
+457            select fromcurd,tocurd,count(*) as n_rows,
+458                   sum(not missing(fx_rate)) as n_positive_unique_rate
+459            from work.fx_dly
+460            where fromcurd='GBP'
+461            group by fromcurd,tocurd
+462            order by tocurd;
+463        
+464            select fromcurm,tocurm,count(*) as n_rows,
+465                   sum(not missing(fx_rate)) as n_positive_unique_rate
+466            from work.fx_mth
+467            where fromcurm='GBP'
+468            group by fromcurm,tocurm
+469            order by tocurm;
+470        quit;
+NOTE: The PROCEDURE SQL printed pages 10-19.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.26 seconds
+      
+
+471        
+472        proc sort data=work.annual(where=(fyear >= 1972 and fyear <= 1992 and
+473                                          not missing(zscore))) out=work.zpop;
+474            by fyear;
+475        run;
+
+NOTE: There were 91496 observations read from the data set WORK.ANNUAL.
+      WHERE (fyear>=1972 and fyear<=1992) and (not MISSING(zscore));
+NOTE: The data set WORK.ZPOP has 91496 observations and 78 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.11 seconds
+      
+
+476        
+477        proc rank data=work.zpop out=work.zrank groups=10 ties=mean;
+478            by fyear;
+479            var zscore;
+480            ranks zdec;
+481        run;
+
+NOTE: There were 91496 observations read from the data set WORK.ZPOP.
+NOTE: The data set WORK.ZRANK has 91496 observations and 79 variables.
+15                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+NOTE: PROCEDURE RANK used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.08 seconds
+      
+
+482        
+483        proc sql;
+484            select fyear, zdec, count(*) as z_population
+485            from work.zrank
+486            group by fyear, zdec
+487            order by fyear, zdec;
+488        quit;
+NOTE: The PROCEDURE SQL printed pages 20-23.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+      
+
+489        
+490        proc sql;
+491            create table work.wide as
+492            select a.gvkey, a.fyear, a.datadate as dat_t, a.curcd as cur_t,
+493                   a.curncd as nat_t, a.pddur as dur_t, a.fyr as fyr_t,
+494                   a.xrd_usd as xrd_t, a.capx_usd as capx_t, a.xad_usd as xad_t,
+495                   a.ppent_usd as ppent_t, a.seq_usd as seq_t,
+496                   a.dltt_usd as dltt_t, a.dlc_usd as dlc_t,
+497                   a.cshpri as shares_t, a.csho as sh_out_t, a.ajex as ajex_t,
+498                   a.prccf_usd as price_t_usd, a.epspx as eps_t_raw,
+499                   a.mve_z_usd as mve_z_t, a.zscore,
+500                   p.datadate as dat_p, p.curcd as cur_p, p.curncd as nat_p,
+501                   p.seq_usd as seq_p, p.csho as sh_out_p, p.ajex as ajex_p,
+502                   p.prccf_usd as price_p_usd, p.annual_price_ok as price_p_ok,
+503                   p.quote_cur as price_cur_p,
+504                   m1.xrd_usd as xrd_m1, m1.cshpri as shares_m1, m1.csho as sh_out_m1, m1.ajex as ajex_m1,
+505                   m2.xrd_usd as xrd_m2, m2.cshpri as shares_m2, m2.csho as sh_out_m2, m2.ajex as ajex_m2,
+506                   m3.xrd_usd as xrd_m3, m3.cshpri as shares_m3, m3.csho as sh_out_m3, m3.ajex as ajex_m3,
+507                   m4.xrd_usd as xrd_m4, m4.cshpri as shares_m4, m4.csho as sh_out_m4, m4.ajex as ajex_m4,
+508                   f1.datadate as dat_f1, f1.curcd as cur_f1, f1.curncd as nat_f1,
+509                   f1.epspx as eps_f1_raw, f1.epspx_usd as eps_f1, f1.ajex as ajex_f1,
+510                   f1.xrd as xrd_f1_raw, f1.dp as dp_f1_raw,
+511                   f1.xrd_usd as xrd_f1, f1.dp_usd as dp_f1, f1.cshpri as shares_f1,
+512                   f2.datadate as dat_f2, f2.curcd as cur_f2, f2.curncd as nat_f2,
+513                   f2.epspx as eps_f2_raw, f2.epspx_usd as eps_f2, f2.ajex as ajex_f2,
+514                   f2.xrd as xrd_f2_raw, f2.dp as dp_f2_raw,
+515                   f2.xrd_usd as xrd_f2, f2.dp_usd as dp_f2, f2.cshpri as shares_f2,
+516                   f3.datadate as dat_f3, f3.curcd as cur_f3, f3.curncd as nat_f3,
+517                   f3.epspx as eps_f3_raw, f3.epspx_usd as eps_f3, f3.ajex as ajex_f3,
+518                   f3.xrd as xrd_f3_raw, f3.dp as dp_f3_raw,
+519                   f3.xrd_usd as xrd_f3, f3.dp_usd as dp_f3, f3.cshpri as shares_f3,
+520                   f4.datadate as dat_f4, f4.curcd as cur_f4, f4.curncd as nat_f4,
+521                   f4.epspx as eps_f4_raw, f4.epspx_usd as eps_f4, f4.ajex as ajex_f4,
+522                   f4.xrd as xrd_f4_raw, f4.dp as dp_f4_raw,
+523                   f4.xrd_usd as xrd_f4, f4.dp_usd as dp_f4, f4.cshpri as shares_f4,
+524                   f5.datadate as dat_f5, f5.curcd as cur_f5, f5.curncd as nat_f5,
+525                   f5.epspx as eps_f5_raw, f5.epspx_usd as eps_f5, f5.ajex as ajex_f5,
+526                   f5.xrd as xrd_f5_raw, f5.dp as dp_f5_raw,
+527                   f5.xrd_usd as xrd_f5, f5.dp_usd as dp_f5, f5.cshpri as shares_f5
+528            from work.annual as a
+16                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+529            left join work.annual as p
+530              on a.gvkey=p.gvkey and p.fyear=a.fyear-1
+531            left join work.annual as m1
+532              on a.gvkey=m1.gvkey and m1.fyear=a.fyear-1
+533            left join work.annual as m2
+534              on a.gvkey=m2.gvkey and m2.fyear=a.fyear-2
+535            left join work.annual as m3
+536              on a.gvkey=m3.gvkey and m3.fyear=a.fyear-3
+537            left join work.annual as m4
+538              on a.gvkey=m4.gvkey and m4.fyear=a.fyear-4
+539            left join work.annual as f1
+540              on a.gvkey=f1.gvkey and f1.fyear=a.fyear+1
+541            left join work.annual as f2
+542              on a.gvkey=f2.gvkey and f2.fyear=a.fyear+2
+543            left join work.annual as f3
+544              on a.gvkey=f3.gvkey and f3.fyear=a.fyear+3
+545            left join work.annual as f4
+546              on a.gvkey=f4.gvkey and f4.fyear=a.fyear+4
+547            left join work.annual as f5
+548              on a.gvkey=f5.gvkey and f5.fyear=a.fyear+5
+549            where a.fyear between 1972 and 1992;
+NOTE: Table WORK.WIDE created, with 163836 rows and 101 columns.
+
+550        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.83 seconds
+      cpu time            2.80 seconds
+      
+
+551        
+552        proc sql;
+553            create table work.widez as
+554            select w.*, z.zdec
+555            from work.wide as w
+556            left join work.zrank as z
+557              on w.gvkey=z.gvkey and w.fyear=z.fyear;
+NOTE: Table WORK.WIDEZ created, with 163836 rows and 102 columns.
+
+558        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.27 seconds
+      cpu time            0.36 seconds
+      
+
+559        
+560        data work.base0;
+561            set work.widez;
+562            length date_order 3;
+563            array fdate[5] dat_f1 dat_f2 dat_f3 dat_f4 dat_f5;
+564            prev_date=dat_t;
+565            date_order=1;
+566            if missing(dat_t) then date_order=0;
+567            if not missing(dat_p) and dat_p >= dat_t then date_order=0;
+568            do j=1 to 5;
+569                if not missing(fdate[j]) then do;
+570                    if fdate[j] <= prev_date then date_order=0;
+571                    prev_date=fdate[j];
+572                end;
+17                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+573            end;
+574            drop j prev_date;
+575        
+576            future_source_missing=0;
+577            future_construct_missing=0;
+578            gross_source_missing=0;
+579            gross_construct_missing=0;
+580            array epsraw[5] eps_f1_raw eps_f2_raw eps_f3_raw eps_f4_raw eps_f5_raw;
+581            array epsusd[5] eps_f1 eps_f2 eps_f3 eps_f4 eps_f5;
+582            array xrdraw[5] xrd_f1_raw xrd_f2_raw xrd_f3_raw xrd_f4_raw xrd_f5_raw;
+583            array dpraw[5] dp_f1_raw dp_f2_raw dp_f3_raw dp_f4_raw dp_f5_raw;
+584            array xrddol[5] xrd_f1 xrd_f2 xrd_f3 xrd_f4 xrd_f5;
+585            array dpdol[5] dp_f1 dp_f2 dp_f3 dp_f4 dp_f5;
+586            if date_order=1 then do j=1 to 5;
+587                if missing(epsraw[j]) then future_source_missing=1;
+588                else if missing(epsusd[j]) then future_construct_missing=1;
+589                if nmiss(epsraw[j],xrdraw[j],dpraw[j]) > 0 then gross_source_missing=1;
+590                else if nmiss(epsusd[j],xrddol[j],dpdol[j]) > 0 then gross_construct_missing=1;
+591            end;
+592            drop j;
+593        
+594            mve_usd=.;
+595            if not missing(price_t_usd) and not missing(shares_t) and shares_t>0 then
+596                mve_usd=price_t_usd*shares_t;
+597            mve_bil=.;
+598            size=.;
+599            if mve_usd>0 then do;
+600                mve_bil=mve_usd/1000;
+601                size=log(mve_bil);
+602            end;
+603            lev=.;
+604            if nmiss(dltt_t,dlc_t,mve_usd)=0 and dltt_t+mve_usd ne 0 then
+605                lev=(dltt_t+dlc_t)/(dltt_t+mve_usd);
+606        
+607            bve_ps_p=.;
+608            if nmiss(seq_p,sh_out_p,ajex_t,ajex_p)=0 and
+609               seq_p>0 and sh_out_p>0 and ajex_t>0 and ajex_p>0 then
+610                bve_ps_p=(seq_p/sh_out_p)*(ajex_t/ajex_p);
+611            price_ps_p=.;
+612            if nmiss(price_p_usd,ajex_t,ajex_p)=0 and
+613               price_p_ok=1 and price_p_usd>0 and ajex_t>0 and ajex_p>0 then
+614                price_ps_p=price_p_usd*(ajex_t/ajex_p);
+615        
+616            xrd_ps=.; capx_ps=.; xad_ps=.;
+617            if not missing(xrd_t) and not missing(shares_t) and shares_t>0 then xrd_ps=xrd_t/shares_t;
+618            if not missing(capx_t) and not missing(shares_t) and shares_t>0 then capx_ps=capx_t/shares_t;
+619            if not missing(xad_t) and not missing(shares_t) and shares_t>0 then xad_ps=xad_t/shares_t;
+620            xrd_bve=.; capx_bve=.; xad_bve=.;
+621            if bve_ps_p>0 then do;
+622                if not missing(xrd_ps) then xrd_bve=xrd_ps/bve_ps_p;
+623                if not missing(capx_ps) then capx_bve=capx_ps/bve_ps_p;
+624                if not missing(xad_ps) then xad_bve=xad_ps/bve_ps_p;
+625            end;
+626            xrd_price=.; capx_price=.; xad_price=.;
+627            if price_ps_p>0 then do;
+628                if not missing(xrd_ps) then xrd_price=xrd_ps/price_ps_p;
+629                if not missing(capx_ps) then capx_price=capx_ps/price_ps_p;
+630                if not missing(xad_ps) then xad_price=xad_ps/price_ps_p;
+18                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+631            end;
+632        
+633            caprd_usd=.; caprd_ps=.; caprd_ps_epsden=.; caprd_bve=.; caprd_old_ps=.;
+634            ppent_ps=.; ppent_bve=.;
+635            if nmiss(xrd_t,xrd_m1,xrd_m2,xrd_m3,xrd_m4,sh_out_t)=0 and sh_out_t>0 then do;
+636                caprd_usd=xrd_t + 0.8*xrd_m1 + 0.6*xrd_m2 + 0.4*xrd_m3 + 0.2*xrd_m4;
+637                caprd_ps=caprd_usd/sh_out_t;
+638                if bve_ps_p>0 then caprd_bve=caprd_ps/bve_ps_p;
+639                if shares_t>0 then caprd_ps_epsden=caprd_usd/shares_t;
+640            end;
+641            if nmiss(xrd_t,xrd_m1,xrd_m2,xrd_m3,xrd_m4,
+642                     shares_t,shares_m1,shares_m2,shares_m3,shares_m4,
+643                     ajex_t,ajex_m1,ajex_m2,ajex_m3,ajex_m4)=0 and
+644               min(shares_t,shares_m1,shares_m2,shares_m3,shares_m4,
+645                   ajex_t,ajex_m1,ajex_m2,ajex_m3,ajex_m4)>0 then do;
+646                caprd_old_ps=xrd_t/shares_t +
+647                             0.8*(xrd_m1/shares_m1)*(ajex_t/ajex_m1) +
+648                             0.6*(xrd_m2/shares_m2)*(ajex_t/ajex_m2) +
+649                             0.4*(xrd_m3/shares_m3)*(ajex_t/ajex_m3) +
+650                             0.2*(xrd_m4/shares_m4)*(ajex_t/ajex_m4);
+651            end;
+652            caprd_shares_vary=.; caprd_split_vary=.; caprd_old_diff=.;
+653            caprd_old_epsden_diff=.; caprd_denominator_diff=.;
+654            if nmiss(sh_out_t,sh_out_m1,sh_out_m2,sh_out_m3,sh_out_m4)=0 then
+655                caprd_shares_vary=(max(of sh_out_t sh_out_m1-sh_out_m4) ne
+656                                   min(of sh_out_t sh_out_m1-sh_out_m4));
+657            if nmiss(ajex_t,ajex_m1,ajex_m2,ajex_m3,ajex_m4)=0 then
+658                caprd_split_vary=(max(of ajex_t ajex_m1-ajex_m4) ne
+659                                  min(of ajex_t ajex_m1-ajex_m4));
+660            if nmiss(caprd_ps,caprd_old_ps)=0 then caprd_old_diff=caprd_ps-caprd_old_ps;
+661            if nmiss(caprd_ps_epsden,caprd_old_ps)=0 then
+662                caprd_old_epsden_diff=caprd_ps_epsden-caprd_old_ps;
+663            if nmiss(caprd_ps,caprd_ps_epsden)=0 then
+664                caprd_denominator_diff=caprd_ps-caprd_ps_epsden;
+665            if not missing(ppent_t) and not missing(sh_out_t) and sh_out_t>0 then do;
+666                ppent_ps=ppent_t/sh_out_t;
+667                if bve_ps_p>0 then ppent_bve=ppent_ps/bve_ps_p;
+668            end;
+669            xad_cap=.;
+670            if not missing(xad_ps) and bve_ps_p>0 then xad_cap=xad_ps/bve_ps_p;
+671        
+672            eps_b1=.; eps_b2=.; eps_b3=.; eps_b4=.; eps_b5=.;
+673            eps_p1=.; eps_p2=.; eps_p3=.; eps_p4=.; eps_p5=.;
+674            eps_g1=.; eps_g2=.; eps_g3=.; eps_g4=.; eps_g5=.;
+675            if date_order=1 and bve_ps_p>0 and ajex_t>0 then do;
+676                if not missing(eps_f1) and ajex_f1>0 then eps_b1=(eps_f1*ajex_t/ajex_f1)/bve_ps_p;
+677                if not missing(eps_f2) and ajex_f2>0 then eps_b2=(eps_f2*ajex_t/ajex_f2)/bve_ps_p;
+678                if not missing(eps_f3) and ajex_f3>0 then eps_b3=(eps_f3*ajex_t/ajex_f3)/bve_ps_p;
+679                if not missing(eps_f4) and ajex_f4>0 then eps_b4=(eps_f4*ajex_t/ajex_f4)/bve_ps_p;
+680                if not missing(eps_f5) and ajex_f5>0 then eps_b5=(eps_f5*ajex_t/ajex_f5)/bve_ps_p;
+681                if not missing(eps_f1) and ajex_f1>0 then eps_g1=(eps_f1*ajex_t/ajex_f1);
+682                if not missing(eps_f2) and ajex_f2>0 then eps_g2=(eps_f2*ajex_t/ajex_f2);
+683                if not missing(eps_f3) and ajex_f3>0 then eps_g3=(eps_f3*ajex_t/ajex_f3);
+684                if not missing(eps_f4) and ajex_f4>0 then eps_g4=(eps_f4*ajex_t/ajex_f4);
+685                if not missing(eps_f5) and ajex_f5>0 then eps_g5=(eps_f5*ajex_t/ajex_f5);
+686            end;
+687            if date_order=1 and price_ps_p>0 and ajex_t>0 then do;
+688                if not missing(eps_f1) and ajex_f1>0 then eps_p1=(eps_f1*ajex_t/ajex_f1)/price_ps_p;
+19                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+689                if not missing(eps_f2) and ajex_f2>0 then eps_p2=(eps_f2*ajex_t/ajex_f2)/price_ps_p;
+690                if not missing(eps_f3) and ajex_f3>0 then eps_p3=(eps_f3*ajex_t/ajex_f3)/price_ps_p;
+691                if not missing(eps_f4) and ajex_f4>0 then eps_p4=(eps_f4*ajex_t/ajex_f4)/price_ps_p;
+692                if not missing(eps_f5) and ajex_f5>0 then eps_p5=(eps_f5*ajex_t/ajex_f5)/price_ps_p;
+693            end;
+694            if date_order=1 and bve_ps_p>0 and ajex_t>0 then do;
+695                if nmiss(eps_f1,xrd_f1,dp_f1,shares_f1,ajex_f1)=0 and shares_f1>0 and ajex_f1>0 then
+696                    eps_g1=((eps_f1+(xrd_f1+dp_f1)/shares_f1)*ajex_t/ajex_f1)/bve_ps_p;
+697                else eps_g1=.;
+698                if nmiss(eps_f2,xrd_f2,dp_f2,shares_f2,ajex_f2)=0 and shares_f2>0 and ajex_f2>0 then
+699                    eps_g2=((eps_f2+(xrd_f2+dp_f2)/shares_f2)*ajex_t/ajex_f2)/bve_ps_p;
+700                else eps_g2=.;
+701                if nmiss(eps_f3,xrd_f3,dp_f3,shares_f3,ajex_f3)=0 and shares_f3>0 and ajex_f3>0 then
+702                    eps_g3=((eps_f3+(xrd_f3+dp_f3)/shares_f3)*ajex_t/ajex_f3)/bve_ps_p;
+703                else eps_g3=.;
+704                if nmiss(eps_f4,xrd_f4,dp_f4,shares_f4,ajex_f4)=0 and shares_f4>0 and ajex_f4>0 then
+705                    eps_g4=((eps_f4+(xrd_f4+dp_f4)/shares_f4)*ajex_t/ajex_f4)/bve_ps_p;
+706                else eps_g4=.;
+707                if nmiss(eps_f5,xrd_f5,dp_f5,shares_f5,ajex_f5)=0 and shares_f5>0 and ajex_f5>0 then
+708                    eps_g5=((eps_f5+(xrd_f5+dp_f5)/shares_f5)*ajex_t/ajex_f5)/bve_ps_p;
+709                else eps_g5=.;
+710            end;
+711        
+712            array epscaps[15] eps_b1-eps_b5 eps_p1-eps_p5 eps_g1-eps_g5;
+713            do k=1 to 15;
+714                if not missing(epscaps[k]) then do;
+715                    if epscaps[k] < -1 then epscaps[k]=-1;
+716                    else if epscaps[k] > 1 then epscaps[k]=1;
+717                end;
+718            end;
+719            drop k;
+720        run;
+
+NOTE: There were 163836 observations read from the data set WORK.WIDEZ.
+NOTE: The data set WORK.BASE0 has 163836 observations and 150 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.29 seconds
+      cpu time            0.28 seconds
+      
+
+721        
+722        proc sql;
+723            select count(*) as caprd_new_per_share_n,
+724                   sum(not missing(caprd_old_ps)) as comparable_old_n,
+725                   sum(caprd_shares_vary=1) as unequal_share_history_n,
+726                   sum(caprd_split_vary=1) as nontrivial_ajex_history_n,
+727                   max(abs(caprd_old_diff)) as max_abs_stock_vs_a1,
+728                   mean(abs(caprd_old_diff)) as mean_abs_stock_vs_a1,
+729                   max(abs(caprd_old_epsden_diff)) as max_abs_epsden_vs_a1,
+730                   mean(abs(caprd_old_epsden_diff)) as mean_abs_epsden_vs_a1,
+731                   max(abs(caprd_denominator_diff)) as max_abs_csho_cshpri_diff,
+732                   mean(abs(caprd_denominator_diff)) as mean_abs_csho_cshpri_diff
+733            from work.base0
+734            where fyear between 1972 and 1992;
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+20                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+735        quit;
+NOTE: The PROCEDURE SQL printed page 24.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+736        
+737        proc sql;
+738            create table work.zrank_all as
+739            select gvkey, fyear, zdec
+740            from work.zrank;
+NOTE: Table WORK.ZRANK_ALL created, with 91496 rows and 3 columns.
+
+741        
+742            create table work.bve_donors0 as
+743            select gvkey, fyear, zdec, std(eps_b1,eps_b2,eps_b3,eps_b4,eps_b5) as y_bve_obs
+744            from work.base0
+745            where zdec ne . and nmiss(eps_b1,eps_b2,eps_b3,eps_b4,eps_b5)=0;
+NOTE: Table WORK.BVE_DONORS0 created, with 63770 rows and 4 columns.
+
+746            create table work.bve_donors as
+747            select fyear, zdec, mean(y_bve_obs) as donor_bve
+748            from work.bve_donors0
+749            group by fyear, zdec;
+NOTE: Table WORK.BVE_DONORS created, with 210 rows and 3 columns.
+
+750        
+751            create table work.price_donors0 as
+752            select gvkey, fyear, zdec, std(eps_p1,eps_p2,eps_p3,eps_p4,eps_p5) as y_price_obs
+753            from work.base0
+754            where zdec ne . and nmiss(eps_p1,eps_p2,eps_p3,eps_p4,eps_p5)=0;
+NOTE: Table WORK.PRICE_DONORS0 created, with 61072 rows and 4 columns.
+
+755            create table work.price_donors as
+756            select fyear, zdec, mean(y_price_obs) as donor_price
+757            from work.price_donors0
+758            group by fyear, zdec;
+NOTE: Table WORK.PRICE_DONORS created, with 210 rows and 3 columns.
+
+759        
+760            create table work.cap_donors0 as
+761            select gvkey, fyear, zdec, std(eps_g1,eps_g2,eps_g3,eps_g4,eps_g5) as y_cap_obs
+762            from work.base0
+763            where zdec ne . and nmiss(eps_g1,eps_g2,eps_g3,eps_g4,eps_g5)=0;
+NOTE: Table WORK.CAP_DONORS0 created, with 29560 rows and 4 columns.
+
+764            create table work.cap_donors as
+765            select fyear, zdec, mean(y_cap_obs) as donor_cap
+766            from work.cap_donors0
+767            group by fyear, zdec;
+NOTE: Table WORK.CAP_DONORS created, with 210 rows and 3 columns.
+
+768        
+769            create table work.with_donors as
+770            select b.*, z.zdec as zscore_decile,
+21                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+771                   db.donor_bve, dp.donor_price, dc.donor_cap
+772            from work.base0 as b
+773            left join work.zrank_all as z
+774              on b.gvkey=z.gvkey and b.fyear=z.fyear
+775            left join work.bve_donors as db
+776              on b.fyear=db.fyear and z.zdec=db.zdec
+777            left join work.price_donors as dp
+778              on b.fyear=dp.fyear and z.zdec=dp.zdec
+779            left join work.cap_donors as dc
+780              on b.fyear=dc.fyear and z.zdec=dc.zdec;
+NOTE: Table WORK.WITH_DONORS created, with 163836 rows and 154 columns.
+
+781        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.22 seconds
+      cpu time            1.68 seconds
+      
+
+782        
+783        proc sql;
+784            select fyear,zdec,count(*) as bve_observed_donors
+785            from work.bve_donors0
+786            group by fyear,zdec
+787            order by fyear,zdec;
+788            select fyear,zdec,count(*) as price_observed_donors
+789            from work.price_donors0
+790            group by fyear,zdec
+791            order by fyear,zdec;
+792            select fyear,zdec,count(*) as gross_observed_donors
+793            from work.cap_donors0
+794            group by fyear,zdec
+795            order by fyear,zdec;
+796        quit;
+NOTE: The PROCEDURE SQL printed pages 25-36.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.05 seconds
+      
+
+797        
+798        data work.outcomes;
+799            set work.with_donors;
+800            y_bve=.; y_price=.; y_cap=.;
+801            imp_bve=.; imp_price=.; imp_cap=.;
+802            if date_order=1 and bve_ps_p>0 then do;
+803                if nmiss(eps_b1,eps_b2,eps_b3,eps_b4,eps_b5)=0 then do;
+804                    y_bve=std(eps_b1,eps_b2,eps_b3,eps_b4,eps_b5);
+805                    imp_bve=0;
+806                end;
+807                else if future_source_missing=1 and not missing(donor_bve) then do;
+808                    y_bve=donor_bve;
+809                    imp_bve=1;
+810                end;
+811            end;
+812            if date_order=1 and price_ps_p>0 then do;
+813                if nmiss(eps_p1,eps_p2,eps_p3,eps_p4,eps_p5)=0 then do;
+814                    y_price=std(eps_p1,eps_p2,eps_p3,eps_p4,eps_p5);
+815                    imp_price=0;
+22                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+816                end;
+817                else if future_source_missing=1 and not missing(donor_price) then do;
+818                    y_price=donor_price;
+819                    imp_price=1;
+820                end;
+821            end;
+822            if date_order=1 and bve_ps_p>0 then do;
+823                if nmiss(eps_g1,eps_g2,eps_g3,eps_g4,eps_g5)=0 then do;
+824                    y_cap=std(eps_g1,eps_g2,eps_g3,eps_g4,eps_g5);
+825                    imp_cap=0;
+826                end;
+827                else if gross_source_missing=1 and not missing(donor_cap) then do;
+828                    y_cap=donor_cap;
+829                    imp_cap=1;
+830                end;
+831            end;
+832        
+833            candidate_bve=0; candidate_price=0; candidate_cap=0;
+834            base_bve=0; base_price=0; fit_bve=0; fit_price=0; fit_cap=0;
+835            if nmiss(xrd_bve,capx_bve,size,lev)=0 and bve_ps_p>0 and
+836               not missing(eps_t_raw) then candidate_bve=1;
+837            if nmiss(xrd_price,capx_price,size,lev)=0 and price_ps_p>0 and
+838               not missing(eps_t_raw) then candidate_price=1;
+839            if candidate_bve=1 and not missing(y_bve) then base_bve=1;
+840            if candidate_price=1 and not missing(y_price) then base_price=1;
+841            if base_bve=1 and not missing(xad_bve) then fit_bve=1;
+842            if base_price=1 and not missing(xad_price) then fit_price=1;
+843            if candidate_bve=1 and not missing(xad_cap) and not missing(caprd_bve) and
+844               not missing(ppent_bve) then candidate_cap=1;
+845            if candidate_cap=1 and not missing(y_cap) then fit_cap=1;
+846        run;
+
+NOTE: There were 163836 observations read from the data set WORK.WITH_DONORS.
+NOTE: The data set WORK.OUTCOMES has 163836 observations and 168 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.15 seconds
+      cpu time            0.16 seconds
+      
+
+847        
+848        %macro cutvar(flag=,var=,prefix=,out=);
+849            proc univariate data=work.outcomes(where=(&flag=1)) noprint pctldef=5;
+850                by fyear;
+851                var &var;
+852                output out=&out pctlpts=1 2 99 pctlpre=&prefix._ pctlname=p1 p2 p99;
+853            run;
+854        %mend;
+855        
+856        proc sort data=work.outcomes; by fyear; run;
+
+NOTE: There were 163836 observations read from the data set WORK.OUTCOMES.
+NOTE: The data set WORK.OUTCOMES has 163836 observations and 168 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.33 seconds
+      cpu time            0.31 seconds
+      
+
+857        %cutvar(flag=fit_bve,var=xrd_bve,prefix=xrb,out=work.c_xrb);
+23                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+
+NOTE: The data set WORK.C_XRB has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+858        %cutvar(flag=fit_bve,var=capx_bve,prefix=xcb,out=work.c_xcb);
+
+NOTE: The data set WORK.C_XCB has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+859        %cutvar(flag=fit_bve,var=xad_bve,prefix=xab,out=work.c_xab);
+
+NOTE: The data set WORK.C_XAB has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+860        %cutvar(flag=fit_bve,var=size,prefix=sizb,out=work.c_sizb);
+
+NOTE: The data set WORK.C_SIZB has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+861        %cutvar(flag=fit_bve,var=lev,prefix=levb,out=work.c_levb);
+
+NOTE: The data set WORK.C_LEVB has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+862        %cutvar(flag=fit_price,var=xrd_price,prefix=xrp,out=work.c_xrp);
+
+NOTE: The data set WORK.C_XRP has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+863        %cutvar(flag=fit_price,var=capx_price,prefix=xcp,out=work.c_xcp);
+
+NOTE: The data set WORK.C_XCP has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+864        %cutvar(flag=fit_price,var=xad_price,prefix=xap,out=work.c_xap);
+
+NOTE: The data set WORK.C_XAP has 21 observations and 4 variables.
+24                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+865        %cutvar(flag=fit_price,var=size,prefix=sizp,out=work.c_sizp);
+
+NOTE: The data set WORK.C_SIZP has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+866        %cutvar(flag=fit_price,var=lev,prefix=levp,out=work.c_levp);
+
+NOTE: The data set WORK.C_LEVP has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+867        %cutvar(flag=fit_cap,var=caprd_bve,prefix=crd,out=work.c_crd);
+
+NOTE: The data set WORK.C_CRD has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+868        %cutvar(flag=fit_cap,var=ppent_bve,prefix=ppe,out=work.c_ppe);
+
+NOTE: The data set WORK.C_PPE has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+869        %cutvar(flag=fit_cap,var=xad_cap,prefix=xac,out=work.c_xac);
+
+NOTE: The data set WORK.C_XAC has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+870        %cutvar(flag=fit_cap,var=size,prefix=sizc,out=work.c_sizc);
+
+NOTE: The data set WORK.C_SIZC has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+871        %cutvar(flag=fit_cap,var=lev,prefix=levc,out=work.c_levc);
+
+NOTE: The data set WORK.C_LEVC has 21 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+25                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+      cpu time            0.03 seconds
+      
+
+872        
+873        proc sql;
+874            create table work.cuts_bve as
+875            select a.fyear, a.xrb_p1, a.xrb_p2, a.xrb_p99,
+876                   b.xcb_p1, b.xcb_p2, b.xcb_p99,
+877                   c.xab_p1, c.xab_p2, c.xab_p99,
+878                   d.sizb_p1, d.sizb_p2, d.sizb_p99,
+879                   e.levb_p1, e.levb_p2, e.levb_p99
+880            from work.c_xrb as a
+881            left join work.c_xcb as b on a.fyear=b.fyear
+882            left join work.c_xab as c on a.fyear=c.fyear
+883            left join work.c_sizb as d on a.fyear=d.fyear
+884            left join work.c_levb as e on a.fyear=e.fyear;
+NOTE: Table WORK.CUTS_BVE created, with 21 rows and 16 columns.
+
+885        
+886            create table work.cuts_price as
+887            select a.fyear, a.xrp_p1, a.xrp_p2, a.xrp_p99,
+888                   b.xcp_p1, b.xcp_p2, b.xcp_p99,
+889                   c.xap_p1, c.xap_p2, c.xap_p99,
+890                   d.sizp_p1, d.sizp_p2, d.sizp_p99,
+891                   e.levp_p1, e.levp_p2, e.levp_p99
+892            from work.c_xrp as a
+893            left join work.c_xcp as b on a.fyear=b.fyear
+894            left join work.c_xap as c on a.fyear=c.fyear
+895            left join work.c_sizp as d on a.fyear=d.fyear
+896            left join work.c_levp as e on a.fyear=e.fyear;
+NOTE: Table WORK.CUTS_PRICE created, with 21 rows and 16 columns.
+
+897        
+898            create table work.cuts_cap as
+899            select a.fyear, a.crd_p1, a.crd_p2, a.crd_p99,
+900                   b.ppe_p1, b.ppe_p2, b.ppe_p99,
+901                   c.xac_p1, c.xac_p2, c.xac_p99,
+902                   d.sizc_p1, d.sizc_p2, d.sizc_p99,
+903                   e.levc_p1, e.levc_p2, e.levc_p99
+904            from work.c_crd as a
+905            left join work.c_ppe as b on a.fyear=b.fyear
+906            left join work.c_xac as c on a.fyear=c.fyear
+907            left join work.c_sizc as d on a.fyear=d.fyear
+908            left join work.c_levc as e on a.fyear=e.fyear;
+NOTE: Table WORK.CUTS_CAP created, with 21 rows and 16 columns.
+
+909        
+910            create table work.final_join as
+911            select o.*, b.xrb_p1,b.xrb_p2,b.xrb_p99,b.xcb_p1,b.xcb_p2,b.xcb_p99,
+912                   b.xab_p1,b.xab_p2,b.xab_p99,b.sizb_p1,b.sizb_p2,b.sizb_p99,
+913                   b.levb_p1,b.levb_p2,b.levb_p99,
+914                   p.xrp_p1,p.xrp_p2,p.xrp_p99,p.xcp_p1,p.xcp_p2,p.xcp_p99,
+915                   p.xap_p1,p.xap_p2,p.xap_p99,p.sizp_p1,p.sizp_p2,p.sizp_p99,
+916                   p.levp_p1,p.levp_p2,p.levp_p99,
+917                   c.crd_p1,c.crd_p2,c.crd_p99,c.ppe_p1,c.ppe_p2,c.ppe_p99,
+918                   c.xac_p1,c.xac_p2,c.xac_p99,c.sizc_p1,c.sizc_p2,c.sizc_p99,
+919                   c.levc_p1,c.levc_p2,c.levc_p99
+920            from work.outcomes as o
+26                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+921            left join work.cuts_bve as b on o.fyear=b.fyear
+922            left join work.cuts_price as p on o.fyear=p.fyear
+923            left join work.cuts_cap as c on o.fyear=c.fyear;
+NOTE: Table WORK.FINAL_JOIN created, with 163836 rows and 213 columns.
+
+924        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.25 seconds
+      cpu time            0.26 seconds
+      
+
+925        
+926        proc sql;
+927            select 'Table3A_BVE' as model length=16,
+928                   sum(fit_bve=1 and xrd_bve<xrb_p1) +
+929                   sum(fit_bve=1 and capx_bve<xcb_p1) +
+930                   sum(fit_bve=1 and xad_bve<xab_p1) +
+931                   sum(fit_bve=1 and size<sizb_p1) +
+932                   sum(fit_bve=1 and lev<levb_p1) as p1_lower_variable_clamps,
+933                   sum(fit_bve=1 and xrd_bve>=xrb_p1 and xrd_bve<xrb_p2) +
+934                   sum(fit_bve=1 and capx_bve>=xcb_p1 and capx_bve<xcb_p2) +
+935                   sum(fit_bve=1 and xad_bve>=xab_p1 and xad_bve<xab_p2) +
+936                   sum(fit_bve=1 and size>=sizb_p1 and size<sizb_p2) +
+937                   sum(fit_bve=1 and lev>=levb_p1 and lev<levb_p2) as extra_if_p2,
+938                   sum(fit_bve=1 and xrd_bve>xrb_p99) +
+939                   sum(fit_bve=1 and capx_bve>xcb_p99) +
+940                   sum(fit_bve=1 and xad_bve>xab_p99) +
+941                   sum(fit_bve=1 and size>sizb_p99) +
+942                   sum(fit_bve=1 and lev>levb_p99) as p99_upper_variable_clamps
+943            from work.final_join;
+944            select 'Table3B_PRICE' as model length=16,
+945                   sum(fit_price=1 and xrd_price<xrp_p1) +
+946                   sum(fit_price=1 and capx_price<xcp_p1) +
+947                   sum(fit_price=1 and xad_price<xap_p1) +
+948                   sum(fit_price=1 and size<sizp_p1) +
+949                   sum(fit_price=1 and lev<levp_p1) as p1_lower_variable_clamps,
+950                   sum(fit_price=1 and xrd_price>=xrp_p1 and xrd_price<xrp_p2) +
+951                   sum(fit_price=1 and capx_price>=xcp_p1 and capx_price<xcp_p2) +
+952                   sum(fit_price=1 and xad_price>=xap_p1 and xad_price<xap_p2) +
+953                   sum(fit_price=1 and size>=sizp_p1 and size<sizp_p2) +
+954                   sum(fit_price=1 and lev>=levp_p1 and lev<levp_p2) as extra_if_p2,
+955                   sum(fit_price=1 and xrd_price>xrp_p99) +
+956                   sum(fit_price=1 and capx_price>xcp_p99) +
+957                   sum(fit_price=1 and xad_price>xap_p99) +
+958                   sum(fit_price=1 and size>sizp_p99) +
+959                   sum(fit_price=1 and lev>levp_p99) as p99_upper_variable_clamps
+960            from work.final_join;
+961            select 'Table4B_CAP' as model length=16,
+962                   sum(fit_cap=1 and caprd_bve<crd_p1) +
+963                   sum(fit_cap=1 and ppent_bve<ppe_p1) +
+964                   sum(fit_cap=1 and xad_cap<xac_p1) +
+965                   sum(fit_cap=1 and size<sizc_p1) +
+966                   sum(fit_cap=1 and lev<levc_p1) as p1_lower_variable_clamps,
+967                   sum(fit_cap=1 and caprd_bve>=crd_p1 and caprd_bve<crd_p2) +
+968                   sum(fit_cap=1 and ppent_bve>=ppe_p1 and ppent_bve<ppe_p2) +
+969                   sum(fit_cap=1 and xad_cap>=xac_p1 and xad_cap<xac_p2) +
+970                   sum(fit_cap=1 and size>=sizc_p1 and size<sizc_p2) +
+971                   sum(fit_cap=1 and lev>=levc_p1 and lev<levc_p2) as extra_if_p2,
+27                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+972                   sum(fit_cap=1 and caprd_bve>crd_p99) +
+973                   sum(fit_cap=1 and ppent_bve>ppe_p99) +
+974                   sum(fit_cap=1 and xad_cap>xac_p99) +
+975                   sum(fit_cap=1 and size>sizc_p99) +
+976                   sum(fit_cap=1 and lev>levc_p99) as p99_upper_variable_clamps
+977            from work.final_join;
+978        quit;
+NOTE: The PROCEDURE SQL printed pages 37-39.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.21 seconds
+      cpu time            0.21 seconds
+      
+
+979        
+980        data work.final;
+981            set work.final_join;
+982            if candidate_bve=0 and candidate_price=0 and candidate_cap=0 then delete;
+983            length xrd_bve_w capx_bve_w xad_bve_w size_bve_w lev_bve_w 8;
+984            length xrd_price_w capx_price_w xad_price_w size_price_w lev_price_w 8;
+985            length caprd_bve_w ppent_bve_w xad_cap_w size_cap_w lev_cap_w 8;
+986        
+987            xrd_bve_w=.; capx_bve_w=.; xad_bve_w=.; size_bve_w=.; lev_bve_w=.;
+988            if fit_bve=1 then do;
+989                xrd_bve_w=xrd_bve; capx_bve_w=capx_bve; xad_bve_w=xad_bve;
+990                size_bve_w=size; lev_bve_w=lev;
+991                if not missing(xrb_p1) and xrd_bve < xrb_p1 then xrd_bve_w=xrb_p1;
+992                else if not missing(xrb_p99) and xrd_bve > xrb_p99 then xrd_bve_w=xrb_p99;
+993                if not missing(xcb_p1) and capx_bve < xcb_p1 then capx_bve_w=xcb_p1;
+994                else if not missing(xcb_p99) and capx_bve > xcb_p99 then capx_bve_w=xcb_p99;
+995                if not missing(xab_p1) and xad_bve < xab_p1 then xad_bve_w=xab_p1;
+996                else if not missing(xab_p99) and xad_bve > xab_p99 then xad_bve_w=xab_p99;
+997                if not missing(sizb_p1) and size < sizb_p1 then size_bve_w=sizb_p1;
+998                else if not missing(sizb_p99) and size > sizb_p99 then size_bve_w=sizb_p99;
+999                if not missing(levb_p1) and lev < levb_p1 then lev_bve_w=levb_p1;
+1000               else if not missing(levb_p99) and lev > levb_p99 then lev_bve_w=levb_p99;
+1001           end;
+1002       
+1003           xrd_price_w=.; capx_price_w=.; xad_price_w=.; size_price_w=.; lev_price_w=.;
+1004           if fit_price=1 then do;
+1005               xrd_price_w=xrd_price; capx_price_w=capx_price; xad_price_w=xad_price;
+1006               size_price_w=size; lev_price_w=lev;
+1007               if not missing(xrp_p1) and xrd_price < xrp_p1 then xrd_price_w=xrp_p1;
+1008               else if not missing(xrp_p99) and xrd_price > xrp_p99 then xrd_price_w=xrp_p99;
+1009               if not missing(xcp_p1) and capx_price < xcp_p1 then capx_price_w=xcp_p1;
+1010               else if not missing(xcp_p99) and capx_price > xcp_p99 then capx_price_w=xcp_p99;
+1011               if not missing(xap_p1) and xad_price < xap_p1 then xad_price_w=xap_p1;
+1012               else if not missing(xap_p99) and xad_price > xap_p99 then xad_price_w=xap_p99;
+1013               if not missing(sizp_p1) and size < sizp_p1 then size_price_w=sizp_p1;
+1014               else if not missing(sizp_p99) and size > sizp_p99 then size_price_w=sizp_p99;
+1015               if not missing(levp_p1) and lev < levp_p1 then lev_price_w=levp_p1;
+1016               else if not missing(levp_p99) and lev > levp_p99 then lev_price_w=levp_p99;
+1017           end;
+1018       
+1019           caprd_bve_w=.; ppent_bve_w=.; xad_cap_w=.; size_cap_w=.; lev_cap_w=.;
+1020           if fit_cap=1 then do;
+1021               caprd_bve_w=caprd_bve; ppent_bve_w=ppent_bve; xad_cap_w=xad_cap;
+1022               size_cap_w=size; lev_cap_w=lev;
+1023               if not missing(crd_p1) and caprd_bve < crd_p1 then caprd_bve_w=crd_p1;
+28                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+1024               else if not missing(crd_p99) and caprd_bve > crd_p99 then caprd_bve_w=crd_p99;
+1025               if not missing(ppe_p1) and ppent_bve < ppe_p1 then ppent_bve_w=ppe_p1;
+1026               else if not missing(ppe_p99) and ppent_bve > ppe_p99 then ppent_bve_w=ppe_p99;
+1027               if not missing(xac_p1) and xad_cap < xac_p1 then xad_cap_w=xac_p1;
+1028               else if not missing(xac_p99) and xad_cap > xac_p99 then xad_cap_w=xac_p99;
+1029               if not missing(sizc_p1) and size < sizc_p1 then size_cap_w=sizc_p1;
+1030               else if not missing(sizc_p99) and size > sizc_p99 then size_cap_w=sizc_p99;
+1031               if not missing(levc_p1) and lev < levc_p1 then lev_cap_w=levc_p1;
+1032               else if not missing(levc_p99) and lev > levc_p99 then lev_cap_w=levc_p99;
+1033           end;
+1034       
+1035           keep gvkey fyear zscore_decile
+1036                base_bve base_price fit_bve fit_price fit_cap
+1037                imp_bve imp_price imp_cap
+1038                y_bve y_price y_cap
+1039                xrd_bve_w capx_bve_w xad_bve_w size_bve_w lev_bve_w
+1040                xrd_price_w capx_price_w xad_price_w size_price_w lev_price_w
+1041                caprd_bve_w ppent_bve_w xad_cap_w size_cap_w lev_cap_w;
+1042       run;
+
+NOTE: There were 163836 observations read from the data set WORK.FINAL_JOIN.
+NOTE: The data set WORK.FINAL has 46259 observations and 29 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+1043       
+1044       proc sql;
+1045           select sum(candidate_bve) as bve_candidates,
+1046                  sum(nmiss(xrd_bve,capx_bve,size,lev)=0 and bve_ps_p>0 and
+1047                      missing(eps_t_raw)) as bve_missing_current_eps,
+1048                  sum(base_bve) as broad_bve_n,
+1049                  sum(base_bve=1 and imp_bve=0) as broad_bve_observed,
+1050                  sum(base_bve=1 and imp_bve=1) as broad_bve_imputed,
+1051                  sum(candidate_bve=1 and missing(y_bve)) as bve_no_outcome,
+1052                  sum(candidate_bve=1 and date_order ne 1) as bve_bad_date_order,
+1053                  sum(candidate_bve=1 and future_source_missing=1) as bve_source_future_missing,
+1054                  sum(candidate_bve=1 and future_construct_missing=1) as bve_future_conv_miss,
+1055                  sum(candidate_bve=1 and future_source_missing=0 and
+1056                      future_construct_missing=1 and missing(y_bve)) as bve_unimputed_construct_missing,
+1057                  sum(candidate_bve=1 and future_source_missing=1 and
+1058                      missing(zscore_decile)) as bve_missing_score_recipients,
+1059                  sum(candidate_bve=1 and not missing(xad_bve)) as bve_full_candidates,
+1060                  sum(fit_bve) as full_bve_n,
+1061                  sum(fit_bve=1 and imp_bve=0) as full_bve_observed,
+1062                  sum(fit_bve=1 and imp_bve=1) as full_bve_imputed,
+1063                  sum(candidate_bve=1 and not missing(xad_bve) and missing(y_bve)) as bve_full_no_outcome,
+1064                  sum(candidate_price) as price_candidates,
+1065                  sum(nmiss(xrd_price,capx_price,size,lev)=0 and price_ps_p>0 and
+1066                      missing(eps_t_raw)) as price_missing_current_eps,
+1067                  sum(base_price) as broad_price_n,
+1068                  sum(base_price=1 and imp_price=0) as broad_price_observed,
+1069                  sum(base_price=1 and imp_price=1) as broad_price_imputed,
+1070                  sum(candidate_price=1 and missing(y_price)) as price_no_outcome,
+1071                  sum(candidate_price=1 and date_order ne 1) as price_bad_date_order,
+1072                  sum(candidate_price=1 and future_source_missing=1) as price_source_future_missing,
+1073                  sum(candidate_price=1 and future_construct_missing=1) as price_future_conv_miss,
+29                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+1074                  sum(candidate_price=1 and future_source_missing=0 and
+1075                      future_construct_missing=1 and missing(y_price)) as price_no_impute_construct,
+1076                  sum(candidate_price=1 and future_source_missing=1 and
+1077                      missing(zscore_decile)) as price_missing_score_recipients,
+1078                  sum(candidate_price=1 and not missing(xad_price)) as price_full_candidates,
+1079                  sum(fit_price) as full_price_n,
+1080                  sum(fit_price=1 and imp_price=0) as full_price_observed,
+1081                  sum(fit_price=1 and imp_price=1) as full_price_imputed,
+1082                  sum(candidate_price=1 and not missing(xad_price) and missing(y_price)) as price_full_no_outcome,
+1083                  sum(candidate_cap) as cap_full_candidates,
+1084                  sum(candidate_cap=1 and gross_source_missing=1) as cap_source_future_missing,
+1085                  sum(candidate_cap=1 and gross_construct_missing=1) as cap_future_conv_miss,
+1086                  sum(candidate_cap=1 and gross_source_missing=0 and
+1087                      gross_construct_missing=1 and missing(y_cap)) as cap_unimputed_construct_missing,
+1088                  sum(candidate_cap=1 and gross_source_missing=1 and
+1089                      missing(zscore_decile)) as cap_missing_score_recipients,
+1090                  sum(fit_cap) as full_cap_n,
+1091                  sum(fit_cap=1 and imp_cap=0) as full_cap_observed,
+1092                  sum(fit_cap=1 and imp_cap=1) as full_cap_imputed,
+1093                  sum(candidate_cap=1 and missing(y_cap)) as cap_no_outcome
+1094           from work.outcomes;
+1095       
+1096           select fyear, count(*) as union_n,
+1097                  sum(candidate_bve) as bve_candidates,
+1098                  sum(nmiss(xrd_bve,capx_bve,size,lev)=0 and bve_ps_p>0 and
+1099                      missing(eps_t_raw)) as bve_missing_current_eps,
+1100                  sum(base_bve) as broad_bve_n,
+1101                  sum(base_bve=1 and imp_bve=0) as broad_bve_observed,
+1102                  sum(base_bve=1 and imp_bve=1) as broad_bve_imputed,
+1103                  sum(candidate_bve=1 and missing(y_bve)) as bve_no_outcome,
+1104                  sum(candidate_bve=1 and date_order ne 1) as bve_bad_date_order,
+1105                  sum(candidate_bve=1 and future_source_missing=1) as bve_source_future_missing,
+1106                  sum(candidate_bve=1 and future_construct_missing=1) as bve_future_conv_miss,
+1107                  sum(candidate_bve=1 and not missing(xad_bve)) as bve_full_candidates,
+1108                  sum(fit_bve) as full_bve_n,
+1109                  sum(fit_bve=1 and imp_bve=0) as full_bve_observed,
+1110                  sum(fit_bve=1 and imp_bve=1) as full_bve_imputed,
+1111                  sum(candidate_price) as price_candidates,
+1112                  sum(nmiss(xrd_price,capx_price,size,lev)=0 and price_ps_p>0 and
+1113                      missing(eps_t_raw)) as price_missing_current_eps,
+1114                  sum(base_price) as broad_price_n,
+1115                  sum(base_price=1 and imp_price=0) as broad_price_observed,
+1116                  sum(base_price=1 and imp_price=1) as broad_price_imputed,
+1117                  sum(candidate_price=1 and missing(y_price)) as price_no_outcome,
+1118                  sum(candidate_price=1 and date_order ne 1) as price_bad_date_order,
+1119                  sum(candidate_price=1 and future_source_missing=1) as price_source_future_missing,
+1120                  sum(candidate_price=1 and future_construct_missing=1) as price_future_conv_miss,
+1121                  sum(candidate_price=1 and not missing(xad_price)) as price_full_candidates,
+1122                  sum(fit_price) as full_price_n,
+1123                  sum(fit_price=1 and imp_price=0) as full_price_observed,
+1124                  sum(fit_price=1 and imp_price=1) as full_price_imputed,
+1125                  sum(candidate_cap) as cap_full_candidates,
+1126                  sum(candidate_cap=1 and gross_source_missing=1) as cap_source_future_missing,
+1127                  sum(candidate_cap=1 and gross_construct_missing=1) as cap_future_conv_miss,
+1128                  sum(fit_cap) as full_cap_n,
+1129                  sum(fit_cap=1 and imp_cap=0) as full_cap_observed,
+1130                  sum(fit_cap=1 and imp_cap=1) as full_cap_imputed,
+1131                  sum(candidate_cap=1 and missing(y_cap)) as cap_no_outcome
+30                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+1132           from work.outcomes
+1133           group by fyear
+1134           order by fyear;
+1135       quit;
+NOTE: The PROCEDURE SQL printed pages 40-43.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.20 seconds
+      cpu time            0.21 seconds
+      
+
+1136       
+1137       proc means data=work.outcomes n mean std min p25 p50 p75 max;
+1138           where fit_bve=1;
+1139           class fyear;
+1140           var y_bve xrd_bve capx_bve xad_bve size lev caprd_bve ppent_bve;
+1141       run;
+
+NOTE: There were 22951 observations read from the data set WORK.OUTCOMES.
+      WHERE fit_bve=1;
+NOTE: The PROCEDURE MEANS printed pages 44-47.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.06 seconds
+      
+
+1142       
+1143       proc means data=work.outcomes n mean std min p25 p50 p75 max;
+1144           where fit_price=1;
+1145           class fyear;
+1146           var y_price xrd_price capx_price xad_price size lev;
+1147       run;
+
+NOTE: There were 21929 observations read from the data set WORK.OUTCOMES.
+      WHERE fit_price=1;
+NOTE: The PROCEDURE MEANS printed pages 48-50.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+1148       
+1149       proc means data=work.outcomes n mean std min p25 p50 p75 max;
+1150           where fit_cap=1;
+1151           class fyear;
+1152           var y_cap caprd_bve ppent_bve xad_cap size lev;
+1153       run;
+
+NOTE: There were 14817 observations read from the data set WORK.OUTCOMES.
+      WHERE fit_cap=1;
+NOTE: The PROCEDURE MEANS printed pages 51-53.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+1154       
+1155       data out.main;
+1156           set work.final;
+31                                                         The SAS System                     Tuesday, November  3, 2026 12:47:00 PM
+
+1157       run;
+
+NOTE: There were 46259 observations read from the data set WORK.FINAL.
+NOTE: The data set OUT.MAIN has 46259 observations and 29 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1158       
+1159       proc sql;
+1160           select count(*) as final_rows,
+1161                  count(distinct gvkey) as final_firms,
+1162                  min(fyear) as first_fit_year,
+1163                  max(fyear) as last_fit_year
+1164           from out.main;
+1165       quit;
+NOTE: The PROCEDURE SQL printed page 54.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1166       
+1167       proc sort data=out.main out=work.key_check;
+1168           by gvkey fyear;
+1169       run;
+
+NOTE: There were 46259 observations read from the data set OUT.MAIN.
+NOTE: The data set WORK.KEY_CHECK has 46259 observations and 29 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+1170       
+1171       proc sql;
+1172           create table work.final_dups as
+1173           select gvkey, fyear, count(*) as n_rows
+1174           from work.key_check
+1175           group by gvkey, fyear
+1176           having count(*) > 1;
+NOTE: Table WORK.FINAL_DUPS created, with 0 rows and 3 columns.
+
+1177           select count(*) as duplicate_final_keys from work.final_dups;
+1178       quit;
+NOTE: The PROCEDURE SQL printed page 55.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           12.91 seconds
+      cpu time            17.55 seconds
+      

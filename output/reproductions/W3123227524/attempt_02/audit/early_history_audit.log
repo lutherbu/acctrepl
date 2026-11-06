@@ -1,0 +1,484 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 09:11:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 09:11:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+1          options errorabend;
+2          
+3          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname compsec "/storage/sas/base/comp/d_na/security" access=readonly;
+NOTE: Libref COMPSEC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+5          libname sdc "/storage/sas/base/tfn/sdc_ni" access=readonly;
+NOTE: Libref SDC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/tfn/sdc_ni
+6          
+7          /* Bounded 1987-89 audit; emits only grouped counts and date distributions. */
+8          data sdc_early;
+9              set sdc.wrds_ni_details(
+10                 where=(master_deal_date >= '01JAN1987'd and master_deal_date <= '31DEC1989'd)
+11                 keep=master_deal_no master_deal_date filingdate postponed_date withdrawn_date
+12                      withdrawn_date2 security ipo nation currency listmain offerpric description
+13                      businesss spinninames spinafter spinbefore simoffcus cusip cusip9
+14             );
+15             length offer_price_num 8 issue_year 8 offer_cusip $20 sdc_cusip6 $6 sdc_cusip9 $9;
+16             offer_price_num = input(compress(strip(offerpric), '$, '), ?? best32.);
+17             issue_year = year(master_deal_date);
+18             offer_cusip = compress(strip(cusip), ' -');
+19             if lengthn(offer_cusip) >= 6 then sdc_cusip6 = substr(offer_cusip, 1, 6);
+20             else call missing(sdc_cusip6);
+21             offer_cusip = compress(strip(cusip9), ' -');
+22             if lengthn(offer_cusip) = 9 then sdc_cusip9 = offer_cusip;
+23             else call missing(sdc_cusip9);
+24             issue_status = (not missing(master_deal_date)
+25                             and missing(postponed_date)
+26                             and missing(withdrawn_date)
+27                             and missing(withdrawn_date2));
+28             has_spin = (not missing(spinninames) or not missing(spinafter)
+3                                                          The SAS System                     Tuesday, November  3, 2026 09:11:00 AM
+
+29                         or not missing(spinbefore));
+30             has_simul = not missing(simoffcus);
+31             has_rights = (index(upcase(description), 'RIGHT') > 0
+32                           or index(upcase(description), 'STANDBY') > 0
+33                           or index(upcase(description), 'UNIT') > 0);
+34             has_reverse_lbo = (index(upcase(description), 'REVERSE LBO') > 0
+35                                or index(upcase(description), 'REVERSE LEVERAGED') > 0
+36                                or index(upcase(businesss), 'REVERSE LBO') > 0);
+37             is_fund_text = (index(upcase(description), 'CLOSED-END') > 0
+38                             or index(upcase(description), 'CLOSED END') > 0
+39                             or index(upcase(description), 'UNIT TRUST') > 0
+40                             or index(upcase(description), 'LIMITED PARTNERSHIP') > 0
+41                             or index(upcase(description), 'REIT') > 0
+42                             or index(upcase(businesss), 'UNIT TRUST') > 0
+43                             or index(upcase(businesss), 'LIMITED PARTNERSHIP') > 0
+44                             or index(upcase(businesss), 'REAL ESTATE INVESTMENT TRUST') > 0);
+45             target_base = (security = 'Common Shares'
+46                            and ipo = 'No'
+47                            and nation = 'United States');
+48             target_market = (currency = 'US'
+49                              and listmain in ('NYSE','NASDQ','AMEX'));
+50             target_price = (offer_price_num >= 5);
+51             target_event = (target_base and target_market and target_price
+52                             and issue_status and not has_spin and not has_simul
+53                             and not has_rights and not has_reverse_lbo and not is_fund_text
+54                             and not missing(filingdate) and not missing(sdc_cusip6));
+55             issue_age_days = master_deal_date - filingdate;
+56             format master_deal_date filingdate postponed_date withdrawn_date withdrawn_date2 date9.;
+57         run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      24823 at 55:39   
+NOTE: There were 28151 observations read from the data set SDC.WRDS_NI_DETAILS.
+      WHERE (master_deal_date>='01JAN1987'D and master_deal_date<='31DEC1989'D);
+NOTE: The data set WORK.SDC_EARLY has 28151 observations and 36 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.60 seconds
+      cpu time            0.60 seconds
+      
+
+58         
+59         proc sql;
+60             title "1987-1989 U.S. common-share exchange candidates: filing-date checks";
+61             select issue_year,
+62                    count(*) as base_candidates,
+63                    sum(missing(filingdate)) as missing_filingdate,
+64                    sum(filingdate=.B) as filingdate_B,
+65                    sum(filingdate=.E) as filingdate_E,
+66                    sum(filingdate > master_deal_date) as filing_after_issue,
+67                    sum(filingdate = master_deal_date) as same_day_filing_issue,
+68                    sum(filingdate < '01JAN1982'd) as filing_before_1982,
+69                    min(filingdate) format=date9. as min_filingdate,
+70                    max(filingdate) format=date9. as max_filingdate
+71             from sdc_early
+72             where target_base and target_market
+73             group by issue_year
+74             order by issue_year;
+4                                                          The SAS System                     Tuesday, November  3, 2026 09:11:00 AM
+
+75         
+76             title "1987-1989 current target screen and dated links";
+77             create table target as select * from sdc_early where target_event;
+NOTE: Table WORK.TARGET created, with 390 rows and 36 columns.
+
+78             select issue_year, count(*) as target_events,
+79                    min(filingdate) format=date9. as min_filingdate,
+80                    max(filingdate) format=date9. as max_filingdate,
+81                    sum(issue_age_days < 0) as negative_issue_age,
+82                    sum(issue_age_days = 0) as zero_issue_age
+83             from target group by issue_year order by issue_year;
+84         quit;
+NOTE: The PROCEDURE SQL printed pages 1-2.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+85         
+86         proc sort data=target; by issue_year; run;
+
+NOTE: There were 390 observations read from the data set WORK.TARGET.
+NOTE: The data set WORK.TARGET has 390 observations and 36 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+87         proc means data=target n mean min p1 p25 median p75 p99 max;
+88             by issue_year;
+89             var issue_age_days;
+90         run;
+
+NOTE: There were 390 observations read from the data set WORK.TARGET.
+NOTE: The PROCEDURE MEANS printed page 3.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+91         
+92         /* Recreate only the source-date CUSIP links for these target events. */
+93         data secid_early;
+94             set compsec.sec_idhist(keep=gvkey iid item itemvalue efffrom effthru);
+95             if strip(upcase(item)) = 'CUSIP'
+96                and (missing(efffrom) or efffrom <= '31DEC1989'd)
+97                and (missing(effthru) or effthru >= '01JAN1987'd);
+98             length hist_cusip $20 hist_cusip6 $6;
+99             hist_cusip = compress(strip(itemvalue), ' -');
+100            if lengthn(hist_cusip) >= 6 then hist_cusip6 = substr(hist_cusip, 1, 6);
+101            else call missing(hist_cusip6);
+102        run;
+
+NOTE: There were 861868 observations read from the data set COMPSEC.SEC_IDHIST.
+NOTE: The data set WORK.SECID_EARLY has 17523 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+5                                                          The SAS System                     Tuesday, November  3, 2026 09:11:00 AM
+
+      
+
+103        
+104        proc sql;
+105            create table link_pairs as
+106            select t.master_deal_no, t.issue_year, t.master_deal_date, t.filingdate,
+107                   t.issue_age_days, t.sdc_cusip6, t.sdc_cusip9,
+108                   c.gvkey, c.iid, c.efffrom, c.effthru,
+109                   (not missing(t.sdc_cusip9)
+110                    and t.sdc_cusip9=substr(c.hist_cusip,1,9)) as exact9
+111            from target as t inner join secid_early as c
+112              on c.hist_cusip6=t.sdc_cusip6
+113             and (c.efffrom <= t.master_deal_date or c.efffrom=.B or c.efffrom=.)
+114             and (c.effthru >= t.master_deal_date or c.effthru=.E or c.effthru=.);
+NOTE: Table WORK.LINK_PAIRS created, with 382 rows and 12 columns.
+
+115            create table link_exact as
+116            select master_deal_no, max(exact9) as has_exact9
+117            from link_pairs group by master_deal_no;
+NOTE: Table WORK.LINK_EXACT created, with 373 rows and 2 columns.
+
+118            create table issue_link as
+119            select p.master_deal_no,
+120                   count(distinct p.gvkey) as n_gvkeys,
+121                   min(p.gvkey) as gvkey,
+122                   max(p.exact9) as exact9
+123            from link_pairs as p inner join link_exact as q
+124              on p.master_deal_no=q.master_deal_no
+125             and (q.has_exact9=0 or p.exact9=1)
+126            group by p.master_deal_no;
+NOTE: Table WORK.ISSUE_LINK created, with 373 rows and 4 columns.
+
+127            create table target_link as
+128            select t.*, l.gvkey, l.n_gvkeys, l.exact9
+129            from target as t left join issue_link as l
+130              on t.master_deal_no=l.master_deal_no;
+NOTE: Table WORK.TARGET_LINK created, with 390 rows and 39 columns.
+
+131            create table selected_gvkeys as
+132            select distinct issue_year, gvkey
+133            from target_link where n_gvkeys=1;
+NOTE: Table WORK.SELECTED_GVKEYS created, with 372 rows and 2 columns.
+
+134            title "1987-1989 target link coverage";
+135            select issue_year, count(*) as target_events,
+136                   sum(n_gvkeys=1) as unique_gvkey,
+137                   sum(n_gvkeys>1) as ambiguous_gvkey,
+138                   sum(missing(n_gvkeys)) as no_dated_gvkey
+139            from target_link group by issue_year order by issue_year;
+140        quit;
+NOTE: The PROCEDURE SQL printed page 4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+141        
+142        /* Bound raw history through FY1989 for only the date-linked target GVKEYs. */
+6                                                          The SAS System                     Tuesday, November  3, 2026 09:11:00 AM
+
+143        data comp_raw_pre90;
+144            set comp.funda(keep=gvkey fyear datadate where=(fyear <= 1989));
+145            if not missing(gvkey) and not missing(fyear) and not missing(datadate);
+146            format datadate date9.;
+147        run;
+
+NOTE: There were 243197 observations read from the data set COMP.FUNDA.
+      WHERE fyear<=1989;
+NOTE: The data set WORK.COMP_RAW_PRE90 has 242722 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.47 seconds
+      cpu time            0.48 seconds
+      
+
+148        proc sql;
+149            create table raw_bounds as
+150            select s.issue_year, s.gvkey,
+151                   count(r.fyear) as raw_rows_through_1989,
+152                   min(r.fyear) as raw_first_fyear,
+153                   max(r.fyear) as raw_last_fyear,
+154                   min(r.datadate) format=date9. as raw_first_datadate,
+155                   max(r.datadate) format=date9. as raw_last_datadate
+156            from selected_gvkeys as s left join comp_raw_pre90 as r
+157              on s.gvkey=r.gvkey
+158            group by s.issue_year, s.gvkey;
+NOTE: Table WORK.RAW_BOUNDS created, with 372 rows and 7 columns.
+
+159            create table raw_pre_counts as
+160            select t.master_deal_no, t.issue_year, t.gvkey, t.filingdate,
+161                   count(distinct r.fyear) as raw_pre_years
+162            from target_link as t left join comp_raw_pre90 as r
+163              on t.gvkey=r.gvkey and r.datadate < t.filingdate
+164            where t.n_gvkeys=1
+165            group by t.master_deal_no, t.issue_year, t.gvkey, t.filingdate;
+NOTE: Table WORK.RAW_PRE_COUNTS created, with 373 rows and 5 columns.
+
+166        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.12 seconds
+      
+
+167        proc sort data=raw_bounds; by issue_year; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+168        title "Linked GVKEY raw Compustat history bounds through FY1989";
+169        proc means data=raw_bounds n mean min p25 median p75 max;
+170            by issue_year;
+171            var raw_rows_through_1989 raw_first_fyear raw_last_fyear;
+172        run;
+
+NOTE: There were 372 observations read from the data set WORK.RAW_BOUNDS.
+NOTE: The PROCEDURE MEANS printed page 5.
+7                                                          The SAS System                     Tuesday, November  3, 2026 09:11:00 AM
+
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+173        
+174        /* Match the production pre-filing statement population exactly, without item completeness. */
+175        data comp_prod_raw;
+176            set comp.funda(
+177                keep=gvkey datadate fyear indfmt consol datafmt popsrc fic sich
+178                where=(fyear >= 1982 and fyear <= 1989)
+179            );
+180            if strip(upcase(indfmt)) ne 'INDL'
+181               or strip(upcase(consol)) ne 'C'
+182               or strip(upcase(datafmt)) ne 'STD'
+183               or strip(upcase(popsrc)) ne 'D'
+184               or strip(upcase(fic)) ne 'USA' then delete;
+185            format datadate date9.;
+186        run;
+
+NOTE: There were 102784 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1982 and fyear<=1989);
+NOTE: The data set WORK.COMP_PROD_RAW has 62761 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.47 seconds
+      cpu time            0.48 seconds
+      
+
+187        proc sort data=comp_prod_raw out=comp_prod_sorted;
+188            by gvkey fyear datadate;
+189        run;
+
+NOTE: There were 62761 observations read from the data set WORK.COMP_PROD_RAW.
+NOTE: The data set WORK.COMP_PROD_SORTED has 62761 observations and 9 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+190        data comp_prod_annual;
+191            set comp_prod_sorted;
+192            by gvkey fyear datadate;
+193            if last.fyear;
+194            if not missing(sich) and sich >= 100 and sich <= 9999
+195               and not (sich >= 6000 and sich <= 6999);
+196        run;
+
+NOTE: There were 62761 observations read from the data set WORK.COMP_PROD_SORTED.
+NOTE: The data set WORK.COMP_PROD_ANNUAL has 18115 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+197        proc sql;
+198            create table prod_pre_counts as
+199            select t.master_deal_no, t.issue_year, t.gvkey, t.filingdate,
+200                   count(distinct c.fyear) as build_pre_years
+8                                                          The SAS System                     Tuesday, November  3, 2026 09:11:00 AM
+
+201            from target_link as t left join comp_prod_annual as c
+202              on t.gvkey=c.gvkey and c.datadate < t.filingdate
+203            where t.n_gvkeys=1
+204            group by t.master_deal_no, t.issue_year, t.gvkey, t.filingdate;
+NOTE: Table WORK.PROD_PRE_COUNTS created, with 373 rows and 5 columns.
+
+205            create table event_history as
+206            select r.issue_year, r.master_deal_no, r.gvkey, r.filingdate,
+207                   r.raw_pre_years, p.build_pre_years
+208            from raw_pre_counts as r left join prod_pre_counts as p
+209              on r.master_deal_no=p.master_deal_no;
+NOTE: Table WORK.EVENT_HISTORY created, with 373 rows and 6 columns.
+
+210            title "Unique-linked early target offers: raw versus production pre-filing histories";
+211            select issue_year, count(*) as unique_linked_events,
+212                   sum(raw_pre_years >= 4) as raw_events_with_4_prior_fy,
+213                   sum(build_pre_years >= 4) as build_events_with_4_prior_fy,
+214                   sum(raw_pre_years >= 4 and build_pre_years < 4) as raw4_but_build_lt4,
+215                   sum(raw_pre_years < 4 and build_pre_years < 4) as raw_lt4_and_build_lt4,
+216                   min(raw_pre_years) as raw_min_pre_fy,
+217                   max(raw_pre_years) as raw_max_pre_fy,
+218                   min(build_pre_years) as build_min_pre_fy,
+219                   max(build_pre_years) as build_max_pre_fy
+220            from event_history group by issue_year order by issue_year;
+221        quit;
+NOTE: The PROCEDURE SQL printed page 6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+222        proc sort data=event_history; by issue_year; run;
+
+NOTE: There were 373 observations read from the data set WORK.EVENT_HISTORY.
+NOTE: The data set WORK.EVENT_HISTORY has 373 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+223        title "Pre-filing annual-history count distributions by issue cohort";
+224        proc means data=event_history n mean min p25 median p75 max;
+225            by issue_year;
+226            var raw_pre_years build_pre_years;
+227        run;
+
+NOTE: There were 373 observations read from the data set WORK.EVENT_HISTORY.
+NOTE: The PROCEDURE MEANS printed page 7.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+228        
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           1.78 seconds
+9                                                          The SAS System                     Tuesday, November  3, 2026 09:11:00 AM
+
+      cpu time            1.82 seconds
+      

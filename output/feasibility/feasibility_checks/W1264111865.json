@@ -1,0 +1,1976 @@
+{
+  "schema_version": "1.2",
+  "paper_id": "W1264111865",
+  "doi": "10.1023/a:1027351630866",
+  "eligibility": "eligible",
+  "provenance": {
+    "models_inventory_sha256": "99fa3538c4600dfe238e16b796b87f0e11534ddb747b8330bc6184d5d4de41c8",
+    "samples_inventory_sha256": "bcb4cb5c897be4e1d19d5eb27f2249171c3b432429b3ca0ca62577d45855662e",
+    "catalog_sha256": "45894893e45d56cb56150252c2ce4e85dfa88f5d891f3e547d3e9ea8003993fb",
+    "catalog_artifact_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "5821845ace490928bbee4ab43e064acc161010641b908d2a65a5a13de7569030",
+    "model_record_sha256": "70a6621008595cf1258f7c53f31bf147226ff17d37dbf2123020068365ea7a7e",
+    "sample_record_sha256": "ea86c05a2d4a9cb945dff2656ddf52071eac871e77400f37e03b62298c1e27a7",
+    "reading_sha256": "e28d7c2b33b728ef6c7f86363d494fabdb567a2f5301336ecaa7e87d11ac5ee5",
+    "pdf_sha256": "2095278b0ecee6c1172c8d884ea655321be4119d64db6c833133de316d985c3e",
+    "work_item_sha256": "8c8387d697c8956a887f26f650f99de8ebbbb7768311550bf6c41a84ac884746",
+    "review_source_aggregate_sha256": "2c054a78d6515b45b20bd409e84018663c81a2ac3002944ed28baa287078ea88",
+    "review_source_assessment_sha256": "b775f80ac7f56c8a7c3f826730fe2d85e9a3b8349265ff2f8f00b82c8f303536",
+    "review_source_work_item_sha256": "6173b4ed02bd8f8a52151cccef25cf27fddfd394ee30e533e00f3ded32896e34",
+    "review_source_converter_sha256": "adc57168632515ab279560dc8138f3093edf12c561dd519aacc0fe9f0c61f590",
+    "review_source_decisions_sha256": "51ca795843b3c5ff732b33b38572f00ecd2ecbabea1393a13540884851125a2d",
+    "temporal_audit_file": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/full_01_reviewed/drafts/W1264111865/temporal_audit.json",
+    "temporal_audit_sha256": "d35773708f4035750f912474b462c5ba88c8d02af0fdd6bfb64f7f9321320067"
+  },
+  "requirements": [
+    {
+      "requirement_id": "filing_universe",
+      "kind": "sampling",
+      "description": "SEC EDGAR filings and header metadata needed to define all 10-K, 10-K SB, 10-Q and 10-Q SB events, same-day information counts, NT extensions, filing weekdays, SIC and issuer population.",
+      "required_coverage": {
+        "begin": 1995,
+        "end": 2001,
+        "years": [],
+        "frequency": "filing events with filing and report dates",
+        "population": "All EDGAR 10-K/10-K SB/10-Q/10-Q SB filings in the source study period before CRSP restrictions.",
+        "detail": "The paper starts with filing headers from 1996-01-01 through 2001-12-31; historic SEC examples verify some records, not complete event-universe coverage."
+      },
+      "routes": [
+        {
+          "route_id": "route_sec_filing_universe",
+          "route_type": "public_raw",
+          "source_name": "SEC EDGAR filing metadata",
+          "dataset": null,
+          "location": "https://www.sec.gov/edgar/browse/?CIK=0000072843",
+          "fields": [
+            "form type",
+            "filing date",
+            "reporting date",
+            "CIK",
+            "accession number"
+          ],
+          "mapping_notes": "Official EDGAR pages expose historical filing form, date and registrant metadata; full header-file completeness, 10-K SB/10-Q SB universe and historical sample coding remain unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Official public examples establish access for the cited records only. Required full-period, full-population coverage has not been verified.",
+          "evidence_ids": [
+            "public_sec_10k"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Official examples do not establish complete 1996–2001 filings or exact source header-file population.",
+      "evidence_ids": [
+        "paper_5_sample_019",
+        "public_sec_10k"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "crsp_event_returns",
+      "kind": "raw_measure",
+      "description": "CRSP daily stock returns and market capitalization around filing events, including event days 0–3 (or 0–2 for 10-Q) and non-information standardization days −10 to −6 and +6 to +10.",
+      "required_coverage": {
+        "begin": 1995,
+        "end": 2002,
+        "years": [],
+        "frequency": "daily security observations",
+        "population": "CRSP securities linked to EDGAR registrants with filing events 1996–2001.",
+        "detail": "One-month buffers around the event window and ±10-trading-day standardization period are included conservatively; raw bounds are 1995–2002."
+      },
+      "routes": [
+        {
+          "route_id": "route_crsp_event_returns_CRSP_DSF",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "CRSP.DSF",
+          "location": "/storage/sas/base/crsp/a_stock/dsf.sas7bdat",
+          "fields": [
+            "PERMNO",
+            "DATE",
+            "RET",
+            "PRC",
+            "SHROUT",
+            "VOL",
+            "CUSIP"
+          ],
+          "mapping_notes": "CRSP daily security return, date, PERMNO, price and shares-outstanding fields are verified; event-window history and date-level coverage are not.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_CRSP_DSF",
+            "catalog_CRSP_DSF"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No full-history coverage confirmation.",
+      "evidence_ids": [
+        "paper_8_002",
+        "probe_CRSP_DSF",
+        "catalog_CRSP_DSF"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "crsp_market_index",
+      "kind": "benchmark",
+      "description": "CRSP value-weighted daily total-return index for excess-return and standardization calculations.",
+      "required_coverage": {
+        "begin": 1995,
+        "end": 2002,
+        "years": [],
+        "frequency": "daily market-index observations",
+        "population": "CRSP U.S. value-weighted market index on filing and estimation dates.",
+        "detail": "Use the source-specified value-weighted return including dividends; date coverage across all filing windows is unverified."
+      },
+      "routes": [
+        {
+          "route_id": "route_crsp_market_index_CRSP_DSI",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "CRSP.DSI",
+          "location": "/storage/sas/base/crsp/a_stock/dsi.sas7bdat",
+          "fields": [
+            "DATE",
+            "vwretd"
+          ],
+          "mapping_notes": "CRSP daily index exposes DATE and vwretd value-weighted return including dividends; historical coverage is unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_CRSP_DSI",
+            "catalog_CRSP_DSI"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No full-history date coverage confirmation.",
+      "evidence_ids": [
+        "paper_8_002",
+        "probe_CRSP_DSI",
+        "catalog_CRSP_DSI"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "crsp_security_universe",
+      "kind": "sampling",
+      "description": "Historical CRSP name/security records for exchange, share class and SIC screens and CRSP-listed-firm sample construction.",
+      "required_coverage": {
+        "begin": 1995,
+        "end": 2002,
+        "years": [],
+        "frequency": "historical security-name intervals",
+        "population": "CRSP securities eligible for the EDGAR-linked filer population.",
+        "detail": "Effective name intervals and share/exchange/SIC codes are required; this bounded scope does not establish complete coverage."
+      },
+      "routes": [
+        {
+          "route_id": "route_crsp_security_universe_CRSP_DSENAMES",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "CRSP.DSENAMES",
+          "location": "/storage/sas/base/crsp/a_stock/dsenames.sas7bdat",
+          "fields": [
+            "PERMNO",
+            "NAMEDT",
+            "NAMEENDT",
+            "SHRCD",
+            "EXCHCD",
+            "SICCD",
+            "CUSIP",
+            "NCUSIP",
+            "TICKER"
+          ],
+          "mapping_notes": "Historical names, share code, exchange code and SIC fields are present; coverage of all sample registrants and periods is unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_CRSP_DSENAMES",
+            "catalog_CRSP_DSENAMES"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No full historical/population coverage confirmation.",
+      "evidence_ids": [
+        "paper_5_sample_019",
+        "probe_CRSP_DSENAMES",
+        "catalog_CRSP_DSENAMES"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "comp_annual_aa",
+      "kind": "raw_measure",
+      "description": "Compustat annual accounting accrual components for regular Form 10-K and 10-K SB cases: income from continuing operations (source Data 123), operating cash flow (Data 308) and shareholders’ equity (Data 216), then year-specific median indicators.",
+      "required_coverage": {
+        "begin": 1995,
+        "end": 2001,
+        "years": [],
+        "frequency": "annual firm-year statements",
+        "population": "CRSP-matched EDGAR registrants with annual filings in 1996–2001.",
+        "detail": "Current Compustat candidates are ib, oancf and seq; historical item-number/unit correspondence and report-date availability remain unverified."
+      },
+      "routes": [
+        {
+          "route_id": "route_comp_annual_aa_COMP_FUNDA",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "sich",
+            "ib",
+            "ni",
+            "oancf",
+            "seq",
+            "at",
+            "sale"
+          ],
+          "mapping_notes": "Catalog labels identify annual income, operating cash flow and total shareholders’ equity candidates; source item codes and timing are unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_COMP_FUNDA",
+            "catalog_COMP_FUNDA"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Current product fields do not confirm historical item-code equivalence or all-year coverage.",
+      "evidence_ids": [
+        "paper_8_001",
+        "probe_COMP_FUNDA",
+        "catalog_COMP_FUNDA"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "comp_quarter_aa",
+      "kind": "raw_measure",
+      "description": "Compustat quarterly accounting accrual components for regular Form 10-Q cases: net income (Data 8), operating cash flow (Data 108) and shareholders’ equity (Data 60), then year-specific median indicators.",
+      "required_coverage": {
+        "begin": 1995,
+        "end": 2001,
+        "years": [],
+        "frequency": "quarterly firm-period statements",
+        "population": "CRSP-matched EDGAR registrants with regular 10-Q filings in 1996–2001.",
+        "detail": "Quarterly candidates are niq, oancfy and seqq. CFO may be year-to-date; the paper does not specify whether to difference YTD values into stand-alone quarters."
+      },
+      "routes": [
+        {
+          "route_id": "route_comp_quarter_aa_COMP_FUNDQ",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "COMP.FUNDQ",
+          "location": "/storage/sas/base/comp/d_na/fundq.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyearq",
+            "fqtr",
+            "niq",
+            "oancfy",
+            "seqq",
+            "atq",
+            "saleq"
+          ],
+          "mapping_notes": "Catalog fields support current quarterly accounting candidates; item-code mapping, fiscal-period alignment and CFO YTD-vs-quarter construction remain unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_COMP_FUNDQ",
+            "catalog_COMP_FUNDQ"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Quarterly CFO transformation and exact current-vintage item correspondence are unresolved.",
+      "evidence_ids": [
+        "paper_8_001",
+        "probe_COMP_FUNDQ",
+        "catalog_COMP_FUNDQ"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "institutional_holdings",
+      "kind": "raw_measure",
+      "description": "Quarterly institutional holdings for managers with at least $100 million assets under management, linked to issuer shares outstanding, to calculate institutional ownership percentage and annual median indicator.",
+      "required_coverage": {
+        "begin": 1995,
+        "end": 2001,
+        "years": [],
+        "frequency": "quarterly manager-security positions and filing events",
+        "population": "Form 13F manager holdings linked to the CRSP/EDGAR sample; retain managers meeting the source AUM threshold.",
+        "detail": "Use holdings available before each filing event and issuer shares outstanding; account for report-date/file-date timing and the annual median rule. SEC structured 13F data sets begin in 2013; raw 2001 filings are public examples, but the full 1996–2001 manager universe, early filing period and AUM filter are not verified."
+      },
+      "routes": [
+        {
+          "route_id": "route_institutional_holdings_TFN_S34",
+          "route_type": "local_sas",
+          "source_name": "Local TFN holdings candidate",
+          "dataset": "TFN.S34",
+          "location": "/storage/sas/base/tfn/s34/s34.sas7bdat",
+          "fields": [],
+          "mapping_notes": "The exact local table has a supplied failed/unverified probe; its holdings fields, dates, identifiers and code meanings are not verified.",
+          "verification": {
+            "access": "unverified",
+            "fields": "unverified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Failed/unverified bounded probe does not establish table access, fields or historical coverage.",
+          "evidence_ids": [
+            "probe_TFN_S34"
+          ]
+        },
+        {
+          "route_id": "route_sec_13f_raw",
+          "route_type": "public_raw",
+          "source_name": "SEC EDGAR Form 13F-HR raw filings",
+          "dataset": null,
+          "location": "https://www.sec.gov/Archives/edgar/data/1142081/000079762601000001/0000797626-01-000001-index.htm",
+          "fields": [],
+          "mapping_notes": "Individual SEC 13F text filings are publicly accessible for cited 2001 reports; structured SEC 13F data sets begin in 2013. Full raw 1996–2001 population, holdings fields, AUM threshold and issuer linkage remain unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "not_applicable",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Official public examples establish access for the cited records only. Required full-period, full-population coverage has not been verified.",
+          "evidence_ids": [
+            "public_sec_13f",
+            "public_sec_13f_data",
+            "public_sec_13f_rule"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Public examples verify only a 2001 raw filing and structured datasets start after the study period; local TFN probe is unverified. A complete eligible-manager holdings panel and AUM filter are not verified.",
+      "evidence_ids": [
+        "paper_8_001",
+        "public_sec_13f",
+        "public_sec_13f_data"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "cik_gvkey",
+      "kind": "identifier_link",
+      "description": "Issuer CIK to Compustat GVKEY mapping to link SEC filing registrants to accounting statements.",
+      "required_coverage": {
+        "begin": 1996,
+        "end": 2001,
+        "years": [],
+        "frequency": "effective-dated issuer links",
+        "population": "EDGAR registrants in the 1996–2001 sample with Compustat annual or quarterly observations.",
+        "detail": "Use effective date/source validity for CIK-to-GVKEY mapping; no full-population link confirmation."
+      },
+      "routes": [
+        {
+          "route_id": "route_cik_gvkey_WRDSSEC_WCIKLINK_GVKEY",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "WRDSSEC.WCIKLINK_GVKEY",
+          "location": "/storage/sas/base/sec/common/wciklink_gvkey.sas7bdat",
+          "fields": [
+            "cik",
+            "gvkey"
+          ],
+          "mapping_notes": "CIK and GVKEY fields are present in the SEC link table; historical match coverage and validity rules remain unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_WRDSSEC_WCIKLINK_GVKEY",
+            "catalog_WRDSSEC_WCIKLINK_GVKEY"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No full sample link-coverage confirmation.",
+      "evidence_ids": [
+        "paper_5_sample_019",
+        "probe_WRDSSEC_WCIKLINK_GVKEY",
+        "catalog_WRDSSEC_WCIKLINK_GVKEY"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "gvkey_permno",
+      "kind": "identifier_link",
+      "description": "Effective-dated Compustat GVKEY to CRSP PERMNO links for accounting, market-capitalization and event-return construction.",
+      "required_coverage": {
+        "begin": 1996,
+        "end": 2001,
+        "years": [],
+        "frequency": "effective-dated security-link intervals",
+        "population": "CRSP-listed SEC registrants with Compustat observations.",
+        "detail": "Apply primary/type/date validity codes; link coverage across the full filing sample is unverified."
+      },
+      "routes": [
+        {
+          "route_id": "route_gvkey_permno_CRSP_CCMXPF_LINKTABLE",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "CRSP.CCMXPF_LINKTABLE",
+          "location": "/storage/sas/base/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+          "fields": [
+            "gvkey",
+            "lpermno",
+            "linkdt",
+            "linkenddt",
+            "linkprim",
+            "linktype",
+            "liid"
+          ],
+          "mapping_notes": "GVKEY, PERMNO and effective link interval/type fields are live; full sample match coverage is unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_CRSP_CCMXPF_LINKTABLE",
+            "catalog_CRSP_CCMXPF_LINKTABLE"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No full sample link-coverage confirmation.",
+      "evidence_ids": [
+        "paper_5_sample_019",
+        "probe_CRSP_CCMXPF_LINKTABLE",
+        "catalog_CRSP_CCMXPF_LINKTABLE"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "rmc_market_cap_fit",
+      "kind": "supporting_input",
+      "description": "Market capitalization inputs for the supporting regression of log market capitalization on log institutional holdings percentage, used to form residualized market-capitalization rank indicators.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "filing-date or annual firm observations; exact frequency unspecified",
+        "population": "The paper’s residual-market-capitalization fitting population for all Model 4 samples.",
+        "detail": "The source does not specify regression estimation period, sample population, per-filing versus per-year timing, market-cap measure or log base. Keep raw date lower bound and fit population unknown."
+      },
+      "routes": [
+        {
+          "route_id": "route_rmc_market_cap_fit_CRSP_DSF",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "CRSP.DSF",
+          "location": "/storage/sas/base/crsp/a_stock/dsf.sas7bdat",
+          "fields": [
+            "PERMNO",
+            "DATE",
+            "PRC",
+            "SHROUT",
+            "CUSIP"
+          ],
+          "mapping_notes": "Market capitalization can be derived from CRSP price and shares; exact date and treatment are not specified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_CRSP_DSF",
+            "catalog_CRSP_DSF"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Support-fit date, population and market-cap/log definitions are unspecified.",
+      "evidence_ids": [
+        "paper_20_016",
+        "probe_CRSP_DSF",
+        "catalog_CRSP_DSF"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "rmc_holdings_fit",
+      "kind": "supporting_input",
+      "description": "Institutional holdings percentage input for the supporting residualization regression.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "quarterly holdings or annual firm observations; exact fit frequency unspecified",
+        "population": "The paper’s residual-market-capitalization fitting population for all Model 4 samples.",
+        "detail": "The supporting regression period, population and holdings-to-filing date alignment are not given; use of current fiscal-year filings or annual/pooled fit is unspecified."
+      },
+      "routes": [
+        {
+          "route_id": "route_rmc_holdings_fit_TFN_S34",
+          "route_type": "local_sas",
+          "source_name": "Local TFN holdings candidate",
+          "dataset": "TFN.S34",
+          "location": "/storage/sas/base/tfn/s34/s34.sas7bdat",
+          "fields": [],
+          "mapping_notes": "The exact local table has a supplied failed/unverified probe; its holdings fields, dates, identifiers and code meanings are not verified.",
+          "verification": {
+            "access": "unverified",
+            "fields": "unverified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Failed/unverified bounded probe does not establish table access, fields or historical coverage.",
+          "evidence_ids": [
+            "probe_TFN_S34"
+          ]
+        },
+        {
+          "route_id": "route_rmc_13f_raw",
+          "route_type": "public_raw",
+          "source_name": "SEC EDGAR Form 13F-HR raw filings",
+          "dataset": null,
+          "location": "https://www.sec.gov/Archives/edgar/data/1142081/000079762601000001/0000797626-01-000001-index.htm",
+          "fields": [],
+          "mapping_notes": "Raw 13F filings provide manager-security position reports, but the study-period full holdings panel and support-fit timing are unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "not_applicable",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Official public examples establish access for the cited records only. Required full-period, full-population coverage has not been verified.",
+          "evidence_ids": [
+            "public_sec_13f",
+            "public_sec_13f_data"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The RMC supporting-fit population and raw holdings-date convention remain unspecified.",
+      "evidence_ids": [
+        "paper_20_016",
+        "public_sec_13f",
+        "public_sec_13f_data"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "ic_comparison",
+      "kind": "design",
+      "description": "Comparison population and period used to determine whether the share of a firm’s SIC industry in the sample increased or decreased for IC.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "filing-period sample shares; comparison window unspecified",
+        "population": "The source’s filing sample and reference period for SIC-composition changes.",
+        "detail": "The article does not state which two periods or sample denominator define an increase/decrease; date span and comparison population cannot be inferred."
+      },
+      "routes": [
+        {
+          "route_id": "route_ic_comparison_filings",
+          "route_type": "public_raw",
+          "source_name": "SEC EDGAR filings",
+          "dataset": null,
+          "location": "https://www.sec.gov/edgar/browse/?CIK=0000072843",
+          "fields": [
+            "form type",
+            "filing date",
+            "reporting date",
+            "CIK",
+            "SIC"
+          ],
+          "mapping_notes": "SEC filing metadata is a candidate population source, but the paper’s comparison window and industry-share denominator are not specified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Official public examples establish access for the cited records only. Required full-period, full-population coverage has not been verified.",
+          "evidence_ids": [
+            "public_sec_10k"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The IC comparison-period/reference is an essential unresolved specification.",
+      "evidence_ids": [
+        "paper_18_005",
+        "public_sec_10k"
+      ],
+      "data_status": "undetermined"
+    }
+  ],
+  "assessments": [
+    {
+      "model_id": "W126_table6_m4_10k",
+      "result_set_id": "table6_model4",
+      "required_model_ids": [
+        "W126_rmc_construction",
+        "W126_table6_m4_10k"
+      ],
+      "requirement_ids": [
+        "rmc_market_cap_fit",
+        "rmc_holdings_fit",
+        "filing_universe",
+        "crsp_event_returns",
+        "crsp_market_index",
+        "cik_gvkey",
+        "gvkey_permno",
+        "crsp_security_universe",
+        "ic_comparison",
+        "institutional_holdings",
+        "comp_annual_aa"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "W126_rmc_construction",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "rmc_market_cap_fit"
+          ],
+          "construction": "Source definition: Log of market capitalization used as the dependent variable in the residualization; the source does not identify the log base or underlying market-cap calculation. Raw component fields: CRSP.DSF: PERMNO, DATE, PRC, SHROUT, CUSIP Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_rmc_construction",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "rmc_holdings_fit"
+          ],
+          "construction": "Source definition: Log of the percentage of shares held by institutions used as the residualization predictor; the source does not identify the log base. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_event_returns",
+            "crsp_market_index",
+            "cik_gvkey",
+            "gvkey_permno"
+          ],
+          "construction": "Source formula: mean(SAER over event days 0–3); SAER = |CRSP total return − CRSP value-weighted market return| / SD(|daily excess return| over event days −10 to −6 and 6 to 10) Source definition: For firm i at a regular Form 10-K filing date, the mean standardized absolute excess return (SAER) over event days 0 through 3. Daily absolute excess return is the absolute difference between the firm’s CRSP daily total return and the CRSP daily value-weighted total return index. SAER divides this absolute excess return by its standard deviation over the non-information estimation days −10 to −6 and 6 to 10 around filing day 0. Raw component fields: CRSP.DSF: PERMNO, DATE, RET, PRC, SHROUT, VOL, CUSIP; CRSP.DSI: DATE, vwretd; WRDSSEC.WCIKLINK_GVKEY: cik, gvkey; CRSP.CCMXPF_LINKTABLE: gvkey, lpermno, linkdt, linkenddt, linkprim, linktype, liid Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 1{filings of regular Form 10-K on date t ≥ 20}; 0 otherwise Source definition: Information-intensity indicator: 1 when at least 20 filings of this filing type arrive on the filing date, and 0 otherwise. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 1{prior Form NT 10-K filing}; 0 otherwise Source definition: Indicator equal to one when a prior Form NT filing for the corresponding 10-K is filed before the current regular Form 10-K filing date, and zero otherwise. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 0 for 1996–1998; 1 for 1999–2001 Source definition: EDGAR-year indicator: zero for 1996–1998 and one for 1999–2001. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 1 for Monday or Friday; 0 otherwise Source definition: The paper labels this Midweek Filing; it equals one for Monday or Friday and zero for other weekdays. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k",
+          "variable_id": "iv_005",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_security_universe",
+            "ic_comparison"
+          ],
+          "construction": "Source definition: Industry-composition indicator: one if the proportion of the firm's SIC code in the sample increases and zero if it decreases. The source does not state the comparison period or reference used to define the increase/decrease. Raw component fields: CRSP.DSENAMES: PERMNO, NAMEDT, NAMEENDT, SHRCD, EXCHCD, SICCD, CUSIP, NCUSIP, TICKER Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k",
+          "variable_id": "iv_006",
+          "requirement_ids": [
+            "institutional_holdings",
+            "crsp_event_returns"
+          ],
+          "construction": "Source formula: 1 if institutional-holdings percentage is above the median in year; 0 if below Source definition: Indicator based on the percentage of shares held by institutions: one if this percentage is above the median in the year and zero if below. The source traces institutional holdings to quarterly Form 13-F filings by large institutions (at least $100 million in assets under management) summarized in CDA/Investnet. Raw component fields: CRSP.DSF: PERMNO, DATE, RET, PRC, SHROUT, VOL, CUSIP Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k",
+          "variable_id": "iv_007",
+          "requirement_ids": [
+            "comp_annual_aa"
+          ],
+          "construction": "Source formula: AA_it = 1 if (Compustat annual #123 − #308) / #216 > year median; 0 if below; exact ties unspecified. Source definition: Accounting-accrual indicator for net income from continuing operations less operating cash flow, divided by shareholders’ equity. The printed code quantity for this filing sample is (Compustat annual #123 − #308) / #216. The indicator equals 1 above the median in the year and 0 below it; treatment of exact median ties is not reported. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, ib, ni, oancf, seq, at, sale Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k",
+          "variable_id": "iv_008",
+          "requirement_ids": [
+            "rmc_market_cap_fit",
+            "rmc_holdings_fit",
+            "institutional_holdings",
+            "crsp_event_returns"
+          ],
+          "construction": "Source formula: 1 if residual market capitalization is above the median in year; 0 otherwise Source definition: Model 4 adds an indicator based on the residual from a regression of log market capitalization on log percentage of shares held by institutions. The Table 6 note codes the market-capitalization indicator as one above the median in year and zero otherwise; this median rule is applied to the residualized measure. Raw component fields: CRSP.DSF: PERMNO, DATE, PRC, SHROUT, CUSIP; CRSP.DSF: PERMNO, DATE, RET, PRC, SHROUT, VOL, CUSIP Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_market_index",
+            "crsp_security_universe"
+          ],
+          "reason": "Rebuild each filing-type cohort from 1996–2001 EDGAR filing dates, then apply the paper’s CRSP data-availability and Model 4 filters.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "cik_gvkey",
+            "gvkey_permno"
+          ],
+          "reason": "Link EDGAR CIK to GVKEY and date-valid GVKEY to PERMNO; historical 13F manager/security mapping is still unverified.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "Table 6 Model 4 does not identify fixed effects.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The article does not report clustered or other non-default standard-error corrections for Table 6.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "Pooled time-series/cross-sectional regression is reported; the underlying estimator remains an implementation choice.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_security_universe",
+            "institutional_holdings"
+          ],
+          "reason": "Reconstruct form thresholds, year/week/SIC/holding/accounting medians, event windows and the residual-market-cap indicator; median tie rules are unspecified.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The IC industry-composition indicator is defined as an increase/decrease in sample SIC share, but the comparison period and reference population are not stated.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The supporting residual-market-capitalization regression does not identify its estimation period, population, per-year versus pooled fit, market-cap measure or log base.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The IH variable requires institutional positions from managers with at least $100 million AUM; a full 1996–2001 manager universe and AUM filter source are not established by the available SEC structured dataset or local TFN probe.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "For 10-Q AA, quarterly cash flow item 108 may be year-to-date; the source does not specify a quarter-only transformation. Median ties are also unspecified.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The pooled regression estimator and standard-error correction are not named; this is an implementation choice rather than evidence that raw fields are unavailable.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "Model 4 is the final reported column for this filing sample. Its size-related term is the residual-market-capitalization indicator added to Model 3; raw market capitalization from Model 1 is not added to Model 4.",
+        "Parent independently checked the source PDF arithmetic and supplied a versioned reading; the annual/quarterly AA formula is now explicit.",
+        "All three frozen Table 6 Model 4 fits and the shared residual-market-capitalization construction are retained. SEC pages verify selected historical examples only.",
+        "Local SEC directory probes are directory-existence probes and establish no SEC file-content coverage. No local historical coverage confirmation was supplied."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "W126_table6_m4_10k_sb",
+      "result_set_id": "table6_model4",
+      "required_model_ids": [
+        "W126_rmc_construction",
+        "W126_table6_m4_10k_sb"
+      ],
+      "requirement_ids": [
+        "rmc_market_cap_fit",
+        "rmc_holdings_fit",
+        "filing_universe",
+        "crsp_event_returns",
+        "crsp_market_index",
+        "cik_gvkey",
+        "gvkey_permno",
+        "crsp_security_universe",
+        "ic_comparison",
+        "institutional_holdings",
+        "comp_annual_aa"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "W126_rmc_construction",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "rmc_market_cap_fit"
+          ],
+          "construction": "Source definition: Log of market capitalization used as the dependent variable in the residualization; the source does not identify the log base or underlying market-cap calculation. Raw component fields: CRSP.DSF: PERMNO, DATE, PRC, SHROUT, CUSIP Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_rmc_construction",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "rmc_holdings_fit"
+          ],
+          "construction": "Source definition: Log of the percentage of shares held by institutions used as the residualization predictor; the source does not identify the log base. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k_sb",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_event_returns",
+            "crsp_market_index",
+            "cik_gvkey",
+            "gvkey_permno"
+          ],
+          "construction": "Source formula: mean(SAER over event days 0–3); SAER = |CRSP total return − CRSP value-weighted market return| / SD(|daily excess return| over event days −10 to −6 and 6 to 10) Source definition: For firm i at a Form 10-K SB filing date, the mean standardized absolute excess return (SAER) over event days 0 through 3. Daily absolute excess return is the absolute difference between the firm’s CRSP daily total return and the CRSP daily value-weighted total return index. SAER divides this absolute excess return by its standard deviation over the non-information estimation days −10 to −6 and 6 to 10 around filing day 0. Raw component fields: CRSP.DSF: PERMNO, DATE, RET, PRC, SHROUT, VOL, CUSIP; CRSP.DSI: DATE, vwretd; WRDSSEC.WCIKLINK_GVKEY: cik, gvkey; CRSP.CCMXPF_LINKTABLE: gvkey, lpermno, linkdt, linkenddt, linkprim, linktype, liid Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k_sb",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 1{filings of Form 10-K SB on date t ≥ 20}; 0 otherwise Source definition: Information-intensity indicator: 1 when at least 20 filings of this filing type arrive on the filing date, and 0 otherwise. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k_sb",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 1{prior Form NT 10-K filing}; 0 otherwise Source definition: Indicator equal to one when a prior Form NT filing for the corresponding 10-K is filed before the current Form 10-K SB filing date, and zero otherwise. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k_sb",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 0 for 1996–1998; 1 for 1999–2001 Source definition: EDGAR-year indicator: zero for 1996–1998 and one for 1999–2001. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k_sb",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 1 for Monday or Friday; 0 otherwise Source definition: The paper labels this Midweek Filing; it equals one for Monday or Friday and zero for other weekdays. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k_sb",
+          "variable_id": "iv_005",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_security_universe",
+            "ic_comparison"
+          ],
+          "construction": "Source definition: Industry-composition indicator: one if the proportion of the firm's SIC code in the sample increases and zero if it decreases. The source does not state the comparison period or reference used to define the increase/decrease. Raw component fields: CRSP.DSENAMES: PERMNO, NAMEDT, NAMEENDT, SHRCD, EXCHCD, SICCD, CUSIP, NCUSIP, TICKER Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k_sb",
+          "variable_id": "iv_006",
+          "requirement_ids": [
+            "institutional_holdings",
+            "crsp_event_returns"
+          ],
+          "construction": "Source formula: 1 if institutional-holdings percentage is above the median in year; 0 if below Source definition: Indicator based on the percentage of shares held by institutions: one if this percentage is above the median in the year and zero if below. The source traces institutional holdings to quarterly Form 13-F filings by large institutions (at least $100 million in assets under management) summarized in CDA/Investnet. Raw component fields: CRSP.DSF: PERMNO, DATE, RET, PRC, SHROUT, VOL, CUSIP Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k_sb",
+          "variable_id": "iv_007",
+          "requirement_ids": [
+            "comp_annual_aa"
+          ],
+          "construction": "Source formula: AA_it = 1 if (Compustat annual #123 − #308) / #216 > year median; 0 if below; exact ties unspecified. Source definition: Accounting-accrual indicator for net income from continuing operations less operating cash flow, divided by shareholders’ equity. The printed code quantity for this filing sample is (Compustat annual #123 − #308) / #216. The indicator equals 1 above the median in the year and 0 below it; treatment of exact median ties is not reported. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, ib, ni, oancf, seq, at, sale Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10k_sb",
+          "variable_id": "iv_008",
+          "requirement_ids": [
+            "rmc_market_cap_fit",
+            "rmc_holdings_fit",
+            "institutional_holdings",
+            "crsp_event_returns"
+          ],
+          "construction": "Source formula: 1 if residual market capitalization is above the median in year; 0 otherwise Source definition: Model 4 adds an indicator based on the residual from a regression of log market capitalization on log percentage of shares held by institutions. The Table 6 note codes the market-capitalization indicator as one above the median in year and zero otherwise; this median rule is applied to the residualized measure. Raw component fields: CRSP.DSF: PERMNO, DATE, PRC, SHROUT, CUSIP; CRSP.DSF: PERMNO, DATE, RET, PRC, SHROUT, VOL, CUSIP Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_market_index",
+            "crsp_security_universe"
+          ],
+          "reason": "Rebuild each filing-type cohort from 1996–2001 EDGAR filing dates, then apply the paper’s CRSP data-availability and Model 4 filters.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "cik_gvkey",
+            "gvkey_permno"
+          ],
+          "reason": "Link EDGAR CIK to GVKEY and date-valid GVKEY to PERMNO; historical 13F manager/security mapping is still unverified.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "Table 6 Model 4 does not identify fixed effects.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The article does not report clustered or other non-default standard-error corrections for Table 6.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "Pooled time-series/cross-sectional regression is reported; the underlying estimator remains an implementation choice.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_security_universe",
+            "institutional_holdings"
+          ],
+          "reason": "Reconstruct form thresholds, year/week/SIC/holding/accounting medians, event windows and the residual-market-cap indicator; median tie rules are unspecified.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The IC industry-composition indicator is defined as an increase/decrease in sample SIC share, but the comparison period and reference population are not stated.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The supporting residual-market-capitalization regression does not identify its estimation period, population, per-year versus pooled fit, market-cap measure or log base.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The IH variable requires institutional positions from managers with at least $100 million AUM; a full 1996–2001 manager universe and AUM filter source are not established by the available SEC structured dataset or local TFN probe.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "For 10-Q AA, quarterly cash flow item 108 may be year-to-date; the source does not specify a quarter-only transformation. Median ties are also unspecified.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The pooled regression estimator and standard-error correction are not named; this is an implementation choice rather than evidence that raw fields are unavailable.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "Model 4 is the final reported column for this filing sample. Its size-related term is the residual-market-capitalization indicator added to Model 3; raw market capitalization from Model 1 is not added to Model 4.",
+        "Parent independently checked the source PDF arithmetic and supplied a versioned reading; the annual/quarterly AA formula is now explicit.",
+        "All three frozen Table 6 Model 4 fits and the shared residual-market-capitalization construction are retained. SEC pages verify selected historical examples only.",
+        "Local SEC directory probes are directory-existence probes and establish no SEC file-content coverage. No local historical coverage confirmation was supplied."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "W126_table6_m4_10q",
+      "result_set_id": "table6_model4",
+      "required_model_ids": [
+        "W126_rmc_construction",
+        "W126_table6_m4_10q"
+      ],
+      "requirement_ids": [
+        "rmc_market_cap_fit",
+        "rmc_holdings_fit",
+        "filing_universe",
+        "crsp_event_returns",
+        "crsp_market_index",
+        "cik_gvkey",
+        "gvkey_permno",
+        "crsp_security_universe",
+        "ic_comparison",
+        "institutional_holdings",
+        "comp_quarter_aa"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "W126_rmc_construction",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "rmc_market_cap_fit"
+          ],
+          "construction": "Source definition: Log of market capitalization used as the dependent variable in the residualization; the source does not identify the log base or underlying market-cap calculation. Raw component fields: CRSP.DSF: PERMNO, DATE, PRC, SHROUT, CUSIP Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_rmc_construction",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "rmc_holdings_fit"
+          ],
+          "construction": "Source definition: Log of the percentage of shares held by institutions used as the residualization predictor; the source does not identify the log base. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10q",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_event_returns",
+            "crsp_market_index",
+            "cik_gvkey",
+            "gvkey_permno"
+          ],
+          "construction": "Source formula: mean(SAER over event days 0–2); SAER = |CRSP total return − CRSP value-weighted market return| / SD(|daily excess return| over event days −10 to −6 and 6 to 10) Source definition: For firm i at a regular Form 10-Q filing date, the mean standardized absolute excess return (SAER) over event days 0 through 2. Daily absolute excess return is the absolute difference between the firm’s CRSP daily total return and the CRSP daily value-weighted total return index. SAER divides this absolute excess return by its standard deviation over the non-information estimation days −10 to −6 and 6 to 10 around filing day 0. Raw component fields: CRSP.DSF: PERMNO, DATE, RET, PRC, SHROUT, VOL, CUSIP; CRSP.DSI: DATE, vwretd; WRDSSEC.WCIKLINK_GVKEY: cik, gvkey; CRSP.CCMXPF_LINKTABLE: gvkey, lpermno, linkdt, linkenddt, linkprim, linktype, liid Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10q",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 1{filings of regular Form 10-Q on date t ≥ 100}; 0 otherwise Source definition: Information-intensity indicator: 1 when at least 100 filings of this filing type arrive on the filing date, and 0 otherwise. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10q",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 1{prior Form NT 10-Q filing}; 0 otherwise Source definition: Indicator equal to one when a prior Form NT filing for the corresponding 10-Q is filed before the current regular Form 10-Q filing date, and zero otherwise. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10q",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 0 for 1996–1998; 1 for 1999–2001 Source definition: EDGAR-year indicator: zero for 1996–1998 and one for 1999–2001. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10q",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "filing_universe"
+          ],
+          "construction": "Source formula: 1 for Monday or Friday; 0 otherwise Source definition: The paper labels this Midweek Filing; it equals one for Monday or Friday and zero for other weekdays. Required raw construction/input dates or component definition remain source-unresolved as recorded in the linked requirement. Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10q",
+          "variable_id": "iv_005",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_security_universe",
+            "ic_comparison"
+          ],
+          "construction": "Source definition: Industry-composition indicator: one if the proportion of the firm's SIC code in the sample increases and zero if it decreases. The source does not state the comparison period or reference used to define the increase/decrease. Raw component fields: CRSP.DSENAMES: PERMNO, NAMEDT, NAMEENDT, SHRCD, EXCHCD, SICCD, CUSIP, NCUSIP, TICKER Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10q",
+          "variable_id": "iv_006",
+          "requirement_ids": [
+            "institutional_holdings",
+            "crsp_event_returns"
+          ],
+          "construction": "Source formula: 1 if institutional-holdings percentage is above the median in year; 0 if below Source definition: Indicator based on the percentage of shares held by institutions: one if this percentage is above the median in the year and zero if below. The source traces institutional holdings to quarterly Form 13-F filings by large institutions (at least $100 million in assets under management) summarized in CDA/Investnet. Raw component fields: CRSP.DSF: PERMNO, DATE, RET, PRC, SHROUT, VOL, CUSIP Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10q",
+          "variable_id": "iv_007",
+          "requirement_ids": [
+            "comp_quarter_aa"
+          ],
+          "construction": "Source formula: AA_it = 1 if (Compustat quarterly #8 − #108) / #60 > year median; 0 if below; exact ties unspecified. Source definition: Accounting-accrual indicator for net income from continuing operations less operating cash flow, divided by shareholders’ equity. The printed code quantity for this filing sample is (Compustat quarterly #8 − #108) / #60. The indicator equals 1 above the median in the year and 0 below it; treatment of exact median ties is not reported. Raw component fields: COMP.FUNDQ: gvkey, datadate, fyearq, fqtr, niq, oancfy, seqq, atq, saleq Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "W126_table6_m4_10q",
+          "variable_id": "iv_008",
+          "requirement_ids": [
+            "rmc_market_cap_fit",
+            "rmc_holdings_fit",
+            "institutional_holdings",
+            "crsp_event_returns"
+          ],
+          "construction": "Source formula: 1 if residual market capitalization is above the median in year; 0 otherwise Source definition: Model 4 adds an indicator based on the residual from a regression of log market capitalization on log percentage of shares held by institutions. The Table 6 note codes the market-capitalization indicator as one above the median in year and zero otherwise; this median rule is applied to the residualized measure. Raw component fields: CRSP.DSF: PERMNO, DATE, PRC, SHROUT, CUSIP; CRSP.DSF: PERMNO, DATE, RET, PRC, SHROUT, VOL, CUSIP Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_market_index",
+            "crsp_security_universe"
+          ],
+          "reason": "Rebuild each filing-type cohort from 1996–2001 EDGAR filing dates, then apply the paper’s CRSP data-availability and Model 4 filters.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "cik_gvkey",
+            "gvkey_permno"
+          ],
+          "reason": "Link EDGAR CIK to GVKEY and date-valid GVKEY to PERMNO; historical 13F manager/security mapping is still unverified.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "Table 6 Model 4 does not identify fixed effects.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The article does not report clustered or other non-default standard-error corrections for Table 6.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "Pooled time-series/cross-sectional regression is reported; the underlying estimator remains an implementation choice.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "filing_universe",
+            "crsp_security_universe",
+            "institutional_holdings"
+          ],
+          "reason": "Reconstruct form thresholds, year/week/SIC/holding/accounting medians, event windows and the residual-market-cap indicator; median tie rules are unspecified.",
+          "evidence_ids": [
+            "paper_5_sample_019",
+            "paper_6_009",
+            "paper_18_005",
+            "paper_19_004",
+            "paper_20_016"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The IC industry-composition indicator is defined as an increase/decrease in sample SIC share, but the comparison period and reference population are not stated.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The supporting residual-market-capitalization regression does not identify its estimation period, population, per-year versus pooled fit, market-cap measure or log base.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The IH variable requires institutional positions from managers with at least $100 million AUM; a full 1996–2001 manager universe and AUM filter source are not established by the available SEC structured dataset or local TFN probe.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "For 10-Q AA, quarterly cash flow item 108 may be year-to-date; the source does not specify a quarter-only transformation. Median ties are also unspecified.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The pooled regression estimator and standard-error correction are not named; this is an implementation choice rather than evidence that raw fields are unavailable.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_8_001"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "Model 4 is the final reported column for this filing sample. Its size-related term is the residual-market-capitalization indicator added to Model 3; raw market capitalization from Model 1 is not added to Model 4.",
+        "Parent independently checked the source PDF arithmetic and supplied a versioned reading; the annual/quarterly AA formula is now explicit.",
+        "All three frozen Table 6 Model 4 fits and the shared residual-market-capitalization construction are retained. SEC pages verify selected historical examples only.",
+        "Local SEC directory probes are directory-existence probes and establish no SEC file-content coverage. No local historical coverage confirmation was supplied."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "paper_8_001",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 8,
+      "quote": "Investor response is measured as an unsigned (or absolute) daily excess stock return",
+      "description": "Source definition for W126_table6_m4_10k ER_it (mean standardized absolute excess return)",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_8_002",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 8,
+      "quote": "the CRSP daily total stock return less the CRSP daily value-weighted total return index",
+      "description": "Source definition for W126_table6_m4_10k ER_it (mean standardized absolute excess return)",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_8_003",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 8,
+      "quote": "over 10 trading days before and after filing day 0",
+      "description": "Source definition for W126_table6_m4_10k ER_it (mean standardized absolute excess return)",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_19_004",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 19,
+      "quote": "This table reports the mean standardized absolute excess return over days 0 to 3 relative to day 0",
+      "description": "Source definition for W126_table6_m4_10k ER_it (mean standardized absolute excess return)",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_18_005",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 18,
+      "quote": "Information intensity, INit (1 1⁄4 high, 0 1⁄4 low) (high 1⁄4 20 or more filings per day for a 10-K report and 100 or more filings per day for a 10-Q report)",
+      "description": "Source definition for W126_table6_m4_10k IN_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_18_006",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 18,
+      "quote": "prior Form NT 10-K or NT 10-Q filing, NTit 1⁄4 1, otherwise 0",
+      "description": "Source definition for W126_table6_m4_10k NT_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_18_007",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 18,
+      "quote": "Edgar year, YRit (0 1⁄4 1996 to 1998, 1 1⁄4 1999 to 2001)",
+      "description": "Source definition for W126_table6_m4_10k YR_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_18_008",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 18,
+      "quote": "midweek filing, WKit (Mon. or Fri. 1⁄4 1, other days 1⁄4 0)",
+      "description": "Source definition for W126_table6_m4_10k WK_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_6_009",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 6,
+      "quote": "as a proxy for change in sample industry composition, I assign a firm an indicator variable of one if its SIC code proportion increases and zero if it decreases.",
+      "description": "Source definition for W126_table6_m4_10k IC_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_18_010",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 18,
+      "quote": "industry composition, ICit (increase 1⁄4 1, decrease 1⁄4 0)",
+      "description": "Source definition for W126_table6_m4_10k IC_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_18_011",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 18,
+      "quote": "percentage of shares held by institutions; IHit (greater than median in year 1⁄4 1, less than median 1⁄4 0)",
+      "description": "Source definition for W126_table6_m4_10k IH_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_26_012",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 26,
+      "quote": "Based on the quarterly SEC Form 13-F filings by large institutions ($100 million or more in assets under management) as summarized in the CDA/Investnet database.",
+      "description": "Source definition for W126_table6_m4_10k IH_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_18_013",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 18,
+      "quote": "accounting accruals, AAit, measured as net income from continuing operations less operating cash flow deflated by shareholders’ equity",
+      "description": "Source definition for W126_table6_m4_10k AA_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_18_014",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 18,
+      "quote": "greater than median in year 1⁄4 1, less than median 1⁄4 0",
+      "description": "Source definition for W126_table6_m4_10k AA_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_18_015",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 18,
+      "quote": "annual Compustat codes (123 - 308) / 216 and quarterly Compustat codes (8 - 108) / 60.",
+      "description": "Source definition for W126_table6_m4_10k AA_it",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_20_016",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 20,
+      "quote": "the residual from a regression of log of market capitalization on the log of percentage of holdings by institutions.",
+      "description": "Source definition for W126_table6_m4_10k Residual market capitalization indicator",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_19_017",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 19,
+      "quote": "market capitalization (greater than median in year 1⁄4 1, otherwise 0)",
+      "description": "Source definition for W126_table6_m4_10k Residual market capitalization indicator",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_20_018",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 20,
+      "quote": "the dependent variable is measured over a three-day response period, from days 0 to 2",
+      "description": "Source definition for W126_table6_m4_10q ER_it (mean standardized absolute excess return)",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_5_sample_019",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 5,
+      "quote": "The CRSP daily return and market capitalization data requirements then reduce these numbers to 10,805 10-K and 52,262 10-Q filings.",
+      "description": "Sample selection/source evidence for W1264111865",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_5_sample_020",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 5,
+      "quote": "I begin with all 10-K (and 10-K SB) and 10-Q (and 10-Q SB) filings for the study period from January 1, 1996 to December 31, 2001, which I identify from the EDGAR header files.",
+      "description": "Sample selection/source evidence for W1264111865",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_5_sample_021",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 5,
+      "quote": "from January 1, 1996 to December 31, 2001",
+      "description": "Sample selection/source evidence for W1264111865",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_2_sample_022",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 2,
+      "quote": "from January 1996, when the system was fully operational and applicable to all registrants (see Section 1.1), to December 2001, the latest period for stock prices on the CRSP database.",
+      "description": "Sample selection/source evidence for W1264111865",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_5_sample_023",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 5,
+      "quote": "which I identify from the EDGAR header files.",
+      "description": "Sample selection/source evidence for W1264111865",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_5_sample_024",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W1264111865_e28d7c2b33b728ef.json",
+      "page": 5,
+      "quote": "I then select filings for those companies that are also listed in the CRSP population.",
+      "description": "Sample selection/source evidence for W1264111865",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_COMP_FUNDA",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/COMP.FUNDA.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource probe for COMP.FUNDA; no historical/population coverage claim.",
+      "sha256": "dd9d66ff1debeea55773cd795f95af5f6cee0c45dc5cab8992f2eb6289e92ea5",
+      "verified_at": "2026-10-27T14:46:58.418486+00:00"
+    },
+    {
+      "evidence_id": "catalog_COMP_FUNDA",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "COMP.FUNDA catalog entry at lines 27500–28729; actual fields/labels: gvkey=Global Company Key; datadate=Data Date; fyear=Data Year - Fiscal; sich=Standard Industrial Classification - Historical; ib=Income Before Extraordinary Items; ni=Net Income (Loss); oancf=Operating Activities - Net Cash Flow; seq=Stockholders Equity - Parent; at=Assets - Total; sale=Sales/Turnover (Net)",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_COMP_FUNDQ",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/COMP.FUNDQ.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource probe for COMP.FUNDQ; no historical/population coverage claim.",
+      "sha256": "388d8a1419129c0945e03dfec26d999bfd5bfa37387b784fbfc020ac2034180f",
+      "verified_at": "2026-10-27T14:46:58.967449+00:00"
+    },
+    {
+      "evidence_id": "catalog_COMP_FUNDQ",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "COMP.FUNDQ catalog entry at lines 28730–29583; actual fields/labels: gvkey=Global Company Key; datadate=Data Date; fyearq=Fiscal Year; fqtr=Fiscal Quarter; niq=Net Income (Loss); oancfy=Operating Activities - Net Cash Flow; seqq=Stockholders Equity > Parent > Index Fundamental > Quarterly; atq=Assets - Total; saleq=Sales/Turnover (Net)",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_CRSP_CCMXPF_LINKTABLE",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.CCMXPF_LINKTABLE.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource probe for CRSP.CCMXPF_LINKTABLE; no historical/population coverage claim.",
+      "sha256": "e76dbf4af338be97f1c61c9fe3126cd2ebf709899d993a32f89ef51416769a1a",
+      "verified_at": "2026-10-27T14:47:02.545572+00:00"
+    },
+    {
+      "evidence_id": "catalog_CRSP_CCMXPF_LINKTABLE",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "CRSP.CCMXPF_LINKTABLE catalog entry at lines 81454–81534; actual fields/labels: gvkey=Standard and Poor's Identifier; lpermno=Historical CRSP PERMNO Link to COMPUSTAT Record; linkdt=First Effective Date of Link; linkenddt=Last Effective Date of Link; linkprim=Primary Link Marker; linktype=Link Type Code; liid=Security-level Identifer",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_CRSP_DSENAMES",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.DSENAMES.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource probe for CRSP.DSENAMES; no historical/population coverage claim.",
+      "sha256": "32fdd163380ffbbfe623a6aa2b01c500219666799d56846ef9868c4a9aeef786",
+      "verified_at": "2026-10-27T14:47:02.040984+00:00"
+    },
+    {
+      "evidence_id": "catalog_CRSP_DSENAMES",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "CRSP.DSENAMES catalog entry at lines 81822–81917; actual fields/labels: PERMNO=PERMNO; NAMEDT=Names Date; NAMEENDT=Names Ending Date; SHRCD=Share Code; EXCHCD=Exchange Code; SICCD=Standard Industrial Classification Code; CUSIP=CUSIP Header; NCUSIP=CUSIP; TICKER=Ticker Symbol",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_CRSP_DSF",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.DSF.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource probe for CRSP.DSF; no historical/population coverage claim.",
+      "sha256": "2471907ef2308bc19dbb8cda3bfd155a4ae534de93ed28e6b94c55b63a19b725",
+      "verified_at": "2026-10-27T14:46:59.536580+00:00"
+    },
+    {
+      "evidence_id": "catalog_CRSP_DSF",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "CRSP.DSF catalog entry at lines 81918–82013; actual fields/labels: PERMNO=PERMNO; DATE=Date of Observation; RET=Returns; PRC=Price or Bid/Ask Average; SHROUT=Shares Outstanding; VOL=Volume; CUSIP=CUSIP Header",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_CRSP_DSI",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.DSI.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource probe for CRSP.DSI; no historical/population coverage claim.",
+      "sha256": "07efa62af430923487dd3c7a2d1e09c34ced1329417fdaf32222498a44ed2cb4",
+      "verified_at": "2026-10-27T14:47:00.548744+00:00"
+    },
+    {
+      "evidence_id": "catalog_CRSP_DSI",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "CRSP.DSI catalog entry at lines 82144–82221; actual fields/labels: DATE=Date of Observation; vwretd=Value-Weighted Return-incl. dividends",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_TFN_S34",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/v11_TFN.S34.json",
+      "page": null,
+      "quote": null,
+      "description": "Failed/unverified exact-resource probe for TFN.S34; no historical/population coverage claim.",
+      "sha256": "5a147b8065d7c179bb02567bbe23f6ed8a1eb15c20fcd1420a9aa38ab38dd7f9",
+      "verified_at": "2026-10-27T15:23:27.441912+00:00"
+    },
+    {
+      "evidence_id": "probe_WRDSSEC_WCIKLINK_GVKEY",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/pilot_01/drafts/W2093651092/wciklink_probe.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource probe for WRDSSEC.WCIKLINK_GVKEY; no historical/population coverage claim.",
+      "sha256": "0644e5fd70d354f30f244e5eefd95210a1fbec0553513ecfdc59a8e98decf90a",
+      "verified_at": "2026-10-27T14:57:33.182059+00:00"
+    },
+    {
+      "evidence_id": "catalog_WRDSSEC_WCIKLINK_GVKEY",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "WRDSSEC.WCIKLINK_GVKEY catalog entry at lines 131901–131999; actual fields/labels: cik=CIK; gvkey=GVKEY",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "public_sec_10k",
+      "kind": "public",
+      "locator": "https://www.sec.gov/edgar/browse/?CIK=0000072843",
+      "page": null,
+      "quote": "10-K ... 1997-03-26 ... 1996-12-31; 10-Q ... 1996-11-14 ... 1996-09-30.",
+      "description": "Official SEC EDGAR entity page search result displays historic Form 10-K and 10-Q records with filing and reporting dates.",
+      "sha256": null,
+      "verified_at": "2026-10-27T20:26:45Z"
+    },
+    {
+      "evidence_id": "public_sec_13f",
+      "kind": "public",
+      "locator": "https://www.sec.gov/Archives/edgar/data/1142081/000079762601000001/0000797626-01-000001-index.htm",
+      "page": null,
+      "quote": "Form 13F-HR ... Filing Date 2001-02-13 ... Period of Report 2000-12-31.",
+      "description": "Official SEC individual Form 13F-HR filing detail page displays filing date, reporting period, CIK and a linked report document.",
+      "sha256": null,
+      "verified_at": "2026-10-27T20:26:45Z"
+    },
+    {
+      "evidence_id": "public_sec_13f_data",
+      "kind": "public",
+      "locator": "https://www.sec.gov/data-research/sec-markets-data/form-13f-data-sets",
+      "page": null,
+      "quote": "July 2013 - August 2026",
+      "description": "SEC structured Form 13F data sets begin in July 2013, later than this paper’s 1996–2001 period.",
+      "sha256": null,
+      "verified_at": "2026-10-27T20:26:45Z"
+    },
+    {
+      "evidence_id": "public_sec_13f_rule",
+      "kind": "public",
+      "locator": "https://www.sec.gov/rules-regulations/1999/01/rulemaking-edgar-system",
+      "page": null,
+      "quote": "A graduated phase-in process ... ended on May 6, 1996, when all filers became subject to mandatory electronic filing.",
+      "description": "SEC rulemaking page explains the mandatory-electronic filing phase-in for filings generally and 13F’s subsequent electronic mandate.",
+      "sha256": null,
+      "verified_at": "2026-10-27T20:26:45Z"
+    }
+  ],
+  "author_alternatives": [],
+  "review_notes": [
+    "All three frozen Table 6 Model 4 fits and the shared residual-market-capitalization construction are retained. SEC pages verify selected historical examples only.",
+    "Local SEC directory probes are directory-existence probes and establish no SEC file-content coverage. No local historical coverage confirmation was supplied."
+  ],
+  "summary": {
+    "outcome": "undetermined",
+    "assessment_counts": {
+      "local_ready": 0,
+      "public_acquisition_required": 0,
+      "access_blocked": 0,
+      "undetermined": 3,
+      "no_observed_data_required": 0
+    },
+    "baseline_models": 3,
+    "baseline_fits": 3,
+    "any_data_feasible": false,
+    "all_data_feasible": false,
+    "partially_data_feasible": false,
+    "attempt_ready_count": 0
+  }
+}

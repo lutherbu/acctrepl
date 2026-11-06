@@ -1,0 +1,1494 @@
+{
+  "schema_version": "1.2",
+  "paper_id": "W3124908438",
+  "doi": "10.2308/accr.2008.83.3.823",
+  "eligibility": "eligible",
+  "provenance": {
+    "models_inventory_sha256": "99fa3538c4600dfe238e16b796b87f0e11534ddb747b8330bc6184d5d4de41c8",
+    "samples_inventory_sha256": "bcb4cb5c897be4e1d19d5eb27f2249171c3b432429b3ca0ca62577d45855662e",
+    "catalog_sha256": "45894893e45d56cb56150252c2ce4e85dfa88f5d891f3e547d3e9ea8003993fb",
+    "catalog_artifact_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "5821845ace490928bbee4ab43e064acc161010641b908d2a65a5a13de7569030",
+    "model_record_sha256": "f44d78c8a988df2d46983dbd1a26a13944ed4bc449b4c5bb7c996fb83e48173e",
+    "sample_record_sha256": "2c3cb88528d736d39b29a747dda1408417d17ebeb9e084b67d5681173ce8b80d",
+    "reading_sha256": "69ce23abd2dd5ff4a3e6123a0e22074256566f8e8d8f883439d2d95cbcd70f82",
+    "pdf_sha256": "4324f540cc4295f58ede587cabaa1ecc4344b705ce88bc529baec0d60c6426e1",
+    "work_item_sha256": "bdbd20df4eae3deecd84528ac0944901ab1bf719bd9ee037053d225832df77d2",
+    "review_source_aggregate_sha256": "2c054a78d6515b45b20bd409e84018663c81a2ac3002944ed28baa287078ea88",
+    "review_source_assessment_sha256": "dc69b5c802abe3d66735006135e55a6765eaa248598443f2910052666dfd85b0",
+    "review_source_work_item_sha256": "c3cce67093fb24ec904f6aaf0bc7bb9ffce29fcff904f6d7a6dfe7b47cb6075a",
+    "review_source_converter_sha256": "adc57168632515ab279560dc8138f3093edf12c561dd519aacc0fe9f0c61f590",
+    "review_source_decisions_sha256": "51ca795843b3c5ff732b33b38572f00ecd2ecbabea1393a13540884851125a2d",
+    "temporal_audit_file": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/full_01_reviewed/drafts/W3124908438/temporal_audit.json",
+    "temporal_audit_sha256": "3ae3632de11c91c642cb542420b9f4201663becc9b80f4ed1d4ea8d16bdf18ea"
+  },
+  "requirements": [
+    {
+      "requirement_id": "compustat_annual_panel",
+      "kind": "raw_measure",
+      "description": "Annual Compustat inputs for NOA, RNOA, PM, ATO, earnings and price scaling; includes historical SIC/fiscal-year identifiers and required prior/future statements.",
+      "required_coverage": {
+        "begin": 1982,
+        "end": 2003,
+        "years": [],
+        "frequency": "annual fiscal-year records",
+        "population": "Compustat firm-year panel underlying the 38,716 final observations; fiscal-year cohort 1984–2002, expanded for nested t−2 ratios and t+1 components before later I/B/E/S and return screens.",
+        "detail": "The 1984–2002 cohort requires t−2 statements for changes in ratios built from average NOA and t+1 statements for future DuPont components. The source reports legacy Compustat item numbers; exact translation to current field names is unresolved."
+      },
+      "routes": [
+        {
+          "route_id": "compustat_funda_fields",
+          "route_type": "local_sas",
+          "source_name": "COMP",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "sich",
+            "oiadp",
+            "at",
+            "che",
+            "ivao",
+            "dltt",
+            "dlc",
+            "ceq",
+            "pstk",
+            "mib",
+            "sale",
+            "revt",
+            "epspx",
+            "prcc_f",
+            "csho",
+            "indfmt",
+            "consol",
+            "popsrc",
+            "datafmt"
+          ],
+          "mapping_notes": "Full annual fundamentals product. Candidate fields are selected by catalog labels, but exact correspondence from every legacy item number in the article to today’s Compustat item semantics is not established.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Shared exact-resource probe confirms these fields are present. No coordinator confirmation establishes historical coverage for the study sample or required population; readable source data and current rows are not coverage evidence.",
+          "evidence_ids": [
+            "cat_COMP_FUNDA",
+            "probe_COMP_FUNDA"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Field presence is verified; exact legacy-item mapping and historical coverage are not confirmed.",
+      "evidence_ids": [
+        "cat_COMP_FUNDA",
+        "probe_COMP_FUNDA"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "compustat_crsp_link",
+      "kind": "identifier_link",
+      "description": "Effective-dated Compustat GVKEY to CRSP PERMNO/PERMCO crosswalk for linking annual fiscal records to return histories.",
+      "required_coverage": {
+        "begin": 1983,
+        "end": 2003,
+        "years": [],
+        "frequency": "effective-dated security-company links",
+        "population": "Study firms with Compustat fiscal-year rows and CRSP returns.",
+        "detail": "Use link dates and primary/link-type markers to match GVKEY and PERMNO over the relevant fiscal/event periods."
+      },
+      "routes": [
+        {
+          "route_id": "compustat_crsp_link_fields",
+          "route_type": "local_sas",
+          "source_name": "CRSP",
+          "dataset": "CRSP.CCMXPF_LINKTABLE",
+          "location": "/storage/sas/base/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+          "fields": [
+            "gvkey",
+            "lpermno",
+            "lpermco",
+            "linkprim",
+            "linktype",
+            "linkdt",
+            "linkenddt"
+          ],
+          "mapping_notes": "CCM link table fields identify GVKEY, PERMNO/PERMCO, link type/primary marker, and effective dates.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "verified"
+          },
+          "coverage_notes": "Shared exact-resource probe confirms these fields are present. No coordinator confirmation establishes historical coverage for the study sample or required population; readable source data and current rows are not coverage evidence.",
+          "evidence_ids": [
+            "cat_CRSP_CCMXPF_LINKTABLE",
+            "probe_CRSP_CCMXPF_LINKTABLE"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Current link fields are verified, but historical completeness and the appropriate effective-link choices for all 1983–2003 sample observations have no coverage confirmation.",
+      "evidence_ids": [
+        "cat_CRSP_CCMXPF_LINKTABLE",
+        "probe_CRSP_CCMXPF_LINKTABLE"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "crsp_monthly_returns",
+      "kind": "raw_measure",
+      "description": "Monthly security total returns, including distributions, used to compound fiscal-year market-adjusted returns.",
+      "required_coverage": {
+        "begin": 1983,
+        "end": 2003,
+        "years": [],
+        "frequency": "monthly security observations",
+        "population": "CRSP-linked securities in the paper’s final sample.",
+        "detail": "12-month return windows are dated to each firm’s fiscal-year start/end, not calendar-year boundaries."
+      },
+      "routes": [
+        {
+          "route_id": "crsp_monthly_total_returns",
+          "route_type": "local_sas",
+          "source_name": "CRSP",
+          "dataset": "CRSP.MSF",
+          "location": "/storage/sas/base/crsp/a_stock/msf.sas7bdat",
+          "fields": [
+            "PERMNO",
+            "DATE",
+            "RET"
+          ],
+          "mapping_notes": "CRSP monthly security total return and date fields; `RET` includes distributions per catalog label.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Shared exact-resource probe confirms these fields are present. No coordinator confirmation establishes historical coverage for the study sample or required population; readable source data and current rows are not coverage evidence.",
+          "evidence_ids": [
+            "cat_CRSP_MSF",
+            "probe_CRSP_MSF"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Fields are verified, but historical security coverage and firm linkage are unconfirmed.",
+      "evidence_ids": [
+        "cat_CRSP_MSF",
+        "probe_CRSP_MSF"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "crsp_monthly_market_returns",
+      "kind": "benchmark",
+      "description": "Monthly CRSP value-weighted total market returns for market-adjusting annual buy-and-hold returns.",
+      "required_coverage": {
+        "begin": 1983,
+        "end": 2003,
+        "years": [],
+        "frequency": "monthly market-index observations",
+        "population": "CRSP value-weighted market index for each fiscal-year return window.",
+        "detail": "Use market total-return series (`vwretd`) over the same monthly dates as security returns."
+      },
+      "routes": [
+        {
+          "route_id": "crsp_monthly_value_weighted_market",
+          "route_type": "local_sas",
+          "source_name": "CRSP",
+          "dataset": "CRSP.MSI",
+          "location": "/storage/sas/base/crsp/a_stock/msi.sas7bdat",
+          "fields": [
+            "DATE",
+            "vwretd"
+          ],
+          "mapping_notes": "CRSP monthly market index date and value-weighted return including dividends.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Shared exact-resource probe confirms these fields are present. No coordinator confirmation establishes historical coverage for the study sample or required population; readable source data and current rows are not coverage evidence.",
+          "evidence_ids": [
+            "cat_CRSP_MSI",
+            "probe_CRSP_MSI"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Fields are verified, but coverage of all required monthly market dates is not confirmed.",
+      "evidence_ids": [
+        "cat_CRSP_MSI",
+        "probe_CRSP_MSI"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "crsp_daily_returns",
+      "kind": "raw_measure",
+      "description": "Daily security total returns for the five-day event-window return around actual annual earnings announcement dates.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "daily security observations",
+        "population": "CRSP-linked securities with annual earnings announcements in the study cohort.",
+        "detail": "Fiscal-year cohort labels are 1984–2002; actual announcement dates and corresponding ±2 trading-day returns may fall in later calendar periods. The paper supplies no hard calendar cutoff for the announcement date."
+      },
+      "routes": [
+        {
+          "route_id": "crsp_daily_total_returns",
+          "route_type": "local_sas",
+          "source_name": "CRSP",
+          "dataset": "CRSP.DSF",
+          "location": "/storage/sas/base/crsp/a_stock/dsf.sas7bdat",
+          "fields": [
+            "PERMNO",
+            "DATE",
+            "RET"
+          ],
+          "mapping_notes": "CRSP daily security total returns and event-date fields.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Shared exact-resource probe confirms these fields are present. No coordinator confirmation establishes historical coverage for the study sample or required population; readable source data and current rows are not coverage evidence.",
+          "evidence_ids": [
+            "cat_CRSP_DSF",
+            "probe_CRSP_DSF"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Required event dates depend on realized annual announcements and have no source-bounded calendar end; historical coverage remains unconfirmed.",
+      "evidence_ids": [
+        "cat_CRSP_DSF",
+        "probe_CRSP_DSF"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "crsp_daily_market_returns",
+      "kind": "benchmark",
+      "description": "Daily CRSP value-weighted total market returns matched to the event-window security returns.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "daily market-index observations",
+        "population": "CRSP value-weighted market index on daily earnings-announcement event dates.",
+        "detail": "Use `vwretd` on the same trading dates as each event window; cohort is by fiscal year while the event window uses actual announcement dates."
+      },
+      "routes": [
+        {
+          "route_id": "crsp_daily_value_weighted_market",
+          "route_type": "local_sas",
+          "source_name": "CRSP",
+          "dataset": "CRSP.DSI",
+          "location": "/storage/sas/base/crsp/a_stock/dsi.sas7bdat",
+          "fields": [
+            "DATE",
+            "vwretd"
+          ],
+          "mapping_notes": "CRSP daily market index date and value-weighted total-return fields.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Shared exact-resource probe confirms these fields are present. No coordinator confirmation establishes historical coverage for the study sample or required population; readable source data and current rows are not coverage evidence.",
+          "evidence_ids": [
+            "cat_CRSP_DSI",
+            "probe_CRSP_DSI"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The event-date calendar window is not bounded by the source; no historical coverage confirmation was supplied.",
+      "evidence_ids": [
+        "cat_CRSP_DSI",
+        "probe_CRSP_DSI"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "ibes_actuals_dates",
+      "kind": "raw_measure",
+      "description": "I/B/E/S annual actual EPS and actual earnings-announcement dates needed to identify short-window events and align forecast revisions.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "annual EPS actuals with announcement dates",
+        "population": "I/B/E/S US firms linked to the 38,716 fiscal-year cohort.",
+        "detail": "Use actual period end, measure/frequency, actual value and announcement date; an annual fiscal-year label is not the event date."
+      },
+      "routes": [
+        {
+          "route_id": "ibes_actuals_and_announcements",
+          "route_type": "local_sas",
+          "source_name": "IBES",
+          "dataset": "IBES.ACT_EPSUS",
+          "location": "/storage/sas/base/ibes/act_epsus.sas7bdat",
+          "fields": [
+            "TICKER",
+            "CUSIP",
+            "PENDS",
+            "MEASURE",
+            "PDICITY",
+            "ANNDATS",
+            "ACTDATS",
+            "VALUE",
+            "CURR_ACT",
+            "USFIRM"
+          ],
+          "mapping_notes": "Actuals file exposes ticker, period end, measure/frequency, actual value and announcement dates; field semantics are supported by catalog labels.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Shared exact-resource probe confirms these fields are present. No coordinator confirmation establishes historical coverage for the study sample or required population; readable source data and current rows are not coverage evidence.",
+          "evidence_ids": [
+            "cat_IBES_ACT_EPSUS",
+            "probe_IBES_ACT_EPSUS"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The announced-date join to each fiscal-year cohort and historical population coverage are unconfirmed.",
+      "evidence_ids": [
+        "cat_IBES_ACT_EPSUS",
+        "probe_IBES_ACT_EPSUS"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "ibes_consensus_forecasts",
+      "kind": "raw_measure",
+      "description": "I/B/E/S median analyst forecasts for annual EPS at the last pre-announcement period and first post-announcement one-year-ahead period.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "forecast summary periods",
+        "population": "I/B/E/S US firms and fiscal-period forecasts linked to the Compustat/CRSP sample.",
+        "detail": "The article specifies median forecasts before/after announcement but does not identify summary frequency, exact period selection or adjustment/currency reconciliation."
+      },
+      "routes": [
+        {
+          "route_id": "ibes_summary_median_forecasts",
+          "route_type": "local_sas",
+          "source_name": "IBES",
+          "dataset": "IBES.STATSUM_EPSUS",
+          "location": "/storage/sas/base/ibes/statsum_epsus.sas7bdat",
+          "fields": [
+            "TICKER",
+            "STATPERS",
+            "MEASURE",
+            "FISCALP",
+            "FPI",
+            "MEDEST",
+            "ACTUAL",
+            "FPEDATS",
+            "ANNDATS_ACT",
+            "ACTDATS_ACT",
+            "CURR_ACT"
+          ],
+          "mapping_notes": "`MEDEST` supplies median estimates with statistical period, fiscal period/FPI, period end and actual-announcement-date fields; exact timing/currency mapping is unresolved.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Shared exact-resource probe confirms these fields are present. No coordinator confirmation establishes historical coverage for the study sample or required population; readable source data and current rows are not coverage evidence.",
+          "evidence_ids": [
+            "cat_IBES_STATSUM_EPSUS",
+            "probe_IBES_STATSUM_EPSUS"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The median field is present, but the source does not specify frequency/timing details sufficiently to establish exact pre/post matching; historical coverage is unconfirmed.",
+      "evidence_ids": [
+        "cat_IBES_STATSUM_EPSUS",
+        "probe_IBES_STATSUM_EPSUS"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "ibes_crsp_link",
+      "kind": "identifier_link",
+      "description": "Effective-dated I/B/E/S ticker to CRSP PERMNO linkage for joining actual announcement and forecast records to CRSP event returns.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "effective-dated ticker-security links",
+        "population": "I/B/E/S US tickers corresponding to firms in the 1984–2002 fiscal-year cohort.",
+        "detail": "Match ticker to PERMNO using effective link dates; combine with CCM Compustat-to-CRSP links when joining forecasts to fiscal records."
+      },
+      "routes": [
+        {
+          "route_id": "ibes_crsp_effective_link",
+          "route_type": "local_sas",
+          "source_name": "WRDSAPPS",
+          "dataset": "WRDSAPPS.IBCRSPHIST",
+          "location": "/storage/sas/base/wrdsapps/linking/iclink/ibcrsphist.sas7bdat",
+          "fields": [
+            "TICKER",
+            "PERMNO",
+            "sdate",
+            "edate",
+            "ncusip"
+          ],
+          "mapping_notes": "Historical I/B/E/S ticker-to-PERMNO linking fields include ticker, PERMNO and effective start/end dates.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Shared exact-resource probe confirms these fields are present. No coordinator confirmation establishes historical coverage for the study sample or required population; readable source data and current rows are not coverage evidence.",
+          "evidence_ids": [
+            "cat_WRDSAPPS_IBCRSPHIST",
+            "probe_WRDSAPPS_IBCRSPHIST"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Link fields are present, but historical coverage and resolution of multiple/effective links for the sample are unconfirmed.",
+      "evidence_ids": [
+        "cat_WRDSAPPS_IBCRSPHIST",
+        "probe_WRDSAPPS_IBCRSPHIST"
+      ],
+      "data_status": "undetermined"
+    }
+  ],
+  "assessments": [
+    {
+      "model_id": "long_window_future_components",
+      "result_set_id": "table5_full_future_components",
+      "required_model_ids": [
+        "long_window_future_components"
+      ],
+      "requirement_ids": [
+        "compustat_annual_panel",
+        "compustat_crsp_link",
+        "crsp_daily_returns",
+        "crsp_monthly_market_returns",
+        "crsp_monthly_returns",
+        "ibes_actuals_dates",
+        "ibes_consensus_forecasts",
+        "ibes_crsp_link"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "compustat_annual_panel",
+            "compustat_crsp_link",
+            "crsp_monthly_returns",
+            "crsp_monthly_market_returns"
+          ],
+          "construction": "Compounded fiscal-year buy-and-hold `RET` less aligned CRSP value-weighted return; use Compustat fiscal-year dates and effective-dated GVKEY–PERMNO link.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "EPS before extraordinary items in year t divided by fiscal-year-end share price at t−1.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "Change in EPS before extraordinary items from t−1 to t divided by the fiscal-year-end share price at t−1.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "Operating income before interest divided by average NOA; derive operating assets and liabilities from the paper’s item-number formula.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "RNOA_t minus RNOA_{t−1}; nested average-NOA ratios require raw statements through t−2.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_005",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "Operating income before interest divided by total sales in year t.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_006",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "Sales divided by average NOA_t and NOA_{t−1}.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_007",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "PM_t minus PM_{t−1}; current and prior-year operating income and sales.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_008",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "ATO_t minus ATO_{t−1}; because each ATO uses average NOA, raw inputs extend through t−2.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_009",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "Future RNOA_{t+1}; t+1 operating income and average NOA require statements through t+1.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_010",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "Future PM_{t+1}: operating income before interest divided by sales in t+1.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "long_window_future_components",
+          "variable_id": "iv_011",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "Future ATO_{t+1}: sales in t+1 divided by average NOA_{t+1} and NOA_t.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "compustat_annual_panel",
+            "ibes_actuals_dates",
+            "ibes_consensus_forecasts",
+            "crsp_monthly_returns",
+            "crsp_daily_returns"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_sample",
+            "p_exclusions"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "compustat_crsp_link",
+            "ibes_crsp_link"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_sample",
+            "probe_CRSP_CCMXPF_LINKTABLE",
+            "probe_WRDSAPPS_IBCRSPHIST"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "Separate annual cross-sectional fits are reported; no fixed-effect indicators are specified.",
+          "evidence_ids": [
+            "p_methods",
+            "p_fits"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "Fama–MacBeth averaging and a Newey–West serial-correlation adjustment are reported; no cross-sectional cluster dimension or Newey–West lag order is reported.",
+          "evidence_ids": [
+            "p_methods",
+            "p_nw"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported.",
+          "evidence_ids": [
+            "p_methods",
+            "p_fits"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The paper reports annual cross-sectional OLS fits, Fama–MacBeth coefficient averaging, 19 annual fits and a Newey–West adjustment; per-year N and the lag order are not reported.",
+          "evidence_ids": [
+            "p_methods",
+            "p_nw",
+            "p_fits"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_winsor"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The paper specifies OLS annual fits and a Newey–West adjustment, but does not report the Newey–West lag/order; this changes reported inference.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_methods",
+            "p_nw"
+          ]
+        },
+        {
+          "kind": "linkage",
+          "description": "Short-window and forecast-revision outcomes require actual announcement dates aligned to fiscal-year cohorts and effective-dated I/B/E/S–CRSP/Compustat links. The paper gives no row-level match convention; local historical coverage is unconfirmed.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_short_return",
+            "p_revision",
+            "p_sample",
+            "probe_WRDSAPPS_IBCRSPHIST",
+            "probe_CRSP_CCMXPF_LINKTABLE"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The article cites legacy Compustat item numbers. Current catalog labels are available, but exact item-to-field correspondence (including NOA components) and I/B/E/S forecast currency/adjustment matching need implementation review.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_noa",
+            "p_earnings_price",
+            "cat_COMP_FUNDA",
+            "probe_COMP_FUNDA",
+            "cat_IBES_STATSUM_EPSUS",
+            "probe_IBES_STATSUM_EPSUS"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The 38,716 firm-year sample is common across the three selected results; annual fit Ns are not reported.",
+        "Fiscal-year cohort labels, fiscal-year-end price denominators, and actual announcement-date event windows are distinct time anchors. The source does not bound the calendar delay from fiscal year end to short-window/revision events.",
+        "Shared probes establish field presence only. Historical coverage/population remains unverified without coordinator coverage confirmations."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "short_window_announcement_returns",
+      "result_set_id": "table6_model3",
+      "required_model_ids": [
+        "short_window_announcement_returns"
+      ],
+      "requirement_ids": [
+        "compustat_annual_panel",
+        "compustat_crsp_link",
+        "crsp_daily_market_returns",
+        "crsp_daily_returns",
+        "crsp_monthly_returns",
+        "ibes_actuals_dates",
+        "ibes_consensus_forecasts",
+        "ibes_crsp_link"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "short_window_announcement_returns",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "ibes_actuals_dates",
+            "ibes_crsp_link",
+            "crsp_daily_returns",
+            "crsp_daily_market_returns"
+          ],
+          "construction": "Compound security total returns minus CRSP value-weighted total returns from two trading days before through two days after the actual annual earnings announcement.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "short_window_announcement_returns",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "ibes_actuals_dates",
+            "ibes_consensus_forecasts",
+            "compustat_annual_panel",
+            "compustat_crsp_link",
+            "ibes_crsp_link"
+          ],
+          "construction": "Annual I/B/E/S actual EPS less the latest pre-announcement median forecast for year t, scaled by Compustat price at fiscal-year t−1 end.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "short_window_announcement_returns",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "ΔPM_t, requiring PM_t and PM_{t−1}.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "short_window_announcement_returns",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "ΔATO_t and its nested average-NOA denominators, requiring raw statements through t−2.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "short_window_announcement_returns",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "ΔRNOA_t and its nested average-NOA denominators, requiring raw statements through t−2.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "compustat_annual_panel",
+            "ibes_actuals_dates",
+            "ibes_consensus_forecasts",
+            "crsp_monthly_returns",
+            "crsp_daily_returns"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_sample",
+            "p_exclusions"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "compustat_crsp_link",
+            "ibes_crsp_link"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_sample",
+            "probe_CRSP_CCMXPF_LINKTABLE",
+            "probe_WRDSAPPS_IBCRSPHIST"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "Separate annual cross-sectional fits are reported; no fixed-effect indicators are specified.",
+          "evidence_ids": [
+            "p_methods",
+            "p_fits"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "Fama–MacBeth averaging and a Newey–West serial-correlation adjustment are reported; no cross-sectional cluster dimension or Newey–West lag order is reported.",
+          "evidence_ids": [
+            "p_methods",
+            "p_nw"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported.",
+          "evidence_ids": [
+            "p_methods",
+            "p_fits"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The paper reports annual cross-sectional OLS fits, Fama–MacBeth coefficient averaging, 19 annual fits and a Newey–West adjustment; per-year N and the lag order are not reported.",
+          "evidence_ids": [
+            "p_methods",
+            "p_nw",
+            "p_fits"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_winsor"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The paper specifies OLS annual fits and a Newey–West adjustment, but does not report the Newey–West lag/order; this changes reported inference.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_methods",
+            "p_nw"
+          ]
+        },
+        {
+          "kind": "linkage",
+          "description": "Short-window and forecast-revision outcomes require actual announcement dates aligned to fiscal-year cohorts and effective-dated I/B/E/S–CRSP/Compustat links. The paper gives no row-level match convention; local historical coverage is unconfirmed.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_short_return",
+            "p_revision",
+            "p_sample",
+            "probe_WRDSAPPS_IBCRSPHIST",
+            "probe_CRSP_CCMXPF_LINKTABLE"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The article cites legacy Compustat item numbers. Current catalog labels are available, but exact item-to-field correspondence (including NOA components) and I/B/E/S forecast currency/adjustment matching need implementation review.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_noa",
+            "p_earnings_price",
+            "cat_COMP_FUNDA",
+            "probe_COMP_FUNDA",
+            "cat_IBES_STATSUM_EPSUS",
+            "probe_IBES_STATSUM_EPSUS"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The 38,716 firm-year sample is common across the three selected results; annual fit Ns are not reported.",
+        "Fiscal-year cohort labels, fiscal-year-end price denominators, and actual announcement-date event windows are distinct time anchors. The source does not bound the calendar delay from fiscal year end to short-window/revision events.",
+        "Shared probes establish field presence only. Historical coverage/population remains unverified without coordinator coverage confirmations."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "analyst_forecast_revisions",
+      "result_set_id": "table8_model3",
+      "required_model_ids": [
+        "analyst_forecast_revisions"
+      ],
+      "requirement_ids": [
+        "compustat_annual_panel",
+        "compustat_crsp_link",
+        "crsp_daily_returns",
+        "crsp_monthly_returns",
+        "ibes_actuals_dates",
+        "ibes_consensus_forecasts",
+        "ibes_crsp_link"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "analyst_forecast_revisions",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "ibes_actuals_dates",
+            "ibes_consensus_forecasts",
+            "ibes_crsp_link",
+            "compustat_annual_panel",
+            "compustat_crsp_link"
+          ],
+          "construction": "First median one-year-ahead forecast for t+1 after the actual t earnings announcement minus the last median immediately before it, scaled by fiscal-year t−1 share price.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "analyst_forecast_revisions",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "ibes_actuals_dates",
+            "ibes_consensus_forecasts",
+            "compustat_annual_panel",
+            "compustat_crsp_link",
+            "ibes_crsp_link"
+          ],
+          "construction": "Annual surprise SUR_t: actual EPS less most recent pre-announcement median forecast for year t, scaled by t−1 share price.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "analyst_forecast_revisions",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "ΔPM_t, requiring operating income and sales in t and t−1.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "analyst_forecast_revisions",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "ΔATO_t; nested average-NOA denominators require raw statements through t−2.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "analyst_forecast_revisions",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "construction": "ΔRNOA_t; nested average-NOA denominators require raw statements through t−2.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "compustat_annual_panel",
+            "ibes_actuals_dates",
+            "ibes_consensus_forecasts",
+            "crsp_monthly_returns",
+            "crsp_daily_returns"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_sample",
+            "p_exclusions"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "compustat_crsp_link",
+            "ibes_crsp_link"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_sample",
+            "probe_CRSP_CCMXPF_LINKTABLE",
+            "probe_WRDSAPPS_IBCRSPHIST"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "Separate annual cross-sectional fits are reported; no fixed-effect indicators are specified.",
+          "evidence_ids": [
+            "p_methods",
+            "p_fits"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "Fama–MacBeth averaging and a Newey–West serial-correlation adjustment are reported; no cross-sectional cluster dimension or Newey–West lag order is reported.",
+          "evidence_ids": [
+            "p_methods",
+            "p_nw"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported.",
+          "evidence_ids": [
+            "p_methods",
+            "p_fits"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The paper reports annual cross-sectional OLS fits, Fama–MacBeth coefficient averaging, 19 annual fits and a Newey–West adjustment; per-year N and the lag order are not reported.",
+          "evidence_ids": [
+            "p_methods",
+            "p_nw",
+            "p_fits"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "compustat_annual_panel"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_winsor"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The paper specifies OLS annual fits and a Newey–West adjustment, but does not report the Newey–West lag/order; this changes reported inference.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_methods",
+            "p_nw"
+          ]
+        },
+        {
+          "kind": "linkage",
+          "description": "Short-window and forecast-revision outcomes require actual announcement dates aligned to fiscal-year cohorts and effective-dated I/B/E/S–CRSP/Compustat links. The paper gives no row-level match convention; local historical coverage is unconfirmed.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_short_return",
+            "p_revision",
+            "p_sample",
+            "probe_WRDSAPPS_IBCRSPHIST",
+            "probe_CRSP_CCMXPF_LINKTABLE"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The article cites legacy Compustat item numbers. Current catalog labels are available, but exact item-to-field correspondence (including NOA components) and I/B/E/S forecast currency/adjustment matching need implementation review.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_noa",
+            "p_earnings_price",
+            "cat_COMP_FUNDA",
+            "probe_COMP_FUNDA",
+            "cat_IBES_STATSUM_EPSUS",
+            "probe_IBES_STATSUM_EPSUS"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The 38,716 firm-year sample is common across the three selected results; annual fit Ns are not reported.",
+        "Fiscal-year cohort labels, fiscal-year-end price denominators, and actual announcement-date event windows are distinct time anchors. The source does not bound the calendar delay from fiscal year end to short-window/revision events.",
+        "Shared probes establish field presence only. Historical coverage/population remains unverified without coordinator coverage confirmations."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "p_methods",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 7,
+      "quote": "Fama-MacBeth t-statistics",
+      "description": "Annual cross-sectional estimation and Fama–MacBeth inference, original paper p. 7.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_nw",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 7,
+      "quote": "West (1987) adjustment",
+      "description": "Serial-correlation adjustment for overlapping annual coefficient estimates, p. 7.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_long_return",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 9,
+      "quote": "12 months beginning",
+      "description": "Long-window return period begins in first fiscal-year month and ends at fiscal-year end, p. 9.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_earnings_price",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 9,
+      "quote": "market value of equity per share at the end of fiscal year",
+      "description": "Earnings and changes in earnings use the prior fiscal-year-end per-share market value, p. 9.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_future_components",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 9,
+      "quote": "future levels of RNOA and DuPont components",
+      "description": "Table 5 includes t+1 RNOA, PM and ATO, p. 9.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_short_return",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 10,
+      "quote": "five-day window surrounding the earnings",
+      "description": "Short-window outcome spans two days before through two days after annual earnings announcement, p. 10.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_surprise",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 10,
+      "quote": "most recent median forecast",
+      "description": "Annual surprise uses actual annual I/B/E/S earnings less the latest median forecast, p. 10.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_revision",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 12,
+      "quote": "first median",
+      "description": "Revision uses first median forecast after and last median forecast before the t earnings announcement, p. 12.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_sample",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 13,
+      "quote": "38,716 firm-year observations",
+      "description": "Common sample size and sample filters, p. 13.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_exclusions",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 13,
+      "quote": "financial companies) are excluded",
+      "description": "Financial SIC industries excluded; the sample also requires I/B/E/S, Compustat and CRSP, p. 13.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_noa",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 13,
+      "quote": "RNOA is operating income before interest",
+      "description": "RNOA/NOA inputs and legacy Compustat item definitions, p. 13.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_winsor",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 13,
+      "quote": "All financial variables are winsorized",
+      "description": "Financial variables are winsorized at the 1st/99th percentiles, p. 13.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_fits",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 22,
+      "quote": "19 annual regressions using the Fama-MacBeth approach",
+      "description": "Table 5 aggregates annual cross-sectional fits, p. 22.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_table6",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 23,
+      "quote": "beginning two days before",
+      "description": "Table 6 event-window alignment, p. 23.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_table8",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3124908438_69ce23abd2dd5ff4.json",
+      "page": 26,
+      "quote": "first median I/B/E/S",
+      "description": "Table 8 median forecast revisions, p. 26.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "cat_COMP_FUNDA",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json#COMP.FUNDA lines 27500-28729",
+      "page": null,
+      "quote": null,
+      "description": "COMP.FUNDA (Merged Fundamental Annual File); relevant catalog field labels: gvkey=Global Company Key; datadate=Data Date; fyear=Data Year - Fiscal; sich=Standard Industrial Classification - Historical; oiadp=Operating Income After Depreciation; at=Assets - Total; che=Cash and Short-Term Investments; ivao=Investment and Advances - Other; dltt=Long-Term Debt - Total; dlc=Debt in Current Liabilities - Total; ceq=Common/Ordinary Equity - Total; pstk=Preferred/Preference Stock (Capital) - Total; mib=Noncontrolling Interest (Balance Sheet); sale=Sales/Turnover (Net); revt=Revenue - Total; epspx=Earnings Per Share (Basic) - Excluding Extraordinary Items; prcc_f=Price Close - Annual - Fiscal; csho=Common Shares Outstanding; indfmt=Industry Format; consol=Level of Consolidation - Company Annual Descriptor; popsrc=Population Source; datafmt=Data Format",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_COMP_FUNDA",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/COMP.FUNDA.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful shared exact-resource probe for COMP.FUNDA; 949 requested fields present. Field presence only; historical and population coverage are unverified.",
+      "sha256": "dd9d66ff1debeea55773cd795f95af5f6cee0c45dc5cab8992f2eb6289e92ea5",
+      "verified_at": "2026-10-27T14:46:58.418486+00:00"
+    },
+    {
+      "evidence_id": "cat_CRSP_CCMXPF_LINKTABLE",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json#CRSP.CCMXPF_LINKTABLE lines 81454-81534",
+      "page": null,
+      "quote": null,
+      "description": "CRSP.CCMXPF_LINKTABLE (CRSP/COMPUSTAT Merged - Link History w/ Used Flag); relevant catalog field labels: gvkey=Standard and Poor's Identifier; lpermno=Historical CRSP PERMNO Link to COMPUSTAT Record; lpermco=Historical CRSP PERMCO Link to COMPUSTAT Record; linkprim=Primary Link Marker; linktype=Link Type Code; linkdt=First Effective Date of Link; linkenddt=Last Effective Date of Link",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_CRSP_CCMXPF_LINKTABLE",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.CCMXPF_LINKTABLE.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful shared exact-resource probe for CRSP.CCMXPF_LINKTABLE; 9 requested fields present. Field presence only; historical and population coverage are unverified.",
+      "sha256": "e76dbf4af338be97f1c61c9fe3126cd2ebf709899d993a32f89ef51416769a1a",
+      "verified_at": "2026-10-27T14:47:02.545572+00:00"
+    },
+    {
+      "evidence_id": "cat_CRSP_MSF",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json#CRSP.MSF lines 83930-84026",
+      "page": null,
+      "quote": null,
+      "description": "CRSP.MSF (Monthly Stock - Securities); relevant catalog field labels: PERMNO=PERMNO; DATE=Date of Observation; RET=Returns",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_CRSP_MSF",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.MSF.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful shared exact-resource probe for CRSP.MSF; 21 requested fields present. Field presence only; historical and population coverage are unverified.",
+      "sha256": "e912b845a14678d13b6a471408957a745218eafa043a028cd05584250837658c",
+      "verified_at": "2026-10-27T14:47:00.045247+00:00"
+    },
+    {
+      "evidence_id": "cat_CRSP_MSI",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json#CRSP.MSI lines 84147-84224",
+      "page": null,
+      "quote": null,
+      "description": "CRSP.MSI (Stock - Market Indexes Monthly NYSE/AMEX/NASDAQ/ARCA); relevant catalog field labels: DATE=Date of Observation; vwretd=Value-Weighted Return-incl. dividends",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_CRSP_MSI",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.MSI.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful shared exact-resource probe for CRSP.MSI; 11 requested fields present. Field presence only; historical and population coverage are unverified.",
+      "sha256": "0e1d4daae984bbc718ad4cc84bccefb2873f12e900f71e6bbf225cebe82ce64a",
+      "verified_at": "2026-10-27T14:47:01.053288+00:00"
+    },
+    {
+      "evidence_id": "cat_CRSP_DSF",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json#CRSP.DSF lines 81918-82013",
+      "page": null,
+      "quote": null,
+      "description": "CRSP.DSF (Daily Stock - Securities); relevant catalog field labels: PERMNO=PERMNO; DATE=Date of Observation; RET=Returns",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_CRSP_DSF",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.DSF.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful shared exact-resource probe for CRSP.DSF; 20 requested fields present. Field presence only; historical and population coverage are unverified.",
+      "sha256": "2471907ef2308bc19dbb8cda3bfd155a4ae534de93ed28e6b94c55b63a19b725",
+      "verified_at": "2026-10-27T14:46:59.536580+00:00"
+    },
+    {
+      "evidence_id": "cat_CRSP_DSI",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json#CRSP.DSI lines 82144-82221",
+      "page": null,
+      "quote": null,
+      "description": "CRSP.DSI (Stock - Market Indexes Daily NYSE/AMEX/NASDAQ/ARCA); relevant catalog field labels: DATE=Date of Observation; vwretd=Value-Weighted Return-incl. dividends",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_CRSP_DSI",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.DSI.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful shared exact-resource probe for CRSP.DSI; 11 requested fields present. Field presence only; historical and population coverage are unverified.",
+      "sha256": "07efa62af430923487dd3c7a2d1e09c34ced1329417fdaf32222498a44ed2cb4",
+      "verified_at": "2026-10-27T14:47:00.548744+00:00"
+    },
+    {
+      "evidence_id": "cat_IBES_ACT_EPSUS",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json#IBES.ACT_EPSUS lines 105115-105198",
+      "page": null,
+      "quote": null,
+      "description": "IBES.ACT_EPSUS (I/B/E/S Detail History - Actuals File (EPS for US Region)); relevant catalog field labels: TICKER=IBES Ticker Symbol; CUSIP=CUSIP/SEDOL; PENDS=Period End Date, SAS Format; MEASURE=Measure Data Type Indicator; PDICITY=Periodicity; ANNDATS=Announce Date, SAS Format; ACTDATS=Activation Date, SAS Format; VALUE=Actual Value; CURR_ACT=Currency (Company Level); USFIRM=USFIRM=0 if from .INT file and USFIRM=1 if from .US file",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_IBES_ACT_EPSUS",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/IBES.ACT_EPSUS.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful shared exact-resource probe for IBES.ACT_EPSUS; 14 requested fields present. Field presence only; historical and population coverage are unverified.",
+      "sha256": "dcb24a8f15063bfa7ef49feb82d00112d808e8f57d65369fea8c8f9d052acc1f",
+      "verified_at": "2026-10-27T14:47:04.104878+00:00"
+    },
+    {
+      "evidence_id": "cat_IBES_STATSUM_EPSUS",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json#IBES.STATSUM_EPSUS lines 108170-108272",
+      "page": null,
+      "quote": null,
+      "description": "IBES.STATSUM_EPSUS (I/B/E/S Summary History - Summary  Statistics with Actuals (EPS for US Region)); relevant catalog field labels: TICKER=IBES Ticker Symbol; STATPERS=I/B/E/S Statistical Period (SAS Format); MEASURE=Measure; FISCALP=Periodicity; FPI=Forecast Period Indicator; MEDEST=Median Estimate; ACTUAL=Actual Value, from the Detail Actuals File; FPEDATS=Forecast Period End Date (SAS Format); ANNDATS_ACT=Announce date of the Actual, from the Detail Actuals File; ACTDATS_ACT=Activation date of the Actual, from the Actuals File; CURR_ACT=Currency from Actual file, from the Detail Actuals File",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_IBES_STATSUM_EPSUS",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/IBES.STATSUM_EPSUS.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful shared exact-resource probe for IBES.STATSUM_EPSUS; 26 requested fields present. Field presence only; historical and population coverage are unverified.",
+      "sha256": "397fa7cc6764619d0aaaac310636e8a66719484fec780bbfba2bfa1fecbbda0b",
+      "verified_at": "2026-10-27T14:47:03.539187+00:00"
+    },
+    {
+      "evidence_id": "cat_WRDSAPPS_IBCRSPHIST",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json#WRDSAPPS.IBCRSPHIST lines 131044-131103",
+      "page": null,
+      "quote": null,
+      "description": "WRDSAPPS.IBCRSPHIST (IBES CRSP Historical Linking Table); relevant catalog field labels: TICKER=IBES Ticker Symbol; PERMNO=PERMNO; sdate=Effective start time of link; edate=Effective end time of link; ncusip=Historical CUSIP",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_WRDSAPPS_IBCRSPHIST",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/WRDSAPPS.IBCRSPHIST.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful shared exact-resource probe for WRDSAPPS.IBCRSPHIST; 6 requested fields present. Field presence only; historical and population coverage are unverified.",
+      "sha256": "ad0a048743066113790abab46724b62793199aba3ad56cc1a63c7072dfcf2606",
+      "verified_at": "2026-10-27T14:47:04.639080+00:00"
+    }
+  ],
+  "author_alternatives": [],
+  "review_notes": [
+    "All three baseline results use the common 1984–2002 fiscal-year cohort and the Compustat, CRSP and I/B/E/S source families. The sample requires nonmissing I/B/E/S, Compustat and contemporaneous/future CRSP data, excludes SIC 6000–6999 and negative NOA/operating income, and yields 38,716 firm-years.",
+    "Original short-window return is around the actual annual earnings announcement; the event date must come from announcement data rather than being substituted with fiscal year end. The source does not bound the last cohort’s calendar announcement date.",
+    "Shared probes establish field presence only. No local source coverage confirmations were supplied; historical coverage remains unverified."
+  ],
+  "summary": {
+    "outcome": "undetermined",
+    "assessment_counts": {
+      "local_ready": 0,
+      "public_acquisition_required": 0,
+      "access_blocked": 0,
+      "undetermined": 3,
+      "no_observed_data_required": 0
+    },
+    "baseline_models": 3,
+    "baseline_fits": 3,
+    "any_data_feasible": false,
+    "all_data_feasible": false,
+    "partially_data_feasible": false,
+    "attempt_ready_count": 0
+  }
+}

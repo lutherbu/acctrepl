@@ -1,0 +1,904 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3121345849/at
+> tempt_02/runtime/20261103T051501161740Z/cell_desc01.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/rolling_fit_panel/reg.dta", clear
+
+. capture mkdir "tables"
+
+. est clear
+
+. isid gvkey avyear
+
+. 
+. global x "hvzat hvzdvc dd hvze nege hvzac"
+
+. keep gvkey avyear hvzy1 hvzy2 hvzy3 $x
+
+. label var hvzat "A: total assets (USD millions)"
+
+. label var hvzdvc "D: dividends (USD millions)"
+
+. label var dd "DD: positive dividend indicator"
+
+. label var hvze "E: current earnings (USD millions)"
+
+. label var nege "NegE: negative earnings indicator"
+
+. label var hvzac "AC: accounting changes (USD millions)"
+
+. forvalues h=1/3 {
+  2.     preserve
+  3.     local firstfit=1969
+  4.     local winlo=`firstfit'-9-`h'
+  5.     local winhi=2012-`h'
+  6.     gen double y=hvzy`h'
+  7.     label var y "Future earnings, h=`h' (USD millions)"
+  8.     egen byte missct=rowmiss(y $x)
+  9.     gen byte inunion=0
+ 10.     forvalues fit=`firstfit'/2012 {
+ 11.         replace inunion=1 if inrange(avyear,`fit'-9-`h',`fit'-`h')
+ 12.     }
+ 13.     keep if inunion & missct==0
+ 14.     isid gvkey avyear
+ 15.     count
+ 16.     local nunion=r(N)
+ 17.     display "HVZ horizon " `h' " complete-case window union: base AVYEAR "
+>  `winlo' "-" `winhi' "; unique rows=" `nunion'
+ 18.     estpost tabstat y $x, statistics(n mean sd p1 p99) columns(statistics)
+ 19.     estadd scalar union_rows=`nunion', replace
+ 20.     est store desc_h`h'
+ 21.     restore
+ 22. }
+(86,644 missing values generated)
+(25,435 real changes made)
+(3,988 real changes made)
+(4,152 real changes made)
+(4,212 real changes made)
+(4,367 real changes made)
+(4,491 real changes made)
+(4,985 real changes made)
+(6,570 real changes made)
+(6,744 real changes made)
+(6,739 real changes made)
+(6,778 real changes made)
+(6,764 real changes made)
+(6,891 real changes made)
+(6,873 real changes made)
+(7,045 real changes made)
+(7,669 real changes made)
+(7,963 real changes made)
+(8,233 real changes made)
+(8,579 real changes made)
+(8,999 real changes made)
+(9,224 real changes made)
+(9,338 real changes made)
+(9,348 real changes made)
+(9,565 real changes made)
+(9,963 real changes made)
+(10,674 real changes made)
+(11,470 real changes made)
+(11,872 real changes made)
+(12,481 real changes made)
+(12,622 real changes made)
+(12,441 real changes made)
+(12,544 real changes made)
+(12,524 real changes made)
+(12,111 real changes made)
+(11,578 real changes made)
+(11,260 real changes made)
+(11,059 real changes made)
+(10,900 real changes made)
+(10,857 real changes made)
+(10,859 real changes made)
+(10,878 real changes made)
+(10,690 real changes made)
+(10,628 real changes made)
+(10,872 real changes made)
+(106,328 observations deleted)
+  308,732
+HVZ horizon 1 complete-case window union: base AVYEAR 1959-2011; unique rows=30
+> 8732
+
+Summary statistics: count mean sd p1 p99
+     for variables: y hvzat hvzdvc dd hvze nege hvzac
+
+             |  e(count)    e(mean)      e(sd)      e(p1)     e(p99) 
+-------------+-------------------------------------------------------
+           y |    308732   61.06694   320.5943   -103.885    1304.66 
+       hvzat |    308732   1873.427   9934.572       .229    39493.5 
+      hvzdvc |    308732    20.9331    109.251          0        466 
+          dd |    308732   .4062682   .4911366          0          1 
+        hvze |    308732   55.70746    291.368    -91.452     1209.9 
+        nege |    308732   .2990846   .4578577          0          1 
+       hvzac |    308732  -32.59761   160.3955       -777     54.097 
+
+added scalar:
+         e(union_rows) =  308732
+(109,652 missing values generated)
+(22,684 real changes made)
+(3,700 real changes made)
+(3,988 real changes made)
+(4,152 real changes made)
+(4,212 real changes made)
+(4,367 real changes made)
+(4,491 real changes made)
+(4,985 real changes made)
+(6,570 real changes made)
+(6,744 real changes made)
+(6,739 real changes made)
+(6,778 real changes made)
+(6,764 real changes made)
+(6,891 real changes made)
+(6,873 real changes made)
+(7,045 real changes made)
+(7,669 real changes made)
+(7,963 real changes made)
+(8,233 real changes made)
+(8,579 real changes made)
+(8,999 real changes made)
+(9,224 real changes made)
+(9,338 real changes made)
+(9,348 real changes made)
+(9,565 real changes made)
+(9,963 real changes made)
+(10,674 real changes made)
+(11,470 real changes made)
+(11,872 real changes made)
+(12,481 real changes made)
+(12,622 real changes made)
+(12,441 real changes made)
+(12,544 real changes made)
+(12,524 real changes made)
+(12,111 real changes made)
+(11,578 real changes made)
+(11,260 real changes made)
+(11,059 real changes made)
+(10,900 real changes made)
+(10,857 real changes made)
+(10,859 real changes made)
+(10,878 real changes made)
+(10,690 real changes made)
+(10,628 real changes made)
+(133,945 observations deleted)
+  281,115
+HVZ horizon 2 complete-case window union: base AVYEAR 1958-2010; unique rows=28
+> 1115
+
+Summary statistics: count mean sd p1 p99
+     for variables: y hvzat hvzdvc dd hvze nege hvzac
+
+             |  e(count)    e(mean)      e(sd)      e(p1)     e(p99) 
+-------------+-------------------------------------------------------
+           y |    281115    65.4559   336.9881    -109.39   1397.765 
+       hvzat |    281115   1813.387   9435.074       .251   38763.37 
+      hvzdvc |    281115   20.61387   105.8618          0        452 
+          dd |    281115    .418729   .4933517          0          1 
+        hvze |    281115   54.28307   276.1771   -84.1945       1197 
+        nege |    281115   .2856696   .4517335          0          1 
+       hvzac |    281115  -31.98373   156.8993     -747.1     53.091 
+
+added scalar:
+         e(union_rows) =  281115
+(132,491 missing values generated)
+(20,077 real changes made)
+(3,483 real changes made)
+(3,700 real changes made)
+(3,988 real changes made)
+(4,152 real changes made)
+(4,212 real changes made)
+(4,367 real changes made)
+(4,491 real changes made)
+(4,985 real changes made)
+(6,570 real changes made)
+(6,744 real changes made)
+(6,739 real changes made)
+(6,778 real changes made)
+(6,764 real changes made)
+(6,891 real changes made)
+(6,873 real changes made)
+(7,045 real changes made)
+(7,669 real changes made)
+(7,963 real changes made)
+(8,233 real changes made)
+(8,579 real changes made)
+(8,999 real changes made)
+(9,224 real changes made)
+(9,338 real changes made)
+(9,348 real changes made)
+(9,565 real changes made)
+(9,963 real changes made)
+(10,674 real changes made)
+(11,470 real changes made)
+(11,872 real changes made)
+(12,481 real changes made)
+(12,622 real changes made)
+(12,441 real changes made)
+(12,544 real changes made)
+(12,524 real changes made)
+(12,111 real changes made)
+(11,578 real changes made)
+(11,260 real changes made)
+(11,059 real changes made)
+(10,900 real changes made)
+(10,857 real changes made)
+(10,859 real changes made)
+(10,878 real changes made)
+(10,690 real changes made)
+(159,115 observations deleted)
+  255,945
+HVZ horizon 3 complete-case window union: base AVYEAR 1957-2009; unique rows=25
+> 5945
+
+Summary statistics: count mean sd p1 p99
+     for variables: y hvzat hvzdvc dd hvze nege hvzac
+
+             |  e(count)    e(mean)      e(sd)      e(p1)     e(p99) 
+-------------+-------------------------------------------------------
+           y |    255945   70.60644   357.1544   -112.748       1507 
+       hvzat |    255945   1760.973   8968.904       .262    37730.6 
+      hvzdvc |    255945   20.56723   104.5019          0      448.7 
+          dd |    255945   .4320108   .4953569          0          1 
+        hvze |    255945   54.63214   272.7454    -74.559   1153.938 
+        nege |    255945   .2718865   .4449326          0          1 
+       hvzac |    255945  -30.71221   148.5269       -717     52.832 
+
+added scalar:
+         e(union_rows) =  255945
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/hvz_input_union.md", cells("coun
+> t(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(union
+> _rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("h
+> =1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input 
+> rows appearing in at least one qualifying annual training window for the mode
+> l and horizon." "Rows are complete for the model outcome and regressors; N co
+> unts unique inputs, not expanded/repeated fit rows or the annual-fit coeffici
+> ent summary." "Input statistics reflect the annual 1/99 winsorized constructi
+> on; union endpoints and counts are logged.")
+(file tables/hvz_input_union.md not found)
+(output written to tables/hvz_input_union.md)
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/hvz_input_union.rtf", cells("cou
+> nt(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(unio
+> n_rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("
+> h=1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input
+>  rows appearing in at least one qualifying annual training window for the mod
+> el and horizon." "Rows are complete for the model outcome and regressors; N c
+> ounts unique inputs, not expanded/repeated fit rows or the annual-fit coeffic
+> ient summary." "Input statistics reflect the annual 1/99 winsorized construct
+> ion; union endpoints and counts are logged.")
+(file tables/hvz_input_union.rtf not found)
+(output written to tables/hvz_input_union.rtf)
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/hvz_input_union.csv", cells("cou
+> nt(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(unio
+> n_rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("
+> h=1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input
+>  rows appearing in at least one qualifying annual training window for the mod
+> el and horizon." "Rows are complete for the model outcome and regressors; N c
+> ounts unique inputs, not expanded/repeated fit rows or the annual-fit coeffic
+> ient summary." "Input statistics reflect the annual 1/99 winsorized construct
+> ion; union endpoints and counts are logged.")
+(file tables/hvz_input_union.csv not found)
+(output written to tables/hvz_input_union.csv)
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/hvz_input_union.tex", cells("cou
+> nt(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(unio
+> n_rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("
+> h=1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input
+>  rows appearing in at least one qualifying annual training window for the mod
+> el and horizon." "Rows are complete for the model outcome and regressors; N c
+> ounts unique inputs, not expanded/repeated fit rows or the annual-fit coeffic
+> ient summary." "Input statistics reflect the annual 1/99 winsorized construct
+> ion; union endpoints and counts are logged.")
+(file tables/hvz_input_union.tex not found)
+(output written to tables/hvz_input_union.tex)
+
+. est clear
+
+. 
+. use "data/rolling_fit_panel/reg.dta", clear
+
+. isid gvkey avyear
+
+. global x "nege epx epnegx"
+
+. keep gvkey avyear eppy1 eppy2 eppy3 $x
+
+. label var nege "NegE: negative earnings indicator"
+
+. label var epx "E: current earnings per share (USD)"
+
+. label var epnegx "NegE x E: interaction"
+
+. forvalues h=1/3 {
+  2.     preserve
+  3.     local firstfit=1969
+  4.     local winlo=`firstfit'-9-`h'
+  5.     local winhi=2012-`h'
+  6.     gen double y=eppy`h'
+  7.     label var y "Future earnings per share, h=`h' (USD)"
+  8.     egen byte missct=rowmiss(y $x)
+  9.     gen byte inunion=0
+ 10.     forvalues fit=`firstfit'/2012 {
+ 11.         replace inunion=1 if inrange(avyear,`fit'-9-`h',`fit'-`h')
+ 12.     }
+ 13.     keep if inunion & missct==0
+ 14.     isid gvkey avyear
+ 15.     count
+ 16.     local nunion=r(N)
+ 17.     display "EP horizon " `h' " complete-case window union: base AVYEAR " 
+> `winlo' "-" `winhi' "; unique rows=" `nunion'
+ 18.     estpost tabstat y $x, statistics(n mean sd p1 p99) columns(statistics)
+ 19.     estadd scalar union_rows=`nunion', replace
+ 20.     est store desc_h`h'
+ 21.     restore
+ 22. }
+(100,242 missing values generated)
+(25,435 real changes made)
+(3,988 real changes made)
+(4,152 real changes made)
+(4,212 real changes made)
+(4,367 real changes made)
+(4,491 real changes made)
+(4,985 real changes made)
+(6,570 real changes made)
+(6,744 real changes made)
+(6,739 real changes made)
+(6,778 real changes made)
+(6,764 real changes made)
+(6,891 real changes made)
+(6,873 real changes made)
+(7,045 real changes made)
+(7,669 real changes made)
+(7,963 real changes made)
+(8,233 real changes made)
+(8,579 real changes made)
+(8,999 real changes made)
+(9,224 real changes made)
+(9,338 real changes made)
+(9,348 real changes made)
+(9,565 real changes made)
+(9,963 real changes made)
+(10,674 real changes made)
+(11,470 real changes made)
+(11,872 real changes made)
+(12,481 real changes made)
+(12,622 real changes made)
+(12,441 real changes made)
+(12,544 real changes made)
+(12,524 real changes made)
+(12,111 real changes made)
+(11,578 real changes made)
+(11,260 real changes made)
+(11,059 real changes made)
+(10,900 real changes made)
+(10,857 real changes made)
+(10,859 real changes made)
+(10,878 real changes made)
+(10,690 real changes made)
+(10,628 real changes made)
+(10,872 real changes made)
+(109,506 observations deleted)
+  305,554
+EP horizon 1 complete-case window union: base AVYEAR 1959-2011; unique rows=305
+> 554
+
+Summary statistics: count mean sd p1 p99
+     for variables: y nege epx epnegx
+
+             |  e(count)    e(mean)      e(sd)      e(p1)     e(p99) 
+-------------+-------------------------------------------------------
+           y |    305554   5.271369   65.00516  -6.063053   69.86379 
+        nege |    305554   .2997833   .4581637          0          1 
+         epx |    305554   5.532842   74.14488  -4.987298   61.84831 
+      epnegx |    305554  -.2618335   1.106678  -4.987298          0 
+
+added scalar:
+         e(union_rows) =  305554
+(126,927 missing values generated)
+(22,684 real changes made)
+(3,700 real changes made)
+(3,988 real changes made)
+(4,152 real changes made)
+(4,212 real changes made)
+(4,367 real changes made)
+(4,491 real changes made)
+(4,985 real changes made)
+(6,570 real changes made)
+(6,744 real changes made)
+(6,739 real changes made)
+(6,778 real changes made)
+(6,764 real changes made)
+(6,891 real changes made)
+(6,873 real changes made)
+(7,045 real changes made)
+(7,669 real changes made)
+(7,963 real changes made)
+(8,233 real changes made)
+(8,579 real changes made)
+(8,999 real changes made)
+(9,224 real changes made)
+(9,338 real changes made)
+(9,348 real changes made)
+(9,565 real changes made)
+(9,963 real changes made)
+(10,674 real changes made)
+(11,470 real changes made)
+(11,872 real changes made)
+(12,481 real changes made)
+(12,622 real changes made)
+(12,441 real changes made)
+(12,544 real changes made)
+(12,524 real changes made)
+(12,111 real changes made)
+(11,578 real changes made)
+(11,260 real changes made)
+(11,059 real changes made)
+(10,900 real changes made)
+(10,857 real changes made)
+(10,859 real changes made)
+(10,878 real changes made)
+(10,690 real changes made)
+(10,628 real changes made)
+(137,002 observations deleted)
+  278,058
+EP horizon 2 complete-case window union: base AVYEAR 1958-2010; unique rows=278
+> 058
+
+Summary statistics: count mean sd p1 p99
+     for variables: y nege epx epnegx
+
+             |  e(count)    e(mean)      e(sd)      e(p1)     e(p99) 
+-------------+-------------------------------------------------------
+           y |    278058   5.166171    54.7553  -6.800872   78.94351 
+        nege |    278058   .2858972   .4518415          0          1 
+         epx |    278058   5.554768   74.30699  -4.786797   61.84831 
+      epnegx |    278058  -.2473282   1.076074  -4.786797          0 
+
+added scalar:
+         e(union_rows) =  278058
+(151,302 missing values generated)
+(20,077 real changes made)
+(3,483 real changes made)
+(3,700 real changes made)
+(3,988 real changes made)
+(4,152 real changes made)
+(4,212 real changes made)
+(4,367 real changes made)
+(4,491 real changes made)
+(4,985 real changes made)
+(6,570 real changes made)
+(6,744 real changes made)
+(6,739 real changes made)
+(6,778 real changes made)
+(6,764 real changes made)
+(6,891 real changes made)
+(6,873 real changes made)
+(7,045 real changes made)
+(7,669 real changes made)
+(7,963 real changes made)
+(8,233 real changes made)
+(8,579 real changes made)
+(8,999 real changes made)
+(9,224 real changes made)
+(9,338 real changes made)
+(9,348 real changes made)
+(9,565 real changes made)
+(9,963 real changes made)
+(10,674 real changes made)
+(11,470 real changes made)
+(11,872 real changes made)
+(12,481 real changes made)
+(12,622 real changes made)
+(12,441 real changes made)
+(12,544 real changes made)
+(12,524 real changes made)
+(12,111 real changes made)
+(11,578 real changes made)
+(11,260 real changes made)
+(11,059 real changes made)
+(10,900 real changes made)
+(10,857 real changes made)
+(10,859 real changes made)
+(10,878 real changes made)
+(10,690 real changes made)
+(161,759 observations deleted)
+  253,301
+EP horizon 3 complete-case window union: base AVYEAR 1957-2009; unique rows=253
+> 301
+
+Summary statistics: count mean sd p1 p99
+     for variables: y nege epx epnegx
+
+             |  e(count)    e(mean)      e(sd)      e(p1)     e(p99) 
+-------------+-------------------------------------------------------
+           y |    253301   5.235074   56.35053   -7.17169    82.6875 
+        nege |    253301    .272111   .4450476          0          1 
+         epx |    253301    5.57181   73.94076  -4.477803   61.84831 
+      epnegx |    253301  -.2293682   1.017381  -4.477803          0 
+
+added scalar:
+         e(union_rows) =  253301
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/ep_input_union.md", cells("count
+> (fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(union_
+> rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("h=
+> 1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input r
+> ows appearing in at least one qualifying annual training window for the model
+>  and horizon." "Rows are complete for the model outcome and regressors; N cou
+> nts unique inputs, not expanded/repeated fit rows or the annual-fit coefficie
+> nt summary." "Input statistics reflect the annual 1/99 winsorized constructio
+> n; union endpoints and counts are logged.")
+(file tables/ep_input_union.md not found)
+(output written to tables/ep_input_union.md)
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/ep_input_union.rtf", cells("coun
+> t(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(union
+> _rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("h
+> =1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input 
+> rows appearing in at least one qualifying annual training window for the mode
+> l and horizon." "Rows are complete for the model outcome and regressors; N co
+> unts unique inputs, not expanded/repeated fit rows or the annual-fit coeffici
+> ent summary." "Input statistics reflect the annual 1/99 winsorized constructi
+> on; union endpoints and counts are logged.")
+(file tables/ep_input_union.rtf not found)
+(output written to tables/ep_input_union.rtf)
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/ep_input_union.csv", cells("coun
+> t(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(union
+> _rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("h
+> =1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input 
+> rows appearing in at least one qualifying annual training window for the mode
+> l and horizon." "Rows are complete for the model outcome and regressors; N co
+> unts unique inputs, not expanded/repeated fit rows or the annual-fit coeffici
+> ent summary." "Input statistics reflect the annual 1/99 winsorized constructi
+> on; union endpoints and counts are logged.")
+(file tables/ep_input_union.csv not found)
+(output written to tables/ep_input_union.csv)
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/ep_input_union.tex", cells("coun
+> t(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(union
+> _rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("h
+> =1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input 
+> rows appearing in at least one qualifying annual training window for the mode
+> l and horizon." "Rows are complete for the model outcome and regressors; N co
+> unts unique inputs, not expanded/repeated fit rows or the annual-fit coeffici
+> ent summary." "Input statistics reflect the annual 1/99 winsorized constructi
+> on; union endpoints and counts are logged.")
+(file tables/ep_input_union.tex not found)
+(output written to tables/ep_input_union.tex)
+
+. est clear
+
+. 
+. use "data/rolling_fit_panel/reg.dta", clear
+
+. isid gvkey avyear
+
+. global x "nege rix rinegx rib ritacc"
+
+. keep gvkey avyear riy1 riy2 riy3 $x
+
+. label var nege "NegE: negative earnings indicator"
+
+. label var rix "E: current earnings per share (USD)"
+
+. label var rinegx "NegE x E: interaction"
+
+. label var rib "B: book value per share (USD)"
+
+. label var ritacc "TACC: accruals per share (USD)"
+
+. forvalues h=1/3 {
+  2.     preserve
+  3.     local firstfit=1969
+  4.     if `h'==3 local firstfit=1970
+  5.     local winlo=`firstfit'-9-`h'
+  6.     local winhi=2012-`h'
+  7.     gen double y=riy`h'
+  8.     label var y "Future earnings per share, h=`h' (USD)"
+  9.     egen byte missct=rowmiss(y $x)
+ 10.     gen byte inunion=0
+ 11.     forvalues fit=`firstfit'/2012 {
+ 12.         replace inunion=1 if inrange(avyear,`fit'-9-`h',`fit'-`h')
+ 13.     }
+ 14.     keep if inunion & missct==0
+ 15.     isid gvkey avyear
+ 16.     count
+ 17.     local nunion=r(N)
+ 18.     display "RI horizon " `h' " complete-case full-rank window union: base
+>  AVYEAR " `winlo' "-" `winhi' "; unique rows=" `nunion'
+ 19.     estpost tabstat y $x, statistics(n mean sd p1 p99) columns(statistics)
+ 20.     estadd scalar union_rows=`nunion', replace
+ 21.     est store desc_h`h'
+ 22.     restore
+ 23. }
+(100,242 missing values generated)
+(25,435 real changes made)
+(3,988 real changes made)
+(4,152 real changes made)
+(4,212 real changes made)
+(4,367 real changes made)
+(4,491 real changes made)
+(4,985 real changes made)
+(6,570 real changes made)
+(6,744 real changes made)
+(6,739 real changes made)
+(6,778 real changes made)
+(6,764 real changes made)
+(6,891 real changes made)
+(6,873 real changes made)
+(7,045 real changes made)
+(7,669 real changes made)
+(7,963 real changes made)
+(8,233 real changes made)
+(8,579 real changes made)
+(8,999 real changes made)
+(9,224 real changes made)
+(9,338 real changes made)
+(9,348 real changes made)
+(9,565 real changes made)
+(9,963 real changes made)
+(10,674 real changes made)
+(11,470 real changes made)
+(11,872 real changes made)
+(12,481 real changes made)
+(12,622 real changes made)
+(12,441 real changes made)
+(12,544 real changes made)
+(12,524 real changes made)
+(12,111 real changes made)
+(11,578 real changes made)
+(11,260 real changes made)
+(11,059 real changes made)
+(10,900 real changes made)
+(10,857 real changes made)
+(10,859 real changes made)
+(10,878 real changes made)
+(10,690 real changes made)
+(10,628 real changes made)
+(10,872 real changes made)
+(118,676 observations deleted)
+  296,384
+RI horizon 1 complete-case full-rank window union: base AVYEAR 1959-2011; uniqu
+> e rows=296384
+
+Summary statistics: count mean sd p1 p99
+     for variables: y nege rix rinegx rib ritacc
+
+             |  e(count)    e(mean)      e(sd)      e(p1)     e(p99) 
+-------------+-------------------------------------------------------
+           y |    296384   5.350607   65.81654  -6.129796   71.06667 
+        nege |    296384    .306221   .4609234          0          1 
+         rix |    296384   5.626398   75.03008  -5.086963   67.88223 
+      rinegx |    296384  -.2676739   1.121097  -5.086963          0 
+         rib |    296384   52.68239    611.281  -8.043084    664.625 
+      ritacc |    296384   .6342527   4.126988  -9.602189   15.88054 
+
+added scalar:
+         e(union_rows) =  296384
+(126,927 missing values generated)
+(22,684 real changes made)
+(3,700 real changes made)
+(3,988 real changes made)
+(4,152 real changes made)
+(4,212 real changes made)
+(4,367 real changes made)
+(4,491 real changes made)
+(4,985 real changes made)
+(6,570 real changes made)
+(6,744 real changes made)
+(6,739 real changes made)
+(6,778 real changes made)
+(6,764 real changes made)
+(6,891 real changes made)
+(6,873 real changes made)
+(7,045 real changes made)
+(7,669 real changes made)
+(7,963 real changes made)
+(8,233 real changes made)
+(8,579 real changes made)
+(8,999 real changes made)
+(9,224 real changes made)
+(9,338 real changes made)
+(9,348 real changes made)
+(9,565 real changes made)
+(9,963 real changes made)
+(10,674 real changes made)
+(11,470 real changes made)
+(11,872 real changes made)
+(12,481 real changes made)
+(12,622 real changes made)
+(12,441 real changes made)
+(12,544 real changes made)
+(12,524 real changes made)
+(12,111 real changes made)
+(11,578 real changes made)
+(11,260 real changes made)
+(11,059 real changes made)
+(10,900 real changes made)
+(10,857 real changes made)
+(10,859 real changes made)
+(10,878 real changes made)
+(10,690 real changes made)
+(10,628 real changes made)
+(146,734 observations deleted)
+  268,326
+RI horizon 2 complete-case full-rank window union: base AVYEAR 1958-2010; uniqu
+> e rows=268326
+
+Summary statistics: count mean sd p1 p99
+     for variables: y nege rix rinegx rib ritacc
+
+             |  e(count)    e(mean)      e(sd)      e(p1)     e(p99) 
+-------------+-------------------------------------------------------
+           y |    268326   5.250126   55.58841  -6.990238   81.06831 
+        nege |    268326   .2932068   .4552333          0          1 
+         rix |    268326   5.663259    75.3647  -4.937696   62.63416 
+      rinegx |    268326  -.2539036   1.092591  -4.937696          0 
+         rib |    268326   52.33086   609.5712  -6.891682   624.4337 
+      ritacc |    268326   .6422073    4.08442  -9.526737   15.14161 
+
+added scalar:
+         e(union_rows) =  268326
+(151,302 missing values generated)
+(22,684 real changes made)
+(3,700 real changes made)
+(3,988 real changes made)
+(4,152 real changes made)
+(4,212 real changes made)
+(4,367 real changes made)
+(4,491 real changes made)
+(4,985 real changes made)
+(6,570 real changes made)
+(6,744 real changes made)
+(6,739 real changes made)
+(6,778 real changes made)
+(6,764 real changes made)
+(6,891 real changes made)
+(6,873 real changes made)
+(7,045 real changes made)
+(7,669 real changes made)
+(7,963 real changes made)
+(8,233 real changes made)
+(8,579 real changes made)
+(8,999 real changes made)
+(9,224 real changes made)
+(9,338 real changes made)
+(9,348 real changes made)
+(9,565 real changes made)
+(9,963 real changes made)
+(10,674 real changes made)
+(11,470 real changes made)
+(11,872 real changes made)
+(12,481 real changes made)
+(12,622 real changes made)
+(12,441 real changes made)
+(12,544 real changes made)
+(12,524 real changes made)
+(12,111 real changes made)
+(11,578 real changes made)
+(11,260 real changes made)
+(11,059 real changes made)
+(10,900 real changes made)
+(10,857 real changes made)
+(10,859 real changes made)
+(10,878 real changes made)
+(10,690 real changes made)
+(171,975 observations deleted)
+  243,085
+RI horizon 3 complete-case full-rank window union: base AVYEAR 1958-2009; uniqu
+> e rows=243085
+
+Summary statistics: count mean sd p1 p99
+     for variables: y nege rix rinegx rib ritacc
+
+             |  e(count)    e(mean)      e(sd)      e(p1)     e(p99) 
+-------------+-------------------------------------------------------
+           y |    243085   5.321351   57.36619  -7.339672   93.16667 
+        nege |    243085   .2802764   .4491352          0          1 
+         rix |    243085   5.694081   75.17107  -4.557963   63.60118 
+      rinegx |    243085  -.2365367   1.035583  -4.557963          0 
+         rib |    243085   52.36927    611.404   -6.07001   551.7311 
+      ritacc |    243085   .6558507    4.02703  -9.315492   14.90236 
+
+added scalar:
+         e(union_rows) =  243085
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/ri_input_union.md", cells("count
+> (fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(union_
+> rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("h=
+> 1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input r
+> ows appearing in at least one native full-rank annual training window for the
+>  model and horizon." "Rows are complete for the model outcome and regressors;
+>  N counts unique inputs, not expanded/repeated fit rows or the annual-fit coe
+> fficient summary." "RI h=3 begins at T=1970 because native full-rank checking
+>  rejects T=1969; base-year union endpoints and counts are logged. Statistics 
+> reflect annual 1/99 winsorization.")
+(file tables/ri_input_union.md not found)
+(output written to tables/ri_input_union.md)
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/ri_input_union.rtf", cells("coun
+> t(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(union
+> _rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("h
+> =1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input 
+> rows appearing in at least one native full-rank annual training window for th
+> e model and horizon." "Rows are complete for the model outcome and regressors
+> ; N counts unique inputs, not expanded/repeated fit rows or the annual-fit co
+> efficient summary." "RI h=3 begins at T=1970 because native full-rank checkin
+> g rejects T=1969; base-year union endpoints and counts are logged. Statistics
+>  reflect annual 1/99 winsorization.")
+(file tables/ri_input_union.rtf not found)
+(output written to tables/ri_input_union.rtf)
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/ri_input_union.csv", cells("coun
+> t(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(union
+> _rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("h
+> =1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input 
+> rows appearing in at least one native full-rank annual training window for th
+> e model and horizon." "Rows are complete for the model outcome and regressors
+> ; N counts unique inputs, not expanded/repeated fit rows or the annual-fit co
+> efficient summary." "RI h=3 begins at T=1970 because native full-rank checkin
+> g rejects T=1969; base-year union endpoints and counts are logged. Statistics
+>  reflect annual 1/99 winsorization.")
+(file tables/ri_input_union.csv not found)
+(output written to tables/ri_input_union.csv)
+
+. esttab desc_h1 desc_h2 desc_h3 using "tables/ri_input_union.tex", cells("coun
+> t(fmt(0)) mean(fmt(3)) sd(fmt(3)) p1(fmt(3)) p99(fmt(3))") nostar stats(union
+> _rows, fmt(0) labels("Unique rows in window union")) replace label mtitles("h
+> =1" "h=2" "h=3") addnotes("Sample is unique GVKEY-by-availability-year input 
+> rows appearing in at least one native full-rank annual training window for th
+> e model and horizon." "Rows are complete for the model outcome and regressors
+> ; N counts unique inputs, not expanded/repeated fit rows or the annual-fit co
+> efficient summary." "RI h=3 begins at T=1970 because native full-rank checkin
+> g rejects T=1969; base-year union endpoints and counts are logged. Statistics
+>  reflect annual 1/99 winsorization.")
+(file tables/ri_input_union.tex not found)
+(output written to tables/ri_input_union.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

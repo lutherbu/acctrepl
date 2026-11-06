@@ -1,0 +1,25 @@
+
+|                      |          (1)    |
+|                      | Panel C: 3-year lag    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| Log market value, USD millions |       -0.001**  |
+|                      |      (0.020)    |
+| Log book-to-market   |        0.003*** |
+|                      |      (0.000)    |
+| Ret(-1:-1)           |       -0.072*** |
+|                      |      (0.000)    |
+| Ret(-12:-2)          |        0.006*** |
+|                      |      (0.000)    |
+| Ret(-36:-13)         |       -0.002*** |
+|                      |      (0.001)    |
+| Accruals, three fiscal years lag |       -0.002    |
+|                      |      (0.295)    |
+| NOA, three fiscal years lag |       -0.002*** |
+|                      |      (0.005)    |
+| Constant             |        0.021*** |
+|                      |      (0.000)    |
+| Firm-month observations |      1122680    |
+| FMB months           |          438    |
+| Average monthly R-squared |        0.052    |
+

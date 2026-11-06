@@ -1,0 +1,126 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W2048409281/at
+> tempt_02/runtime/20261103T064558563417Z/cell_pb_h2_1974.do 
+
+. version 18
+
+. set more off
+
+. global y "y_h2"
+
+. global x "e_rate"
+
+. global d "dp"
+
+. global cl "firm_id fyear"
+
+. use "reg.dta", clear
+
+. egen long firm_id = group(gvkey)
+
+. label variable dp "Regular dividend indicator"
+
+. label variable e_rate "Current adjusted earnings / lagged assets"
+
+. label variable y_h1 "One-year-ahead earnings / lagged assets"
+
+. label variable y_h2 "Two-year-ahead earnings / lagged assets"
+
+. gen double dp_e = dp*e_rate
+(230,494 missing values generated)
+
+. label variable dp_e "DP x current earnings rate"
+
+. est clear
+
+. reghdfe $y c.$x##i.$d if use_h2==1 & fyear>=1974 & fyear<=1983, vce(cluster $
+> cl) noabsorb
+(MWFE estimator converged in 1 iterations)
+
+HDFE Linear regression                            Number of obs   =     14,647
+Absorbing 1 HDFE group                            F(   3,      9) =     131.68
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.2850
+                                                  Adj R-squared   =     0.2849
+Number of clusters (firm_id) =      3,332         Within R-sq.    =     0.2850
+Number of clusters (fyear)   =         10         Root MSE        =     0.1571
+
+                         (Std. err. adjusted for 10 clusters in firm_id fyear)
+------------------------------------------------------------------------------
+             |               Robust
+        y_h2 | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      e_rate |   .6708733   .0459327    14.61   0.000     .5669663    .7747804
+        1.dp |   .0187284   .0094241     1.99   0.078    -.0025904    .0400473
+             |
+ dp#c.e_rate |
+          1  |    .143642   .0850907     1.69   0.126    -.0488465    .3361306
+             |
+       _cons |   .0124419   .0124734     1.00   0.345     -.015775    .0406588
+------------------------------------------------------------------------------
+
+. est store m1
+
+. esttab m1 using "tables/table4_panelB_h2_1974.md", cells(b(star fmt(3)) p(par
+> )) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles("1974-1983
+> ") addnotes("Two-way cluster-robust SE by firm and fiscal year; no fixed effe
+> cts." "Template parentheses report p-values; source parentheses are standard 
+> errors.")
+(file tables/table4_panelB_h2_1974.md not found)
+(output written to tables/table4_panelB_h2_1974.md)
+
+. esttab m1 using "tables/table4_panelB_h2_1974.rtf", cells(b(star fmt(3)) p(pa
+> r)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles("1974-198
+> 3") addnotes("Two-way cluster-robust SE by firm and fiscal year; no fixed eff
+> ects." "Template parentheses report p-values; source parentheses are standard
+>  errors.")
+(file tables/table4_panelB_h2_1974.rtf not found)
+(output written to tables/table4_panelB_h2_1974.rtf)
+
+. esttab m1 using "tables/table4_panelB_h2_1974.csv", cells(b(star fmt(3)) p(pa
+> r)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles("1974-198
+> 3") addnotes("Two-way cluster-robust SE by firm and fiscal year; no fixed eff
+> ects." "Template parentheses report p-values; source parentheses are standard
+>  errors.")
+(file tables/table4_panelB_h2_1974.csv not found)
+(output written to tables/table4_panelB_h2_1974.csv)
+
+. esttab m1 using "tables/table4_panelB_h2_1974.tex", cells(b(star fmt(3)) p(pa
+> r)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles("1974-198
+> 3") addnotes("Two-way cluster-robust SE by firm and fiscal year; no fixed eff
+> ects." "Template parentheses report p-values; source parentheses are standard
+>  errors.")
+(file tables/table4_panelB_h2_1974.tex not found)
+(output written to tables/table4_panelB_h2_1974.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

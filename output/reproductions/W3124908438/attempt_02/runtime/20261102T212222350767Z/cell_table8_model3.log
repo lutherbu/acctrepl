@@ -1,0 +1,102 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3124908438/at
+> tempt_02/runtime/20261102T212222350767Z/cell_table8_model3.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/reg.dta", clear
+(DuPont annual common sample)
+
+. egen long firmid = group(gvkey)
+
+. xtset firmid fyear
+
+Panel variable: firmid (unbalanced)
+ Time variable: fyear, 1984 to 2002, but with gaps
+         Delta: 1 unit
+
+. est clear
+
+. xtfmb anrev sur dpm dato drnoa, lag(1)
+
+Fama-MacBeth (1973) Two-Step procedure           Number of obs     =     25469
+                                                 Num. time periods =        19
+                                                 F(  4,    18)     =     15.45
+                                                 Prob > F          =    0.0000
+Newey-West corrected SE (lag length: 1)          avg. R-squared    =    0.0568
+------------------------------------------------------------------------------
+             |            Fama-MacBeth
+       anrev | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         sur |   .0931614   .0141052     6.60   0.000     .0635275    .1227953
+         dpm |   .0082422   .0022483     3.67   0.002     .0035188    .0129656
+        dato |   .0001091   .0000907     1.20   0.245    -.0000814    .0002997
+       drnoa |   .0012452   .0006882     1.81   0.087    -.0002005     .002691
+       _cons |  -.0012377   .0001401    -8.84   0.000     -.001532   -.0009435
+------------------------------------------------------------------------------
+
+
+. est store m1
+
+. esttab m1 using "tables/table8_model3.md", cells(b(star fmt(3)) p(par)) starl
+> evels(* 0.1 ** 0.05 *** 0.01) r2 replace label
+(file tables/table8_model3.md not found)
+(output written to tables/table8_model3.md)
+
+. esttab m1 using "tables/table8_model3.rtf", cells(b(star fmt(3)) p(par)) star
+> levels(* 0.1 ** 0.05 *** 0.01) r2 replace label
+(file tables/table8_model3.rtf not found)
+(output written to tables/table8_model3.rtf)
+
+. esttab m1 using "tables/table8_model3.csv", cells(b(star fmt(3)) p(par)) star
+> levels(* 0.1 ** 0.05 *** 0.01) r2 replace label
+(file tables/table8_model3.csv not found)
+(output written to tables/table8_model3.csv)
+
+. esttab m1 using "tables/table8_model3.tex", cells(b(star fmt(3)) p(par)) star
+> levels(* 0.1 ** 0.05 *** 0.01) r2 replace label
+(file tables/table8_model3.tex not found)
+(output written to tables/table8_model3.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

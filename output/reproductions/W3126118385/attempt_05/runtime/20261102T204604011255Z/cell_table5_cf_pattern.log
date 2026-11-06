@@ -1,0 +1,180 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3126118385/at
+> tempt_05/runtime/20261102T204604011255Z/cell_table5_cf_pattern.do 
+
+. version 18
+
+. set more off
+
+. 
+. use "data/reg.dta", clear
+
+. est clear
+
+. encode gvkey, gen(firm_id)
+
+. 
+. reghdfe drnoa_w rnoa_w drnoa_t_w grnoa_w dato_w dpm_w ib3.cf_stage if eligibl
+> e_cf==1, vce(cluster firm_id fyear)
+(MWFE estimator converged in 1 iterations)
+Warning: VCV matrix was non-positive semi-definite; adjustment from Cameron, Ge
+> lbach & Miller applied.
+warning: missing F statistic; dropped variables due to collinearity or too few 
+> clusters
+
+HDFE Linear regression                            Number of obs   =     26,242
+Absorbing 1 HDFE group                            F(   9,     16) =          .
+Statistics robust to heteroskedasticity           Prob > F        =          .
+                                                  R-squared       =     0.1256
+                                                  Adj R-squared   =     0.1253
+Number of clusters (firm_id) =      5,598         Within R-sq.    =     0.1256
+Number of clusters (fyear)   =         17         Root MSE        =     0.6801
+
+                         (Std. err. adjusted for 17 clusters in firm_id fyear)
+------------------------------------------------------------------------------
+             |               Robust
+     drnoa_w | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      rnoa_w |   -.321731   .0192807   -16.69   0.000    -.3626044   -.2808577
+   drnoa_t_w |   -.076824   .0143484    -5.35   0.000    -.1072413   -.0464066
+     grnoa_w |   .0029527   .0074731     0.40   0.698    -.0128896    .0187949
+      dato_w |   .0225169   .0054966     4.10   0.001     .0108646    .0341693
+       dpm_w |  -.0330164   .0130517    -2.53   0.022    -.0606847   -.0053481
+             |
+    cf_stage |
+          1  |  -.1644117   .0208955    -7.87   0.000    -.2087081   -.1201153
+          2  |  -.0424731   .0068537    -6.20   0.000    -.0570022    -.027944
+          4  |  -.0473121    .012873    -3.68   0.002    -.0746017   -.0200225
+          5  |  -.2264555   .0271226    -8.35   0.000    -.2839528   -.1689582
+             |
+       _cons |   .0143879   .0062428     2.30   0.035     .0011538     .027622
+------------------------------------------------------------------------------
+
+. est store model
+
+. 
+. display "CF total stage effects (intercept plus contrast; controls at zero)"
+CF total stage effects (intercept plus contrast; controls at zero)
+
+. lincom _b[_cons]
+
+ ( 1)  _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0143879   .0062428     2.30   0.035     .0011538     .027622
+------------------------------------------------------------------------------
+
+. lincom _b[_cons] + _b[1.cf_stage]
+
+ ( 1)  1.cf_stage + _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.1500238     .02418    -6.20   0.000    -.2012831   -.0987646
+------------------------------------------------------------------------------
+
+. lincom _b[_cons] + _b[2.cf_stage]
+
+ ( 1)  2.cf_stage + _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0280852   .0072527    -3.87   0.001    -.0434602   -.0127102
+------------------------------------------------------------------------------
+
+. lincom _b[_cons] + _b[4.cf_stage]
+
+ ( 1)  4.cf_stage + _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0329242    .012566    -2.62   0.019     -.059563   -.0062855
+------------------------------------------------------------------------------
+
+. lincom _b[_cons] + _b[5.cf_stage]
+
+ ( 1)  5.cf_stage + _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.2120676   .0280501    -7.56   0.000    -.2715311   -.1526041
+------------------------------------------------------------------------------
+
+. 
+. esttab model using "tables/table5_model1_cf_pattern.md", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(3.cf_st
+> age) coeflabels(_cons "Mature reference (controls = 0)" 1.cf_stage "Introduct
+> ion" 2.cf_stage "Growth" 4.cf_stage "Shake-Out" 5.cf_stage "Decline") addnote
+> s("Stage rows are contrasts with mature firms; lincom total stage effects are
+>  in the Stata log." "OLS; two-way firm and fiscal-year clustered standard err
+> ors; two-sided tests.")
+(file tables/table5_model1_cf_pattern.md not found)
+(output written to tables/table5_model1_cf_pattern.md)
+
+. esttab model using "tables/table5_model1_cf_pattern.rtf", cells(b(star fmt(3)
+> ) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(3.cf_s
+> tage) coeflabels(_cons "Mature reference (controls = 0)" 1.cf_stage "Introduc
+> tion" 2.cf_stage "Growth" 4.cf_stage "Shake-Out" 5.cf_stage "Decline") addnot
+> es("Stage rows are contrasts with mature firms; lincom total stage effects ar
+> e in the Stata log." "OLS; two-way firm and fiscal-year clustered standard er
+> rors; two-sided tests.")
+(file tables/table5_model1_cf_pattern.rtf not found)
+(output written to tables/table5_model1_cf_pattern.rtf)
+
+. esttab model using "tables/table5_model1_cf_pattern.csv", cells(b(star fmt(3)
+> ) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(3.cf_s
+> tage) coeflabels(_cons "Mature reference (controls = 0)" 1.cf_stage "Introduc
+> tion" 2.cf_stage "Growth" 4.cf_stage "Shake-Out" 5.cf_stage "Decline") addnot
+> es("Stage rows are contrasts with mature firms; lincom total stage effects ar
+> e in the Stata log." "OLS; two-way firm and fiscal-year clustered standard er
+> rors; two-sided tests.")
+(file tables/table5_model1_cf_pattern.csv not found)
+(output written to tables/table5_model1_cf_pattern.csv)
+
+. esttab model using "tables/table5_model1_cf_pattern.tex", cells(b(star fmt(3)
+> ) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(3.cf_s
+> tage) coeflabels(_cons "Mature reference (controls = 0)" 1.cf_stage "Introduc
+> tion" 2.cf_stage "Growth" 4.cf_stage "Shake-Out" 5.cf_stage "Decline") addnot
+> es("Stage rows are contrasts with mature firms; lincom total stage effects ar
+> e in the Stata log." "OLS; two-way firm and fiscal-year clustered standard er
+> rors; two-sided tests.")
+(file tables/table5_model1_cf_pattern.tex not found)
+(output written to tables/table5_model1_cf_pattern.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

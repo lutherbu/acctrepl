@@ -1,0 +1,130 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3123284902/at
+> tempt_02/runtime/20261103T014748980801Z/cell_fmb_panel_b.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. 
+. global y "ret"
+
+. global x "lnsize lnbm retm1 ret12_2 ret36_13"
+
+. global acc "accr2"
+
+. global noa "noa2"
+
+. global elig "fit_b"
+
+. 
+. use "data/noa_firm_month/reg.dta", clear
+
+. format mdate %tm
+
+. tsset firmid mdate
+
+Panel variable: firmid (unbalanced)
+ Time variable: mdate, 1966m7 to 2002m12, but with gaps
+         Delta: 1 month
+
+. 
+. est clear
+
+. xtfmb $y $x $acc $noa if $elig==1
+
+Fama-MacBeth (1973) Two-Step procedure           Number of obs     =   1153631
+                                                 Num. time periods =       438
+                                                 F(  7,   437)     =     74.79
+                                                 Prob > F          =    0.0000
+                                                 avg. R-squared    =    0.0512
+------------------------------------------------------------------------------
+             |            Fama-MacBeth
+         ret | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      lnsize |  -.0010718   .0004879    -2.20   0.029    -.0020307   -.0001129
+        lnbm |    .003034    .000748     4.06   0.000     .0015639     .004504
+       retm1 |  -.0714066    .004277   -16.70   0.000    -.0798127   -.0630005
+     ret12_2 |    .006078   .0016646     3.65   0.000     .0028063    .0093496
+    ret36_13 |  -.0020251    .000669    -3.03   0.003    -.0033399   -.0007102
+       accr2 |  -.0042683   .0018127    -2.35   0.019    -.0078311   -.0007055
+        noa2 |  -.0044289   .0007756    -5.71   0.000    -.0059532   -.0029046
+       _cons |   .0221521   .0039763     5.57   0.000      .014337    .0299672
+------------------------------------------------------------------------------
+
+
+. estadd scalar fmb_months = e(N_g)
+
+added scalar:
+         e(fmb_months) =  438
+
+. est store m_b
+
+. esttab m_b using "tables/table5_panel_b_model4.md", cells(b(star fmt(3)) p(pa
+> r)) starlevels(* 0.1 ** 0.05 *** 0.01) stats(N fmb_months r2, fmt(0 0 3) labe
+> ls("Firm-month observations" "FMB months" "Average monthly R-squared")) r2 ar
+> 2 replace label mtitles("Panel B: 2-year lag")
+(file tables/table5_panel_b_model4.md not found)
+(output written to tables/table5_panel_b_model4.md)
+
+. esttab m_b using "tables/table5_panel_b_model4.rtf", cells(b(star fmt(3)) p(p
+> ar)) starlevels(* 0.1 ** 0.05 *** 0.01) stats(N fmb_months r2, fmt(0 0 3) lab
+> els("Firm-month observations" "FMB months" "Average monthly R-squared")) r2 a
+> r2 replace label mtitles("Panel B: 2-year lag")
+(file tables/table5_panel_b_model4.rtf not found)
+(output written to tables/table5_panel_b_model4.rtf)
+
+. esttab m_b using "tables/table5_panel_b_model4.csv", cells(b(star fmt(3)) p(p
+> ar)) starlevels(* 0.1 ** 0.05 *** 0.01) stats(N fmb_months r2, fmt(0 0 3) lab
+> els("Firm-month observations" "FMB months" "Average monthly R-squared")) r2 a
+> r2 replace label mtitles("Panel B: 2-year lag")
+(file tables/table5_panel_b_model4.csv not found)
+(output written to tables/table5_panel_b_model4.csv)
+
+. esttab m_b using "tables/table5_panel_b_model4.tex", cells(b(star fmt(3)) p(p
+> ar)) starlevels(* 0.1 ** 0.05 *** 0.01) stats(N fmb_months r2, fmt(0 0 3) lab
+> els("Firm-month observations" "FMB months" "Average monthly R-squared")) r2 a
+> r2 replace label mtitles("Panel B: 2-year lag")
+(file tables/table5_panel_b_model4.tex not found)
+(output written to tables/table5_panel_b_model4.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

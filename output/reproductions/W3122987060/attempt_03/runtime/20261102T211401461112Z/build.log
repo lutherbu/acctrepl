@@ -1,0 +1,1607 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 05:14:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 05:14:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend nodate nonumber;
+2          
+3          libname comp '/storage/sas/base/comp/d_na' access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname sec '/storage/sas/base/comp/d_na/security' access=readonly;
+NOTE: Libref SEC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+5          libname fx '/storage/sas/base/comp/d_global/currency' access=readonly;
+NOTE: Libref FX was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_global/currency
+6          libname out 'data/main';
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3122987060/attempt_03/data/main
+7          
+8          /* Exact current fields checked against the catalog and the paper's item numbers. */
+9          data raw;
+10             set comp.funda(
+11                 keep=gvkey datadate fyear indfmt consol popsrc datafmt
+12                      curcd
+13                      at ib oancf xidoc recch invch apalch rect invt ap xacc
+14                      xdp am dp xdepl sale prcc_f sich
+15                 where=(fyear between 1980 and 1997
+16                        and indfmt='INDL' and consol='C' and datafmt='STD' and popsrc='D')
+17             );
+18         run;
+
+NOTE: There were 174566 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1980 and fyear<=1997) and (indfmt='INDL') and (consol='C') and (datafmt='STD') and (popsrc='D');
+NOTE: The data set WORK.RAW has 174566 observations and 26 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.52 seconds
+      cpu time            0.51 seconds
+                                                           The SAS System
+
+      
+
+19         
+20         proc sql;
+21             title 'COMP.FUNDA filtered source coverage';
+22             select count(*) as source_rows, min(fyear) as first_fyear,
+23                    max(fyear) as last_fyear, min(datadate) as first_datadate format=yymmdd10.,
+24                    max(datadate) as last_datadate format=yymmdd10.
+25             from raw;
+26         
+27             title 'Source rows by fiscal year';
+28             select fyear, count(*) as source_rows
+29             from raw
+30             group by fyear
+31             order by fyear;
+32         
+33             create table duplicate_keys as
+34             select gvkey, fyear, count(*) as rows_per_key
+35             from raw
+36             group by gvkey, fyear
+37             having calculated rows_per_key > 1;
+NOTE: Table WORK.DUPLICATE_KEYS created, with 2 rows and 3 columns.
+
+38         
+39             create table duplicate_diagnostics as
+40             select d.gvkey, d.fyear, d.rows_per_key,
+41                    count(distinct r.datadate) as distinct_dates,
+42                    min(r.datadate) as first_date format=yymmdd10.,
+43                    max(r.datadate) as last_date format=yymmdd10.,
+44                    count(distinct r.at) as distinct_at, sum(missing(r.at)) as miss_at,
+45                    count(distinct r.ib) as distinct_ib, sum(missing(r.ib)) as miss_ib,
+46                    count(distinct r.oancf) as distinct_oancf, sum(missing(r.oancf)) as miss_oancf,
+47                    count(distinct r.xidoc) as distinct_xidoc, sum(missing(r.xidoc)) as miss_xidoc,
+48                    count(distinct r.recch) as distinct_recch, sum(missing(r.recch)) as miss_recch,
+49                    count(distinct r.invch) as distinct_invch, sum(missing(r.invch)) as miss_invch,
+50                    count(distinct r.apalch) as distinct_apalch, sum(missing(r.apalch)) as miss_apalch,
+51                    count(distinct r.rect) as distinct_rect, sum(missing(r.rect)) as miss_rect,
+52                    count(distinct r.invt) as distinct_invt, sum(missing(r.invt)) as miss_invt,
+53                    count(distinct r.ap) as distinct_ap, sum(missing(r.ap)) as miss_ap,
+54                    count(distinct r.xacc) as distinct_xacc, sum(missing(r.xacc)) as miss_xacc,
+55                    count(distinct r.xdp) as distinct_xdp, sum(missing(r.xdp)) as miss_xdp,
+56                    count(distinct r.am) as distinct_am, sum(missing(r.am)) as miss_am,
+57                    count(distinct r.dp) as distinct_dp, sum(missing(r.dp)) as miss_dp,
+58                    count(distinct r.xdepl) as distinct_xdepl, sum(missing(r.xdepl)) as miss_xdepl,
+59                    count(distinct r.sale) as distinct_sale, sum(missing(r.sale)) as miss_sale,
+60                    count(distinct r.prcc_f) as distinct_prcc_f, sum(missing(r.prcc_f)) as miss_prcc_f,
+61                    count(distinct r.sich) as distinct_sich, sum(missing(r.sich)) as miss_sich,
+62                    count(distinct r.curcd) as distinct_curcd, sum(missing(r.curcd)) as miss_curcd
+63             from duplicate_keys as d
+64             inner join raw as r on d.gvkey=r.gvkey and d.fyear=r.fyear
+65             group by d.gvkey, d.fyear, d.rows_per_key;
+NOTE: Table WORK.DUPLICATE_DIAGNOSTICS created, with 2 rows and 44 columns.
+
+66         quit;
+NOTE: The PROCEDURE SQL printed pages 1-2.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.13 seconds
+                                                           The SAS System
+
+      
+
+67         
+68         data duplicate_diagnostics;
+69             set duplicate_diagnostics;
+70             array ndist[19] distinct_at distinct_ib distinct_oancf distinct_xidoc
+71                 distinct_recch distinct_invch distinct_apalch distinct_rect distinct_invt
+72                 distinct_ap distinct_xacc distinct_xdp distinct_am distinct_dp distinct_xdepl
+73                 distinct_sale distinct_prcc_f distinct_sich distinct_curcd;
+74             array nmissing[19] miss_at miss_ib miss_oancf miss_xidoc miss_recch miss_invch
+75                 miss_apalch miss_rect miss_invt miss_ap miss_xacc miss_xdp miss_am miss_dp
+76                 miss_xdepl miss_sale miss_prcc_f miss_sich miss_curcd;
+77             mismatch=0;
+78             do i=1 to dim(ndist);
+79                 if ndist[i] + (nmissing[i] > 0) > 1 then do;
+80                     mismatch=1;
+81                     put 'DUPLICATE_FIELD_CONFLICT ' gvkey= fyear= i= ndist[i]= nmissing[i]=;
+82                 end;
+83             end;
+84             put 'DUPLICATE_KEY_DIAGNOSTIC ' gvkey= fyear= rows_per_key=
+85                 distinct_dates= first_date= last_date= mismatch=;
+86         run;
+
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=1 distinct_at=1 miss_at=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=2 distinct_ib=1 miss_ib=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=8 distinct_rect=1 miss_rect=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=9 distinct_invt=1 miss_invt=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=10 distinct_ap=1 miss_ap=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=12 distinct_xdp=1 miss_xdp=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=13 distinct_am=1 miss_am=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=14 distinct_dp=1 miss_dp=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=15 distinct_xdepl=1 miss_xdepl=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=16 distinct_sale=1 miss_sale=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=17 distinct_prcc_f=1 miss_prcc_f=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1982 i=19 distinct_curcd=2 miss_curcd=0
+DUPLICATE_KEY_DIAGNOSTIC gvkey=006557 fyear=1982 rows_per_key=2 distinct_dates=2 first_date=1982-08-31 last_date=1982-12-31
+mismatch=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=1 distinct_at=1 miss_at=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=2 distinct_ib=1 miss_ib=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=8 distinct_rect=1 miss_rect=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=9 distinct_invt=1 miss_invt=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=10 distinct_ap=1 miss_ap=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=11 distinct_xacc=1 miss_xacc=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=12 distinct_xdp=1 miss_xdp=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=13 distinct_am=1 miss_am=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=14 distinct_dp=1 miss_dp=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=15 distinct_xdepl=1 miss_xdepl=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=16 distinct_sale=1 miss_sale=1
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=17 distinct_prcc_f=2 miss_prcc_f=0
+DUPLICATE_FIELD_CONFLICT gvkey=006557 fyear=1983 i=19 distinct_curcd=2 miss_curcd=0
+DUPLICATE_KEY_DIAGNOSTIC gvkey=006557 fyear=1983 rows_per_key=2 distinct_dates=2 first_date=1983-08-31 last_date=1983-12-31
+mismatch=1
+NOTE: There were 2 observations read from the data set WORK.DUPLICATE_DIAGNOSTICS.
+NOTE: The data set WORK.DUPLICATE_DIAGNOSTICS has 2 observations and 46 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+                                                           The SAS System
+
+
+87         proc sql noprint;
+88             select count(*) into :inconsistent_duplicate_groups trimmed
+89             from duplicate_diagnostics where mismatch=1;
+90         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+91         %put NOTE: Duplicate (gvkey,fyear) groups with differing inputs = &inconsistent_duplicate_groups.;
+NOTE: Duplicate (gvkey,fyear) groups with differing inputs = 2
+92         
+93         /* Choose the most complete record; use the latest date only to break ties. */
+94         data raw_ranked;
+95             set raw;
+96             nmiss_inputs=cmiss(at, ib, oancf, xidoc, recch, invch, apalch,
+97                                rect, invt, ap, xacc, xdp, am, dp, xdepl,
+98                                sale, prcc_f, sich, curcd);
+99         run;
+
+NOTE: There were 174566 observations read from the data set WORK.RAW.
+NOTE: The data set WORK.RAW_RANKED has 174566 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+100        proc sort data=raw_ranked out=raw_sorted;
+101            by gvkey fyear nmiss_inputs descending datadate;
+102        run;
+
+NOTE: There were 174566 observations read from the data set WORK.RAW_RANKED.
+NOTE: The data set WORK.RAW_SORTED has 174566 observations and 27 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+103        data raw_unique;
+104            set raw_sorted;
+105            by gvkey fyear;
+106            if first.fyear;
+107        run;
+
+NOTE: There were 174566 observations read from the data set WORK.RAW_SORTED.
+NOTE: The data set WORK.RAW_UNIQUE has 174564 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+108        
+109        proc sql noprint;
+110            select count(*) into :unique_source_rows trimmed from raw_unique;
+111        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+                                                           The SAS System
+
+      cpu time            0.00 seconds
+      
+
+112        %put NOTE: Source rows after coherent annual-key selection = &unique_source_rows.;
+NOTE: Source rows after coherent annual-key selection = 174564
+113        
+114        proc sql;
+115            title 'Observed OANCF rows with missing XIDOC; CF remains unavailable';
+116            select count(*) as n_oancf_observed,
+117                   sum(missing(xidoc)) as n_missing_xidoc
+118            from raw_unique
+119            where not missing(oancf);
+120        quit;
+NOTE: The PROCEDURE SQL printed page 3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+121        
+122        proc sql noprint;
+123            select min(datadate), max(datadate)
+124              into :raw_date_min trimmed, :raw_date_max trimmed
+125            from raw_unique;
+126        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+127        %put NOTE: Actual DATADATE source horizon = &raw_date_min. to &raw_date_max.;
+NOTE: Actual DATADATE source horizon = 7486 to 14030
+128        
+129        /* Annual sales are flows: use positive, unique GBP cross-rates with EXRAT12M. */
+130        data fx_mth_raw;
+131            set fx.g_exrt_mth(keep=datadate fromcurm tocurm exrat12m);
+132            if fromcurm='GBP' and not missing(tocurm) and exrat12m > 0;
+133        run;
+
+NOTE: There were 75838 observations read from the data set FX.G_EXRT_MTH.
+NOTE: The data set WORK.FX_MTH_RAW has 75838 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+134        proc sql;
+135            create table fx_mth_rate as
+136            select datadate, tocurm, count(*) as n_quote,
+137                   max(exrat12m) as fxrate
+138            from fx_mth_raw
+139            group by datadate, tocurm;
+NOTE: Table WORK.FX_MTH_RATE created, with 75838 rows and 4 columns.
+
+140        
+141            create table sale_fx_candidates as
+142            select c.gvkey, c.fyear, c.datadate, c.curcd, c.sale,
+143                   s.datadate as fxdate, s.fxrate as source_rate,
+                                                           The SAS System
+
+144                   u.fxrate as usd_rate
+145            from raw_unique as c
+146            inner join fx_mth_rate as s
+147              on c.curcd=s.tocurm and s.datadate <= c.datadate
+148             and s.datadate >= c.datadate-31 and s.n_quote=1 and s.fxrate > 0
+149            inner join fx_mth_rate as u
+150              on s.datadate=u.datadate and u.tocurm='USD'
+151             and u.n_quote=1 and u.fxrate > 0
+152            where c.curcd not in ('USD','GBP');
+NOTE: Table WORK.SALE_FX_CANDIDATES created, with 24846 rows and 8 columns.
+
+153        
+154            create table sale_fx_dates as
+155            select gvkey, fyear, datadate, curcd, max(fxdate) as fxdate
+156            from sale_fx_candidates
+157            group by gvkey, fyear, datadate, curcd;
+NOTE: Table WORK.SALE_FX_DATES created, with 12429 rows and 5 columns.
+
+158        
+159            create table sale_fx_non_gbp as
+160            select c.gvkey, c.fyear, c.datadate, c.curcd, c.sale, c.fxdate,
+161                   c.source_rate, c.usd_rate
+162            from sale_fx_candidates as c
+163            inner join sale_fx_dates as d
+164              on c.gvkey=d.gvkey and c.fyear=d.fyear and c.datadate=d.datadate
+165             and c.curcd=d.curcd and c.fxdate=d.fxdate;
+NOTE: Table WORK.SALE_FX_NON_GBP created, with 12429 rows and 8 columns.
+
+166        
+167            create table sale_fx_gbp_candidates as
+168            select c.gvkey, c.fyear, c.datadate, c.curcd, c.sale,
+169                   u.datadate as fxdate, 1 as source_rate,
+170                   u.fxrate as usd_rate
+171            from raw_unique as c
+172            inner join fx_mth_rate as u
+173              on u.tocurm='USD' and u.datadate <= c.datadate
+174             and u.datadate >= c.datadate-31 and u.n_quote=1 and u.fxrate > 0
+175            where c.curcd='GBP';
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.SALE_FX_GBP_CANDIDATES created, with 0 rows and 8 columns.
+
+176        
+177            create table sale_fx_gbp_dates as
+178            select gvkey, fyear, datadate, curcd, max(fxdate) as fxdate
+179            from sale_fx_gbp_candidates
+180            group by gvkey, fyear, datadate, curcd;
+NOTE: Table WORK.SALE_FX_GBP_DATES created, with 0 rows and 5 columns.
+
+181        
+182            create table sale_fx_gbp as
+183            select c.gvkey, c.fyear, c.datadate, c.curcd, c.sale, c.fxdate,
+184                   c.source_rate, c.usd_rate
+185            from sale_fx_gbp_candidates as c
+186            inner join sale_fx_gbp_dates as d
+187              on c.gvkey=d.gvkey and c.fyear=d.fyear and c.datadate=d.datadate
+188             and c.curcd=d.curcd and c.fxdate=d.fxdate;
+NOTE: Table WORK.SALE_FX_GBP created, with 0 rows and 8 columns.
+
+                                                           The SAS System
+
+189        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.20 seconds
+      cpu time            0.22 seconds
+      
+
+190        
+191        data sale_fx_quoted;
+192            set sale_fx_non_gbp sale_fx_gbp;
+193            sale_fx_factor=usd_rate/source_rate;
+194        run;
+
+NOTE: There were 12429 observations read from the data set WORK.SALE_FX_NON_GBP.
+NOTE: There were 0 observations read from the data set WORK.SALE_FX_GBP.
+NOTE: The data set WORK.SALE_FX_QUOTED has 12429 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+195        
+196        /* Primary issue markers are monthly; identify the latest dated marker before each actual period end. */
+197        data sec_mth_window;
+198            set sec.sec_mth(keep=gvkey iid datadate primiss
+199                            where=(datadate between &raw_date_min.-31 and &raw_date_max.));
+200        run;
+
+NOTE: There were 1830251 observations read from the data set SEC.SEC_MTH.
+      WHERE (datadate>=7455 and datadate<=14030);
+NOTE: The data set WORK.SEC_MTH_WINDOW has 1830251 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.24 seconds
+      
+
+201        proc freq data=sec_mth_window;
+202            title 'Compustat SEC_MTH primary/joiner markers in the actual source horizon';
+203            tables primiss / missing;
+204        run;
+
+NOTE: There were 1830251 observations read from the data set WORK.SEC_MTH_WINDOW.
+NOTE: The PROCEDURE FREQ printed page 4.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+205        
+206        proc sql;
+207            create table primary_month as
+208            select r.gvkey, r.fyear, r.datadate, max(s.datadate) as marker_date
+209            from raw_unique as r
+210            left join sec_mth_window as s
+211              on r.gvkey=s.gvkey and s.datadate <= r.datadate
+212             and s.datadate >= r.datadate-31
+213            group by r.gvkey, r.fyear, r.datadate;
+NOTE: Table WORK.PRIMARY_MONTH created, with 174564 rows and 4 columns.
+
+                                                           The SAS System
+
+214        
+215            create table primary_candidates as
+216            select m.gvkey, m.fyear, m.datadate, m.marker_date, s.iid,
+217                   count(*) as marker_rows
+218            from primary_month as m
+219            inner join sec_mth_window as s
+220              on m.gvkey=s.gvkey and m.marker_date=s.datadate
+221            where s.primiss='P'
+222            group by m.gvkey, m.fyear, m.datadate, m.marker_date, s.iid;
+NOTE: Table WORK.PRIMARY_CANDIDATES created, with 134846 rows and 6 columns.
+
+223        
+224            create table primary_counts as
+225            select gvkey, fyear, datadate, count(*) as n_primary_iid,
+226                   sum(marker_rows) as n_primary_rows
+227            from primary_candidates
+228            group by gvkey, fyear, datadate;
+NOTE: Table WORK.PRIMARY_COUNTS created, with 132357 rows and 5 columns.
+
+229        
+230            create table primary_iid as
+231            select p.gvkey, p.fyear, p.datadate, p.marker_date, p.iid
+232            from primary_candidates as p
+233            inner join primary_counts as c
+234              on p.gvkey=c.gvkey and p.fyear=c.fyear and p.datadate=c.datadate
+235            where c.n_primary_iid=1 and c.n_primary_rows=1 and p.marker_rows=1;
+NOTE: Table WORK.PRIMARY_IID created, with 129868 rows and 5 columns.
+
+236        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.01 seconds
+      cpu time            1.32 seconds
+      
+
+237        
+238        /* Daily security price identifies the primary issue's currency at the fiscal close. */
+239        data sec_dprc_window;
+240            set sec.sec_dprc(keep=gvkey iid datadate curcdd prccd
+241                             where=(datadate between &raw_date_min.-7 and &raw_date_max.));
+242            if not missing(prccd) and prccd > 0;
+243        run;
+
+NOTE: There were 32234856 observations read from the data set SEC.SEC_DPRC.
+      WHERE (datadate>=7479 and datadate<=14030);
+NOTE: The data set WORK.SEC_DPRC_WINDOW has 32234846 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           4.99 seconds
+      cpu time            4.99 seconds
+      
+
+244        proc sql;
+245            create table price_dates as
+246            select p.gvkey, p.fyear, p.datadate, p.iid, p.marker_date,
+247                   max(d.datadate) as price_date
+248            from primary_iid as p
+249            inner join sec_dprc_window as d
+250              on p.gvkey=d.gvkey and p.iid=d.iid
+251             and d.datadate <= p.datadate and d.datadate >= p.datadate-7
+                                                           The SAS System
+
+252            group by p.gvkey, p.fyear, p.datadate, p.iid, p.marker_date;
+NOTE: Table WORK.PRICE_DATES created, with 105302 rows and 6 columns.
+
+253        
+254            create table price_rows as
+255            select p.gvkey, p.fyear, p.datadate, p.iid, p.marker_date, p.price_date,
+256                   max(d.curcdd) as price_curcd, max(d.prccd) as daily_close,
+257                   count(*) as n_price_rows
+258            from price_dates as p
+259            inner join sec_dprc_window as d
+260              on p.gvkey=d.gvkey and p.iid=d.iid and p.price_date=d.datadate
+261            group by p.gvkey, p.fyear, p.datadate, p.iid, p.marker_date, p.price_date;
+NOTE: Table WORK.PRICE_ROWS created, with 105302 rows and 9 columns.
+
+262        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           11.05 seconds
+      cpu time            11.18 seconds
+      
+
+263        
+264        /* Daily EXRATD is the point-date quote for a fiscal-close security price. */
+265        data fx_dly_raw;
+266            set fx.g_exrt_dly(keep=datadate fromcurd tocurd exratd exrattpd);
+267            if fromcurd='GBP' and not missing(tocurd) and exratd > 0;
+268        run;
+
+NOTE: There were 2221564 observations read from the data set FX.G_EXRT_DLY.
+NOTE: The data set WORK.FX_DLY_RAW has 2221564 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.13 seconds
+      
+
+269        proc sql;
+270            create table fx_dly_rate as
+271            select datadate, tocurd, count(*) as n_quote,
+272                   max(exratd) as fxrate, max(exrattpd) as rate_type
+273            from fx_dly_raw
+274            group by datadate, tocurd;
+NOTE: Table WORK.FX_DLY_RATE created, with 2221564 rows and 5 columns.
+
+275        
+276            create table price_route as
+277            select r.gvkey, r.fyear, r.datadate, r.prcc_f,
+278                   pc.n_primary_iid, pc.n_primary_rows, pi.iid,
+279                   pr.price_date, pr.price_curcd, pr.daily_close, pr.n_price_rows,
+280                   s.fxrate as source_rate, s.n_quote as source_n,
+281                   s.rate_type as source_type,
+282                   u.fxrate as usd_rate, u.n_quote as usd_n,
+283                   u.rate_type as usd_type
+284            from raw_unique as r
+285            left join primary_counts as pc
+286              on r.gvkey=pc.gvkey and r.fyear=pc.fyear and r.datadate=pc.datadate
+287            left join primary_iid as pi
+288              on r.gvkey=pi.gvkey and r.fyear=pi.fyear and r.datadate=pi.datadate
+289            left join price_rows as pr
+290              on pi.gvkey=pr.gvkey and pi.fyear=pr.fyear and pi.datadate=pr.datadate
+                                                           The SAS System
+
+291             and pi.iid=pr.iid
+292            left join fx_dly_rate as s
+293              on pr.price_date=s.datadate and pr.price_curcd=s.tocurd
+294            left join fx_dly_rate as u
+295              on pr.price_date=u.datadate and u.tocurd='USD';
+NOTE: Table WORK.PRICE_ROUTE created, with 174564 rows and 17 columns.
+
+296        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.61 seconds
+      cpu time            1.05 seconds
+      
+
+297        
+298        data price_route;
+299            set price_route;
+300            length price_fx_status 3 price_fx_factor 8 price_usd 8;
+301            if n_primary_iid ne 1 or n_primary_rows ne 1 then price_fx_status=1;
+302            else if missing(price_date) or n_price_rows ne 1 then price_fx_status=2;
+303            else if missing(price_curcd) then price_fx_status=3;
+304            else if missing(prcc_f) then price_fx_status=4;
+305            else if price_curcd='USD' then do;
+306                price_fx_factor=1;
+307                price_usd=prcc_f;
+308                price_fx_status=0;
+309            end;
+310            else if price_curcd='GBP' then do;
+311                if usd_n=1 and usd_rate>0 then do;
+312                    price_fx_factor=usd_rate;
+313                    price_usd=prcc_f*price_fx_factor;
+314                    price_fx_status=0;
+315                end;
+316                else price_fx_status=5;
+317            end;
+318            else if source_n=1 and usd_n=1 and source_rate>0 and usd_rate>0 then do;
+319                price_fx_factor=usd_rate/source_rate;
+320                price_usd=prcc_f*price_fx_factor;
+321                price_fx_status=0;
+322            end;
+323            else price_fx_status=5;
+324        run;
+
+NOTE: There were 174564 observations read from the data set WORK.PRICE_ROUTE.
+NOTE: The data set WORK.PRICE_ROUTE has 174564 observations and 20 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+325        
+326        data sale_fx_usd;
+327            set raw_unique(keep=gvkey fyear datadate curcd sale);
+328            if curcd='USD';
+329            fxdate=.;
+330            source_rate=1;
+331            usd_rate=1;
+332            sale_fx_factor=1;
+333            sale_usd=sale;
+                                                           The SAS System
+
+334            sale_fx_status=0;
+335        run;
+
+NOTE: There were 174564 observations read from the data set WORK.RAW_UNIQUE.
+NOTE: The data set WORK.SALE_FX_USD has 161587 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+336        
+337        data sale_fx_quoted;
+338            set sale_fx_quoted;
+339            sale_usd=.;
+340            if source_rate>0 and usd_rate>0 then sale_usd=sale*sale_fx_factor;
+341            sale_fx_status=0;
+342        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      2051 at 340:55   
+NOTE: There were 12429 observations read from the data set WORK.SALE_FX_QUOTED.
+NOTE: The data set WORK.SALE_FX_QUOTED has 12429 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+343        
+344        data sale_fx_all;
+345            set sale_fx_usd sale_fx_quoted;
+346        run;
+
+NOTE: There were 161587 observations read from the data set WORK.SALE_FX_USD.
+NOTE: There were 12429 observations read from the data set WORK.SALE_FX_QUOTED.
+NOTE: The data set WORK.SALE_FX_ALL has 174016 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+347        
+348        proc sql;
+349            create table source_fx_audit as
+350            select r.fyear, r.curcd, p.price_curcd,
+351                   count(*) as n_rows,
+352                   sum(not missing(r.sale)) as n_sale,
+353                   sum(not missing(s.sale_usd)) as n_sale_usd,
+354                   sum(p.price_fx_status=0) as n_price_usd,
+355                   sum(p.price_fx_status=1) as n_primary_ambiguous,
+356                   sum(p.price_fx_status=2) as n_no_daily_price,
+357                   sum(p.price_fx_status=3) as n_missing_price_curcd,
+358                   sum(p.price_fx_status=4) as n_missing_prccf,
+359                   sum(p.price_fx_status=5) as n_no_price_fx
+360            from raw_unique as r
+361            left join sale_fx_all as s
+362              on r.gvkey=s.gvkey and r.fyear=s.fyear and r.datadate=s.datadate
+363            left join price_route as p
+                                                           The SAS System
+
+364              on r.gvkey=p.gvkey and r.fyear=p.fyear and r.datadate=p.datadate
+365            where r.fyear between 1987 and 1997
+366            group by r.fyear, r.curcd, p.price_curcd
+367            order by r.fyear, r.curcd, p.price_curcd;
+NOTE: Table WORK.SOURCE_FX_AUDIT created, with 66 rows and 12 columns.
+
+368        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.24 seconds
+      
+
+369        data _null_;
+370            set source_fx_audit;
+371            put 'ROW_CURRENCY_AND_USD_SCREEN_AUDIT ' fyear= curcd= price_curcd= n_rows=
+372                n_sale= n_sale_usd= n_price_usd= n_primary_ambiguous= n_no_daily_price=
+373                n_missing_price_curcd= n_missing_prccf= n_no_price_fx=;
+374        run;
+
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1987 curcd=CAD price_curcd=  n_rows=335 n_sale=293 n_sale_usd=293 n_price_usd=0
+n_primary_ambiguous=196 n_no_daily_price=139 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1987 curcd=CAD price_curcd=CAD n_rows=340 n_sale=303 n_sale_usd=303 n_price_usd=340
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1987 curcd=CAD price_curcd=USD n_rows=11 n_sale=11 n_sale_usd=11 n_price_usd=1
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=10 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1987 curcd=USD price_curcd=  n_rows=2621 n_sale=2037 n_sale_usd=2037 n_price_usd=0
+n_primary_ambiguous=2059 n_no_daily_price=562 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1987 curcd=USD price_curcd=CAD n_rows=2 n_sale=2 n_sale_usd=2 n_price_usd=0
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=2 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1987 curcd=USD price_curcd=USD n_rows=5916 n_sale=5387 n_sale_usd=5387 n_price_usd=5909
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=7 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1988 curcd=CAD price_curcd=  n_rows=348 n_sale=258 n_sale_usd=258 n_price_usd=0
+n_primary_ambiguous=200 n_no_daily_price=148 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1988 curcd=CAD price_curcd=CAD n_rows=368 n_sale=324 n_sale_usd=324 n_price_usd=367
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=1 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1988 curcd=CAD price_curcd=USD n_rows=17 n_sale=15 n_sale_usd=15 n_price_usd=2
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=15 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1988 curcd=USD price_curcd=  n_rows=2521 n_sale=1820 n_sale_usd=1820 n_price_usd=0
+n_primary_ambiguous=2217 n_no_daily_price=304 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1988 curcd=USD price_curcd=CAD n_rows=4 n_sale=4 n_sale_usd=4 n_price_usd=0
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=4 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1988 curcd=USD price_curcd=USD n_rows=6075 n_sale=5438 n_sale_usd=5438 n_price_usd=6067
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=8 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1989 curcd=CAD price_curcd=  n_rows=357 n_sale=256 n_sale_usd=256 n_price_usd=0
+n_primary_ambiguous=203 n_no_daily_price=154 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1989 curcd=CAD price_curcd=CAD n_rows=361 n_sale=306 n_sale_usd=306 n_price_usd=360
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=1 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1989 curcd=CAD price_curcd=USD n_rows=18 n_sale=18 n_sale_usd=18 n_price_usd=2
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=16 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1989 curcd=USD price_curcd=  n_rows=2517 n_sale=1770 n_sale_usd=1770 n_price_usd=0
+n_primary_ambiguous=2334 n_no_daily_price=183 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1989 curcd=USD price_curcd=CAD n_rows=7 n_sale=7 n_sale_usd=7 n_price_usd=1
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=6 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1989 curcd=USD price_curcd=USD n_rows=6083 n_sale=5385 n_sale_usd=5385 n_price_usd=6052
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=31 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1990 curcd=CAD price_curcd=  n_rows=328 n_sale=228 n_sale_usd=228 n_price_usd=0
+n_primary_ambiguous=208 n_no_daily_price=120 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1990 curcd=CAD price_curcd=CAD n_rows=405 n_sale=326 n_sale_usd=326 n_price_usd=403
+                                                           The SAS System
+
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=2 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1990 curcd=CAD price_curcd=USD n_rows=17 n_sale=17 n_sale_usd=17 n_price_usd=2
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=15 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1990 curcd=USD price_curcd=  n_rows=2662 n_sale=1813 n_sale_usd=1813 n_price_usd=0
+n_primary_ambiguous=2531 n_no_daily_price=131 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1990 curcd=USD price_curcd=CAD n_rows=7 n_sale=7 n_sale_usd=7 n_price_usd=2
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=5 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1990 curcd=USD price_curcd=USD n_rows=6152 n_sale=5379 n_sale_usd=5379 n_price_usd=6100
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=52 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1991 curcd=CAD price_curcd=  n_rows=337 n_sale=220 n_sale_usd=220 n_price_usd=0
+n_primary_ambiguous=226 n_no_daily_price=111 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1991 curcd=CAD price_curcd=CAD n_rows=421 n_sale=339 n_sale_usd=339 n_price_usd=421
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1991 curcd=CAD price_curcd=USD n_rows=16 n_sale=16 n_sale_usd=16 n_price_usd=1
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=15 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1991 curcd=USD price_curcd=  n_rows=2878 n_sale=1852 n_sale_usd=1852 n_price_usd=0
+n_primary_ambiguous=2770 n_no_daily_price=108 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1991 curcd=USD price_curcd=CAD n_rows=4 n_sale=4 n_sale_usd=4 n_price_usd=2
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=2 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1991 curcd=USD price_curcd=USD n_rows=6310 n_sale=5488 n_sale_usd=5488 n_price_usd=6261
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=49 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1992 curcd=CAD price_curcd=  n_rows=314 n_sale=188 n_sale_usd=188 n_price_usd=0
+n_primary_ambiguous=218 n_no_daily_price=96 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1992 curcd=CAD price_curcd=CAD n_rows=488 n_sale=365 n_sale_usd=365 n_price_usd=488
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1992 curcd=CAD price_curcd=USD n_rows=19 n_sale=19 n_sale_usd=19 n_price_usd=1
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=18 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1992 curcd=USD price_curcd=  n_rows=3182 n_sale=2057 n_sale_usd=2057 n_price_usd=0
+n_primary_ambiguous=3107 n_no_daily_price=75 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1992 curcd=USD price_curcd=CAD n_rows=12 n_sale=9 n_sale_usd=9 n_price_usd=3
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=9 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1992 curcd=USD price_curcd=USD n_rows=6690 n_sale=5709 n_sale_usd=5709 n_price_usd=6657
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=33 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1993 curcd=CAD price_curcd=  n_rows=265 n_sale=208 n_sale_usd=208 n_price_usd=0
+n_primary_ambiguous=228 n_no_daily_price=37 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1993 curcd=CAD price_curcd=CAD n_rows=638 n_sale=509 n_sale_usd=509 n_price_usd=638
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1993 curcd=CAD price_curcd=USD n_rows=17 n_sale=17 n_sale_usd=17 n_price_usd=3
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=14 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1993 curcd=USD price_curcd=  n_rows=3083 n_sale=1980 n_sale_usd=1980 n_price_usd=0
+n_primary_ambiguous=3009 n_no_daily_price=74 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1993 curcd=USD price_curcd=CAD n_rows=14 n_sale=13 n_sale_usd=13 n_price_usd=3
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=11 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1993 curcd=USD price_curcd=USD n_rows=7465 n_sale=6898 n_sale_usd=6898 n_price_usd=7418
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=47 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1994 curcd=CAD price_curcd=  n_rows=277 n_sale=216 n_sale_usd=216 n_price_usd=0
+n_primary_ambiguous=245 n_no_daily_price=32 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1994 curcd=CAD price_curcd=CAD n_rows=722 n_sale=623 n_sale_usd=623 n_price_usd=722
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1994 curcd=CAD price_curcd=USD n_rows=18 n_sale=17 n_sale_usd=17 n_price_usd=4
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=14 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1994 curcd=USD price_curcd=  n_rows=2971 n_sale=1948 n_sale_usd=1948 n_price_usd=0
+n_primary_ambiguous=2911 n_no_daily_price=60 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1994 curcd=USD price_curcd=CAD n_rows=17 n_sale=15 n_sale_usd=15 n_price_usd=6
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=11 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1994 curcd=USD price_curcd=USD n_rows=7894 n_sale=7325 n_sale_usd=7325 n_price_usd=7848
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=46 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1995 curcd=CAD price_curcd=  n_rows=314 n_sale=251 n_sale_usd=251 n_price_usd=0
+                                                           The SAS System
+
+n_primary_ambiguous=270 n_no_daily_price=44 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1995 curcd=CAD price_curcd=CAD n_rows=718 n_sale=668 n_sale_usd=668 n_price_usd=717
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=1 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1995 curcd=CAD price_curcd=USD n_rows=20 n_sale=20 n_sale_usd=20 n_price_usd=2
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=18 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1995 curcd=USD price_curcd=  n_rows=2833 n_sale=2143 n_sale_usd=2143 n_price_usd=0
+n_primary_ambiguous=2729 n_no_daily_price=104 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1995 curcd=USD price_curcd=CAD n_rows=17 n_sale=14 n_sale_usd=14 n_price_usd=8
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=9 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1995 curcd=USD price_curcd=USD n_rows=8590 n_sale=7990 n_sale_usd=7990 n_price_usd=8583
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=7 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1996 curcd=CAD price_curcd=  n_rows=308 n_sale=237 n_sale_usd=237 n_price_usd=0
+n_primary_ambiguous=265 n_no_daily_price=43 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1996 curcd=CAD price_curcd=CAD n_rows=716 n_sale=673 n_sale_usd=673 n_price_usd=716
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1996 curcd=CAD price_curcd=USD n_rows=19 n_sale=18 n_sale_usd=18 n_price_usd=2
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=17 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1996 curcd=USD price_curcd=  n_rows=2325 n_sale=1668 n_sale_usd=1668 n_price_usd=0
+n_primary_ambiguous=2224 n_no_daily_price=101 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1996 curcd=USD price_curcd=CAD n_rows=8 n_sale=7 n_sale_usd=7 n_price_usd=5
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=3 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1996 curcd=USD price_curcd=USD n_rows=9248 n_sale=8645 n_sale_usd=8645 n_price_usd=9245
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=3 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1997 curcd=CAD price_curcd=  n_rows=334 n_sale=239 n_sale_usd=239 n_price_usd=0
+n_primary_ambiguous=271 n_no_daily_price=63 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1997 curcd=CAD price_curcd=CAD n_rows=706 n_sale=675 n_sale_usd=675 n_price_usd=706
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1997 curcd=CAD price_curcd=USD n_rows=19 n_sale=19 n_sale_usd=19 n_price_usd=4
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=15 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1997 curcd=USD price_curcd=  n_rows=1970 n_sale=1293 n_sale_usd=1293 n_price_usd=0
+n_primary_ambiguous=1904 n_no_daily_price=66 n_missing_price_curcd=0 n_missing_prccf=0 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1997 curcd=USD price_curcd=CAD n_rows=15 n_sale=14 n_sale_usd=14 n_price_usd=10
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=5 n_no_price_fx=0
+ROW_CURRENCY_AND_USD_SCREEN_AUDIT fyear=1997 curcd=USD price_curcd=USD n_rows=9393 n_sale=8770 n_sale_usd=8770 n_price_usd=9388
+n_primary_ambiguous=0 n_no_daily_price=0 n_missing_price_curcd=0 n_missing_prccf=5 n_no_price_fx=0
+NOTE: There were 66 observations read from the data set WORK.SOURCE_FX_AUDIT.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+375        proc freq data=price_route;
+376            title 'Per-leg daily EXRATTPD provenance for verified price routes';
+377            where price_fx_status=0;
+378            tables source_type*usd_type / missing;
+379        run;
+
+NOTE: There were 104712 observations read from the data set WORK.PRICE_ROUTE.
+      WHERE price_fx_status=0;
+NOTE: The PROCEDURE FREQ printed page 5.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+380        
+381        proc sql;
+382            create table raw_screen as
+                                                           The SAS System
+
+383            select c.*,
+384                   s.sale_usd, s.fxdate as sale_fx_date,
+385                   s.sale_fx_factor,
+386                   case when missing(c.curcd) then 1
+387                        when missing(c.sale) then 2
+388                        when not missing(s.sale_usd) then 0
+389                        else 3 end as sale_fx_status,
+390                   p.price_usd, p.price_fx_factor, p.price_fx_status,
+391                   p.iid as price_iid, p.price_date, p.price_curcd,
+392                   p.source_type as price_fx_source_type,
+393                   p.usd_type as price_fx_usd_type
+394            from raw_unique as c
+395            left join sale_fx_all as s
+396              on c.gvkey=s.gvkey and c.fyear=s.fyear and c.datadate=s.datadate
+397            left join price_route as p
+398              on c.gvkey=p.gvkey and c.fyear=p.fyear and c.datadate=p.datadate;
+NOTE: Table WORK.RAW_SCREEN created, with 174564 rows and 39 columns.
+
+399        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.23 seconds
+      cpu time            0.33 seconds
+      
+
+400        
+401        proc sql;
+402            create table source_year_fields as
+403            select fyear, count(*) as n_records,
+404                   sum(not missing(at)) as n_at,
+405                   sum(not missing(ib)) as n_ib,
+406                   sum(not missing(oancf)) as n_oancf,
+407                   sum(not missing(sale)) as n_sale,
+408                   sum(not missing(prcc_f)) as n_price,
+409                   sum(not missing(sich)) as n_sic,
+410                   sum(not missing(curcd)) as n_curcd
+411            from raw_unique
+412            group by fyear
+413            order by fyear;
+NOTE: Table WORK.SOURCE_YEAR_FIELDS created, with 18 rows and 9 columns.
+
+414        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.08 seconds
+      
+
+415        data _null_;
+416            set source_year_fields;
+417            put 'SOURCE_YEAR_FIELDS ' fyear= n_records= n_at= n_ib= n_oancf= n_sale= n_price= n_sic= n_curcd=;
+418        run;
+
+SOURCE_YEAR_FIELDS fyear=1980 n_records=6889 n_at=6440 n_ib=6427 n_oancf=0 n_sale=6413 n_price=4682 n_sic=0 n_curcd=6889
+SOURCE_YEAR_FIELDS fyear=1981 n_records=7058 n_at=6476 n_ib=6464 n_oancf=0 n_sale=6449 n_price=5307 n_sic=0 n_curcd=7058
+SOURCE_YEAR_FIELDS fyear=1982 n_records=7685 n_at=6938 n_ib=6922 n_oancf=0 n_sale=6906 n_price=5751 n_sic=100 n_curcd=7685
+SOURCE_YEAR_FIELDS fyear=1983 n_records=7996 n_at=7205 n_ib=7186 n_oancf=0 n_sale=7166 n_price=6185 n_sic=111 n_curcd=7996
+SOURCE_YEAR_FIELDS fyear=1984 n_records=8243 n_at=7273 n_ib=7260 n_oancf=0 n_sale=7233 n_price=6342 n_sic=127 n_curcd=8243
+SOURCE_YEAR_FIELDS fyear=1985 n_records=8599 n_at=7696 n_ib=7668 n_oancf=0 n_sale=7641 n_price=6413 n_sic=137 n_curcd=8599
+SOURCE_YEAR_FIELDS fyear=1986 n_records=9017 n_at=8053 n_ib=7958 n_oancf=0 n_sale=7930 n_price=6857 n_sic=155 n_curcd=9017
+                                                           The SAS System
+
+SOURCE_YEAR_FIELDS fyear=1987 n_records=9225 n_at=8136 n_ib=8065 n_oancf=1312 n_sale=8033 n_price=7262 n_sic=7863 n_curcd=9225
+SOURCE_YEAR_FIELDS fyear=1988 n_records=9333 n_at=8011 n_ib=7934 n_oancf=6519 n_sale=7859 n_price=7156 n_sic=7701 n_curcd=9333
+SOURCE_YEAR_FIELDS fyear=1989 n_records=9343 n_at=7850 n_ib=7818 n_oancf=6911 n_sale=7742 n_price=7034 n_sic=7541 n_curcd=9343
+SOURCE_YEAR_FIELDS fyear=1990 n_records=9571 n_at=7880 n_ib=7848 n_oancf=6991 n_sale=7770 n_price=7045 n_sic=7569 n_curcd=9571
+SOURCE_YEAR_FIELDS fyear=1991 n_records=9966 n_at=8031 n_ib=7998 n_oancf=7184 n_sale=7919 n_price=7180 n_sic=7720 n_curcd=9966
+SOURCE_YEAR_FIELDS fyear=1992 n_records=10705 n_at=8449 n_ib=8424 n_oancf=7634 n_sale=8347 n_price=7664 n_sic=8142 n_curcd=10705
+SOURCE_YEAR_FIELDS fyear=1993 n_records=11482 n_at=9674 n_ib=9630 n_oancf=8113 n_sale=9625 n_price=8452 n_sic=8770 n_curcd=11482
+SOURCE_YEAR_FIELDS fyear=1994 n_records=11899 n_at=10187 n_ib=10147 n_oancf=8609 n_sale=10144 n_price=8959 n_sic=9247 n_curcd=11899
+SOURCE_YEAR_FIELDS fyear=1995 n_records=12492 n_at=11131 n_ib=11091 n_oancf=9716 n_sale=11086 n_price=9718 n_sic=10225 n_curcd=12492
+SOURCE_YEAR_FIELDS fyear=1996 n_records=12624 n_at=11311 n_ib=11253 n_oancf=9938 n_sale=11248 n_price=10363 n_sic=10445
+n_curcd=12624
+SOURCE_YEAR_FIELDS fyear=1997 n_records=12437 n_at=11054 n_ib=11017 n_oancf=9712 n_sale=11010 n_price=10492 n_sic=10126
+n_curcd=12437
+NOTE: There were 18 observations read from the data set WORK.SOURCE_YEAR_FIELDS.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+419        
+420        /* Currency audit for every adjacent fiscal-year pair used by the lag/lead ratios. */
+421        proc sql;
+422            create table currency_pair_fields as
+423            select c.fyear, count(*) as n_firmyears,
+424                   sum(case when missing(p.gvkey) then 1 else 0 end) as n_no_prior_record,
+425                   sum(case when not missing(p.gvkey) and (missing(c.curcd) or missing(p.curcd))
+426                            then 1 else 0 end) as n_currency_code_missing,
+427                   sum(case when not missing(p.gvkey) and not missing(c.curcd)
+428                                 and not missing(p.curcd) and c.curcd ne p.curcd
+429                            then 1 else 0 end) as n_currency_changed,
+430                   sum(case when not missing(p.gvkey) and not missing(c.curcd)
+431                                 and not missing(p.curcd) and c.curcd=p.curcd
+432                            then 1 else 0 end) as n_currency_same
+433            from raw_unique as c
+434            left join raw_unique as p
+435              on c.gvkey=p.gvkey and p.fyear=c.fyear-1
+436            where c.fyear between 1981 and 1997
+437            group by c.fyear
+438            order by c.fyear;
+NOTE: Table WORK.CURRENCY_PAIR_FIELDS created, with 17 rows and 6 columns.
+
+439        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.17 seconds
+      
+
+440        data _null_;
+441            set currency_pair_fields;
+442            put 'CURRENCY_ADJACENT_PAIR ' fyear= n_firmyears= n_no_prior_record=
+443                n_currency_code_missing= n_currency_changed= n_currency_same=;
+444        run;
+
+CURRENCY_ADJACENT_PAIR fyear=1981 n_firmyears=7058 n_no_prior_record=535 n_currency_code_missing=0 n_currency_changed=0
+n_currency_same=6523
+CURRENCY_ADJACENT_PAIR fyear=1982 n_firmyears=7685 n_no_prior_record=992 n_currency_code_missing=0 n_currency_changed=3
+n_currency_same=6690
+CURRENCY_ADJACENT_PAIR fyear=1983 n_firmyears=7996 n_no_prior_record=699 n_currency_code_missing=0 n_currency_changed=2
+                                                           The SAS System
+
+n_currency_same=7295
+CURRENCY_ADJACENT_PAIR fyear=1984 n_firmyears=8243 n_no_prior_record=717 n_currency_code_missing=0 n_currency_changed=0
+n_currency_same=7526
+CURRENCY_ADJACENT_PAIR fyear=1985 n_firmyears=8599 n_no_prior_record=919 n_currency_code_missing=0 n_currency_changed=4
+n_currency_same=7676
+CURRENCY_ADJACENT_PAIR fyear=1986 n_firmyears=9017 n_no_prior_record=928 n_currency_code_missing=0 n_currency_changed=5
+n_currency_same=8084
+CURRENCY_ADJACENT_PAIR fyear=1987 n_firmyears=9225 n_no_prior_record=727 n_currency_code_missing=0 n_currency_changed=7
+n_currency_same=8491
+CURRENCY_ADJACENT_PAIR fyear=1988 n_firmyears=9333 n_no_prior_record=718 n_currency_code_missing=0 n_currency_changed=8
+n_currency_same=8607
+CURRENCY_ADJACENT_PAIR fyear=1989 n_firmyears=9343 n_no_prior_record=615 n_currency_code_missing=0 n_currency_changed=5
+n_currency_same=8723
+CURRENCY_ADJACENT_PAIR fyear=1990 n_firmyears=9571 n_no_prior_record=718 n_currency_code_missing=0 n_currency_changed=6
+n_currency_same=8847
+CURRENCY_ADJACENT_PAIR fyear=1991 n_firmyears=9966 n_no_prior_record=837 n_currency_code_missing=0 n_currency_changed=3
+n_currency_same=9126
+CURRENCY_ADJACENT_PAIR fyear=1992 n_firmyears=10705 n_no_prior_record=1114 n_currency_code_missing=0 n_currency_changed=11
+n_currency_same=9580
+CURRENCY_ADJACENT_PAIR fyear=1993 n_firmyears=11482 n_no_prior_record=1152 n_currency_code_missing=0 n_currency_changed=8
+n_currency_same=10322
+CURRENCY_ADJACENT_PAIR fyear=1994 n_firmyears=11899 n_no_prior_record=1007 n_currency_code_missing=0 n_currency_changed=11
+n_currency_same=10881
+CURRENCY_ADJACENT_PAIR fyear=1995 n_firmyears=12492 n_no_prior_record=1271 n_currency_code_missing=0 n_currency_changed=15
+n_currency_same=11206
+CURRENCY_ADJACENT_PAIR fyear=1996 n_firmyears=12624 n_no_prior_record=775 n_currency_code_missing=0 n_currency_changed=14
+n_currency_same=11835
+CURRENCY_ADJACENT_PAIR fyear=1997 n_firmyears=12437 n_no_prior_record=594 n_currency_code_missing=0 n_currency_changed=18
+n_currency_same=11825
+NOTE: There were 17 observations read from the data set WORK.CURRENCY_PAIR_FIELDS.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+445        
+446        proc means data=raw n nmiss;
+447            title 'Required-source-field coverage in filtered COMP.FUNDA rows';
+448            var at ib oancf xidoc recch invch apalch rect invt ap xacc
+449                xdp am dp xdepl sale prcc_f sich;
+450        run;
+
+NOTE: There were 174566 observations read from the data set WORK.RAW.
+NOTE: The PROCEDURE MEANS printed page 6.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.05 seconds
+      
+
+451        
+452        /* One row per firm/fiscal year. Balance-sheet fallbacks use the exact t-1 fiscal year. */
+453        proc sql;
+454            create table annual_base as
+455            select c.gvkey, c.datadate, c.fyear, c.curcd, c.sich, c.sale, c.prcc_f,
+456                   c.sale_usd, c.sale_fx_status, c.price_usd, c.price_fx_status,
+457                   c.price_iid, c.price_date, c.price_curcd,
+458                   c.at, p.at as at_prev,
+459                   case when not missing(p.gvkey) and not missing(c.curcd)
+                                                           The SAS System
+
+460                             and not missing(p.curcd) and c.curcd=p.curcd
+461                        then (c.at + p.at) / 2 else . end as avg_at,
+462                   case when missing(p.gvkey) then 3
+463                        when missing(c.curcd) or missing(p.curcd) then 2
+464                        when c.curcd ne p.curcd then 1
+465                        else 0 end as currency_status,
+466                   c.ib as earn_raw,
+467                    case when not missing(c.oancf) and not missing(c.xidoc)
+468                         then c.oancf - c.xidoc
+469                        else . end as cf_raw,
+470                    case when not missing(c.oancf) and missing(c.xidoc)
+471                         then 1 else 0 end as xidoc_missing_cf,
+472                   case when not missing(c.recch) then -c.recch
+473                        when not missing(c.rect) and not missing(p.rect)
+474                             and not missing(c.curcd) and not missing(p.curcd)
+475                             and c.curcd=p.curcd
+476                        then c.rect - p.rect
+477                        else . end as dar_raw,
+478                   case when not missing(c.invch) then -c.invch
+479                        when not missing(c.invt) and not missing(p.invt)
+480                             and not missing(c.curcd) and not missing(p.curcd)
+481                             and c.curcd=p.curcd
+482                        then c.invt - p.invt
+483                        else . end as dinv_raw,
+484                   case when not missing(c.apalch) then c.apalch
+485                        when not missing(c.ap) and not missing(c.xacc)
+486                             and not missing(p.ap) and not missing(p.xacc)
+487                             and not missing(c.curcd) and not missing(p.curcd)
+488                             and c.curcd=p.curcd
+489                        then (c.ap + c.xacc) - (p.ap + p.xacc)
+490                        else . end as dap_raw,
+491                   c.xdp as depr_raw,
+492                   case when not missing(c.am) then c.am
+493                        when not missing(c.dp) and not missing(c.xdp) and not missing(c.xdepl)
+494                        then c.dp - c.xdp - c.xdepl
+495                        when not missing(c.dp) and not missing(c.xdp) and missing(c.xdepl)
+496                             and not missing(c.sich)
+497                             and (c.sich < 1000 or c.sich > 1499)
+498                             and (c.sich < 2900 or c.sich > 2999)
+499                             and (c.sich < 4600 or c.sich > 4699)
+500                        then c.dp - c.xdp
+501                        else . end as amort_raw
+502            from raw_screen as c
+503            left join raw_screen as p
+504              on c.gvkey=p.gvkey and c.fyear=p.fyear+1
+505            order by c.gvkey, c.fyear;
+NOTE: Table WORK.ANNUAL_BASE created, with 174564 rows and 26 columns.
+
+506        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.19 seconds
+      
+
+507        
+508        data annual;
+509            set annual_base;
+510            other_raw = earn_raw - (cf_raw + dar_raw + dinv_raw - dap_raw
+                                                           The SAS System
+
+511                                    - depr_raw - amort_raw);
+512        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      2 at 510:26       93759 at 510:36   1181 at 510:46    7880 at 510:57    48932 at 511:29   189 at 511:40     
+NOTE: There were 174564 observations read from the data set WORK.ANNUAL_BASE.
+NOTE: The data set WORK.ANNUAL has 174564 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+513        
+514        /* Fiscal-year keyed lead and lag joins preserve gaps and the t/t+1 distinction. */
+515        proc sql;
+516            create table panel as
+517            select c.gvkey, c.datadate, c.fyear, c.sich, c.sale, c.prcc_f,
+518                   c.curcd, c.sale_usd, c.sale_fx_status,
+519                   c.price_usd, c.price_fx_status, c.price_iid, c.price_date, c.price_curcd,
+520                   c.xidoc_missing_cf as xidoc_missing_cf0,
+521                   case when missing(l.gvkey) then 0 else l.xidoc_missing_cf end as xidoc_missing_cf_lead,
+522                   c.currency_status as currency_status0,
+523                   case when missing(l.gvkey) then 3 else l.currency_status end as currency_status_lead,
+524                   case when missing(e1.gvkey) then 3 else e1.currency_status end as currency_status1,
+525                   case when missing(e2.gvkey) then 3 else e2.currency_status end as currency_status2,
+526                   case when missing(e3.gvkey) then 3 else e3.currency_status end as currency_status3,
+527                   case when missing(e4.gvkey) then 3 else e4.currency_status end as currency_status4,
+528                   case when missing(e5.gvkey) then 3 else e5.currency_status end as currency_status5,
+529                   case when missing(e6.gvkey) then 3 else e6.currency_status end as currency_status6,
+530                   case when c.avg_at > 0 then c.earn_raw/c.avg_at else . end as earn0,
+531                   case when c.avg_at > 0 then c.cf_raw/c.avg_at else . end as cf0,
+532                   case when l.avg_at > 0 then l.cf_raw/l.avg_at else . end as cf_lead,
+533                   case when c.avg_at > 0 then c.dar_raw/c.avg_at else . end as d_ar,
+534                   case when c.avg_at > 0 then c.dinv_raw/c.avg_at else . end as d_inv,
+535                   case when c.avg_at > 0 then c.dap_raw/c.avg_at else . end as d_ap,
+536                   case when c.avg_at > 0 then c.depr_raw/c.avg_at else . end as depr,
+537                   case when c.avg_at > 0 then c.amort_raw/c.avg_at else . end as amort,
+538                   case when c.avg_at > 0 then c.other_raw/c.avg_at else . end as other,
+539                   case when e1.avg_at > 0 then e1.earn_raw/e1.avg_at else . end as earn1,
+540                   case when e2.avg_at > 0 then e2.earn_raw/e2.avg_at else . end as earn2,
+541                   case when e3.avg_at > 0 then e3.earn_raw/e3.avg_at else . end as earn3,
+542                   case when e4.avg_at > 0 then e4.earn_raw/e4.avg_at else . end as earn4,
+543                   case when e5.avg_at > 0 then e5.earn_raw/e5.avg_at else . end as earn5,
+544                   case when e6.avg_at > 0 then e6.earn_raw/e6.avg_at else . end as earn6
+545            from annual as c
+546            left join annual as l
+547              on c.gvkey=l.gvkey and l.fyear=c.fyear+1
+548            left join annual as e1
+549              on c.gvkey=e1.gvkey and e1.fyear=c.fyear-1
+550            left join annual as e2
+551              on c.gvkey=e2.gvkey and e2.fyear=c.fyear-2
+552            left join annual as e3
+553              on c.gvkey=e3.gvkey and e3.fyear=c.fyear-3
+554            left join annual as e4
+555              on c.gvkey=e4.gvkey and e4.fyear=c.fyear-4
+556            left join annual as e5
+557              on c.gvkey=e5.gvkey and e5.fyear=c.fyear-5
+                                                           The SAS System
+
+558            left join annual as e6
+559              on c.gvkey=e6.gvkey and e6.fyear=c.fyear-6
+560            where c.fyear between 1987 and 1996
+561            order by c.gvkey, c.fyear;
+NOTE: Table WORK.PANEL created, with 106640 rows and 39 columns.
+
+562        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.72 seconds
+      cpu time            1.05 seconds
+      
+
+563        
+564        data panel;
+565            set panel;
+566            currency_bad_k0=(currency_status0 ne 0)+(currency_status_lead ne 0);
+567            currency_bad_k1=currency_bad_k0+(currency_status1 ne 0);
+568            currency_bad_k2=currency_bad_k1+(currency_status2 ne 0);
+569            currency_bad_k3=currency_bad_k2+(currency_status3 ne 0);
+570            currency_bad_k4=currency_bad_k3+(currency_status4 ne 0);
+571            currency_bad_k5=currency_bad_k4+(currency_status5 ne 0);
+572            currency_bad_k6=currency_bad_k5+(currency_status6 ne 0);
+573        run;
+
+NOTE: There were 106640 observations read from the data set WORK.PANEL.
+NOTE: The data set WORK.PANEL has 106640 observations and 46 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+574        
+575        proc sql;
+576            create table panel_year_fields as
+577            select fyear, count(*) as n_origins,
+578                   sum(not missing(cf_lead)) as n_cf_lead,
+579                   sum(not missing(cf0)) as n_cf0,
+580                   sum(not missing(sale_usd)) as n_sale_usd,
+581                   sum(not missing(price_usd)) as n_price_usd,
+582                   sum(sale_fx_status > 0) as n_sale_fx_unavailable,
+583                   sum(price_fx_status > 0) as n_price_fx_unavailable,
+584                   sum(xidoc_missing_cf0 > 0) as n_xidoc_missing_current,
+585                   sum(xidoc_missing_cf_lead > 0) as n_xidoc_missing_lead,
+586                   sum(not missing(earn0)) as n_earn0,
+587                   sum(not missing(earn1)) as n_earn1,
+588                   sum(not missing(earn2)) as n_earn2,
+589                   sum(not missing(d_ar)) as n_dar,
+590                   sum(not missing(d_inv)) as n_dinv,
+591                   sum(not missing(d_ap)) as n_dap,
+592                   sum(not missing(depr)) as n_depr,
+593                   sum(not missing(amort)) as n_amort,
+594                   sum(not missing(other)) as n_other,
+595                   sum(currency_bad_k0 > 0) as n_currency_bad_k0,
+596                   sum(currency_bad_k1 > 0) as n_currency_bad_k1,
+597                   sum(currency_bad_k2 > 0) as n_currency_bad_k2,
+598                   sum(currency_bad_k3 > 0) as n_currency_bad_k3,
+599                   sum(currency_bad_k4 > 0) as n_currency_bad_k4,
+600                   sum(currency_bad_k5 > 0) as n_currency_bad_k5,
+                                                           The SAS System
+
+601                   sum(currency_bad_k6 > 0) as n_currency_bad_k6,
+602                   sum(not missing(sich)) as n_sic,
+603                   sum(not missing(sale)) as n_sale,
+604                   sum(not missing(prcc_f)) as n_price
+605            from panel
+606            group by fyear
+607            order by fyear;
+NOTE: Table WORK.PANEL_YEAR_FIELDS created, with 10 rows and 29 columns.
+
+608        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.09 seconds
+      
+
+609        data _null_;
+610            set panel_year_fields;
+611            put 'PANEL_YEAR_FIELDS ' fyear= n_origins= n_cf_lead= n_cf0= n_sale_usd=
+612                n_price_usd= n_sale_fx_unavailable= n_price_fx_unavailable=
+613                n_xidoc_missing_current= n_xidoc_missing_lead= n_earn0=
+614                n_earn1= n_earn2= n_dar= n_dinv= n_dap= n_depr= n_amort= n_other=
+615                n_currency_bad_k0= n_currency_bad_k1= n_currency_bad_k2=
+616                n_currency_bad_k3= n_currency_bad_k4= n_currency_bad_k5=
+617                n_currency_bad_k6= n_sic= n_sale= n_price=;
+618        run;
+
+PANEL_YEAR_FIELDS fyear=1987 n_origins=9225 n_cf_lead=6127 n_cf0=1155 n_sale_usd=8033 n_price_usd=6250 n_sale_fx_unavailable=1192
+n_price_fx_unavailable=2975 n_xidoc_missing_current=23 n_xidoc_missing_lead=49 n_earn0=7486 n_earn1=6673 n_earn2=5802 n_dar=6863
+n_dinv=7261 n_dap=5534 n_depr=4119 n_amort=6252 n_other=585 n_currency_bad_k0=1340 n_currency_bad_k1=2226 n_currency_bad_k2=3074
+n_currency_bad_k3=3686 n_currency_bad_k4=4253 n_currency_bad_k5=5074 n_currency_bad_k6=5379 n_sic=7863 n_sale=8033 n_price=7262
+PANEL_YEAR_FIELDS fyear=1988 n_origins=9333 n_cf_lead=6452 n_cf0=6127 n_sale_usd=7859 n_price_usd=6436 n_sale_fx_unavailable=1474
+n_price_fx_unavailable=2897 n_xidoc_missing_current=51 n_xidoc_missing_lead=48 n_earn0=7437 n_earn1=6924 n_earn2=6160 n_dar=7135
+n_dinv=7269 n_dap=6186 n_depr=3989 n_amort=6151 n_other=3240 n_currency_bad_k0=1331 n_currency_bad_k1=2029 n_currency_bad_k2=2880
+n_currency_bad_k3=3682 n_currency_bad_k4=4234 n_currency_bad_k5=4732 n_currency_bad_k6=5506 n_sic=7701 n_sale=7859 n_price=7156
+PANEL_YEAR_FIELDS fyear=1989 n_origins=9343 n_cf_lead=6457 n_cf0=6452 n_sale_usd=7742 n_price_usd=6415 n_sale_fx_unavailable=1601
+n_price_fx_unavailable=2928 n_xidoc_missing_current=49 n_xidoc_missing_lead=44 n_earn0=7353 n_earn1=6887 n_earn2=6395 n_dar=7217
+n_dinv=7111 n_dap=6100 n_depr=3849 n_amort=5944 n_other=3373 n_currency_bad_k0=1114 n_currency_bad_k1=1826 n_currency_bad_k2=2510
+n_currency_bad_k3=3337 n_currency_bad_k4=4088 n_currency_bad_k5=4596 n_currency_bad_k6=5053 n_sic=7541 n_sale=7742 n_price=7034
+PANEL_YEAR_FIELDS fyear=1990 n_origins=9571 n_cf_lead=6608 n_cf0=6457 n_sale_usd=7770 n_price_usd=6507 n_sale_fx_unavailable=1801
+n_price_fx_unavailable=3064 n_xidoc_missing_current=45 n_xidoc_missing_lead=29 n_earn0=7315 n_earn1=6907 n_earn2=6447 n_dar=7189
+n_dinv=7106 n_dap=6086 n_depr=3776 n_amort=5905 n_other=3335 n_currency_bad_k0=1166 n_currency_bad_k1=1776 n_currency_bad_k2=2465
+n_currency_bad_k3=3133 n_currency_bad_k4=3927 n_currency_bad_k5=4624 n_currency_bad_k6=5097 n_sic=7569 n_sale=7770 n_price=7045
+PANEL_YEAR_FIELDS fyear=1991 n_origins=9966 n_cf_lead=6857 n_cf0=6608 n_sale_usd=7919 n_price_usd=6685 n_sale_fx_unavailable=2047
+n_price_fx_unavailable=3281 n_xidoc_missing_current=30 n_xidoc_missing_lead=22 n_earn0=7404 n_earn1=6906 n_earn2=6516 n_dar=7283
+n_dinv=7201 n_dap=6174 n_depr=3783 n_amort=5956 n_other=3362 n_currency_bad_k0=1225 n_currency_bad_k1=1942 n_currency_bad_k2=2548
+n_currency_bad_k3=3225 n_currency_bad_k4=3868 n_currency_bad_k5=4631 n_currency_bad_k6=5280 n_sic=7720 n_sale=7919 n_price=7180
+PANEL_YEAR_FIELDS fyear=1992 n_origins=10705 n_cf_lead=7283 n_cf0=6857 n_sale_usd=8347 n_price_usd=7149 n_sale_fx_unavailable=2358
+n_price_fx_unavailable=3556 n_xidoc_missing_current=23 n_xidoc_missing_lead=16 n_earn0=7611 n_earn1=7052 n_earn2=6556 n_dar=7486
+n_dinv=7403 n_dap=6395 n_depr=3607 n_amort=5975 n_other=3220 n_currency_bad_k0=1502 n_currency_bad_k1=2338 n_currency_bad_k2=3053
+n_currency_bad_k3=3653 n_currency_bad_k4=4312 n_currency_bad_k5=4923 n_currency_bad_k6=5653 n_sic=8142 n_sale=8347 n_price=7664
+PANEL_YEAR_FIELDS fyear=1993 n_origins=11482 n_cf_lead=7706 n_cf0=7283 n_sale_usd=9625 n_price_usd=8062 n_sale_fx_unavailable=1857
+n_price_fx_unavailable=3420 n_xidoc_missing_current=18 n_xidoc_missing_lead=13 n_earn0=8024 n_earn1=7260 n_earn2=6705 n_dar=7901
+n_dinv=7822 n_dap=6808 n_depr=3517 n_amort=6176 n_other=3177 n_currency_bad_k0=1750 n_currency_bad_k1=2849 n_currency_bad_k2=3668
+n_currency_bad_k3=4371 n_currency_bad_k4=4935 n_currency_bad_k5=5534 n_currency_bad_k6=6083 n_sic=8770 n_sale=9625 n_price=8452
+PANEL_YEAR_FIELDS fyear=1994 n_origins=11899 n_cf_lead=8193 n_cf0=7706 n_sale_usd=10144 n_price_usd=8580 n_sale_fx_unavailable=1755
+n_price_fx_unavailable=3319 n_xidoc_missing_current=14 n_xidoc_missing_lead=17 n_earn0=9070 n_earn1=7567 n_earn2=6826 n_dar=9000
+n_dinv=8933 n_dap=7119 n_depr=1142 n_amort=5488 n_other=971 n_currency_bad_k0=1701 n_currency_bad_k1=2819 n_currency_bad_k2=3871
+n_currency_bad_k3=4665 n_currency_bad_k4=5336 n_currency_bad_k5=5853 n_currency_bad_k6=6400 n_sic=9247 n_sale=10144 n_price=8959
+                                                           The SAS System
+
+PANEL_YEAR_FIELDS fyear=1995 n_origins=12492 n_cf_lead=9186 n_cf0=8193 n_sale_usd=11086 n_price_usd=9310 n_sale_fx_unavailable=1406
+n_price_fx_unavailable=3182 n_xidoc_missing_current=19 n_xidoc_missing_lead=17 n_earn0=9454 n_earn1=8447 n_earn2=7073 n_dar=9372
+n_dinv=9322 n_dap=7460 n_depr=415 n_amort=5438 n_other=307 n_currency_bad_k0=1938 n_currency_bad_k1=2934 n_currency_bad_k2=4003
+n_currency_bad_k3=5022 n_currency_bad_k4=5774 n_currency_bad_k5=6394 n_currency_bad_k6=6868 n_sic=10225 n_sale=11086 n_price=9718
+PANEL_YEAR_FIELDS fyear=1996 n_origins=12624 n_cf_lead=9224 n_cf0=9186 n_sale_usd=11248 n_price_usd=9968 n_sale_fx_unavailable=1376
+n_price_fx_unavailable=2656 n_xidoc_missing_current=17 n_xidoc_missing_lead=14 n_earn0=10426 n_earn1=8870 n_earn2=7913 n_dar=10351
+n_dinv=10280 n_dap=8314 n_depr=92 n_amort=6003 n_other=62 n_currency_bad_k0=1584 n_currency_bad_k1=2847 n_currency_bad_k2=3795
+n_currency_bad_k3=4812 n_currency_bad_k4=5771 n_currency_bad_k5=6459 n_currency_bad_k6=7018 n_sic=10445 n_sale=11248 n_price=10363
+NOTE: There were 10 observations read from the data set WORK.PANEL_YEAR_FIELDS.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+619        
+620        /* Count the pre-tail observations otherwise complete except for missing XIDOC-derived CF. */
+621        data xidoc_impact;
+622            set panel;
+623            if missing(sich) then delete;
+624            if sich >= 6000 and sich <= 6999 then delete;
+625            if missing(sale_usd) or sale_usd < 10 then delete;
+626            if missing(price_usd) or price_usd < 1 then delete;
+627            if currency_bad_k0 > 0 then delete;
+628            if nmiss(earn0, earn1, earn2, d_ar, d_inv, d_ap, depr, amort) > 0 then delete;
+629            if xidoc_missing_cf0=0 and xidoc_missing_cf_lead=0 then delete;
+630        run;
+
+NOTE: There were 106640 observations read from the data set WORK.PANEL.
+NOTE: The data set WORK.XIDOC_IMPACT has 83 observations and 46 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+631        proc sql;
+632            title 'Pre-tail complete-case candidates unavailable only through missing #124/XIDOC';
+633            select fyear, count(*) as n_rows,
+634                   sum(xidoc_missing_cf0 > 0) as n_current_cf,
+635                   sum(xidoc_missing_cf_lead > 0) as n_lead_cf
+636            from xidoc_impact
+637            group by fyear
+638            order by fyear;
+639            select count(*) as total_xidoc_affected_pre_tail from xidoc_impact;
+640        quit;
+NOTE: The PROCEDURE SQL printed pages 7-8.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+641        
+642        data core;
+643            set panel;
+644            if missing(sich) then delete;
+645            if sich >= 6000 and sich <= 6999 then delete;
+646            if missing(sale_usd) or sale_usd < 10 then delete;
+647            if missing(price_usd) or price_usd < 1 then delete;
+648            /* Primary sample must support Eq. (11) k=2 and all of Eq. (12). */
+                                                           The SAS System
+
+649            if nmiss(cf_lead, cf0, earn0, earn1, earn2,
+650                     d_ar, d_inv, d_ap, depr, amort, other) > 0 then delete;
+651        run;
+
+NOTE: There were 106640 observations read from the data set WORK.PANEL.
+NOTE: The data set WORK.CORE has 11012 observations and 46 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+652        
+653        proc sql;
+654            title 'Primary complete-case population before percentile and residual screens';
+655            select fyear, count(*) as rows
+656            from core
+657            group by fyear
+658            order by fyear;
+659            select count(*) as primary_complete_cases from core;
+660        quit;
+NOTE: The PROCEDURE SQL printed pages 9-10.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+661        
+662        /* Pooled current-period deflated EARN/CF cutoffs within the primary pre-screen sample. */
+663        proc means data=core noprint;
+664            var earn0 cf0;
+665            output out=percentile_cutoffs p1=earn_p1 cf_p1 p99=earn_p99 cf_p99;
+666        run;
+
+NOTE: There were 11012 observations read from the data set WORK.CORE.
+NOTE: The data set WORK.PERCENTILE_CUTOFFS has 1 observations and 6 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+667        
+668        data _null_;
+669            set percentile_cutoffs;
+670            call symputx('earn_p1', earn_p1, 'G');
+671            call symputx('earn_p99', earn_p99, 'G');
+672            call symputx('cf_p1', cf_p1, 'G');
+673            call symputx('cf_p99', cf_p99, 'G');
+674        run;
+
+NOTE: There were 1 observations read from the data set WORK.PERCENTILE_CUTOFFS.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+675        %put NOTE: Current EARN pooled 1st/99th percentiles = &earn_p1. / &earn_p99.;
+NOTE: Current EARN pooled 1st/99th percentiles = -0.34334401889657 / 0.2375654118
+676        %put NOTE: Current CF pooled 1st/99th percentiles = &cf_p1. / &cf_p99.;
+                                                           The SAS System
+
+NOTE: Current CF pooled 1st/99th percentiles = -0.17795078213502 / 0.3518490959
+677        
+678        data percentilescreen;
+679            set core;
+680            if earn0 < &earn_p1. or earn0 > &earn_p99. then delete;
+681            if cf0 < &cf_p1. or cf0 > &cf_p99. then delete;
+682        run;
+
+NOTE: There were 11012 observations read from the data set WORK.CORE.
+NOTE: The data set WORK.PERCENTILESCREEN has 10646 observations and 46 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+683        
+684        /* Residual regression is not named in the paper; pooled Eq. (11), k=2 is the documented proxy. */
+685        proc reg data=percentilescreen;
+686            model cf_lead = earn0 earn1 earn2;
+687            output out=studentized rstudent=studentized_resid;
+688        run;
+
+689        quit;
+
+NOTE: The data set WORK.STUDENTIZED has 10646 observations and 47 variables.
+NOTE: The PROCEDURE REG printed page 11.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+      
+
+690        
+691        proc means data=studentized n nmiss min p1 median p99 max;
+692            title 'Eq. (11) k=2 external studentized residual diagnostic';
+693            var studentized_resid;
+694        run;
+
+NOTE: There were 10646 observations read from the data set WORK.STUDENTIZED.
+NOTE: The PROCEDURE MEANS printed page 12.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+695        
+696        data screened;
+697            set studentized;
+698            if missing(studentized_resid) or abs(studentized_resid) <= 3;
+699            accruals = earn0 - cf0;
+700        run;
+
+NOTE: There were 10646 observations read from the data set WORK.STUDENTIZED.
+NOTE: The data set WORK.SCREENED has 10500 observations and 48 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+                                                           The SAS System
+
+701        
+702        proc sql;
+703            title 'Retained sample by predictor fiscal year after paper screens';
+704            select fyear, count(*) as rows
+705            from screened
+706            group by fyear
+707            order by fyear;
+708            select count(*) as final_primary_n from screened;
+709            select count(*) as retained_missing_studentized
+710            from screened where missing(studentized_resid);
+711        quit;
+NOTE: The PROCEDURE SQL printed pages 13-15.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+
+712        
+713        proc sql noprint;
+714            select count(*) into :n_k0 trimmed from screened where not missing(earn0);
+715            select count(*) into :n_k1 trimmed from screened where not missing(earn0) and not missing(earn1);
+716            select count(*) into :n_k2 trimmed from screened where not missing(earn0) and not missing(earn1) and not
+716      ! missing(earn2);
+717            select count(*) into :n_k3 trimmed from screened where not missing(earn0) and not missing(earn1) and not
+717      ! missing(earn2) and not missing(earn3);
+718            select count(*) into :n_k4 trimmed from screened where not missing(earn0) and not missing(earn1) and not
+718      ! missing(earn2) and not missing(earn3) and not missing(earn4);
+719            select count(*) into :n_k5 trimmed from screened where not missing(earn0) and not missing(earn1) and not
+719      ! missing(earn2) and not missing(earn3) and not missing(earn4) and not missing(earn5);
+720            select count(*) into :n_k6 trimmed from screened where not missing(earn0) and not missing(earn1) and not
+720      ! missing(earn2) and not missing(earn3) and not missing(earn4) and not missing(earn5) and not missing(earn6);
+721        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+722        %put NOTE: FIT_SAMPLE_N k0=&n_k0. k1=&n_k1. k2=&n_k2. k3=&n_k3. k4=&n_k4. k5=&n_k5. k6=&n_k6.;
+NOTE: FIT_SAMPLE_N k0=10500 k1=10500 k2=10500 k3=9868 k4=9311 k5=8755 k6=8166
+723        
+724        data out.reg;
+725            set screened;
+726            keep gvkey datadate fyear earn0 earn1 earn2 earn3 earn4 earn5 earn6
+727                 cf_lead cf0 d_ar d_inv d_ap depr amort other accruals;
+728            label
+729                gvkey='Compustat GVKEY'
+730                datadate='Fiscal year end date'
+731                fyear='Fiscal year'
+732                cf_lead='One-year-ahead operating cash flow'
+733                cf0='Current operating cash flow'
+734                earn0='Current earnings'
+735                earn1='One-year lagged earnings'
+736                earn2='Two-year lagged earnings'
+737                earn3='Three-year lagged earnings'
+738                earn4='Four-year lagged earnings'
+739                earn5='Five-year lagged earnings'
+740                earn6='Six-year lagged earnings'
+741                d_ar='Change in accounts receivable'
+                                                           The SAS System
+
+742                d_inv='Change in inventory'
+743                d_ap='Change in accounts payable and accrued liabilities'
+744                depr='Depreciation expense'
+745                amort='Amortization expense'
+746                other='Other accruals'
+747                accruals='Aggregate operating accruals';
+748            format datadate yymmdd10.;
+749        run;
+
+NOTE: There were 10500 observations read from the data set WORK.SCREENED.
+NOTE: The data set OUT.REG has 10500 observations and 19 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+750        
+751        proc means data=out.reg n nmiss mean median std min max;
+752            title 'Final analysis sample descriptive diagnostics';
+753            var earn0 cf0 accruals d_ar d_inv d_ap depr amort other cf_lead;
+754        run;
+
+NOTE: There were 10500 observations read from the data set OUT.REG.
+NOTE: The PROCEDURE MEANS printed page 16.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+755        
+756        proc contents data=out.reg;
+757            title 'Native Stata handoff schema';
+758        run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+NOTE: The PROCEDURE CONTENTS printed page 17.
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           21.01 seconds
+      cpu time            22.58 seconds
+      

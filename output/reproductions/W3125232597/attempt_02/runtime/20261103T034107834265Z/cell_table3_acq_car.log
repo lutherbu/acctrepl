@@ -1,0 +1,138 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3125232597/at
+> tempt_02/runtime/20261103T034107834265Z/cell_table3_acq_car.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. 
+. global y "acq_car"
+
+. global ctrl "trg_comprnk acq_size acq_lev acq_tobin_dum acq_roa acq_fcf acq_q
+> _fcf trg_size trg_lev trg_tobin trg_roa stock_corr sync block all_cash all_st
+> ock tender_d hostile diffind rel_size"
+
+. 
+. use "data/us_acquisitions_1307/reg.dta", clear
+
+. est clear
+
+. regress $y $ctrl, vce(robust)
+
+Linear regression                               Number of obs     =      1,334
+                                                F(20, 1313)       =       7.11
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0997
+                                                Root MSE          =     .09645
+
+------------------------------------------------------------------------------
+             |               Robust
+     acq_car | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ trg_comprnk |  -.0046733   .0093283    -0.50   0.616    -.0229733    .0136268
+    acq_size |   .0074347   .0029207     2.55   0.011     .0017049    .0131645
+     acq_lev |   .0159737   .0186677     0.86   0.392    -.0206481    .0525956
+acq_tobin_~m |   .0265975   .0091464     2.91   0.004     .0086544    .0445407
+     acq_roa |    .052838   .0299591     1.76   0.078     -.005935    .1116109
+     acq_fcf |  -.0180953   .0141699    -1.28   0.202    -.0458933    .0097028
+   acq_q_fcf |  -.1845155   .0551013    -3.35   0.001    -.2926118   -.0764193
+    trg_size |   -.012971    .004908    -2.64   0.008    -.0225994   -.0033427
+     trg_lev |  -.0312248   .0202877    -1.54   0.124    -.0710247    .0085751
+   trg_tobin |  -.0026309   .0019958    -1.32   0.188    -.0065463    .0012844
+     trg_roa |  -.0014529   .0202783    -0.07   0.943    -.0412342    .0383284
+  stock_corr |  -.0606553   .0229827    -2.64   0.008    -.1057421   -.0155685
+        sync |   .0099828   .0414979     0.24   0.810    -.0714266    .0913923
+       block |   .0134074   .0072341     1.85   0.064    -.0007843    .0275991
+    all_cash |   .0204578   .0065014     3.15   0.002     .0077035    .0332121
+   all_stock |   -.010438   .0057507    -1.82   0.070    -.0217196    .0008437
+    tender_d |   .0085981   .0057294     1.50   0.134    -.0026416    .0198379
+     hostile |   .0021439   .0121338     0.18   0.860      -.02166    .0259477
+     diffind |  -.0019477   .0055723    -0.35   0.727    -.0128793     .008984
+    rel_size |   .0212944   .0107824     1.97   0.048     .0001419     .042447
+       _cons |  -.0121342   .0179751    -0.68   0.500    -.0473972    .0231288
+------------------------------------------------------------------------------
+
+. estadd scalar adjusted_r2 = e(r2_a)
+
+added scalar:
+        e(adjusted_r2) =  .08601305
+
+. quietly summarize $y if e(sample)
+
+. estadd scalar outcome_mean = r(mean)
+
+added scalar:
+       e(outcome_mean) =  -.01488629
+
+. est store m1
+
+. 
+. esttab m1 using "tables/table3_acq_car.md", cells(b(star fmt(3)) p(par)) star
+> levels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 adjusted_r2 outcome_mean, fm
+> t(0 3 3 3) labels("Observations" "R-squared" "Adjusted R-squared" "Outcome me
+> an")) replace label
+(file tables/table3_acq_car.md not found)
+(output written to tables/table3_acq_car.md)
+
+. esttab m1 using "tables/table3_acq_car.rtf", cells(b(star fmt(3)) p(par)) sta
+> rlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 adjusted_r2 outcome_mean, f
+> mt(0 3 3 3) labels("Observations" "R-squared" "Adjusted R-squared" "Outcome m
+> ean")) replace label
+(file tables/table3_acq_car.rtf not found)
+(output written to tables/table3_acq_car.rtf)
+
+. esttab m1 using "tables/table3_acq_car.csv", cells(b(star fmt(3)) p(par)) sta
+> rlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 adjusted_r2 outcome_mean, f
+> mt(0 3 3 3) labels("Observations" "R-squared" "Adjusted R-squared" "Outcome m
+> ean")) replace label
+(file tables/table3_acq_car.csv not found)
+(output written to tables/table3_acq_car.csv)
+
+. esttab m1 using "tables/table3_acq_car.tex", cells(b(star fmt(3)) p(par)) sta
+> rlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 adjusted_r2 outcome_mean, f
+> mt(0 3 3 3) labels("Observations" "R-squared" "Adjusted R-squared" "Outcome m
+> ean")) replace label
+(file tables/table3_acq_car.tex not found)
+(output written to tables/table3_acq_car.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

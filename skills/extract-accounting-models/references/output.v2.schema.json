@@ -1,0 +1,1606 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Accounting models, baseline coefficient results and descriptive statistics",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "2.0"
+    },
+    "paper_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "doi": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "status": {
+      "enum": [
+        "complete",
+        "needs_review",
+        "no_baseline_regression",
+        "text_unavailable"
+      ]
+    },
+    "paper_text_file": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/model"
+      }
+    },
+    "review_notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      }
+    },
+    "results_scope": {
+      "const": "baseline_only"
+    },
+    "results_status": {
+      "enum": [
+        "complete",
+        "needs_review",
+        "no_baseline_regression",
+        "text_unavailable"
+      ]
+    },
+    "base_specification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ]
+    },
+    "descriptive_statistics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/descriptive_group"
+      }
+    },
+    "descriptive_status": {
+      "enum": [
+        "complete",
+        "not_reported",
+        "unreadable",
+        "needs_review",
+        "not_applicable"
+      ]
+    },
+    "descriptive_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 8000
+    },
+    "results_review_notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      }
+    },
+    "calculation_provenance": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "paper_id",
+    "doi",
+    "status",
+    "paper_text_file",
+    "models",
+    "review_notes",
+    "results_scope",
+    "results_status",
+    "base_specification",
+    "descriptive_statistics",
+    "descriptive_status",
+    "descriptive_reason",
+    "results_review_notes",
+    "calculation_provenance"
+  ],
+  "$defs": {
+    "quote": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        }
+      },
+      "required": [
+        "page",
+        "quote"
+      ],
+      "description": "Literal evidence from one physical PDF page. Quotes may cover a table or equation; do not cross page boundaries."
+    },
+    "variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "definition": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "formula": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/quote"
+          }
+        },
+        "variable_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "name",
+        "definition",
+        "formula",
+        "evidence",
+        "variable_id"
+      ],
+      "description": "One actual dependent variable or RHS term, including operational construction, coding, scaling, timing and transformations in definition. Use null rather than inventing missing definitions/formulas."
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "table": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "panel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400
+          },
+          "uniqueItems": true
+        },
+        "equation": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "page_begin": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_end": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "table",
+        "panel",
+        "columns",
+        "equation",
+        "page_begin",
+        "page_end"
+      ]
+    },
+    "statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/quote"
+          }
+        }
+      },
+      "required": [
+        "description",
+        "evidence"
+      ]
+    },
+    "specifications": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fixed_effects": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "reported",
+                "none",
+                "not_reported",
+                "unclear"
+              ]
+            },
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "uniqueItems": true
+            },
+            "details": {
+              "type": "string",
+              "maxLength": 8000
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "groups",
+            "details",
+            "evidence"
+          ],
+          "description": "Each inner array is a joint dimension. Separate inner arrays are separate fixed effects. Empty groups require none/not_reported/unclear; none means explicitly absent."
+        },
+        "standard_errors": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "reported",
+                "not_reported",
+                "unclear"
+              ]
+            },
+            "method": {
+              "enum": [
+                "conventional",
+                "heteroskedasticity_robust",
+                "cluster_robust",
+                "hac",
+                "bootstrap",
+                "fama_macbeth",
+                "other",
+                null
+              ]
+            },
+            "cluster_groups": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "uniqueItems": true
+            },
+            "details": {
+              "type": "string",
+              "maxLength": 8000
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "method",
+            "cluster_groups",
+            "details",
+            "evidence"
+          ],
+          "description": "Record multi-way versus joint clustering accurately. Robust standard errors do not imply a robust-regression estimator."
+        },
+        "intercept": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "reported",
+                "not_reported",
+                "unclear"
+              ]
+            },
+            "included": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "included",
+            "evidence"
+          ]
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "reported",
+                "none",
+                "not_reported",
+                "unclear"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 8000
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "description",
+            "evidence"
+          ]
+        },
+        "estimation_procedure": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 12000
+            },
+            "grouping_variables": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400
+              },
+              "uniqueItems": true,
+              "description": "Dimensions across which regressions are separately or repeatedly estimated. Describe matching or sorting keys in procedure text when they do not define separate fits."
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "description",
+            "grouping_variables",
+            "evidence"
+          ],
+          "description": "Fama–MacBeth, difference-in-differences, matching, repeated fits, joint estimation, instruments, quantile/tuning choices and other estimation design details belong here. Grouping is not fixed effects."
+        },
+        "preprocessing": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/statement"
+          }
+        },
+        "other": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/statement"
+          }
+        }
+      },
+      "required": [
+        "fixed_effects",
+        "standard_errors",
+        "intercept",
+        "weights",
+        "estimation_procedure",
+        "preprocessing",
+        "other"
+      ]
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "maxLength": 100
+        },
+        "model_role": {
+          "enum": [
+            "baseline",
+            "supporting"
+          ]
+        },
+        "model_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/location"
+          },
+          "minItems": 1
+        },
+        "sample_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "sample_description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "sample_size": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "method": {
+          "$ref": "regression_methods.json"
+        },
+        "method_reported": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "method_details": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "dependent_variable": {
+          "$ref": "#/$defs/variable"
+        },
+        "independent_variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/predictor"
+          }
+        },
+        "equation_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "specifications": {
+          "$ref": "#/$defs/specifications"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "model_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "purpose": {
+                "enum": [
+                  "variable_construction",
+                  "first_stage",
+                  "selection",
+                  "other"
+                ]
+              },
+              "variables": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 400
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "model_id",
+              "purpose",
+              "variables"
+            ]
+          }
+        },
+        "estimation_group_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            },
+            "method": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            },
+            "equation": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            },
+            "sample": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            },
+            "dependencies": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "scope",
+            "method",
+            "equation",
+            "sample",
+            "dependencies"
+          ]
+        },
+        "missing_fields": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "review_notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "results": {
+          "$ref": "#/$defs/model_results"
+        }
+      },
+      "required": [
+        "model_id",
+        "model_role",
+        "model_label",
+        "locations",
+        "sample_id",
+        "sample_description",
+        "sample_size",
+        "method",
+        "method_reported",
+        "method_details",
+        "dependent_variable",
+        "independent_variables",
+        "equation_text",
+        "specifications",
+        "dependencies",
+        "estimation_group_id",
+        "evidence",
+        "missing_fields",
+        "review_notes",
+        "results"
+      ]
+    },
+    "pdf_region_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pdf_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bbox": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 8
+        },
+        "crop_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "crop_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "page",
+        "pdf_sha256",
+        "bbox",
+        "scale",
+        "crop_path",
+        "crop_sha256",
+        "description"
+      ]
+    },
+    "result_evidence": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/quote"
+        },
+        {
+          "$ref": "#/$defs/pdf_region_evidence"
+        }
+      ]
+    },
+    "number_cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "text",
+        "value"
+      ]
+    },
+    "p_cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "relation": {
+          "enum": [
+            "eq",
+            "lt",
+            "le",
+            "gt",
+            "ge",
+            "interval",
+            "rounded_boundary"
+          ]
+        },
+        "lower": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "upper": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "text",
+        "value",
+        "relation",
+        "lower",
+        "upper"
+      ]
+    },
+    "test_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "wald",
+            "likelihood_ratio",
+            "score",
+            "other",
+            "unknown"
+          ]
+        },
+        "null_value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "null_basis": {
+          "enum": [
+            "reported",
+            "standard_zero_coefficient_test",
+            "unknown"
+          ]
+        },
+        "alternative": {
+          "enum": [
+            "two_sided",
+            "greater",
+            "less",
+            "unknown"
+          ]
+        },
+        "reference": {
+          "enum": [
+            "student_t",
+            "normal",
+            "unknown"
+          ]
+        },
+        "degrees_of_freedom": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        },
+        "wald_on_reported_scale": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 4000
+        }
+      },
+      "required": [
+        "type",
+        "null_value",
+        "null_basis",
+        "alternative",
+        "reference",
+        "degrees_of_freedom",
+        "wald_on_reported_scale",
+        "evidence",
+        "notes"
+      ]
+    },
+    "legend_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "marker": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "p_threshold": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "relation": {
+          "enum": [
+            "lt",
+            "le"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        }
+      },
+      "required": [
+        "marker",
+        "p_threshold",
+        "relation",
+        "evidence"
+      ]
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "parameter_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "target_kind": {
+          "enum": [
+            "predictor",
+            "intercept",
+            "auxiliary",
+            "fixed_effect",
+            "unmapped"
+          ]
+        },
+        "variable_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "uniqueItems": true
+        },
+        "estimate_kind": {
+          "enum": [
+            "coefficient",
+            "standardized_coefficient",
+            "marginal_effect",
+            "odds_ratio",
+            "incidence_rate_ratio",
+            "hazard_ratio",
+            "other"
+          ]
+        },
+        "reported": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "estimate": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/number_cell"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "statistic": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "t",
+                        "z",
+                        "wald_ratio",
+                        "other"
+                      ]
+                    },
+                    "cell": {
+                      "$ref": "#/$defs/number_cell"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "cell"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "standard_error": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/number_cell"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "p_value": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/p_cell"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "significance_marker": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 30
+            }
+          },
+          "required": [
+            "estimate",
+            "statistic",
+            "standard_error",
+            "p_value",
+            "significance_marker"
+          ]
+        },
+        "test": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/test_context"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "estimate_multiplier": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "standard_error_multiplier": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "scale_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        },
+        "missing_fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "review_notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "derived": {
+          "type": "object"
+        },
+        "reported_distribution": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/statistic"
+          }
+        }
+      },
+      "required": [
+        "parameter_id",
+        "label",
+        "target_kind",
+        "variable_ids",
+        "estimate_kind",
+        "reported",
+        "test",
+        "estimate_multiplier",
+        "standard_error_multiplier",
+        "scale_evidence",
+        "evidence",
+        "missing_fields",
+        "review_notes",
+        "derived",
+        "reported_distribution"
+      ]
+    },
+    "result_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "result_set_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/location"
+          }
+        },
+        "horizon": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "period": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "population": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "aggregation": {
+          "enum": [
+            "single_fit",
+            "mean_across_fits",
+            "median_across_fits",
+            "other_summary",
+            "unclear"
+          ]
+        },
+        "test_context": {
+          "$ref": "#/$defs/test_context"
+        },
+        "significance_legend": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/legend_entry"
+          }
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/parameter"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        },
+        "review_notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        }
+      },
+      "required": [
+        "result_set_id",
+        "label",
+        "locations",
+        "horizon",
+        "period",
+        "population",
+        "aggregation",
+        "test_context",
+        "significance_legend",
+        "parameters",
+        "evidence",
+        "review_notes"
+      ]
+    },
+    "model_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "complete",
+            "needs_review",
+            "not_reported",
+            "unreadable",
+            "not_requested"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "result_sets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_set"
+          }
+        },
+        "missing_fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "review_notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "result_sets",
+        "missing_fields",
+        "review_notes",
+        "evidence"
+      ]
+    },
+    "predictor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "definition": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "formula": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/quote"
+          }
+        },
+        "variable_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "is_research_interest": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "research_interest_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        },
+        "research_interest_reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 8000
+        }
+      },
+      "required": [
+        "name",
+        "definition",
+        "formula",
+        "evidence",
+        "variable_id",
+        "is_research_interest",
+        "research_interest_evidence",
+        "research_interest_reason"
+      ],
+      "description": "One actual dependent variable or RHS term, including operational construction, coding, scaling, timing and transformations in definition. Use null rather than inventing missing definitions/formulas."
+    },
+    "statistic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "enum": [
+            "n",
+            "mean",
+            "sd",
+            "min",
+            "median",
+            "max",
+            "variance",
+            "skewness",
+            "kurtosis",
+            "percentile",
+            "other"
+          ]
+        },
+        "percentile": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "reported_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "cell": {
+          "$ref": "#/$defs/number_cell"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "percentile",
+        "reported_label",
+        "cell",
+        "evidence"
+      ]
+    },
+    "variable_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "variable_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "relation": {
+          "enum": [
+            "exact",
+            "raw_version",
+            "component",
+            "unclear"
+          ]
+        }
+      },
+      "required": [
+        "model_id",
+        "variable_id",
+        "relation"
+      ]
+    },
+    "descriptive_variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "variable_links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/variable_link"
+          }
+        },
+        "units": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "statistics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/statistic"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        },
+        "review_notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "statistics_about": {
+          "const": "data_values"
+        }
+      },
+      "required": [
+        "name",
+        "variable_links",
+        "units",
+        "statistics",
+        "evidence",
+        "review_notes",
+        "statistics_about"
+      ]
+    },
+    "descriptive_group": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "group_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "sample_description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "period": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "sample_relation": {
+          "enum": [
+            "exact",
+            "broader",
+            "narrower",
+            "different",
+            "unclear"
+          ]
+        },
+        "model_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "uniqueItems": true
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/location"
+          }
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/descriptive_variable"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/result_evidence"
+          }
+        },
+        "review_notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        }
+      },
+      "required": [
+        "group_id",
+        "label",
+        "sample_description",
+        "period",
+        "sample_relation",
+        "model_ids",
+        "locations",
+        "variables",
+        "evidence",
+        "review_notes"
+      ]
+    }
+  }
+}

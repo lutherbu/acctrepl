@@ -1,0 +1,263 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3126000559/at
+> tempt_02/runtime/20261102T230155869453Z/cell_w312_t5.do 
+
+. version 18
+
+. set more off
+
+. use "data/icw_loan_facilities/reg.dta", clear
+
+. 
+. global fe "i.loan_year"
+
+. global cl "firmid"
+
+. est clear
+
+. probit secured uncorrected corrected inst_investor revolver loan_size maturit
+> y credit_rating num_lenders firm_size profitability leverage tangibility $fe,
+>  vce(cluster $cl)
+
+note: 2001.loan_year != 0 predicts failure perfectly;
+      2001.loan_year omitted and 2 obs not used.
+
+note: 2008.loan_year != 0 predicts success perfectly;
+      2008.loan_year omitted and 9 obs not used.
+
+note: 2007.loan_year omitted because of collinearity.
+Iteration 0:  Log pseudolikelihood =   -108.266  
+Iteration 1:  Log pseudolikelihood = -55.244841  
+Iteration 2:  Log pseudolikelihood = -50.857511  
+Iteration 3:  Log pseudolikelihood = -50.712755  
+Iteration 4:  Log pseudolikelihood = -50.712445  
+Iteration 5:  Log pseudolikelihood = -50.712445  
+
+Probit regression                                       Number of obs =    212
+                                                        Wald chi2(17) =  90.42
+                                                        Prob > chi2   = 0.0000
+Log pseudolikelihood = -50.712445                       Pseudo R2     = 0.5316
+
+                                (Std. err. adjusted for 45 clusters in firmid)
+------------------------------------------------------------------------------
+             |               Robust
+     secured | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ uncorrected |  -1.169573   .6363468    -1.84   0.066     -2.41679    .0776438
+   corrected |  -1.766608   .5156751    -3.43   0.001    -2.777312   -.7559031
+inst_inves~r |   .5078026   .4034289     1.26   0.208    -.2829036    1.298509
+    revolver |  -.2981199    .275486    -1.08   0.279    -.8380625    .2418227
+   loan_size |   .0786486   .1904439     0.41   0.680    -.2946146    .4519118
+    maturity |   .0132875   .0074779     1.78   0.076    -.0013688    .0279439
+credit_rat~g |   .5455675     .10636     5.13   0.000     .3371056    .7540293
+ num_lenders |  -.0095821   .0110607    -0.87   0.386    -.0312607    .0120966
+   firm_size |  -.2223318   .2114398    -1.05   0.293    -.6367461    .1920825
+profitabil~y |   5.685234   3.123519     1.82   0.069    -.4367509    11.80722
+    leverage |  -1.496884   1.005431    -1.49   0.137    -3.467492    .4737235
+ tangibility |  -1.068761    .884265    -1.21   0.227    -2.801889     .664366
+             |
+   loan_year |
+       2001  |          0  (empty)
+       2002  |   .2348914   .8407471     0.28   0.780    -1.412943    1.882725
+       2003  |   .5830639   .7020448     0.83   0.406    -.7929187    1.959047
+       2004  |   .2677214   .7195384     0.37   0.710    -1.142548    1.677991
+       2005  |   1.094082    .605243     1.81   0.071    -.0921721    2.280337
+       2006  |   .8677637    .558235     1.55   0.120    -.2263568    1.961884
+       2007  |          0  (omitted)
+       2008  |          0  (empty)
+             |
+       _cons |  -4.126763   2.000479    -2.06   0.039    -8.047629   -.2058959
+------------------------------------------------------------------------------
+
+. tempvar clustertag1
+
+. egen byte `clustertag1'=tag($cl) if e(sample)
+
+. quietly count if `clustertag1'==1
+
+. local nclusters=r(N)
+
+. estadd scalar nclusters=`nclusters'
+
+added scalar:
+          e(nclusters) =  45
+
+. est store m_sec
+
+. regress general_covenants uncorrected corrected inst_investor revolver intere
+> st_rate secured loan_size maturity credit_rating num_lenders pp_indicator fir
+> m_size profitability leverage $fe, vce(cluster $cl)
+
+Linear regression                               Number of obs     =         37
+                                                F(15, 16)         =          .
+                                                Prob > F          =          .
+                                                R-squared         =     0.8223
+                                                Root MSE          =     .64315
+
+                                (Std. err. adjusted for 17 clusters in firmid)
+------------------------------------------------------------------------------
+             |               Robust
+general_co~s | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ uncorrected |  -.9457972   .8664052    -1.09   0.291    -2.782494    .8908999
+   corrected |  -.8110958   .6787887    -1.19   0.250    -2.250064    .6278719
+inst_inves~r |    .117439    .444932     0.26   0.795    -.8257746    1.060653
+    revolver |  -.0809869   .2452137    -0.33   0.745    -.6008168    .4388429
+interest_r~e |    .004322   .0036693     1.18   0.256    -.0034567    .0121006
+     secured |   1.578491   .5683248     2.78   0.013     .3736962    2.783286
+   loan_size |  -.2561438   .1921201    -1.33   0.201    -.6634203    .1511326
+    maturity |   .0244957   .0101219     2.42   0.028     .0030382    .0459531
+credit_rat~g |  -.4116045   .2557306    -1.61   0.127    -.9537292    .1305201
+ num_lenders |   .0281336   .0626454     0.45   0.659    -.1046686    .1609358
+pp_indicator |   .4190335   .3010717     1.39   0.183      -.21921    1.057277
+   firm_size |   -.129459   .1651788    -0.78   0.445    -.4796225    .2207045
+profitabil~y |  -5.275124   4.957032    -1.06   0.303    -15.78356    5.233315
+    leverage |   3.466792   1.488703     2.33   0.033     .3108824    6.622702
+             |
+   loan_year |
+       2003  |   1.338194    .615137     2.18   0.045     .0341613    2.642226
+       2004  |   1.955867   .7666601     2.55   0.021     .3306207    3.581114
+       2005  |   3.194718   1.471662     2.17   0.045      .074934    6.314502
+       2006  |   4.351367    1.42494     3.05   0.008     1.330628    7.372105
+       2007  |   2.393353   .9068557     2.64   0.018     .4709045    4.315801
+       2008  |   3.209201   .9556685     3.36   0.004     1.183275    5.235128
+             |
+       _cons |   5.423788   2.757864     1.97   0.067    -.4226224     11.2702
+------------------------------------------------------------------------------
+
+. tempvar clustertag2
+
+. egen byte `clustertag2'=tag($cl) if e(sample)
+
+. quietly count if `clustertag2'==1
+
+. local nclusters=r(N)
+
+. estadd scalar nclusters=`nclusters'
+
+added scalar:
+          e(nclusters) =  17
+
+. est store m_gen
+
+. regress ln_maturity uncorrected corrected inst_investor interest_rate financi
+> al_covenants secured loan_size credit_rating credit_rating_sq num_lenders pp_
+> indicator firm_size profitability leverage tangibility $fe, vce(cluster $cl)
+
+Linear regression                               Number of obs     =        223
+                                                F(22, 44)         =      11.55
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.2966
+                                                Root MSE          =     .48078
+
+                                (Std. err. adjusted for 45 clusters in firmid)
+------------------------------------------------------------------------------
+             |               Robust
+ ln_maturity | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ uncorrected |   .1860698   .1478093     1.26   0.215    -.1118203    .4839598
+   corrected |    .148238   .1183444     1.25   0.217    -.0902696    .3867455
+inst_inves~r |   .2695428   .0728335     3.70   0.001     .1227566    .4163291
+interest_r~e |  -.0003817   .0005101    -0.75   0.458    -.0014098    .0006465
+financial_~s |   .0479287   .0324845     1.48   0.147    -.0175394    .1133969
+     secured |   .2359341   .0985069     2.40   0.021     .0374064    .4344618
+   loan_size |   .0473447   .0328248     1.44   0.156    -.0188094    .1134989
+credit_rat~g |  -.0259832   .0784016    -0.33   0.742    -.1839912    .1320248
+credit_rat~q |   .0015909   .0035771     0.44   0.659    -.0056182       .0088
+ num_lenders |  -.0012244    .001786    -0.69   0.497    -.0048239    .0023752
+pp_indicator |   .0486071   .0977511     0.50   0.621    -.1483972    .2456114
+   firm_size |  -.0323456   .0320134    -1.01   0.318    -.0968645    .0321732
+profitabil~y |   1.698421   .5474118     3.10   0.003     .5951849    2.801657
+    leverage |   .1492596   .2340887     0.64   0.527    -.3225151    .6210343
+ tangibility |   .0765614   .1948072     0.39   0.696    -.3160468    .4691696
+             |
+   loan_year |
+       2002  |   .4289451   .5183096     0.83   0.412    -.6156392    1.473529
+       2003  |   .2370894     .46129     0.51   0.610    -.6925795    1.166758
+       2004  |   .4482009   .4206364     1.07   0.292     -.399536    1.295938
+       2005  |   .5059585   .4884392     1.04   0.306     -.478426    1.490343
+       2006  |   .3557363   .4926722     0.72   0.474    -.6371794    1.348652
+       2007  |   .6988305   .4646474     1.50   0.140    -.2376048    1.635266
+       2008  |   .4123811   .5287728     0.78   0.440    -.6532905    1.478053
+             |
+       _cons |   2.820153   .7400138     3.81   0.000     1.328753    4.311553
+------------------------------------------------------------------------------
+
+. tempvar clustertag3
+
+. egen byte `clustertag3'=tag($cl) if e(sample)
+
+. quietly count if `clustertag3'==1
+
+. local nclusters=r(N)
+
+. estadd scalar nclusters=`nclusters'
+
+added scalar:
+          e(nclusters) =  45
+
+. est store m_mat
+
+. esttab m_sec m_gen m_mat using "tables/table5_loan_mechanisms.md", cells(b(st
+> ar fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label dr
+> op(*.loan_year) scalars("r2_p Pseudo R-squared" "nclusters Borrower clusters"
+> ) mtitles("Secured" "General covenants" "Log maturity") addnotes("Loan-year f
+> ixed effects included." "Standard errors clustered by borrower.")
+(file tables/table5_loan_mechanisms.md not found)
+(output written to tables/table5_loan_mechanisms.md)
+
+. esttab m_sec m_gen m_mat using "tables/table5_loan_mechanisms.rtf", cells(b(s
+> tar fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label d
+> rop(*.loan_year) scalars("r2_p Pseudo R-squared" "nclusters Borrower clusters
+> ") mtitles("Secured" "General covenants" "Log maturity") addnotes("Loan-year 
+> fixed effects included." "Standard errors clustered by borrower.")
+(file tables/table5_loan_mechanisms.rtf not found)
+(output written to tables/table5_loan_mechanisms.rtf)
+
+. esttab m_sec m_gen m_mat using "tables/table5_loan_mechanisms.csv", cells(b(s
+> tar fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label d
+> rop(*.loan_year) scalars("r2_p Pseudo R-squared" "nclusters Borrower clusters
+> ") mtitles("Secured" "General covenants" "Log maturity") addnotes("Loan-year 
+> fixed effects included." "Standard errors clustered by borrower.")
+(file tables/table5_loan_mechanisms.csv not found)
+(output written to tables/table5_loan_mechanisms.csv)
+
+. esttab m_sec m_gen m_mat using "tables/table5_loan_mechanisms.tex", cells(b(s
+> tar fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label d
+> rop(*.loan_year) scalars("r2_p Pseudo R-squared" "nclusters Borrower clusters
+> ") mtitles("Secured" "General covenants" "Log maturity") addnotes("Loan-year 
+> fixed effects included." "Standard errors clustered by borrower.")
+(file tables/table5_loan_mechanisms.tex not found)
+(output written to tables/table5_loan_mechanisms.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

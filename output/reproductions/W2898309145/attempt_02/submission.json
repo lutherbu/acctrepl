@@ -1,0 +1,55 @@
+{
+  "paper_id": "W2898309145",
+  "attempt": 2,
+  "required_commands": [
+    "esttab",
+    "estpost",
+    "estadd",
+    "ivreg2"
+  ],
+  "source_datasets": [
+    "COMP.FUNDA",
+    "COMP.FUNDQ",
+    "COMP.COMPANY",
+    "COMP.SEC_IDHIST",
+    "COMP.SEC_MTHPRC",
+    "COMP.G_EXRT_DLY",
+    "COMP.G_EXRT_MTH"
+  ],
+  "samples": [
+    {
+      "sample_id": "main",
+      "sas_file": "data/main/analysis.sas7bdat",
+      "dta_file": "data/main/reg.dta",
+      "key": [
+        "gvkey_id",
+        "year"
+      ],
+      "description": "Full-sample U.S.-incorporated firm-years with nonmissing one-year Δ/MVA1, nonmissing CTE and current total assets, paper corporation exclusions, and observation years 1988–2014; firms require at least five eligible (not necessarily consecutive) observations. Uses documented best-effort current FIC/STKO approximations and currency-compatible construction."
+    }
+  ],
+  "fits": [
+    {
+      "model_id": "full_sample_delta_trend",
+      "result_set_id": "table6_panel_c_all_firms",
+      "cell_id": "t6c_reg",
+      "table_basename": "tables/table6c_all",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "Use FYEAR as observation year for TIME=FYEAR−1988 and the 34% schedule in 1988–1992; the paper prints the descending typo “1998 through 1992.”",
+        "Use current ISO FIC=USA as an approximation to legacy FIC/FINC=0; the local field is labeled current, not historical.",
+        "Use current COMPANY.STKO and FUNDA.CONM because no dated fields are cataloged; use SEC_IDHIST for dated CUSIP when unique, with a documented current/header fallback. Follow FN14’s explicit STKO=1/2 and STKO=0 missing-price exclusions despite Table 3 wording.",
+        "Use SEC_MTHPRC.CURCDM only after same-GVKEY/HIID/date PRCCM agrees with FUNDQ.PRCCQ within one cent; otherwise use the authorized beginning-AT fallback when available.",
+        "Keep stable reporting-currency Δ native; convert mismatched beginning price to beginning statement currency at the exact date. Translate only actual mixed reporting histories to USD with EXRAT12M for flows and EXRATD for stocks.",
+        "Use pooled 1st/99th percentile winsorization on the common-eligible full-period sample before the five-observation firm filter; SAS PCTLDEF=5 default.",
+        "Use ivreg2 small-sample inference for reported t statistics; two-way finite-sample correction is best effort because the paper does not specify it.",
+        "Companion descriptive exports for actual estimation rows are tables/table6c_all_desc.{md,rtf,csv,tex}."
+      ],
+      "blocked_reason": null
+    }
+  ],
+  "limitations": [
+    "The assignment uses current-header incorporation, ownership, and name classifications for historical rows because exact dated FIC/STKO/name fields are absent from the cataloged local products; dated CUSIP history is used where SEC_IDHIST uniquely supports it.",
+    "The paper does not specify FYEAR versus calendar-year(DATADATE), percentile grouping/order, percentile algorithm, or exact two-way finite-sample degrees-of-freedom correction; documented best-effort choices are in design.md."
+  ]
+}

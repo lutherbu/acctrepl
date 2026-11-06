@@ -1,0 +1,454 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 01:24:00 PM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 01:24:00 PM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend;
+2          
+3          libname compna "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMPNA was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname fxsrc "/storage/sas/base/comp/d_global/currency" access=readonly;
+NOTE: Libref FXSRC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_global/currency
+5          
+6          /* Bounded Table 1 support: exact Funda filters, dates, duplicate policy,
+7             own-period currency conversion and one-year prior / one-to-three-year lead. */
+8          data f0;
+9              set compna.funda
+10                 (keep=gvkey datadate indfmt consol popsrc datafmt curcd fdate
+11                       ib spi at dvc csho act che lct dlc txp dp ceq lt ivst pstk);
+12             if upcase(indfmt) ne "INDL" then delete;
+13             if upcase(consol) ne "C" then delete;
+14             if upcase(popsrc) ne "D" then delete;
+15             if upcase(datafmt) ne "STD" then delete;
+16             if missing(gvkey) or missing(datadate) then delete;
+17             if datadate < '01APR1955'd or datadate > '31MAR2012'd then delete;
+18             if month(datadate) >= 4 then avyear=year(datadate)+1;
+19             else avyear=year(datadate);
+20             if avyear < 1956 or avyear > 2012 then delete;
+21             mthkey=intnx('month',datadate,0,'b');
+22         run;
+
+NOTE: There were 941340 observations read from the data set COMPNA.FUNDA.
+NOTE: The data set WORK.F0 has 427637 observations and 25 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.66 seconds
+      cpu time            0.67 seconds
+      
+
+23         
+3                                                          The SAS System                     Tuesday, November  3, 2026 01:24:00 PM
+
+24         proc sort data=f0 out=f0sort;
+25             by gvkey avyear descending datadate descending fdate;
+26         run;
+
+NOTE: There were 427637 observations read from the data set WORK.F0.
+NOTE: The data set WORK.F0SORT has 427637 observations and 25 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.21 seconds
+      
+
+27         
+28         data f1;
+29             set f0sort;
+30             by gvkey avyear;
+31             if first.avyear;
+32         run;
+
+NOTE: There were 427637 observations read from the data set WORK.F0SORT.
+NOTE: The data set WORK.F1 has 427193 observations and 25 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+33         
+34         data dly0;
+35             set fxsrc.g_exrt_dly
+36                 (keep=datadate fromcurd tocurd exratd);
+37             if upcase(fromcurd) ne "GBP" then delete;
+38             if datadate < '01APR1955'd or datadate > '31MAR2012'd then delete;
+39             tocur=upcase(tocurd);
+40             if tocur not in ("USD","CAD") then delete;
+41             if missing(exratd) or exratd <= 0 then delete;
+42         run;
+
+NOTE: There were 2221564 observations read from the data set FXSRC.G_EXRT_DLY.
+NOTE: The data set WORK.DLY0 has 21218 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+43         
+44         proc sql;
+45             create table dly as
+46             select datadate, tocur, min(exratd) as rate
+47             from dly0
+48             group by datadate, tocur
+49             having min(exratd)=max(exratd);
+NOTE: Table WORK.DLY created, with 21218 rows and 3 columns.
+
+50         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+4                                                          The SAS System                     Tuesday, November  3, 2026 01:24:00 PM
+
+51         
+52         data mth0;
+53             set fxsrc.g_exrt_mth
+54                 (keep=datadate fromcurm tocurm exrat12m);
+55             if upcase(fromcurm) ne "GBP" then delete;
+56             if datadate < '01APR1955'd or datadate > '31MAR2012'd then delete;
+57             tocur=upcase(tocurm);
+58             if tocur not in ("USD","CAD") then delete;
+59             if missing(exrat12m) or exrat12m <= 0 then delete;
+60             monthkey=intnx('month',datadate,0,'b');
+61         run;
+
+NOTE: There were 75838 observations read from the data set FXSRC.G_EXRT_MTH.
+NOTE: The data set WORK.MTH0 has 726 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+62         
+63         proc sql;
+64             create table mth as
+65             select monthkey, tocur, min(exrat12m) as rate
+66             from mth0
+67             group by monthkey, tocur
+68             having min(exrat12m)=max(exrat12m);
+NOTE: Table WORK.MTH created, with 726 rows and 3 columns.
+
+69         
+70             create table fx0 as
+71             select a.*,
+72                    du.rate as usd_d_rate,
+73                    dc.rate as cur_d_rate,
+74                    mu.rate as usd_m_rate,
+75                    mc.rate as cur_m_rate
+76             from f1 as a
+77             left join dly as dc
+78               on a.datadate=dc.datadate and upcase(a.curcd)=dc.tocur
+79             left join dly as du
+80               on a.datadate=du.datadate and du.tocur="USD"
+81             left join mth as mc
+82               on a.mthkey=mc.monthkey and upcase(a.curcd)=mc.tocur
+83             left join mth as mu
+84               on a.mthkey=mu.monthkey and mu.tocur="USD";
+NOTE: Table WORK.FX0 created, with 427193 rows and 29 columns.
+
+85         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.51 seconds
+      cpu time            0.75 seconds
+      
+
+86         
+87         data fx1;
+88             set fx0;
+89             if upcase(curcd)="USD" then do;
+90                 fxbs=1;
+91                 fxflow=1;
+5                                                          The SAS System                     Tuesday, November  3, 2026 01:24:00 PM
+
+92             end;
+93             else do;
+94                 fxbs=.;
+95                 fxflow=.;
+96                 if cur_d_rate>0 and usd_d_rate>0 then fxbs=usd_d_rate/cur_d_rate;
+97                 if cur_m_rate>0 and usd_m_rate>0 then fxflow=usd_m_rate/cur_m_rate;
+98             end;
+99         run;
+
+NOTE: There were 427193 observations read from the data set WORK.FX0.
+NOTE: The data set WORK.FX1 has 427193 observations and 31 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+100        
+101        proc freq data=fx1;
+102            tables curcd / missing;
+103        run;
+
+NOTE: There were 427193 observations read from the data set WORK.FX1.
+NOTE: The PROCEDURE FREQ printed page 1.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+104        
+105        proc sql;
+106            create table ffeat as
+107            select a.gvkey, a.avyear, a.curcd, a.fxbs, a.fxflow,
+108                   a.ib, a.spi, a.at, a.dvc, a.csho, a.act, a.che, a.lct,
+109                   a.dlc, a.txp, a.dp, a.ceq, a.lt, a.ivst, a.pstk,
+110                   p.curcd as curcd_l, p.fxbs as fxbs_l,
+111                   p.act as act_l, p.che as che_l, p.lct as lct_l,
+112                   p.dlc as dlc_l, p.txp as txp_l,
+113                   p.at as at_l, p.lt as lt_l, p.ivst as ivst_l,
+114                   p.pstk as pstk_l,
+115                   b1.ib as ib1, b1.spi as spi1, b1.fxflow as fxflow1,
+116                   b2.ib as ib2, b2.spi as spi2, b2.fxflow as fxflow2,
+117                   b3.ib as ib3, b3.spi as spi3, b3.fxflow as fxflow3
+118            from fx1 as a
+119            left join fx1 as p
+120              on a.gvkey=p.gvkey and p.avyear=a.avyear-1
+121            left join fx1 as b1
+122              on a.gvkey=b1.gvkey and b1.avyear=a.avyear+1
+123            left join fx1 as b2
+124              on a.gvkey=b2.gvkey and b2.avyear=a.avyear+2
+125            left join fx1 as b3
+126              on a.gvkey=b3.gvkey and b3.avyear=a.avyear+3
+127            where a.avyear>=1957 and a.avyear<=2011;
+NOTE: Table WORK.FFEAT created, with 415060 rows and 40 columns.
+
+128        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.27 seconds
+      cpu time            1.99 seconds
+6                                                          The SAS System                     Tuesday, November  3, 2026 01:24:00 PM
+
+      
+
+129        
+130        data audit_base;
+131            set ffeat;
+132            ac_raw_ok=(n(act,che,lct,dlc,txp,dp,
+133                         act_l,che_l,lct_l,dlc_l,txp_l)=11);
+134            ac_fx_ok=0;
+135            if ac_raw_ok then
+136                ac_fx_ok=(not missing(fxbs) and fxbs>0 and
+137                          not missing(fxbs_l) and fxbs_l>0 and
+138                          not missing(fxflow) and fxflow>0);
+139        
+140            tacc_raw_ok=(n(at,che,lt,ivst,pstk,
+141                           at_l,che_l,lt_l,ivst_l,pstk_l,csho)=11 and csho>0);
+142            tacc_fx_ok=0;
+143            if tacc_raw_ok then
+144                tacc_fx_ok=(not missing(fxbs) and fxbs>0 and
+145                            not missing(fxbs_l) and fxbs_l>0);
+146        
+147            hvz_base_ok=(not missing(at) and not missing(fxbs) and fxbs>0 and
+148                         not missing(dvc) and not missing(fxflow) and fxflow>0 and
+149                         not missing(ib) and not missing(spi));
+150            ep_base_ok=(not missing(ib) and not missing(spi) and
+151                        not missing(csho) and csho>0 and
+152                        not missing(fxflow) and fxflow>0);
+153            ri_base_ok=(ep_base_ok and not missing(ceq) and
+154                        not missing(fxbs) and fxbs>0);
+155        
+156            array iblead[3] ib1 ib2 ib3;
+157            array spilead[3] spi1 spi2 spi3;
+158            array fxlead[3] fxflow1 fxflow2 fxflow3;
+159            do h=1 to 3;
+160                if h=1 then do;
+161                    min_av=1959; max_av=2011;
+162                end;
+163                else if h=2 then do;
+164                    min_av=1958; max_av=2010;
+165                end;
+166                else do;
+167                    min_av=1957; max_av=2009;
+168                end;
+169                lead_ok=(not missing(iblead[h]) and not missing(spilead[h]) and
+170                         not missing(fxlead[h]) and fxlead[h]>0);
+171                if avyear>=min_av and avyear<=max_av and lead_ok then do;
+172                    length model $3 cause $16;
+173        
+174                    if hvz_base_ok then do;
+175                        model="HVZ";
+176                        if not ac_raw_ok then cause="RAW_MISSING_ZERO";
+177                        else if not ac_fx_ok then cause="FX_ONLY_ZERO";
+178                        else cause="AC_CONVERTED";
+179                        output;
+180                    end;
+181        
+182                    if ep_base_ok then do;
+183                        model="EP";
+184                        cause="EP_ELIGIBLE";
+7                                                          The SAS System                     Tuesday, November  3, 2026 01:24:00 PM
+
+185                        output;
+186                    end;
+187        
+188                    if ri_base_ok and (h<3 or avyear>=1958) then do;
+189                        model="RI";
+190                        if not tacc_raw_ok then cause="RAW_MISSING_ZERO";
+191                        else if not tacc_fx_ok then cause="FX_ONLY_ZERO";
+192                        else cause="TACC_CONVERTED";
+193                        output;
+194                    end;
+195                end;
+196            end;
+197        
+198            keep gvkey avyear curcd_l h model cause ac_raw_ok ac_fx_ok tacc_raw_ok tacc_fx_ok;
+199        run;
+
+NOTE: There were 415060 observations read from the data set WORK.FFEAT.
+NOTE: The data set WORK.AUDIT_BASE has 2490500 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.27 seconds
+      cpu time            0.28 seconds
+      
+
+200        
+201        title "W3121345849 bounded missing-construct attribution by Table 1 horizon";
+202        proc sql;
+203            select model, h as horizon, count(*) as otherwise_eligible_union_rows,
+204                   sum(cause="RAW_MISSING_ZERO") as explicit_raw_missing_zeros,
+205                   sum(cause="FX_ONLY_ZERO") as fx_only_zero_fills,
+206                   sum(cause in ("AC_CONVERTED","TACC_CONVERTED")) as construct_converted
+207            from audit_base
+208            group by model, h
+209            order by model, h;
+210        quit;
+NOTE: The PROCEDURE SQL printed page 2.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.53 seconds
+      cpu time            0.94 seconds
+      
+
+211        
+212        data audit_fitrows;
+213            set audit_base;
+214            do fityear=1969 to 2012;
+215                if avyear>=fityear-9-h and avyear<=fityear-h then output;
+216            end;
+217            keep gvkey avyear fityear h model cause curcd_l;
+218        run;
+
+NOTE: There were 2490500 observations read from the data set WORK.AUDIT_BASE.
+NOTE: The data set WORK.AUDIT_FITROWS has 21491614 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.47 seconds
+      cpu time            1.48 seconds
+      
+
+219        
+220        title "W3121345849 FX-only zero-fill frequency across rolling fit uses";
+8                                                          The SAS System                     Tuesday, November  3, 2026 01:24:00 PM
+
+221        proc sql;
+222            select model, h as horizon, count(*) as eligible_fit_observations,
+223                   sum(cause="RAW_MISSING_ZERO") as raw_missing_zero_uses,
+224                   sum(cause="FX_ONLY_ZERO") as fx_only_zero_uses
+225            from audit_fitrows
+226            group by model, h
+227            order by model, h;
+228        
+229            select model, h as horizon, curcd_l as prior_currency,
+230                   count(*) as unique_fx_only_union_rows
+231            from audit_base
+232            where cause="FX_ONLY_ZERO"
+233            group by model, h, curcd_l
+234            order by model, h, curcd_l;
+235        quit;
+NOTE: The PROCEDURE SQL printed pages 3-4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           3.46 seconds
+      cpu time            6.70 seconds
+      
+
+236        
+237        libname compna clear;
+NOTE: Libref COMPNA has been deassigned.
+238        libname fxsrc clear;
+NOTE: Libref FXSRC has been deassigned.
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           8.65 seconds
+      cpu time            13.36 seconds
+      

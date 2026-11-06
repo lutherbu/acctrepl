@@ -1,0 +1,12 @@
+
+Table 4 Panel B, h=2, 1974-1983: actual regression sample
+
+|                      |          (1) |              |              |              |              |              |
+|                      |              |              |              |              |              |              |
+|                      |        count |         mean |           sd |          p25 |          p50 |          p75 |
+| -------------------- | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: |
+| Two-year-ahead earnings / lagged assets |        14647 |        0.070 |        0.186 |        0.030 |        0.082 |        0.138 |
+| Regular dividend indicator |        14647 |        0.579 |        0.494 |        0.000 |        1.000 |        1.000 |
+| Current adjusted earnings / lagged assets |        14647 |        0.058 |        0.137 |        0.036 |        0.073 |        0.110 |
+| DP x current earnings rate |        14647 |        0.051 |        0.064 |        0.000 |        0.040 |        0.091 |
+

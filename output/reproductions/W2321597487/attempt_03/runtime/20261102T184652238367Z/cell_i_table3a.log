@@ -1,0 +1,315 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W2321597487/at
+> tempt_03/runtime/20261102T184652238367Z/cell_i_table3a.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/reg.dta", clear
+
+. est clear
+
+. preserve
+
+. keep if sample_a_cf==1 & industry_a_cf==1
+(21,560 observations deleted)
+
+. asreg acc cf dcf dcf_cf, by(sic3) minimum(30)
+
+. egen byte __industry_tag=tag(sic3)
+
+. quietly count if __industry_tag==1
+
+. local __nind=r(N)
+
+. quietly summarize _R2 if __industry_tag==1
+
+. local __r2=r(mean)*100
+
+. quietly summarize _adjR2 if __industry_tag==1
+
+. local __ar2=r(mean)*100
+
+. estpost summarize _b_cons _b_cf _b_dcf _b_dcf_cf if __industry_tag==1
+
+             |  e(count)   e(sum_w)    e(mean)     e(Var)      e(sd) 
+-------------+-------------------------------------------------------
+     _b_cons |       221        221  -.0353184   .0021101   .0459353 
+       _b_cf |       221        221  -.4415371   .1451023    .380923 
+      _b_dcf |       221        221   .0176993   .0094092   .0970012 
+   _b_dcf_cf |       221        221   .7316335    .861845   .9283561 
+
+             |    e(min)     e(max)     e(sum) 
+-------------+---------------------------------
+     _b_cons | -.2574098   .1111398   -7.80536 
+       _b_cf |  -2.50284   1.015664   -97.5797 
+      _b_dcf | -.3430969   .4193724   3.911551 
+   _b_dcf_cf | -4.139401   4.899647    161.691 
+
+. matrix __p=e(mean)
+
+. local __j=1
+
+. foreach __v of varlist _b_cons _b_cf _b_dcf _b_dcf_cf {
+  2.     capture quietly ttest `__v' = 0 if __industry_tag==1
+  3.     if !_rc matrix __p[1,`__j']=r(p)
+  4.     local ++__j
+  5. }
+
+. estadd matrix p=__p, replace
+
+added matrix:
+                  e(p) :  1 x 4
+
+. estadd scalar N=`__nind', replace
+
+added scalar:
+                  e(N) =  221
+
+. estadd scalar r2=`__r2', replace
+
+added scalar:
+                 e(r2) =  22.680106
+
+. estadd scalar r2_a=`__ar2', replace
+
+added scalar:
+               e(r2_a) =  20.726793
+
+. est store i_cf
+
+. restore
+
+. preserve
+
+. keep if sample_a_dd==1 & industry_a_dd==1
+(34,621 observations deleted)
+
+. asreg acc cf cf_lag cf_lead dcf dcf_cf, by(sic3) minimum(30)
+
+. egen byte __industry_tag=tag(sic3)
+
+. quietly count if __industry_tag==1
+
+. local __nind=r(N)
+
+. quietly summarize _R2 if __industry_tag==1
+
+. local __r2=r(mean)*100
+
+. quietly summarize _adjR2 if __industry_tag==1
+
+. local __ar2=r(mean)*100
+
+. estpost summarize _b_cons _b_cf _b_cf_lag _b_cf_lead _b_dcf _b_dcf_cf if __in
+> dustry_tag==1
+
+             |  e(count)   e(sum_w)    e(mean)     e(Var)      e(sd) 
+-------------+-------------------------------------------------------
+     _b_cons |       210        210  -.0472268   .0023411   .0483852 
+       _b_cf |       210        210  -.6827658   .1635688   .4044364 
+   _b_cf_lag |       210        210   .3736083   .1951902   .4418034 
+  _b_cf_lead |       210        210   .1825063   .0820464   .2864375 
+      _b_dcf |       210        210   .0224077   .0084973   .0921806 
+   _b_dcf_cf |       210        210   .5044644   .7232395   .8504349 
+
+             |    e(min)     e(max)     e(sum) 
+-------------+---------------------------------
+     _b_cons |  -.274471   .0582645  -9.917638 
+       _b_cf | -2.625956   .9285773  -143.3808 
+   _b_cf_lag | -.5146489   2.737956   78.45775 
+  _b_cf_lead |  -.681054    1.78075   38.32632 
+      _b_dcf | -.3951237   .4611328   4.705626 
+   _b_dcf_cf | -2.780684   4.537555   105.9375 
+
+. matrix __p=e(mean)
+
+. local __j=1
+
+. foreach __v of varlist _b_cons _b_cf _b_cf_lag _b_cf_lead _b_dcf _b_dcf_cf {
+  2.     capture quietly ttest `__v' = 0 if __industry_tag==1
+  3.     if !_rc matrix __p[1,`__j']=r(p)
+  4.     local ++__j
+  5. }
+
+. estadd matrix p=__p, replace
+
+added matrix:
+                  e(p) :  1 x 6
+
+. estadd scalar N=`__nind', replace
+
+added scalar:
+                  e(N) =  210
+
+. estadd scalar r2=`__r2', replace
+
+added scalar:
+                 e(r2) =  37.205647
+
+. estadd scalar r2_a=`__ar2', replace
+
+added scalar:
+               e(r2_a) =  34.267994
+
+. est store i_dd
+
+. restore
+
+. preserve
+
+. keep if sample_a_jones==1 & industry_a_jones==1
+(25,059 observations deleted)
+
+. asreg acc cf drev gppe dcf dcf_cf, by(sic3) minimum(30)
+
+. egen byte __industry_tag=tag(sic3)
+
+. quietly count if __industry_tag==1
+
+. local __nind=r(N)
+
+. quietly summarize _R2 if __industry_tag==1
+
+. local __r2=r(mean)*100
+
+. quietly summarize _adjR2 if __industry_tag==1
+
+. local __ar2=r(mean)*100
+
+. estpost summarize _b_cons _b_cf _b_drev _b_gppe _b_dcf _b_dcf_cf if __industr
+> y_tag==1
+
+             |  e(count)   e(sum_w)    e(mean)     e(Var)      e(sd) 
+-------------+-------------------------------------------------------
+     _b_cons |       219        219  -.0298111   .0074874   .0865295 
+       _b_cf |       219        219  -.4876985   .1397114   .3737798 
+     _b_drev |       219        219   .1270484   .0167351   .1293641 
+     _b_gppe |       219        219   -.022711   .0129089   .1136175 
+      _b_dcf |       219        219   .0211088   .0079756   .0893065 
+   _b_dcf_cf |       219        219   .7965861   .8266211   .9091871 
+
+             |    e(min)     e(max)     e(sum) 
+-------------+---------------------------------
+     _b_cons | -.5702478   .2475713  -6.528639 
+       _b_cf | -2.615675    1.07686   -106.806 
+     _b_drev |  -.399401   .8233834    27.8236 
+     _b_gppe | -.5300531   .3529142  -4.973714 
+      _b_dcf | -.2487818   .3390242   4.622827 
+   _b_dcf_cf | -1.760569    5.70721   174.4524 
+
+. matrix __p=e(mean)
+
+. local __j=1
+
+. foreach __v of varlist _b_cons _b_cf _b_drev _b_gppe _b_dcf _b_dcf_cf {
+  2.     capture quietly ttest `__v' = 0 if __industry_tag==1
+  3.     if !_rc matrix __p[1,`__j']=r(p)
+  4.     local ++__j
+  5. }
+
+. estadd matrix p=__p, replace
+
+added matrix:
+                  e(p) :  1 x 6
+
+. estadd scalar N=`__nind', replace
+
+added scalar:
+                  e(N) =  219
+
+. estadd scalar r2=`__r2', replace
+
+added scalar:
+                 e(r2) =  31.830384
+
+. estadd scalar r2_a=`__ar2', replace
+
+added scalar:
+               e(r2_a) =  28.842071
+
+. est store i_jones
+
+. restore
+
+. esttab i_cf i_dd i_jones using "tables/table3_panelA_industry.md", main(mean)
+>  aux(p 3) starlevels(* 0.1 ** 0.05 *** 0.01) noobs stats(N r2 r2_a, labels("I
+> ndustry regressions" "Mean R-squared (%)" "Mean adjusted R-squared (%)") fmt(
+> 0 3 3)) coeflabels(_b_cf "CF_t" _b_cf_lag "CF_{t-1}" _b_cf_lead "CF_{t+1}" _b
+> _cons "Intercept" _b_dcf "DCF_t" _b_dcf_cf "DCF_t x CF_t" _b_drev "DeltaREV_t
+> " _b_gppe "GPPE_t") addnotes("R-squared and adjusted R-squared are percent.")
+>  replace label
+(file tables/table3_panelA_industry.md not found)
+(output written to tables/table3_panelA_industry.md)
+
+. esttab i_cf i_dd i_jones using "tables/table3_panelA_industry.rtf", main(mean
+> ) aux(p 3) starlevels(* 0.1 ** 0.05 *** 0.01) noobs stats(N r2 r2_a, labels("
+> Industry regressions" "Mean R-squared (%)" "Mean adjusted R-squared (%)") fmt
+> (0 3 3)) coeflabels(_b_cf "CF_t" _b_cf_lag "CF_{t-1}" _b_cf_lead "CF_{t+1}" _
+> b_cons "Intercept" _b_dcf "DCF_t" _b_dcf_cf "DCF_t x CF_t" _b_drev "DeltaREV_
+> t" _b_gppe "GPPE_t") addnotes("R-squared and adjusted R-squared are percent."
+> ) replace label
+(file tables/table3_panelA_industry.rtf not found)
+(output written to tables/table3_panelA_industry.rtf)
+
+. esttab i_cf i_dd i_jones using "tables/table3_panelA_industry.csv", main(mean
+> ) aux(p 3) starlevels(* 0.1 ** 0.05 *** 0.01) noobs stats(N r2 r2_a, labels("
+> Industry regressions" "Mean R-squared (%)" "Mean adjusted R-squared (%)") fmt
+> (0 3 3)) coeflabels(_b_cf "CF_t" _b_cf_lag "CF_{t-1}" _b_cf_lead "CF_{t+1}" _
+> b_cons "Intercept" _b_dcf "DCF_t" _b_dcf_cf "DCF_t x CF_t" _b_drev "DeltaREV_
+> t" _b_gppe "GPPE_t") addnotes("R-squared and adjusted R-squared are percent."
+> ) replace label
+(file tables/table3_panelA_industry.csv not found)
+(output written to tables/table3_panelA_industry.csv)
+
+. esttab i_cf i_dd i_jones using "tables/table3_panelA_industry.tex", main(mean
+> ) aux(p 3) starlevels(* 0.1 ** 0.05 *** 0.01) noobs stats(N r2 r2_a, labels("
+> Industry regressions" "Mean R-squared (%)" "Mean adjusted R-squared (%)") fmt
+> (0 3 3)) coeflabels(_b_cf "CF_t" _b_cf_lag "CF_{t-1}" _b_cf_lead "CF_{t+1}" _
+> b_cons "Intercept" _b_dcf "DCF_t" _b_dcf_cf "DCF_t x CF_t" _b_drev "DeltaREV_
+> t" _b_gppe "GPPE_t") addnotes("R-squared and adjusted R-squared are percent."
+> ) replace label
+(file tables/table3_panelA_industry.tex not found)
+(output written to tables/table3_panelA_industry.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

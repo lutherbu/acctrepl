@@ -1,0 +1,27 @@
+
+|                      |          (1)    |          (2)    |          (3)    |
+|                      |         y\_f1    |         y\_f2    |         y\_f3    |
+|                      |          b/p    |          b/p    |          b/p    |
+| -------------------- | :-------------: | :-------------: | :-------------: |
+| MTB quintile rank (1–5) |       -0.007*** |       -0.012*** |       -0.014**  |
+|                      |      (0.006)    |      (0.007)    |      (0.020)    |
+| Negative-return indicator |       -0.020    |       -0.061**  |       -0.131*** |
+|                      |      (0.140)    |      (0.026)    |      (0.000)    |
+| MTB rank × DR        |        0.005*   |        0.014**  |        0.027*** |
+|                      |      (0.094)    |      (0.012)    |      (0.000)    |
+| Buy-and-hold return  |        0.085*** |        0.153*** |        0.195*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| MTB rank × return    |       -0.014*** |       -0.021*** |       -0.027*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| Return × DR          |        0.434*** |        0.704*** |        0.908*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| MTB rank × return × DR |       -0.063*** |       -0.102*** |       -0.113*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| Constant             |        0.113*** |        0.213*** |        0.310*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| Observations         |        49354    |        49354    |        49354    |
+| *R*<sup>2</sup>      |        0.207    |        0.298    |        0.371    |
+| Adjusted *R*<sup>2</sup> |                 |                 |                 |
+
+Fama–MacBeth means of annual OLS coefficients, 1972–1999. P-values are two-sided. R-squared is average annual first-stage R-squared in decimal units; adjusted R-squared is unavailable from xtfmb.
+

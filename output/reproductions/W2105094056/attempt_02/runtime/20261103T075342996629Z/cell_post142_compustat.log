@@ -1,0 +1,154 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W2105094056/at
+> tempt_02/runtime/20261103T075342996629Z/cell_post142_compustat.do 
+
+. version 18
+
+. set more off
+
+. use "data/goodwill_panel_19290/reg.dta", clear
+
+. egen long firmid = group(gvkey)
+
+. label variable imppi "IMPI(t-1)"
+
+. label variable btmg1 "BTMG1(t-1)"
+
+. label variable comp_impdum "Compustat impairment indicator"
+
+. est clear
+
+. clogit comp_impdum imppi btmg1 if inrange(fyear,2004,2011), group(firmid) vce
+> (cluster firmid)
+note: multiple positive outcomes within groups encountered.
+note: 2,561 groups (11,220 obs) omitted because of all positive or
+      all negative outcomes.
+
+Iteration 0:  Log pseudolikelihood = -3094.3316  
+Iteration 1:  Log pseudolikelihood = -3083.7175  
+Iteration 2:  Log pseudolikelihood = -3083.7139  
+Iteration 3:  Log pseudolikelihood = -3083.7139  
+
+Conditional (fixed-effects) logistic regression         Number of obs =  9,140
+                                                        Wald chi2(2)  = 282.45
+                                                        Prob > chi2   = 0.0000
+Log pseudolikelihood = -3083.7139                       Pseudo R2     = 0.0476
+
+                             (Std. err. adjusted for 1,561 clusters in firmid)
+------------------------------------------------------------------------------
+             |               Robust
+ comp_impdum | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       imppi |   .4311078   .0877924     4.91   0.000     .2590378    .6031777
+       btmg1 |   1.219629   .0784913    15.54   0.000     1.065789    1.373469
+------------------------------------------------------------------------------
+
+. est store model1
+
+. gen byte fit_sample = e(sample)
+
+. 
+. esttab model1 using "tables/table3a_post_compustat.md", cells(b(star fmt(3)) 
+> p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 scalars("r2_p Pseudo R-squa
+> red") replace label
+(file tables/table3a_post_compustat.md not found)
+(output written to tables/table3a_post_compustat.md)
+
+. esttab model1 using "tables/table3a_post_compustat.rtf", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 scalars("r2_p Pseudo R-squ
+> ared") replace label
+(file tables/table3a_post_compustat.rtf not found)
+(output written to tables/table3a_post_compustat.rtf)
+
+. esttab model1 using "tables/table3a_post_compustat.csv", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 scalars("r2_p Pseudo R-squ
+> ared") replace label
+(file tables/table3a_post_compustat.csv not found)
+(output written to tables/table3a_post_compustat.csv)
+
+. esttab model1 using "tables/table3a_post_compustat.tex", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 scalars("r2_p Pseudo R-squ
+> ared") replace label
+(file tables/table3a_post_compustat.tex not found)
+(output written to tables/table3a_post_compustat.tex)
+
+. 
+. preserve
+
+. keep if fit_sample
+(21,888 observations deleted)
+
+. estpost tabstat comp_impdum imppi btmg1, stat(N mean sd p25 p50 p75) c(s)
+
+Summary statistics: count mean sd p25 p50 p75
+     for variables: comp_impdum imppi btmg1
+
+             |  e(count)    e(mean)      e(sd)     e(p25)     e(p50) 
+-------------+-------------------------------------------------------
+ comp_impdum |      9140   .2599562   .4386343          0          0 
+       imppi |      9140   -.030744   .4612529          0          0 
+       btmg1 |      9140   .1578775    .364646          0          0 
+
+             |    e(p75) 
+-------------+-----------
+ comp_impdum |         1 
+       imppi |         0 
+       btmg1 |         0 
+
+. esttab using "tables/descriptives_post_compustat.md", replace cells("count(fm
+> t(%9.0f)) mean(fmt(%9.3f)) sd(fmt(%9.3f)) p25(fmt(%9.3f)) p50(fmt(%9.3f)) p75
+> (fmt(%9.3f))") label
+(file tables/descriptives_post_compustat.md not found)
+(output written to tables/descriptives_post_compustat.md)
+
+. esttab using "tables/descriptives_post_compustat.rtf", replace cells("count(f
+> mt(%9.0f)) mean(fmt(%9.3f)) sd(fmt(%9.3f)) p25(fmt(%9.3f)) p50(fmt(%9.3f)) p7
+> 5(fmt(%9.3f))") label
+(file tables/descriptives_post_compustat.rtf not found)
+(output written to tables/descriptives_post_compustat.rtf)
+
+. esttab using "tables/descriptives_post_compustat.csv", replace cells("count(f
+> mt(%9.0f)) mean(fmt(%9.3f)) sd(fmt(%9.3f)) p25(fmt(%9.3f)) p50(fmt(%9.3f)) p7
+> 5(fmt(%9.3f))") label
+(file tables/descriptives_post_compustat.csv not found)
+(output written to tables/descriptives_post_compustat.csv)
+
+. esttab using "tables/descriptives_post_compustat.tex", replace cells("count(f
+> mt(%9.0f)) mean(fmt(%9.3f)) sd(fmt(%9.3f)) p25(fmt(%9.3f)) p50(fmt(%9.3f)) p7
+> 5(fmt(%9.3f))") label
+(file tables/descriptives_post_compustat.tex not found)
+(output written to tables/descriptives_post_compustat.tex)
+
+. restore
+
+. est clear
+
+. exit, clear
+
+end of do-file

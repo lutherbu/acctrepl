@@ -1,0 +1,1549 @@
+{
+  "schema_version": "1.2",
+  "paper_id": "W3124170598",
+  "doi": "10.1016/j.jacceco.2004.11.002",
+  "eligibility": "eligible",
+  "provenance": {
+    "models_inventory_sha256": "99fa3538c4600dfe238e16b796b87f0e11534ddb747b8330bc6184d5d4de41c8",
+    "samples_inventory_sha256": "bcb4cb5c897be4e1d19d5eb27f2249171c3b432429b3ca0ca62577d45855662e",
+    "catalog_sha256": "45894893e45d56cb56150252c2ce4e85dfa88f5d891f3e547d3e9ea8003993fb",
+    "catalog_artifact_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "5821845ace490928bbee4ab43e064acc161010641b908d2a65a5a13de7569030",
+    "model_record_sha256": "b0a0591bbb1feea8ca584dd64fd2eb693b21690aa720ecbfd6d7a78fcf43327e",
+    "sample_record_sha256": "fd0a36f53db91abbcab0e0b2e5c6b6b99bbed08dd84f823fe8fde668734d9c61",
+    "reading_sha256": "66838a4ff3dff72c3c3f93e2f5b9d424901029380448a77e67399358f0327011",
+    "pdf_sha256": "69d1e89caa1ce3612312708e5b58f95ff0ea4a06e36dd79749e17b1181115fbb",
+    "work_item_sha256": "4e1a6195daf261e738c6c06dfd34f4f39c493caa2cc90cae0a10e758290331dc",
+    "review_source_aggregate_sha256": "2c054a78d6515b45b20bd409e84018663c81a2ac3002944ed28baa287078ea88",
+    "review_source_assessment_sha256": "67b1bbc9e68dc1db14acb32659daf1756c58530ab08e54617732ad82570c2550",
+    "review_source_work_item_sha256": "d212df49d78c268ed02b9cd7f636735d5133346abc2b219a5cccf6d6b64e5132",
+    "review_source_converter_sha256": "adc57168632515ab279560dc8138f3093edf12c561dd519aacc0fe9f0c61f590",
+    "review_source_decisions_sha256": "51ca795843b3c5ff732b33b38572f00ecd2ecbabea1393a13540884851125a2d",
+    "temporal_audit_file": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/full_01_reviewed/drafts/W3124170598/temporal_audit.json",
+    "temporal_audit_sha256": "cc2f642373387f496a2032d313e4df31cf576947286d60792a1fc05c1795794b"
+  },
+  "requirements": [
+    {
+      "requirement_id": "acc_comp_annual",
+      "kind": "raw_measure",
+      "description": "Compustat Industrial Annual/Research financial statements for total accruals, Jones predictors, ROA and performance matching.",
+      "required_coverage": {
+        "begin": 1962,
+        "end": 1999,
+        "years": [],
+        "frequency": "annual firm-year observations",
+        "population": "Compustat firm-years from 1963–1999, grouped by two-digit SIC and fiscal year; include source years needed for one-year lags and matching.",
+        "detail": "The source starts with 1962 source files and reports accrual observations in 1963–1999. Required components include current assets, cash, current liabilities, current debt, depreciation, assets, sales, receivables, net PPE, net income, fiscal year and historical SIC. The item extraction notes min cell size eight; source text says fewer than ten are excluded."
+      },
+      "routes": [
+        {
+          "route_id": "route_acc_comp_annual_COMP_FUNDA",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "sich",
+            "act",
+            "che",
+            "lct",
+            "dlc",
+            "dp",
+            "at",
+            "sale",
+            "rect",
+            "ppent",
+            "ni"
+          ],
+          "mapping_notes": "Current Compustat annual fields match the basic labels for source statement items; industrial/research vintage coverage, historical code correspondence and missing-value behavior are unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_COMP_FUNDA",
+            "catalog_COMP_FUNDA"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No local coverage confirmation for the source’s 1962–1999 Industrial Annual/Research universe.",
+      "evidence_ids": [
+        "paper_10_sample_016",
+        "paper_11_002",
+        "probe_COMP_FUNDA",
+        "catalog_COMP_FUNDA"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "acc_sic_year_fit",
+      "kind": "design",
+      "description": "Annual two-digit-SIC-by-year estimation cells, sample-size screen and sample construction for discretionary-accrual models.",
+      "required_coverage": {
+        "begin": 1963,
+        "end": 1999,
+        "years": [],
+        "frequency": "annual SIC-year cross-sections",
+        "population": "All Compustat firm-year observations with required inputs in each two-digit SIC-year fit, with at least 10 observations per cell according to source text.",
+        "detail": "Source page 10 says groups with fewer than ten are excluded; the frozen fit/sample extraction also records a minimum-eight-cell criterion. Preserve the extraction IDs and flag the conflict."
+      },
+      "routes": [
+        {
+          "route_id": "route_acc_sic_year_fit_COMP_FUNDA",
+          "route_type": "local_sas",
+          "source_name": "Local SAS data catalog",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "sich",
+            "act",
+            "che",
+            "lct",
+            "dlc",
+            "dp",
+            "at",
+            "sale",
+            "rect",
+            "ppent",
+            "ni"
+          ],
+          "mapping_notes": "Historical SIC, year and component fields allow cell construction; exact filter conflict and full source population remain unresolved.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Exact-resource probe confirms the table and requested columns only. No coordinator coverage confirmation was supplied; historical completeness and population coverage remain unverified.",
+          "evidence_ids": [
+            "probe_COMP_FUNDA",
+            "catalog_COMP_FUNDA"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Source text and frozen extraction disagree on the minimum cell size; no full cell coverage confirmation.",
+      "evidence_ids": [
+        "paper_10_sample_016",
+        "paper_11_002",
+        "probe_COMP_FUNDA",
+        "catalog_COMP_FUNDA"
+      ],
+      "data_status": "undetermined"
+    }
+  ],
+  "assessments": [
+    {
+      "model_id": "jones_eq6",
+      "result_set_id": null,
+      "required_model_ids": [
+        "jones_eq6"
+      ],
+      "requirement_ids": [
+        "acc_comp_annual",
+        "acc_sic_year_fit"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "jones_eq6",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: (ΔData4_{i,t} − ΔData1_{i,t} − ΔData5_{i,t} + ΔData34_{i,t} − Data14_{i,t}) / Data6_{i,t−1} Source definition: Total accruals: change in noncash current assets, less change in cash, less change in current liabilities plus change in current portion of long-term debt, less depreciation and amortization, all scaled by lagged total assets. The paper gives Compustat components Data4, Data1, Data5, Data34, Data14, and lagged Data6. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_eq6",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: 1 / ASSETS_{i,t−1} Source definition: Inverse of firm i’s lagged total assets; this is the actual regressor β₁(1/ASSETS_{i,t−1}), separate from the ordinary intercept. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_eq6",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: ΔSales_{i,t} / ASSETS_{i,t−1} Source definition: Change in sales scaled by lagged total assets. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_eq6",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net PPE_{i,t} / ASSETS_{i,t−1} Source definition: Net property, plant and equipment scaled by lagged total assets. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "acc_comp_annual"
+          ],
+          "reason": "Use Compustat Industrial Annual/Research observations 1963–1999 and two-digit-SIC/year support cells; exclude groups below the source’s ten-row rule and flag the frozen eight-row conflict.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [],
+          "reason": "Compustat GVKEY and fiscal-year/SIC identify each row and regression cell; no external database link is required.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "These are separate annual cross-sectional fits by two-digit SIC, not a pooled model with reported fixed effects.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The paper does not specify clustered standard errors for these construction fits.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are stated.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The source reports annual cross-sectional regressions; the underlying estimator is an implementation choice.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "reason": "Apply the paper’s total-accrual/assets filter and 1st/99th winsorization; preserve all source missingness and use source cell restrictions.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The source’s sample selection excludes groups with fewer than ten observations per two-digit SIC-year, while the frozen work item/extraction records a minimum-eight rule; the target fit IDs remain unchanged and the conflict is preserved.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The article reports annual cross-sectional Jones/modified-Jones regressions but does not name the underlying estimator; this is a documented implementation choice.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The modified-Jones term subtracts the change in receivables but the article does not separately state DAR’s scaling; retain the source ambiguity and do not choose a formula silently.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "Performance matching uses a same-SIC-year firm with the closest current/prior ROA residual; source-specific tie handling and exact matching implementation remain to be documented.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The estimated regression is a measurement construction, not a later simulation-test regression. The fitted equation and complete RHS inventory follow the source; exact group N and the underlying estimator remain unreported.",
+        "All six frozen annual cross-sectional accrual construction fits are retained; no additional simulation-result models were added.",
+        "The source text’s minimum-ten cell rule is preserved while the conflicting frozen extraction criterion remains explicitly flagged.",
+        "No local source-vintage coverage confirmation was supplied."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "modified_jones_eq6",
+      "result_set_id": null,
+      "required_model_ids": [
+        "modified_jones_eq6"
+      ],
+      "requirement_ids": [
+        "acc_comp_annual",
+        "acc_sic_year_fit"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "modified_jones_eq6",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: (ΔData4_{i,t} − ΔData1_{i,t} − ΔData5_{i,t} + ΔData34_{i,t} − Data14_{i,t}) / Data6_{i,t−1} Source definition: Total accruals: change in noncash current assets, less change in cash, less change in current liabilities plus change in current portion of long-term debt, less depreciation and amortization, all scaled by lagged total assets. The paper gives Compustat components Data4, Data1, Data5, Data34, Data14, and lagged Data6. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_eq6",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: 1 / ASSETS_{i,t−1} Source definition: Inverse of firm i’s lagged total assets; this is the actual regressor β₁(1/ASSETS_{i,t−1}), separate from the ordinary intercept. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_eq6",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: DSALES_{i,t} − DAR_{i,t}; source-described substitution: change in sales net of change in accounts receivable before equation (6). Source definition: Modified-Jones sales-change term. The paper subtracts the change in accounts receivable from the change in sales before estimation; DSALES is change in sales scaled by lagged total assets. The paper does not separately restate DAR’s scaling. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_eq6",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net PPE_{i,t} / ASSETS_{i,t−1} Source definition: Net property, plant and equipment scaled by lagged total assets. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "acc_comp_annual"
+          ],
+          "reason": "Use Compustat Industrial Annual/Research observations 1963–1999 and two-digit-SIC/year support cells; exclude groups below the source’s ten-row rule and flag the frozen eight-row conflict.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [],
+          "reason": "Compustat GVKEY and fiscal-year/SIC identify each row and regression cell; no external database link is required.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "These are separate annual cross-sectional fits by two-digit SIC, not a pooled model with reported fixed effects.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The paper does not specify clustered standard errors for these construction fits.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are stated.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The source reports annual cross-sectional regressions; the underlying estimator is an implementation choice.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "reason": "Apply the paper’s total-accrual/assets filter and 1st/99th winsorization; preserve all source missingness and use source cell restrictions.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The source’s sample selection excludes groups with fewer than ten observations per two-digit SIC-year, while the frozen work item/extraction records a minimum-eight rule; the target fit IDs remain unchanged and the conflict is preserved.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The article reports annual cross-sectional Jones/modified-Jones regressions but does not name the underlying estimator; this is a documented implementation choice.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The modified-Jones term subtracts the change in receivables but the article does not separately state DAR’s scaling; retain the source ambiguity and do not choose a formula silently.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "Performance matching uses a same-SIC-year firm with the closest current/prior ROA residual; source-specific tie handling and exact matching implementation remain to be documented.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The estimated regression is a measurement construction, not a later simulation-test regression. The fitted equation and complete RHS inventory follow the source; exact group N and the underlying estimator remain unreported.",
+        "All six frozen annual cross-sectional accrual construction fits are retained; no additional simulation-result models were added.",
+        "The source text’s minimum-ten cell rule is preserved while the conflicting frozen extraction criterion remains explicitly flagged.",
+        "No local source-vintage coverage confirmation was supplied."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "jones_roa_lag_eq7",
+      "result_set_id": null,
+      "required_model_ids": [
+        "jones_roa_lag_eq7"
+      ],
+      "requirement_ids": [
+        "acc_comp_annual",
+        "acc_sic_year_fit"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "jones_roa_lag_eq7",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: (ΔData4_{i,t} − ΔData1_{i,t} − ΔData5_{i,t} + ΔData34_{i,t} − Data14_{i,t}) / Data6_{i,t−1} Source definition: Total accruals: change in noncash current assets, less change in cash, less change in current liabilities plus change in current portion of long-term debt, less depreciation and amortization, all scaled by lagged total assets. The paper gives Compustat components Data4, Data1, Data5, Data34, Data14, and lagged Data6. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_roa_lag_eq7",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: 1 / ASSETS_{i,t−1} Source definition: Inverse of firm i’s lagged total assets; this is the actual regressor β₁(1/ASSETS_{i,t−1}), separate from the ordinary intercept. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_roa_lag_eq7",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: ΔSales_{i,t} / ASSETS_{i,t−1} Source definition: Change in sales scaled by lagged total assets. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_roa_lag_eq7",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net PPE_{i,t} / ASSETS_{i,t−1} Source definition: Net property, plant and equipment scaled by lagged total assets. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_roa_lag_eq7",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net income_{i,t−1} / total assets_{i,t−1} Source definition: Prior-year return on assets, net income divided by total assets for period t−1. For matching and model descriptions, the authors use net income rather than net income plus net-of-tax interest expense. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "acc_comp_annual"
+          ],
+          "reason": "Use Compustat Industrial Annual/Research observations 1963–1999 and two-digit-SIC/year support cells; exclude groups below the source’s ten-row rule and flag the frozen eight-row conflict.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [],
+          "reason": "Compustat GVKEY and fiscal-year/SIC identify each row and regression cell; no external database link is required.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "These are separate annual cross-sectional fits by two-digit SIC, not a pooled model with reported fixed effects.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The paper does not specify clustered standard errors for these construction fits.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are stated.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The source reports annual cross-sectional regressions; the underlying estimator is an implementation choice.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "reason": "Apply the paper’s total-accrual/assets filter and 1st/99th winsorization; preserve all source missingness and use source cell restrictions.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The source’s sample selection excludes groups with fewer than ten observations per two-digit SIC-year, while the frozen work item/extraction records a minimum-eight rule; the target fit IDs remain unchanged and the conflict is preserved.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The article reports annual cross-sectional Jones/modified-Jones regressions but does not name the underlying estimator; this is a documented implementation choice.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The modified-Jones term subtracts the change in receivables but the article does not separately state DAR’s scaling; retain the source ambiguity and do not choose a formula silently.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "Performance matching uses a same-SIC-year firm with the closest current/prior ROA residual; source-specific tie handling and exact matching implementation remain to be documented.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The estimated regression is a measurement construction, not a later simulation-test regression. The fitted equation and complete RHS inventory follow the source; exact group N and the underlying estimator remain unreported.",
+        "All six frozen annual cross-sectional accrual construction fits are retained; no additional simulation-result models were added.",
+        "The source text’s minimum-ten cell rule is preserved while the conflicting frozen extraction criterion remains explicitly flagged.",
+        "No local source-vintage coverage confirmation was supplied."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "jones_roa_current_eq7",
+      "result_set_id": null,
+      "required_model_ids": [
+        "jones_roa_current_eq7"
+      ],
+      "requirement_ids": [
+        "acc_comp_annual",
+        "acc_sic_year_fit"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "jones_roa_current_eq7",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: (ΔData4_{i,t} − ΔData1_{i,t} − ΔData5_{i,t} + ΔData34_{i,t} − Data14_{i,t}) / Data6_{i,t−1} Source definition: Total accruals: change in noncash current assets, less change in cash, less change in current liabilities plus change in current portion of long-term debt, less depreciation and amortization, all scaled by lagged total assets. The paper gives Compustat components Data4, Data1, Data5, Data34, Data14, and lagged Data6. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_roa_current_eq7",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: 1 / ASSETS_{i,t−1} Source definition: Inverse of firm i’s lagged total assets; this is the actual regressor β₁(1/ASSETS_{i,t−1}), separate from the ordinary intercept. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_roa_current_eq7",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: ΔSales_{i,t} / ASSETS_{i,t−1} Source definition: Change in sales scaled by lagged total assets. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_roa_current_eq7",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net PPE_{i,t} / ASSETS_{i,t−1} Source definition: Net property, plant and equipment scaled by lagged total assets. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jones_roa_current_eq7",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net income_{i,t} / total assets_{i,t} Source definition: Current-year return on assets, net income divided by total assets for period t. For matching and model descriptions, the authors use net income rather than net income plus net-of-tax interest expense. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "acc_comp_annual"
+          ],
+          "reason": "Use Compustat Industrial Annual/Research observations 1963–1999 and two-digit-SIC/year support cells; exclude groups below the source’s ten-row rule and flag the frozen eight-row conflict.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [],
+          "reason": "Compustat GVKEY and fiscal-year/SIC identify each row and regression cell; no external database link is required.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "These are separate annual cross-sectional fits by two-digit SIC, not a pooled model with reported fixed effects.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The paper does not specify clustered standard errors for these construction fits.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are stated.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The source reports annual cross-sectional regressions; the underlying estimator is an implementation choice.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "reason": "Apply the paper’s total-accrual/assets filter and 1st/99th winsorization; preserve all source missingness and use source cell restrictions.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The source’s sample selection excludes groups with fewer than ten observations per two-digit SIC-year, while the frozen work item/extraction records a minimum-eight rule; the target fit IDs remain unchanged and the conflict is preserved.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The article reports annual cross-sectional Jones/modified-Jones regressions but does not name the underlying estimator; this is a documented implementation choice.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The modified-Jones term subtracts the change in receivables but the article does not separately state DAR’s scaling; retain the source ambiguity and do not choose a formula silently.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "Performance matching uses a same-SIC-year firm with the closest current/prior ROA residual; source-specific tie handling and exact matching implementation remain to be documented.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The estimated regression is a measurement construction, not a later simulation-test regression. The fitted equation and complete RHS inventory follow the source; exact group N and the underlying estimator remain unreported.",
+        "All six frozen annual cross-sectional accrual construction fits are retained; no additional simulation-result models were added.",
+        "The source text’s minimum-ten cell rule is preserved while the conflicting frozen extraction criterion remains explicitly flagged.",
+        "No local source-vintage coverage confirmation was supplied."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "modified_jones_roa_lag_eq7",
+      "result_set_id": null,
+      "required_model_ids": [
+        "modified_jones_roa_lag_eq7"
+      ],
+      "requirement_ids": [
+        "acc_comp_annual",
+        "acc_sic_year_fit"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "modified_jones_roa_lag_eq7",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: (ΔData4_{i,t} − ΔData1_{i,t} − ΔData5_{i,t} + ΔData34_{i,t} − Data14_{i,t}) / Data6_{i,t−1} Source definition: Total accruals: change in noncash current assets, less change in cash, less change in current liabilities plus change in current portion of long-term debt, less depreciation and amortization, all scaled by lagged total assets. The paper gives Compustat components Data4, Data1, Data5, Data34, Data14, and lagged Data6. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_roa_lag_eq7",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: 1 / ASSETS_{i,t−1} Source definition: Inverse of firm i’s lagged total assets; this is the actual regressor β₁(1/ASSETS_{i,t−1}), separate from the ordinary intercept. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_roa_lag_eq7",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: DSALES_{i,t} − DAR_{i,t}; source-described substitution: change in sales net of change in accounts receivable before equation (6). Source definition: Modified-Jones sales-change term. The paper subtracts the change in accounts receivable from the change in sales before estimation; DSALES is change in sales scaled by lagged total assets. The paper does not separately restate DAR’s scaling. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_roa_lag_eq7",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net PPE_{i,t} / ASSETS_{i,t−1} Source definition: Net property, plant and equipment scaled by lagged total assets. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_roa_lag_eq7",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net income_{i,t−1} / total assets_{i,t−1} Source definition: Prior-year return on assets, net income divided by total assets for period t−1. For matching and model descriptions, the authors use net income rather than net income plus net-of-tax interest expense. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "acc_comp_annual"
+          ],
+          "reason": "Use Compustat Industrial Annual/Research observations 1963–1999 and two-digit-SIC/year support cells; exclude groups below the source’s ten-row rule and flag the frozen eight-row conflict.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [],
+          "reason": "Compustat GVKEY and fiscal-year/SIC identify each row and regression cell; no external database link is required.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "These are separate annual cross-sectional fits by two-digit SIC, not a pooled model with reported fixed effects.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The paper does not specify clustered standard errors for these construction fits.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are stated.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The source reports annual cross-sectional regressions; the underlying estimator is an implementation choice.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "reason": "Apply the paper’s total-accrual/assets filter and 1st/99th winsorization; preserve all source missingness and use source cell restrictions.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The source’s sample selection excludes groups with fewer than ten observations per two-digit SIC-year, while the frozen work item/extraction records a minimum-eight rule; the target fit IDs remain unchanged and the conflict is preserved.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The article reports annual cross-sectional Jones/modified-Jones regressions but does not name the underlying estimator; this is a documented implementation choice.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The modified-Jones term subtracts the change in receivables but the article does not separately state DAR’s scaling; retain the source ambiguity and do not choose a formula silently.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "Performance matching uses a same-SIC-year firm with the closest current/prior ROA residual; source-specific tie handling and exact matching implementation remain to be documented.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The estimated regression is a measurement construction, not a later simulation-test regression. The fitted equation and complete RHS inventory follow the source; exact group N and the underlying estimator remain unreported.",
+        "All six frozen annual cross-sectional accrual construction fits are retained; no additional simulation-result models were added.",
+        "The source text’s minimum-ten cell rule is preserved while the conflicting frozen extraction criterion remains explicitly flagged.",
+        "No local source-vintage coverage confirmation was supplied."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "modified_jones_roa_current_eq7",
+      "result_set_id": null,
+      "required_model_ids": [
+        "modified_jones_roa_current_eq7"
+      ],
+      "requirement_ids": [
+        "acc_comp_annual",
+        "acc_sic_year_fit"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "modified_jones_roa_current_eq7",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: (ΔData4_{i,t} − ΔData1_{i,t} − ΔData5_{i,t} + ΔData34_{i,t} − Data14_{i,t}) / Data6_{i,t−1} Source definition: Total accruals: change in noncash current assets, less change in cash, less change in current liabilities plus change in current portion of long-term debt, less depreciation and amortization, all scaled by lagged total assets. The paper gives Compustat components Data4, Data1, Data5, Data34, Data14, and lagged Data6. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_roa_current_eq7",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: 1 / ASSETS_{i,t−1} Source definition: Inverse of firm i’s lagged total assets; this is the actual regressor β₁(1/ASSETS_{i,t−1}), separate from the ordinary intercept. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_roa_current_eq7",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: DSALES_{i,t} − DAR_{i,t}; source-described substitution: change in sales net of change in accounts receivable before equation (6). Source definition: Modified-Jones sales-change term. The paper subtracts the change in accounts receivable from the change in sales before estimation; DSALES is change in sales scaled by lagged total assets. The paper does not separately restate DAR’s scaling. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_roa_current_eq7",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net PPE_{i,t} / ASSETS_{i,t−1} Source definition: Net property, plant and equipment scaled by lagged total assets. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "modified_jones_roa_current_eq7",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "construction": "Source formula: Net income_{i,t} / total assets_{i,t} Source definition: Current-year return on assets, net income divided by total assets for period t. For matching and model descriptions, the authors use net income rather than net income plus net-of-tax interest expense. Raw component fields: COMP.FUNDA: gvkey, datadate, fyear, sich, act, che, lct, dlc, dp, at, sale, rect, ppent, ni Preserve raw missing values and denominators; do not impute missing source components or force an observed classification.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "acc_comp_annual"
+          ],
+          "reason": "Use Compustat Industrial Annual/Research observations 1963–1999 and two-digit-SIC/year support cells; exclude groups below the source’s ten-row rule and flag the frozen eight-row conflict.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [],
+          "reason": "Compustat GVKEY and fiscal-year/SIC identify each row and regression cell; no external database link is required.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "These are separate annual cross-sectional fits by two-digit SIC, not a pooled model with reported fixed effects.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The paper does not specify clustered standard errors for these construction fits.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are stated.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The source reports annual cross-sectional regressions; the underlying estimator is an implementation choice.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "acc_comp_annual",
+            "acc_sic_year_fit"
+          ],
+          "reason": "Apply the paper’s total-accrual/assets filter and 1st/99th winsorization; preserve all source missingness and use source cell restrictions.",
+          "evidence_ids": [
+            "paper_10_sample_016",
+            "paper_11_001",
+            "paper_12_008",
+            "paper_14_014",
+            "paper_15_009"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The source’s sample selection excludes groups with fewer than ten observations per two-digit SIC-year, while the frozen work item/extraction records a minimum-eight rule; the target fit IDs remain unchanged and the conflict is preserved.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The article reports annual cross-sectional Jones/modified-Jones regressions but does not name the underlying estimator; this is a documented implementation choice.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The modified-Jones term subtracts the change in receivables but the article does not separately state DAR’s scaling; retain the source ambiguity and do not choose a formula silently.",
+          "blocking": true,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "Performance matching uses a same-SIC-year firm with the closest current/prior ROA residual; source-specific tie handling and exact matching implementation remain to be documented.",
+          "blocking": false,
+          "evidence_ids": [
+            "paper_11_001"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The estimated regression is a measurement construction, not a later simulation-test regression. The fitted equation and complete RHS inventory follow the source; exact group N and the underlying estimator remain unreported.",
+        "All six frozen annual cross-sectional accrual construction fits are retained; no additional simulation-result models were added.",
+        "The source text’s minimum-ten cell rule is preserved while the conflicting frozen extraction criterion remains explicitly flagged.",
+        "No local source-vintage coverage confirmation was supplied."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "paper_11_001",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 11,
+      "quote": "To estimate the discretionary accrual models, we define total accruals (TA) as",
+      "description": "Source definition for jones_eq6 TA_{i,t}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_11_002",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 11,
+      "quote": "change in non-cash current assets minus the change in current liabilities excluding the current portion of long-term debt",
+      "description": "Source definition for jones_eq6 TA_{i,t}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_11_003",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 11,
+      "quote": "minus depreciation and amortization, scaled by lagged total assets",
+      "description": "Source definition for jones_eq6 TA_{i,t}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_11_004",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 11,
+      "quote": "total accruals 1⁄4 ðDData4 � DData1 � DData5 þ DData34 � Data14Þ=lagged Data6:",
+      "description": "Source definition for jones_eq6 TA_{i,t}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_11_005",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 11,
+      "quote": "TAit 1⁄4 b0 þ b1ð1=ASSETSit�1Þ þ b2DSALESit þ b3PPEit þ �it; (6)",
+      "description": "Source definition for jones_eq6 1/ASSETS_{i,t−1}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_11_006",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 11,
+      "quote": "PPEit is net property, plant and equipment scaled by ASSETSit�1.",
+      "description": "Source definition for jones_eq6 1/ASSETS_{i,t−1}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_11_007",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 11,
+      "quote": "DSALESit is change in sales scaled by lagged total assets",
+      "description": "Source definition for jones_eq6 DSALES_{i,t}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_12_008",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 12,
+      "quote": "That is, we cross-sectionally estimate the modified-Jones model using sales changes net of the change in accounts receivables [i.e., we use DSALESit � DARit].",
+      "description": "Source definition for modified_jones_eq6 DSALES_{i,t} − DAR_{i,t}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_15_009",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 15,
+      "quote": "Discretionary accruals from the modified-Jones model are estimated for each industry and year as for the Jones model except that the change in accounts receivable is subtracted from the change in sales.",
+      "description": "Source definition for modified_jones_eq6 DSALES_{i,t} − DAR_{i,t}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_12_010",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 12,
+      "quote": "As noted above, we also estimate a model that is similar to the Jones and modified-Jones models, except that it is augmented to include ROAit or ROAit�1.",
+      "description": "Source definition for jones_roa_lag_eq7 ROA_{i,t−1}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_12_011",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 12,
+      "quote": "ROAit (net income divided by total assets).",
+      "description": "Source definition for jones_roa_lag_eq7 ROA_{i,t−1}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_12_012",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 12,
+      "quote": "In calculating ROA, we use net income rather than net income plus net-of-tax interest expense",
+      "description": "Source definition for jones_roa_lag_eq7 ROA_{i,t−1}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_15_013",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 15,
+      "quote": "Discretionary accruals from the Jones Model (Modified-Jones model) with ROA are similar to the Jones Model (Modified-Jones model) except for the inclusion of current or lagged year’s ROA as an additional explanatory variable.",
+      "description": "Source definition for jones_roa_lag_eq7 ROA_{i,t−1}",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_14_014",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 14,
+      "quote": "Table 1 Descriptive statistics for various discretionary accrual measures Panel A reports the mean, standard deviation, lower quartile,",
+      "description": "Model/sample/design evidence for jones_eq6",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_14_sample_015",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 14,
+      "quote": "The final sample size is 122,798",
+      "description": "Sample selection/source evidence for W3124170598",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_10_sample_016",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 10,
+      "quote": "Collectively, these filters yield a sample of roughly 210,000 observations.",
+      "description": "Sample selection/source evidence for W3124170598",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_10_sample_017",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 10,
+      "quote": "We begin with all firm-year observations from the COMPUSTAT Industrial Annual, and Research files from 1962 through 1999.",
+      "description": "Sample selection/source evidence for W3124170598",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "paper_14_sample_018",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3124170598.json",
+      "page": 14,
+      "quote": "Firm-year accrual observations are from the COMPUSTAT Industrial Annual and Research files from 1963 through 1999.",
+      "description": "Sample selection/source evidence for W3124170598",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_COMP_FUNDA",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/COMP.FUNDA.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource probe for COMP.FUNDA; no historical/population coverage claim.",
+      "sha256": "dd9d66ff1debeea55773cd795f95af5f6cee0c45dc5cab8992f2eb6289e92ea5",
+      "verified_at": "2026-10-27T14:46:58.418486+00:00"
+    },
+    {
+      "evidence_id": "catalog_COMP_FUNDA",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "COMP.FUNDA catalog entry at lines 27500–28729; actual fields/labels: gvkey=Global Company Key; datadate=Data Date; fyear=Data Year - Fiscal; sich=Standard Industrial Classification - Historical; act=Current Assets - Total; che=Cash and Short-Term Investments; lct=Current Liabilities - Total; dlc=Debt in Current Liabilities - Total; dp=Depreciation and Amortization; at=Assets - Total; sale=Sales/Turnover (Net); rect=Receivables - Total; ppent=Property, Plant and Equipment - Total (Net); ni=Net Income (Loss)",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    }
+  ],
+  "author_alternatives": [],
+  "review_notes": [
+    "All six frozen annual cross-sectional accrual construction fits are retained; no additional simulation-result models were added.",
+    "The source text’s minimum-ten cell rule is preserved while the conflicting frozen extraction criterion remains explicitly flagged.",
+    "No local source-vintage coverage confirmation was supplied."
+  ],
+  "summary": {
+    "outcome": "undetermined",
+    "assessment_counts": {
+      "local_ready": 0,
+      "public_acquisition_required": 0,
+      "access_blocked": 0,
+      "undetermined": 6,
+      "no_observed_data_required": 0
+    },
+    "baseline_models": 6,
+    "baseline_fits": 6,
+    "any_data_feasible": false,
+    "all_data_feasible": false,
+    "partially_data_feasible": false,
+    "attempt_ready_count": 0
+  }
+}

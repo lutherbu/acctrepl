@@ -1,0 +1,850 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend;
+2          options validvarname=v7;
+                   ____________
+                   36
+WARNING 36-12: SAS option VALIDVARNAME is restricted by your Site Administrator and cannot be updated.
+
+3          
+4          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+5          libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3122547505/attempt_03/data
+6          
+7          /* Read only the fields and fiscal years needed for 1987-1999 outcomes and
+8             the 1985-2000 denominator/CFO history. CURCD is retained to ensure that
+9             each average-assets denominator is formed within one reporting currency.
+10            CURRTR is summarized for diagnosis only; no arithmetic direction is
+11            inferred from its provider definition. */
+12         data work.raw;
+13             set comp.funda
+14                 (keep=gvkey datadate fyear indfmt datafmt consol popsrc fyr at oancf
+15                       recch invch apalch txach aoloch ibc sich curcd currtr
+16                  where=(fyear >= 1985 and fyear <= 2000 and indfmt="INDL" and datafmt="STD"
+17                         and consol="C" and popsrc="D"));
+18         run;
+
+NOTE: There were 173871 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1985 and fyear<=2000) and (indfmt='INDL') and (datafmt='STD') and (consol='C') and (popsrc='D');
+NOTE: The data set WORK.RAW has 173871 observations and 19 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.52 seconds
+      cpu time            0.53 seconds
+      
+
+3                                                          The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+19         
+20         proc sql noprint;
+21             select count(*) into :raw_rows trimmed from work.raw;
+22             select count(*) into :duplicate_pairs trimmed
+23             from (select gvkey, fyear
+24                   from work.raw
+25                   group by gvkey, fyear
+26                   having count(*) > 1) as d;
+27         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.05 seconds
+      
+
+28         %put NOTE: Filtered annual source rows=&raw_rows.;
+NOTE: Filtered annual source rows=173871
+29         %put NOTE: Duplicate gvkey-fyear keys=&duplicate_pairs.;
+NOTE: Duplicate gvkey-fyear keys=0
+30         
+31         proc freq data=work.raw;
+32             tables curcd / missing;
+33             title "W3122547505 reporting-currency codes in raw auxiliary population";
+34         run;
+
+NOTE: There were 173871 observations read from the data set WORK.RAW.
+NOTE: The PROCEDURE FREQ printed page 1.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+35         
+36         proc means data=work.raw n nmiss min mean max;
+37             class curcd;
+38             var currtr;
+39             title "W3122547505 provider translation-rate diagnostics (not used for conversion)";
+40         run;
+
+NOTE: There were 173871 observations read from the data set WORK.RAW.
+NOTE: The PROCEDURE MEANS printed page 2.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+      
+
+41         
+42         /* A firm-year must be unique before date-keyed lead/lag construction. Do not
+43            hide duplicates with NODUPKEY or select a vintage without evidence. */
+44         %if &duplicate_pairs > 0 %then %do;
+45             %put ERROR: Resolve the reported duplicate gvkey-fyear keys before estimation.;
+46             %abort cancel;
+47         %end;
+48         
+49         proc sort data=work.raw;
+50             by gvkey fyear;
+51         run;
+
+NOTE: There were 173871 observations read from the data set WORK.RAW.
+4                                                          The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+NOTE: The data set WORK.RAW has 173871 observations and 19 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+52         
+53         /* Shift by fiscal year so gaps remain gaps. Retain adjacent earnings inputs
+54            as well as CFO because the prose sample rule mentions both. */
+55         data work.lag1(keep=gvkey fyear at_lag1 curcd_lag1
+56                             cfo_lag_raw ibc_lag_raw d_wc_lag_raw);
+57             set work.raw(keep=gvkey fyear at oancf ibc recch invch apalch txach aoloch curcd);
+58             fyear = fyear + 1;
+59             at_lag1 = at;
+60             curcd_lag1 = curcd;
+61             cfo_lag_raw = oancf;
+62             ibc_lag_raw = ibc;
+63             if nmiss(recch, invch, apalch, txach, aoloch)=0 then
+64                 d_wc_lag_raw = -(recch + invch + apalch + txach + aoloch);
+65             else d_wc_lag_raw = .;
+66         run;
+
+NOTE: There were 173871 observations read from the data set WORK.RAW.
+NOTE: The data set WORK.LAG1 has 173871 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+67         
+68         data work.lag2(keep=gvkey fyear at_lag2 curcd_lag2);
+69             set work.raw(keep=gvkey fyear at curcd);
+70             fyear = fyear + 2;
+71             at_lag2 = at;
+72             curcd_lag2 = curcd;
+73         run;
+
+NOTE: There were 173871 observations read from the data set WORK.RAW.
+NOTE: The data set WORK.LAG2 has 173871 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+74         
+75         data work.lead1(keep=gvkey fyear at_lead1 curcd_lead1
+76                              cfo_lead_raw ibc_lead_raw d_wc_lead_raw);
+77             set work.raw(keep=gvkey fyear at oancf ibc recch invch apalch txach aoloch curcd);
+78             fyear = fyear - 1;
+79             at_lead1 = at;
+80             curcd_lead1 = curcd;
+81             cfo_lead_raw = oancf;
+82             ibc_lead_raw = ibc;
+83             if nmiss(recch, invch, apalch, txach, aoloch)=0 then
+84                 d_wc_lead_raw = -(recch + invch + apalch + txach + aoloch);
+85             else d_wc_lead_raw = .;
+86         run;
+
+5                                                          The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+NOTE: There were 173871 observations read from the data set WORK.RAW.
+NOTE: The data set WORK.LEAD1 has 173871 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+87         
+88         proc sort data=work.lag1; by gvkey fyear; run;
+
+NOTE: There were 173871 observations read from the data set WORK.LAG1.
+NOTE: The data set WORK.LAG1 has 173871 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+89         proc sort data=work.lag2; by gvkey fyear; run;
+
+NOTE: There were 173871 observations read from the data set WORK.LAG2.
+NOTE: The data set WORK.LAG2 has 173871 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+90         proc sort data=work.lead1; by gvkey fyear; run;
+
+NOTE: There were 173871 observations read from the data set WORK.LEAD1.
+NOTE: The data set WORK.LEAD1 has 173871 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+91         
+92         /* Check the same-period average-assets denominator for every raw year used
+93            by current, past, and future variables: 1986-2000. This includes 1986
+94            history for 1987 outcomes and 2000 history for 1999 outcomes. */
+95         data work.prior_period(keep=gvkey fyear at_prior curcd_prior);
+96             set work.raw(keep=gvkey fyear at curcd);
+97             fyear = fyear + 1;
+98             at_prior = at;
+99             curcd_prior = curcd;
+100        run;
+
+NOTE: There were 173871 observations read from the data set WORK.RAW.
+NOTE: The data set WORK.PRIOR_PERIOD has 173871 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+101        proc sort data=work.prior_period; by gvkey fyear; run;
+
+NOTE: There were 173871 observations read from the data set WORK.PRIOR_PERIOD.
+NOTE: The data set WORK.PRIOR_PERIOD has 173871 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+6                                                          The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+102        
+103        data work.currency_periods;
+104            merge work.raw(in=current_row)
+105                  work.prior_period(in=prior_row);
+106            by gvkey fyear;
+107            if current_row and fyear >= 1986 and fyear <= 2000;
+108            has_prior_row = prior_row;
+109            curcd_same_as_prior = 0;
+110            if has_prior_row and not missing(curcd) and not missing(curcd_prior)
+111               and curcd = curcd_prior then curcd_same_as_prior = 1;
+112            avg_at_period = .;
+113            if curcd_same_as_prior and has_prior_row and nmiss(at, at_prior)=0 then do;
+114                avg_at_period = (at + at_prior) / 2;
+115                if avg_at_period <= 0 then avg_at_period = .;
+116            end;
+117            if not missing(avg_at_period) then do;
+118                cfo_scaled_period = oancf / avg_at_period;
+119                if nmiss(recch, invch, apalch, txach, aoloch)=0 then do;
+120                    d_wc_period = -(recch + invch + apalch + txach + aoloch);
+121                    earn_scaled_period = (oancf + d_wc_period) / avg_at_period;
+122                end;
+123                else do;
+124                    d_wc_period = .;
+125                    earn_scaled_period = .;
+126                end;
+127            end;
+128            else do;
+129                cfo_scaled_period = .;
+130                d_wc_period = .;
+131                earn_scaled_period = .;
+132            end;
+133        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      26792 at 118:35   
+NOTE: There were 173871 observations read from the data set WORK.RAW.
+NOTE: There were 173871 observations read from the data set WORK.PRIOR_PERIOD.
+NOTE: The data set WORK.CURRENCY_PERIODS has 165272 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+134        
+135        proc sql;
+136            title "W3122547505 CURCD and own-period denominator checks over raw auxiliary years";
+137            select fyear as scaled_fyear,
+138                   count(*) as raw_firm_years,
+139                   sum(has_prior_row=0) as no_prior_year_record,
+140                   sum(has_prior_row=1 and (missing(curcd) or missing(curcd_prior))) as missing_currency_pair,
+141                   sum(has_prior_row=1 and not missing(curcd) and not missing(curcd_prior)
+142                       and curcd=curcd_prior) as same_currency_pair,
+143                   sum(has_prior_row=1 and not missing(curcd) and not missing(curcd_prior)
+7                                                          The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+144                       and curcd ne curcd_prior) as different_currency_pair,
+145                   sum(has_prior_row=1 and nmiss(at,at_prior)=0) as assets_pair_fields_present,
+146                   sum(not missing(avg_at_period)) as currency_valid_average_assets,
+147                   sum(not missing(cfo_scaled_period)) as currency_valid_cfo,
+148                   sum(not missing(earn_scaled_period)) as currency_valid_earn
+149            from work.currency_periods
+150            group by fyear
+151            order by fyear;
+152        quit;
+NOTE: The PROCEDURE SQL printed page 3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.08 seconds
+      
+
+153        
+154        data work.anchored;
+155            merge work.raw(in=anchor)
+156                  work.lag1
+157                  work.lag2
+158                  work.lead1;
+159            by gvkey fyear;
+160            if anchor and fyear >= 1987 and fyear <= 1999;
+161        
+162            /* Paper item 302+303+304+305+307 are signed cash-flow changes. */
+163            if nmiss(recch, invch, apalch, txach, aoloch)=0 then
+164                d_wc = -(recch + invch + apalch + txach + aoloch);
+165            else d_wc = .;
+166        
+167            /* Make a denominator available only when both source assets share CURCD.
+168               No average is formed across unlike-currency amounts. */
+169            curcd_ok_current = (not missing(curcd) and not missing(curcd_lag1)
+170                                and curcd = curcd_lag1);
+171            curcd_ok_lag = (not missing(curcd_lag1) and not missing(curcd_lag2)
+172                            and curcd_lag1 = curcd_lag2);
+173            curcd_ok_lead = (not missing(curcd) and not missing(curcd_lead1)
+174                             and curcd = curcd_lead1);
+175        
+176            avg_at = .;
+177            avg_at_lag = .;
+178            avg_at_lead = .;
+179            if curcd_ok_current and nmiss(at, at_lag1)=0 then do;
+180                avg_at = (at + at_lag1) / 2;
+181                if avg_at <= 0 then avg_at = .;
+182            end;
+183            if curcd_ok_lag and nmiss(at_lag1, at_lag2)=0 then do;
+184                avg_at_lag = (at_lag1 + at_lag2) / 2;
+185                if avg_at_lag <= 0 then avg_at_lag = .;
+186            end;
+187            if curcd_ok_lead and nmiss(at, at_lead1)=0 then do;
+188                avg_at_lead = (at + at_lead1) / 2;
+189                if avg_at_lead <= 0 then avg_at_lead = .;
+190            end;
+191        
+192            if avg_at > 0 then do;
+193                cfo_scaled = oancf / avg_at;
+194                prof_scaled = ibc / avg_at;
+195                d_wc_scaled = d_wc / avg_at;
+8                                                          The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+196                earn_scaled = cfo_scaled + d_wc_scaled;
+197            end;
+198            else do;
+199                cfo_scaled = .;
+200                prof_scaled = .;
+201                d_wc_scaled = .;
+202            end;
+203        
+204            if avg_at_lag > 0 and not missing(cfo_lag_raw) then
+205                cfo_lag = cfo_lag_raw / avg_at_lag;
+206            else cfo_lag = .;
+207            if avg_at_lag > 0 and not missing(ibc_lag_raw) then
+208                prof_lag = ibc_lag_raw / avg_at_lag;
+209            else prof_lag = .;
+210            if avg_at_lag > 0 and not missing(cfo_lag_raw) and not missing(d_wc_lag_raw) then
+211                earn_lag = (cfo_lag_raw + d_wc_lag_raw) / avg_at_lag;
+212            else earn_lag = .;
+213        
+214            if avg_at_lead > 0 and not missing(cfo_lead_raw) then
+215                cfo_lead = cfo_lead_raw / avg_at_lead;
+216            else cfo_lead = .;
+217            if avg_at_lead > 0 and not missing(ibc_lead_raw) then
+218                prof_lead = ibc_lead_raw / avg_at_lead;
+219            else prof_lead = .;
+220            if avg_at_lead > 0 and not missing(cfo_lead_raw) and not missing(d_wc_lead_raw) then
+221                earn_lead = (cfo_lead_raw + d_wc_lead_raw) / avg_at_lead;
+222            else earn_lead = .;
+223        
+224            /* Availability indicators count complete source fields, not fabricated
+225               scaled values, for the pre-currency audit comparison. */
+226            cfo_lag_source_available = (not missing(cfo_lag_raw)
+227                                        and nmiss(at_lag1, at_lag2)=0);
+228            earn_lag_source_available = (not missing(cfo_lag_raw)
+229                                         and not missing(d_wc_lag_raw)
+230                                         and nmiss(at_lag1, at_lag2)=0);
+231            cfo_lead_source_available = (not missing(cfo_lead_raw)
+232                                         and nmiss(at, at_lead1)=0);
+233            earn_lead_source_available = (not missing(cfo_lead_raw)
+234                                          and not missing(d_wc_lead_raw)
+235                                          and nmiss(at, at_lead1)=0);
+236        
+237            complete_reported_fields = (nmiss(at, ibc, oancf, recch, invch)=0);
+238            source_inputs_precur = (nmiss(at, at_lag1, ibc, oancf,
+239                                          recch, invch, apalch, txach,
+240                                          aoloch)=0);
+241            complete_model_inputs = (nmiss(at, ibc, oancf, recch, invch,
+242                                           apalch, txach, aoloch,
+243                                           avg_at, d_wc_scaled,
+244                                           cfo_scaled, prof_scaled)=0);
+245        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      18703 at 193:28   7564 at 194:27    60855 at 195:28   60855 at 196:34   
+NOTE: There were 173871 observations read from the data set WORK.RAW.
+NOTE: There were 173871 observations read from the data set WORK.LAG1.
+NOTE: There were 173871 observations read from the data set WORK.LAG2.
+NOTE: There were 173871 observations read from the data set WORK.LEAD1.
+9                                                          The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+NOTE: The data set WORK.ANCHORED has 144162 observations and 55 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.14 seconds
+      
+
+246        
+247        proc sql;
+248            title "W3122547505 source coverage and pre-trim sample counts";
+249            select count(*) as outcome_year_rows,
+250                   sum(complete_reported_fields) as reported_fields_complete,
+251                   sum(source_inputs_precur) as source_inputs_precur,
+252                   sum(complete_model_inputs) as all_model_inputs_complete,
+253                   count(distinct gvkey) as firms_in_outcome_window
+254            from work.anchored;
+255        quit;
+NOTE: The PROCEDURE SQL printed page 4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+256        
+257        proc sql;
+258            title "W3122547505 currency status for each model denominator window";
+259            select count(*) as outcome_year_rows,
+260                   sum(curcd_ok_current) as current_t_and_tminus1_same,
+261                   sum(not missing(curcd) and not missing(curcd_lag1)
+262                       and curcd ne curcd_lag1) as current_t_and_tminus1_different,
+263                   sum(curcd_ok_lag) as past_tminus1_and_tminus2_same,
+264                   sum(not missing(curcd_lag1) and not missing(curcd_lag2)
+265                       and curcd_lag1 ne curcd_lag2) as past_tm1_tm2_different,
+266                   sum(curcd_ok_lead) as future_tplus1_and_t_same,
+267                   sum(not missing(curcd) and not missing(curcd_lead1)
+268                       and curcd ne curcd_lead1) as future_tplus1_and_t_different
+269            from work.anchored;
+270        quit;
+NOTE: The PROCEDURE SQL printed page 5.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+271        
+272        proc sql;
+273            title "W3122547505 field missingness in outcome-year population";
+274            select count(*) as outcome_year_rows,
+275                   sum(missing(at)) as missing_assets,
+276                   sum(missing(ibc)) as missing_item123_earnings,
+277                   sum(missing(oancf)) as missing_item308_cfo,
+278                   sum(missing(recch)) as missing_item302,
+279                   sum(missing(invch)) as missing_item303,
+280                   sum(missing(apalch)) as missing_item304,
+281                   sum(missing(txach)) as missing_item305,
+282                   sum(missing(aoloch)) as missing_item307,
+283                   sum(missing(avg_at)) as missing_current_avg_assets,
+284                   sum(missing(d_wc_scaled)) as missing_scaled_delta_wc
+285            from work.anchored;
+10                                                         The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+286        quit;
+NOTE: The PROCEDURE SQL printed page 6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+287        
+288        data work.complete;
+289            set work.anchored;
+290            if complete_model_inputs;
+291        run;
+
+NOTE: There were 144162 observations read from the data set WORK.ANCHORED.
+NOTE: The data set WORK.COMPLETE has 51955 observations and 55 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+292        
+293        /* The paper does not state whether percentiles are year-specific. Use pooled
+294           SAS 1st/99th percentile cutoffs for the scaled current-year variables. */
+295        proc univariate data=work.complete noprint;
+296            var cfo_scaled prof_scaled d_wc_scaled;
+297            output out=work.cutoffs
+298                pctlpts=1 99
+299                pctlpre=cfo_ prof_ dwc_;
+300        run;
+
+NOTE: The data set WORK.CUTOFFS has 1 observations and 6 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+301        
+302        data work.trimmed;
+303            if _n_=1 then set work.cutoffs;
+304            set work.complete;
+305            if cfo_scaled >= cfo_1 and cfo_scaled <= cfo_99
+306               and prof_scaled >= prof_1 and prof_scaled <= prof_99
+307               and d_wc_scaled >= dwc_1 and d_wc_scaled <= dwc_99;
+308        run;
+
+NOTE: There were 1 observations read from the data set WORK.CUTOFFS.
+NOTE: There were 51955 observations read from the data set WORK.COMPLETE.
+NOTE: The data set WORK.TRIMMED has 49853 observations and 61 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+309        
+310        proc sql;
+311            title "W3122547505 sample attrition by Table 1 screen";
+312            select "Complete variables before trimming" as stage length=40,
+313                   count(*) as firm_years,
+11                                                         The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+314                   count(distinct gvkey) as firms
+315            from work.complete
+316            union all
+317            select "After pooled 1/99 percentile trimming" as stage length=40,
+318                   count(*) as firm_years,
+319                   count(distinct gvkey) as firms
+320            from work.trimmed;
+321        quit;
+NOTE: The PROCEDURE SQL printed page 7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+322        
+323        proc sql;
+324            title "W3122547505 lead/lag availability after current-row trimming";
+325            select count(*) as trimmed_firm_years,
+326                   sum(cfo_lag_source_available) as lag_cfo_inputs_present,
+327                   sum(not missing(cfo_lag)) as lag_cfo_currency_valid,
+328                   sum(earn_lag_source_available) as lag_earn_inputs_present,
+329                   sum(not missing(earn_lag)) as lag_earn_currency_valid,
+330                   sum(cfo_lead_source_available) as lead_cfo_inputs_present,
+331                   sum(not missing(cfo_lead)) as lead_cfo_currency_valid,
+332                   sum(earn_lead_source_available) as lead_earn_inputs_present,
+333                   sum(not missing(earn_lead)) as lead_earn_currency_valid,
+334                   sum(cfo_lag_source_available and not missing(cfo_scaled)
+335                       and cfo_lead_source_available and earn_lag_source_available
+336                       and not missing(earn_scaled) and earn_lead_source_available)
+337                       as all_cfo_earn_inputs_precur,
+338                   sum(nmiss(cfo_lag,cfo_scaled,cfo_lead,
+339                             earn_lag,earn_scaled,earn_lead)=0) as all_cfo_earn_currency_valid,
+340                   sum(missing(cfo_lag)) as missing_scaled_lag_cfo,
+341                   sum(missing(cfo_lead)) as missing_scaled_lead_cfo,
+342                   sum(missing(earn_lag)) as missing_scaled_lag_earn,
+343                   sum(missing(earn_lead)) as missing_scaled_lead_earn,
+344                   sum(missing(prof_lag)) as missing_scaled_lag_prof,
+345                   sum(missing(prof_lead)) as missing_scaled_lead_prof
+346            from work.trimmed;
+347        quit;
+NOTE: The PROCEDURE SQL printed page 8.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+348        
+349        /* Compare Table 1's explicit CFO lead/lag row with the surrounding prose
+350           requiring past/future cash flows and earnings. Earn is CFO + delta WC. */
+351        proc sql;
+352            title "W3122547505 lead/lag eligibility alternatives and period boundaries";
+353            select "CFO only, outcome 1987-1999" as screen length=48,
+354                   count(*) as firm_years, count(distinct gvkey) as firms
+355            from work.trimmed
+356            where nmiss(cfo_lag, cfo_scaled, cfo_lead)=0
+357            union all
+358            select "CFO plus Earn, outcome 1987-1999" as screen length=48,
+359                   count(*) as firm_years, count(distinct gvkey) as firms
+12                                                         The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+360            from work.trimmed
+361            where nmiss(cfo_lag, cfo_scaled, cfo_lead, earn_lag, earn_scaled, earn_lead)=0
+362            union all
+363            select "CFO plus Prof, outcome 1987-1999" as screen length=48,
+364                   count(*) as firm_years, count(distinct gvkey) as firms
+365            from work.trimmed
+366            where nmiss(cfo_lag, cfo_scaled, cfo_lead, prof_lag, prof_scaled, prof_lead)=0
+367            union all
+368            select "CFO plus Earn, all years inside 1987-1999" as screen length=48,
+369                   count(*) as firm_years, count(distinct gvkey) as firms
+370            from work.trimmed
+371            where fyear >= 1988 and fyear <= 1998
+372              and nmiss(cfo_lag, cfo_scaled, cfo_lead, earn_lag, earn_scaled, earn_lead)=0;
+373        quit;
+NOTE: The PROCEDURE SQL printed page 9.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+374        
+375        /* Preserve the observed outcome-year window and adjacent raw-year inputs.
+376           Follow the p. 8 sample prose by requiring lead/lag Earn in addition to CFO.
+377           Neighbor years need not independently pass the current-year trimming rule. */
+378        data work.with_leads;
+379            set work.trimmed;
+380            if nmiss(cfo_lag, cfo_scaled, cfo_lead,
+381                     earn_lag, earn_scaled, earn_lead)=0;
+382        run;
+
+NOTE: There were 49853 observations read from the data set WORK.TRIMMED.
+NOTE: The data set WORK.WITH_LEADS has 32357 observations and 61 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+383        
+384        proc sql;
+385            title "W3122547505 post lead/lag CFO and Earn screen";
+386            select count(*) as firm_years,
+387                   count(distinct gvkey) as firms
+388            from work.with_leads;
+389        quit;
+NOTE: The PROCEDURE SQL printed page 10.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+390        
+391        proc sql;
+392            create table work.firm_counts as
+393            select gvkey, count(*) as n_firm_years
+394            from work.with_leads
+395            group by gvkey;
+NOTE: Table WORK.FIRM_COUNTS created, with 7127 rows and 2 columns.
+
+13                                                         The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+396        
+397            create table work.fit_sample as
+398            select a.gvkey, a.fyear, a.curcd,
+399                   a.curcd_lag1, a.curcd_lag2, a.curcd_lead1, a.d_wc_scaled,
+400                   a.cfo_lag, a.cfo_scaled as cfo_cur, a.cfo_lead,
+401                   b.n_firm_years
+402            from work.with_leads as a
+403            inner join work.firm_counts as b
+404              on a.gvkey=b.gvkey
+405            where b.n_firm_years >= 8
+406            order by a.gvkey, a.fyear;
+NOTE: Table WORK.FIT_SAMPLE created, with 14346 rows and 11 columns.
+
+407        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+408        
+409        proc sql;
+410            title "W3122547505 firm-specific regression sample";
+411            select count(*) as firm_years,
+412                   count(distinct gvkey) as firms,
+413                   min(n_firm_years) as min_years_per_firm,
+414                   max(n_firm_years) as max_years_per_firm
+415            from work.fit_sample;
+416        quit;
+NOTE: The PROCEDURE SQL printed page 11.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+417        
+418        proc sql;
+419            title "W3122547505 firm-specific sample observation-count distribution";
+420            select n_firm_years, count(distinct gvkey) as firms
+421            from work.fit_sample
+422            group by n_firm_years
+423            order by n_firm_years;
+424        quit;
+NOTE: The PROCEDURE SQL printed page 12.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+425        
+426        proc sql;
+427            title "W3122547505 outcome-year boundary observations";
+428            select fyear, count(*) as firm_years, count(distinct gvkey) as firms
+429            from work.fit_sample
+430            group by fyear
+431            order by fyear;
+432        quit;
+NOTE: The PROCEDURE SQL printed page 13.
+NOTE: PROCEDURE SQL used (Total process time):
+14                                                         The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+433        
+434        data out.firm_specific;
+435            set work.fit_sample;
+436            label d_wc_scaled="Change in working capital / average assets"
+437                  cfo_lag="CFO(t-1) / average assets(t-1)"
+438                  cfo_cur="CFO(t) / average assets(t)"
+439                  cfo_lead="CFO(t+1) / average assets(t+1)"
+440                  curcd="CURCD at outcome year"
+441                  curcd_lag1="CURCD at outcome year minus one"
+442                  curcd_lag2="CURCD at outcome year minus two"
+443                  curcd_lead1="CURCD at outcome year plus one"
+444                  n_firm_years="Eligible annual observations for firm";
+445        run;
+
+NOTE: There were 14346 observations read from the data set WORK.FIT_SAMPLE.
+NOTE: The data set OUT.FIRM_SPECIFIC has 14346 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+446        
+447        proc sql;
+448            title "W3122547505 retained sample currency check (same-currency records stay eligible)";
+449            select curcd,
+450                   count(*) as firm_years,
+451                   count(distinct gvkey) as firms,
+452                   sum(curcd=curcd_lag1) as current_and_prior_same,
+453                   sum(curcd_lag1=curcd_lag2) as prior_and_two_prior_same,
+454                   sum(curcd=curcd_lead1) as current_and_following_same
+455            from out.firm_specific
+456            group by curcd
+457            order by curcd;
+458        quit;
+NOTE: The PROCEDURE SQL printed page 14.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+459        
+460        proc sql;
+461            title "W3122547505 final sample key check";
+462            select count(*) as firm_years,
+463                   count(distinct gvkey) as firms,
+464                   count(distinct cats(gvkey, "-", put(fyear, 4.))) as firm_year_keys
+465            from out.firm_specific;
+466        quit;
+NOTE: The PROCEDURE SQL printed page 15.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+15                                                         The SAS System                     Tuesday, November  3, 2026 12:28:00 AM
+
+467        
+468        title;
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           1.45 seconds
+      cpu time            1.51 seconds
+      

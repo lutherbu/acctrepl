@@ -1,0 +1,23 @@
+# Design: Model (I), one-year pooled sample
+
+## Source evidence
+
+Model (I) is pooled OLS of the log change in annual SG&A on the log change in annual net sales and its interaction with a sales-decrease indicator. The paper defines the model and screens on PDF pp. 6–7 (journal pp. 52–53), describes trimming and diagnostics on PDF p. 8 (journal p. 54), and reports the one-year pooled estimates in Table 2 on PDF p. 9 (journal p. 55). The analysis period is 1979–1998; construction requires 1978 inputs.
+
+The source specifies Compustat annual items #189 (SG&A) and #12 (sales). The assigned catalog lists `COMP.FUNDA` at `/storage/sas/base/comp/d_na/funda.sas7bdat`, where `xsga` and `sale` have matching labels. `curcd` is labeled ISO Currency Code and `currtr` Currency Translation Rate. The provider's *S&P Research Insight North America Data Guide* (physical p. 71, printed p. 21; extract retained in `scratch/compustat_currency_guide_p71.txt`) defines CURRTR/A228 as the rate used to translate foreign currency amounts into U.S. dollars at the company's balance-sheet date. These source labels and definitions support the unit repair, but do not prove historical item-number crosswalk or 1999-vintage coverage.
+
+## Source population and screens
+
+The local source selection uses `indfmt=INDL`, `consol=C`, `datafmt=STD`, and `popsrc=D` for fiscal years 1978–1998. `INDL` operationalizes “industrial firms”; no SIC cutoff is reported. These flags approximate the paper's 1999 PST/full-coverage population using a current vintage. The source library is read-only. For a `gvkey`–`fyear` with multiple `datadate` values, construction retains the latest fiscal-year-end row; same-date duplicate keys stop the build.
+
+The current-period analysis window is 1979–1998. Source screens require nonmissing current and prior SG&A and sales and exclude rows where current SG&A exceeds current sales. The latter compares same-period amounts from the same reported source currency. Positive current and prior values are required for the log specification. A missing or nonpositive source currency rate does not change these paper screens; it makes an unlike-currency ratio unavailable.
+
+## Currency-aware construction
+
+The original-data check found 58 different-CURCD current/prior pairs in the 109,388 source-screened handoff rows. For each baseline ratio and the sales-decrease comparison, construction checks both `curcd_t` and `curcd_lag`. If the codes match, it uses the original local amounts, which are already in common units. The provider guide identifies `currtr` as a balance-sheet-date exchange rate for translating foreign amounts to USD, but does not state the quote direction or arithmetic for this table. In the selected transitions, 49 pairs changed from CAD to USD (the lagged CAD `currtr` ranged from 1.0000 to 1.4286 while current USD `currtr` was 1.0000), and 9 changed from USD to CAD (both rates were 1.0000). Since these observations do not establish whether to multiply or divide the amounts by `currtr`, the 58 unlike-currency ratios and decrease comparisons are left unavailable. Source-screened rows remain in the handoff with their raw amounts, codes, rates, and a status, but cannot enter the fit. No external rate series or guessed conversion is used.
+
+The repair covers all monetary inputs to Model (I): `log(SG&A_t/SG&A_lag)`, `log(sales_t/sales_lag)`, the comparison `sales_t < sales_lag`, and the interaction built from the decrease indicator and sales change. The binary decrease dummy is not itself trimmed. The source's instruction to remove observations in the top or bottom 0.5% of any model variable is implemented using pooled SAS percentile cutoffs for the outcome, sales change, and interaction, calculated on unit-verified rows. The build reports the original raw-unit fit and the unit-verified fit counts, including the cross-currency rows in the original fit and observations moving into or out of the trimmed fit. The original A2 build is preserved as the before-repair reference.
+
+## Estimation and unresolved assumptions
+
+The selected result is pooled OLS with an intercept and no weights or fixed effects, matching Table 2. The paper reports t-statistics but does not identify Table 2's covariance estimator, so conventional homoskedastic OLS standard errors remain a best-effort choice; exports use two-sided p-values. Local data do not establish the 1999 Compustat vintage, historical item-number crosswalk, exact PST/full-coverage population, industrial SIC screen, or percentile tie handling. The current-data sample count is compared with, but not tuned to, the published count.

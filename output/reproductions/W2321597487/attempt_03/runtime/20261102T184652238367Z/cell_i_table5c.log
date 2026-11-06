@@ -1,0 +1,344 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W2321597487/at
+> tempt_03/runtime/20261102T184652238367Z/cell_i_table5c.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/reg.dta", clear
+
+. est clear
+
+. preserve
+
+. keep if sample_t5c_cf==1 & industry_t5c_cf==1
+(47,796 observations deleted)
+
+. asreg acc cf abnret dind dind_indadj_cf dabnret dabnret_abnret, by(sic3) mini
+> mum(30)
+
+. egen byte __industry_tag=tag(sic3)
+
+. quietly count if __industry_tag==1
+
+. local __nind=r(N)
+
+. quietly summarize _R2 if __industry_tag==1
+
+. local __r2=r(mean)*100
+
+. quietly summarize _adjR2 if __industry_tag==1
+
+. local __ar2=r(mean)*100
+
+. estpost summarize _b_cons _b_cf _b_abnret _b_dind _b_dind_indadj_cf _b_dabnre
+> t _b_dabnret_abnret if __industry_tag==1
+
+             |  e(count)   e(sum_w)    e(mean)     e(Var)      e(sd) 
+-------------+-------------------------------------------------------
+     _b_cons |       204        204   .0000127   .0020412   .0451802 
+       _b_cf |       204        204  -.4492196   .0931331   .3051772 
+   _b_abnret |       204        204   .0025997   .0016053   .0400656 
+     _b_dind |       204        204   .0197734   .0020873   .0456874 
+_b_dind_in~f |       204        204   .3149992   .2256542   .4750307 
+  _b_dabnret |       204        204   .0151908   .0013778   .0371181 
+_b_dabnret~t |       204        204   .1044314   .0060181   .0775764 
+
+             |    e(min)     e(max)     e(sum) 
+-------------+---------------------------------
+     _b_cons | -.1763309   .1027114   .0025999 
+       _b_cf | -1.243737   .4121993  -91.64079 
+   _b_abnret | -.2101255   .1529853    .530343 
+     _b_dind |  -.147374   .2095332   4.033764 
+_b_dind_in~f | -1.539995   2.147242   64.25985 
+  _b_dabnret | -.0856255   .1441975   3.098916 
+_b_dabnret~t | -.1348236   .3873955   21.30401 
+
+. matrix __p=e(mean)
+
+. local __j=1
+
+. foreach __v of varlist _b_cons _b_cf _b_abnret _b_dind _b_dind_indadj_cf _b_d
+> abnret _b_dabnret_abnret {
+  2.     capture quietly ttest `__v' = 0 if __industry_tag==1
+  3.     if !_rc matrix __p[1,`__j']=r(p)
+  4.     local ++__j
+  5. }
+
+. estadd matrix p=__p, replace
+
+added matrix:
+                  e(p) :  1 x 7
+
+. estadd scalar N=`__nind', replace
+
+added scalar:
+                  e(N) =  204
+
+. estadd scalar r2=`__r2', replace
+
+added scalar:
+                 e(r2) =  27.612598
+
+. estadd scalar r2_a=`__ar2', replace
+
+added scalar:
+               e(r2_a) =  22.920842
+
+. est store i_cf
+
+. restore
+
+. preserve
+
+. keep if sample_t5c_dd==1 & industry_t5c_dd==1
+(55,096 observations deleted)
+
+. asreg acc cf cf_lag cf_lead abnret dind dind_indadj_cf dabnret dabnret_abnret
+> , by(sic3) minimum(30)
+
+. egen byte __industry_tag=tag(sic3)
+
+. quietly count if __industry_tag==1
+
+. local __nind=r(N)
+
+. quietly summarize _R2 if __industry_tag==1
+
+. local __r2=r(mean)*100
+
+. quietly summarize _adjR2 if __industry_tag==1
+
+. local __ar2=r(mean)*100
+
+. estpost summarize _b_cons _b_cf _b_cf_lag _b_cf_lead _b_abnret _b_dind _b_din
+> d_indadj_cf _b_dabnret _b_dabnret_abnret if __industry_tag==1
+
+             |  e(count)   e(sum_w)    e(mean)     e(Var)      e(sd) 
+-------------+-------------------------------------------------------
+     _b_cons |       198        198   -.011464   .0025698   .0506936 
+       _b_cf |       198        198  -.6506042     .09767    .312522 
+   _b_cf_lag |       198        198   .2218876   .0311128   .1763883 
+  _b_cf_lead |       198        198   .1548261   .0292988    .171169 
+   _b_abnret |       198        198    .004379   .0020305   .0450608 
+     _b_dind |       198        198   .0159857   .0018868   .0434378 
+_b_dind_in~f |       198        198   .2441584   .2048596   .4526142 
+  _b_dabnret |       198        198    .013573    .001652   .0406444 
+_b_dabnret~t |       198        198   .0859232   .0058999    .076811 
+
+             |    e(min)     e(max)     e(sum) 
+-------------+---------------------------------
+     _b_cons | -.2114134   .1511762  -2.269867 
+       _b_cf | -1.605744   .5333145  -128.8196 
+   _b_cf_lag | -.5070989     .87526   43.93375 
+  _b_cf_lead | -.3594932   .6438528   30.65557 
+   _b_abnret | -.1657646   .2174281   .8670519 
+     _b_dind | -.0984231   .2187538   3.165176 
+_b_dind_in~f | -1.339349   2.127583   48.34335 
+  _b_dabnret | -.1331959   .2075736   2.687458 
+_b_dabnret~t | -.1595784   .3462446   17.01279 
+
+. matrix __p=e(mean)
+
+. local __j=1
+
+. foreach __v of varlist _b_cons _b_cf _b_cf_lag _b_cf_lead _b_abnret _b_dind _
+> b_dind_indadj_cf _b_dabnret _b_dabnret_abnret {
+  2.     capture quietly ttest `__v' = 0 if __industry_tag==1
+  3.     if !_rc matrix __p[1,`__j']=r(p)
+  4.     local ++__j
+  5. }
+
+. estadd matrix p=__p, replace
+
+added matrix:
+                  e(p) :  1 x 9
+
+. estadd scalar N=`__nind', replace
+
+added scalar:
+                  e(N) =  198
+
+. estadd scalar r2=`__r2', replace
+
+added scalar:
+                 e(r2) =  39.717856
+
+. estadd scalar r2_a=`__ar2', replace
+
+added scalar:
+               e(r2_a) =  34.004601
+
+. est store i_dd
+
+. restore
+
+. preserve
+
+. keep if sample_t5c_jones==1 & industry_t5c_jones==1
+(48,856 observations deleted)
+
+. asreg acc drev gppe indadj_cf abnret dind dind_indadj_cf dabnret dabnret_abnr
+> et, by(sic3) minimum(30)
+
+. egen byte __industry_tag=tag(sic3)
+
+. quietly count if __industry_tag==1
+
+. local __nind=r(N)
+
+. quietly summarize _R2 if __industry_tag==1
+
+. local __r2=r(mean)*100
+
+. quietly summarize _adjR2 if __industry_tag==1
+
+. local __ar2=r(mean)*100
+
+. estpost summarize _b_cons _b_drev _b_gppe _b_indadj_cf _b_abnret _b_dind _b_d
+> ind_indadj_cf _b_dabnret _b_dabnret_abnret if __industry_tag==1
+
+             |  e(count)   e(sum_w)    e(mean)     e(Var)      e(sd) 
+-------------+-------------------------------------------------------
+     _b_cons |       204        204  -.0165582   .0030091   .0548548 
+     _b_drev |       204        204   .0897032   .0105182   .1025583 
+     _b_gppe |       204        204  -.0350642   .0043059   .0656191 
+_b_indadj_cf |       204        204  -.4663227   .0788471   .2807972 
+   _b_abnret |       204        204  -.0032903   .0023301   .0482715 
+     _b_dind |       204        204   .0157086   .0016096   .0401199 
+_b_dind_in~f |       204        204   .3307131   .3038734   .5512472 
+  _b_dabnret |       204        204   .0160283   .0014651    .038277 
+_b_dabnret~t |       204        204   .0891623   .0068834   .0829663 
+
+             |    e(min)     e(max)     e(sum) 
+-------------+---------------------------------
+     _b_cons | -.1616223   .1468028  -3.377867 
+     _b_drev | -.3024503    .867887   18.29946 
+     _b_gppe | -.3769114   .1270877  -7.153092 
+_b_indadj_cf | -1.472374   .3440399  -95.12984 
+   _b_abnret | -.3399325   .1469602   -.671217 
+     _b_dind | -.0928875   .1773736    3.20455 
+_b_dind_in~f | -1.819847   2.635344   67.46548 
+  _b_dabnret | -.1029655   .1561663   3.269773 
+_b_dabnret~t | -.1359161   .4812558   18.18911 
+
+. matrix __p=e(mean)
+
+. local __j=1
+
+. foreach __v of varlist _b_cons _b_drev _b_gppe _b_indadj_cf _b_abnret _b_dind
+>  _b_dind_indadj_cf _b_dabnret _b_dabnret_abnret {
+  2.     capture quietly ttest `__v' = 0 if __industry_tag==1
+  3.     if !_rc matrix __p[1,`__j']=r(p)
+  4.     local ++__j
+  5. }
+
+. estadd matrix p=__p, replace
+
+added matrix:
+                  e(p) :  1 x 9
+
+. estadd scalar N=`__nind', replace
+
+added scalar:
+                  e(N) =  204
+
+. estadd scalar r2=`__r2', replace
+
+added scalar:
+                 e(r2) =  34.423668
+
+. estadd scalar r2_a=`__ar2', replace
+
+added scalar:
+               e(r2_a) =  28.470126
+
+. est store i_jones
+
+. restore
+
+. esttab i_cf i_dd i_jones using "tables/table5_panelC_industry.md", main(mean)
+>  aux(p 3) starlevels(* 0.1 ** 0.05 *** 0.01) noobs stats(N r2 r2_a, labels("I
+> ndustry regressions" "Mean R-squared (%)" "Mean adjusted R-squared (%)") fmt(
+> 0 3 3)) coeflabels(_b_abnret "ABNRET_t" _b_cf "CF_t" _b_cf_lag "CF_{t-1}" _b_
+> cf_lead "CF_{t+1}" _b_cons "Intercept" _b_dabnret "DABNRET_t" _b_dabnret_abnr
+> et "DABNRET_t x ABNRET_t" _b_dind "DIND_t" _b_dind_indadj_cf "DIND_t x INDADJ
+> _CF_t" _b_drev "DeltaREV_t" _b_gppe "GPPE_t" _b_indadj_cf "INDADJ_CF_t") addn
+> otes("R-squared and adjusted R-squared are percent.") replace label
+(file tables/table5_panelC_industry.md not found)
+(output written to tables/table5_panelC_industry.md)
+
+. esttab i_cf i_dd i_jones using "tables/table5_panelC_industry.rtf", main(mean
+> ) aux(p 3) starlevels(* 0.1 ** 0.05 *** 0.01) noobs stats(N r2 r2_a, labels("
+> Industry regressions" "Mean R-squared (%)" "Mean adjusted R-squared (%)") fmt
+> (0 3 3)) coeflabels(_b_abnret "ABNRET_t" _b_cf "CF_t" _b_cf_lag "CF_{t-1}" _b
+> _cf_lead "CF_{t+1}" _b_cons "Intercept" _b_dabnret "DABNRET_t" _b_dabnret_abn
+> ret "DABNRET_t x ABNRET_t" _b_dind "DIND_t" _b_dind_indadj_cf "DIND_t x INDAD
+> J_CF_t" _b_drev "DeltaREV_t" _b_gppe "GPPE_t" _b_indadj_cf "INDADJ_CF_t") add
+> notes("R-squared and adjusted R-squared are percent.") replace label
+(file tables/table5_panelC_industry.rtf not found)
+(output written to tables/table5_panelC_industry.rtf)
+
+. esttab i_cf i_dd i_jones using "tables/table5_panelC_industry.csv", main(mean
+> ) aux(p 3) starlevels(* 0.1 ** 0.05 *** 0.01) noobs stats(N r2 r2_a, labels("
+> Industry regressions" "Mean R-squared (%)" "Mean adjusted R-squared (%)") fmt
+> (0 3 3)) coeflabels(_b_abnret "ABNRET_t" _b_cf "CF_t" _b_cf_lag "CF_{t-1}" _b
+> _cf_lead "CF_{t+1}" _b_cons "Intercept" _b_dabnret "DABNRET_t" _b_dabnret_abn
+> ret "DABNRET_t x ABNRET_t" _b_dind "DIND_t" _b_dind_indadj_cf "DIND_t x INDAD
+> J_CF_t" _b_drev "DeltaREV_t" _b_gppe "GPPE_t" _b_indadj_cf "INDADJ_CF_t") add
+> notes("R-squared and adjusted R-squared are percent.") replace label
+(file tables/table5_panelC_industry.csv not found)
+(output written to tables/table5_panelC_industry.csv)
+
+. esttab i_cf i_dd i_jones using "tables/table5_panelC_industry.tex", main(mean
+> ) aux(p 3) starlevels(* 0.1 ** 0.05 *** 0.01) noobs stats(N r2 r2_a, labels("
+> Industry regressions" "Mean R-squared (%)" "Mean adjusted R-squared (%)") fmt
+> (0 3 3)) coeflabels(_b_abnret "ABNRET_t" _b_cf "CF_t" _b_cf_lag "CF_{t-1}" _b
+> _cf_lead "CF_{t+1}" _b_cons "Intercept" _b_dabnret "DABNRET_t" _b_dabnret_abn
+> ret "DABNRET_t x ABNRET_t" _b_dind "DIND_t" _b_dind_indadj_cf "DIND_t x INDAD
+> J_CF_t" _b_drev "DeltaREV_t" _b_gppe "GPPE_t" _b_indadj_cf "INDADJ_CF_t") add
+> notes("R-squared and adjusted R-squared are percent.") replace label
+(file tables/table5_panelC_industry.tex not found)
+(output written to tables/table5_panelC_industry.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

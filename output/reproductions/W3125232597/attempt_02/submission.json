@@ -1,0 +1,91 @@
+{
+  "paper_id": "W3125232597",
+  "attempt": 2,
+  "required_commands": [
+    "esttab",
+    "estpost",
+    "estadd"
+  ],
+  "samples": [
+    {
+      "sample_id": "us_acquisitions_1307",
+      "sas_file": "data/us_acquisitions_1307.sas7bdat",
+      "dta_file": "data/us_acquisitions_1307/reg.dta",
+      "key": [
+        "dealid"
+      ],
+      "description": "Deal-level completed U.S. public-acquirer/public-target SDC M/AM/AA acquisitions announced 1983–2009, excluding repurchases and applying the $1m and 1% relative-value screens. Carries outcome-specific missingness for the three full-control Table 3 regressions; the OLS complete-case Ns are allowed to differ by outcome."
+    }
+  ],
+  "fits": [
+    {
+      "model_id": "table3_acq_car",
+      "result_set_id": "table3_acq_car_main",
+      "cell_id": "table3_acq_car",
+      "table_basename": "tables/table3_acq_car",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "Market-model estimation uses native PROC REG over actual CRSP sessions; incomplete/underidentified participant fits remain missing.",
+        "TRG_COMPRNK is ranked among eligible deals with available raw target comparability because the paper does not identify the rank population.",
+        "S34 uses the first FDATE per manager/RDATE; dated SEC_IDHIST/CRSP NCUSIP links; SHARES is translated from FDATE to RDATE basis with CFACSHR(FDATE)/CFACSHR(RDATE), then divided by CRSP RDATE SHROUT in thousands. Missing/unmatched holdings remain missing; BLOCK is manager-level >5%, not aggregate ownership.",
+        "Company MVE uses Compustat MKVALTQ translated to USD when valid, with a dated CCM PERMCO sum of CRSP common-share market values as a documented fallback; annual MKVALT Tobin Q receives the analogous fallback when needed.",
+        "If one cash/stock percentage is missing and the observed counterpart share is above 10%, the missing type is bounded below 90% when observed shares are coherent, so its dummy is zero. Both flags remain missing for both-unknown or invalid rows (any observed share outside 0–100 or both observed shares summing above 100).",
+        "Quarterly comparability maps use IBQ divided by the prior FYEARQ/FQTR market equity and fiscal-quarter buy-and-hold returns approximated by the CRSP monthly returns ending in the Compustat DATADATE month and prior two months; calendar-quarter returns remain for common-period stock correlations. Duplicate FYEARQ/FQTR rows within each event window are reduced to the latest DATADATE/FDATEQ at or before the event anchor.",
+        "The paper says deal value but does not identify whether it means SDC ranking value including target net debt, enterprise value, or equity value. The construction screens with cataloged RANKVAL (USD millions, including target net debt) and leaves it as a best-effort choice."
+      ],
+      "blocked_reason": null
+    },
+    {
+      "model_id": "table3_synergy",
+      "result_set_id": "table3_synergy_main",
+      "cell_id": "table3_synergy",
+      "table_basename": "tables/table3_synergy",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "Target market value and target CAR must be available in addition to the acquisition-population controls.",
+        "Prior-quarter company market equity uses Compustat MKVALTQ or a dated CCM PERMCO aggregate of CRSP common-share market values when required.",
+        "If one cash/stock percentage is missing and the observed counterpart share is above 10%, the missing type is bounded below 90% when observed shares are coherent, so its dummy is zero. Both flags remain missing for both-unknown or invalid rows (any observed share outside 0–100 or both observed shares summing above 100).",
+        "Quarterly comparability maps use IBQ divided by the prior FYEARQ/FQTR market equity and fiscal-quarter buy-and-hold returns approximated by the CRSP monthly returns ending in the Compustat DATADATE month and prior two months; calendar-quarter returns remain for common-period stock correlations. Duplicate FYEARQ/FQTR rows within each event window are reduced to the latest DATADATE/FDATEQ at or before the event anchor.",
+        "The paper says deal value but does not identify whether it means SDC ranking value including target net debt, enterprise value, or equity value. The construction screens with cataloged RANKVAL (USD millions, including target net debt) and leaves it as a best-effort choice."
+      ],
+      "blocked_reason": null
+    },
+    {
+      "model_id": "table3_delta_roa",
+      "result_set_id": "table3_delta_roa_main",
+      "cell_id": "table3_delta_roa",
+      "table_basename": "tables/table3_delta_roa",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "Peer matching uses the announcement-year cohort held fixed through the completion-year outcome window.",
+        "The full three-year pre and post windows are required because no minimum-year rule is stated.",
+        "If one cash/stock percentage is missing and the observed counterpart share is above 10%, the missing type is bounded below 90% when observed shares are coherent, so its dummy is zero. Both flags remain missing for both-unknown or invalid rows (any observed share outside 0–100 or both observed shares summing above 100).",
+        "Quarterly comparability maps use IBQ divided by the prior FYEARQ/FQTR market equity and fiscal-quarter buy-and-hold returns approximated by the CRSP monthly returns ending in the Compustat DATADATE month and prior two months; calendar-quarter returns remain for common-period stock correlations. Duplicate FYEARQ/FQTR rows within each event window are reduced to the latest DATADATE/FDATEQ at or before the event anchor.",
+        "The paper says deal value but does not identify whether it means SDC ranking value including target net debt, enterprise value, or equity value. The construction screens with cataloged RANKVAL (USD millions, including target net debt) and leaves it as a best-effort choice."
+      ],
+      "blocked_reason": null
+    }
+  ],
+  "limitations": [
+    "The local SDC catalog includes RANKVAL (ranking value including target net debt), ENTVAL (enterprise value), and EQVAL (equity value). The paper says deal value without identifying which field definition it means; A2 uses RANKVAL as a best-effort screen choice.",
+    "The local pre-value SDC screen has 6,681 unique deals versus the paper's 6,282; 645 local deals have missing RANKVAL, and 906 otherwise eligible deals lack positive acquirer MVE before the 1% relative-size screen. The 4,697 material-deal population is 566 below the paper's implied 5,263; the local value and market-value coverage gaps remain material.",
+    "A2 reports the raw TRG_COMP ratio-scale mean and median in the design/review. Multiplying by 100 would display a different candidate convention, but the source does not identify an extra multiplier or resolve the units; the decile-rank regressor is invariant to positive rescaling.",
+    "The event control field meanings, reporting-currency conversions, company-level MVE route and price/share checks, S34 share-basis conversion, daily and quarterly window coverage, and native comparability-regression rank were checked in the final SAS log/listing. Daily SYNC windows range down to 3 observations because the paper gives no minimum.",
+    "The three fitted Ns differ slightly from the published Ns. Table 3 uses one-sided inference for target comparability; reported Stata p-values follow the strict template's two-sided convention.",
+    "The paper describes returns during quarter t without naming fiscal or calendar boundaries. A2 interprets t as the Compustat fiscal quarter, using CRSP monthly total returns ending in the DATADATE month and the preceding two months; calendar returns remain for common-period stock correlation. A2 retains the latest dated row at or before the anchor once per fiscal-quarter key/window and preserves the 16-quarter/minimum-14 rule."
+  ],
+  "source_datasets": [
+    "SDC.WRDS_MA_DETAILS",
+    "COMP.SEC_IDHIST",
+    "COMP.FUNDA",
+    "COMP.FUNDQ",
+    "COMP.G_EXRT_DLY",
+    "CRSP.DSF",
+    "CRSP.DSI",
+    "CRSP.MSEDELIST",
+    "CRSP.MSF",
+    "CRSP.STOCKNAMES",
+    "CRSP.CCMXPF_LINKTABLE",
+    "TFN.S34"
+  ]
+}

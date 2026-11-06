@@ -1,0 +1,2053 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3121345849/at
+> tempt_02/runtime/20261103T051501161740Z/cell_rifit01.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. global x "nege rix rinegx rib ritacc"
+
+. use "data/rolling_fit_panel/reg.dta", clear
+
+. capture mkdir "tables"
+
+. est clear
+
+. 
+. keep gvkey avyear riy1 riy2 riy3 $x
+
+. expand 30
+(12,036,740 observations created)
+
+. bysort gvkey avyear: gen byte copy=_n
+
+. gen byte horizon=ceil(copy/10)
+
+. gen int fityear=avyear+horizon+mod(copy-1,10)
+
+. keep if inrange(fityear,1969,2012) & inrange(avyear,fityear-9-horizon,fityear
+> -horizon)
+(2,049,444 observations deleted)
+
+. gen double y=.
+(10,402,356 missing values generated)
+
+. replace y=riy1 if horizon==1
+(2,708,672 real changes made)
+
+. replace y=riy2 if horizon==2
+(2,479,462 real changes made)
+
+. replace y=riy3 if horizon==3
+(2,267,778 real changes made)
+
+. egen byte missct=rowmiss(y $x)
+
+. gen byte complete=missct==0
+
+. drop missct
+
+. bysort fityear horizon: egen long n_cc=total(complete)
+
+. sort fityear horizon gvkey avyear
+
+. 
+. gen byte rankok=0
+
+. local nchecked = 0
+
+. local nfull = 0
+
+. local nrank = 0
+
+. local nempty = 0
+
+. forvalues t=1969/2012 {
+  2.     forvalues h=1/3 {
+  3.         local ++nchecked
+  4.         quietly count if fityear==`t' & horizon==`h'
+  5.         local nrecords = r(N)
+  6.         if `nrecords' > 0 {
+  7.             quietly summarize n_cc if fityear==`t' & horizon==`h', meanonl
+> y
+  8.             local ncc = r(mean)
+  9.             if `ncc' > 6 {
+ 10.                 regress y $x if fityear==`t' & horizon==`h', notable
+ 11.                 if e(N)>6 & e(rank)==6 {
+ 12.                     replace rankok=1 if fityear==`t' & horizon==`h'
+ 13.                     local ++nfull
+ 14. 
+.                     if `t'==1969 | `t'==2012 {
+ 15.                         scalar ri_nat_N_`h'_`t' = e(N)
+ 16.                         scalar ri_nat_cons_`h'_`t' = _b[_cons]
+ 17.                         scalar ri_nat_nege_`h'_`t' = _b[nege]
+ 18.                         scalar ri_nat_rix_`h'_`t' = _b[rix]
+ 19.                         scalar ri_nat_rinegx_`h'_`t' = _b[rinegx]
+ 20.                         scalar ri_nat_rib_`h'_`t' = _b[rib]
+ 21.                         scalar ri_nat_ritacc_`h'_`t' = _b[ritacc]
+ 22.                     }
+ 23.                 }
+ 24.                 else {
+ 25.                     local ++nrank
+ 26.                 }
+ 27.             }
+ 28.             else {
+ 29.                 local ++nempty
+ 30.             }
+ 31.         }
+ 32.         else {
+ 33.             local ++nempty
+ 34.         }
+ 35.     }
+ 36. }
+
+      Source |       SS           df       MS      Number of obs   =     8,681
+-------------+----------------------------------   F(5, 8675)      =   6641.98
+       Model |  23751.7606         5  4750.35213   Prob > F        =    0.0000
+    Residual |  6204.36904     8,675  .715201042   R-squared       =    0.7929
+-------------+----------------------------------   Adj R-squared   =    0.7928
+       Total |  29956.1297     8,680  3.45116701   Root MSE        =     .8457
+
+(25,435 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =     6,487
+-------------+----------------------------------   F(5, 6481)      =   2220.17
+       Model |   21388.151         5   4277.6302   Prob > F        =    0.0000
+    Residual |  12487.0288     6,481  1.92671329   R-squared       =    0.6314
+-------------+----------------------------------   Adj R-squared   =    0.6311
+       Total |  33875.1798     6,486  5.22281526   Root MSE        =    1.3881
+
+(22,684 real changes made)
+note: ritacc omitted because of collinearity.
+
+      Source |       SS           df       MS      Number of obs   =     4,575
+-------------+----------------------------------   F(4, 4570)      =   1442.16
+       Model |  19507.7201         4  4876.93002   Prob > F        =    0.0000
+    Residual |  15454.3431     4,570  3.38169433   R-squared       =    0.5580
+-------------+----------------------------------   Adj R-squared   =    0.5576
+       Total |  34962.0631     4,574  7.64365176   Root MSE        =    1.8389
+
+
+      Source |       SS           df       MS      Number of obs   =    11,442
+-------------+----------------------------------   F(5, 11436)     =   8401.35
+       Model |  29662.5108         5  5932.50217   Prob > F        =    0.0000
+    Residual |  8075.38393    11,436  .706137105   R-squared       =    0.7860
+-------------+----------------------------------   Adj R-squared   =    0.7859
+       Total |  37737.8948    11,441   3.2984787   Root MSE        =    .84032
+
+(28,361 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =     8,673
+-------------+----------------------------------   F(5, 8667)      =   2533.30
+       Model |  26121.5914         5  5224.31828   Prob > F        =    0.0000
+    Residual |  17873.5656     8,667  2.06225517   R-squared       =    0.5937
+-------------+----------------------------------   Adj R-squared   =    0.5935
+       Total |   43995.157     8,672  5.07324227   Root MSE        =    1.4361
+
+(25,435 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =     6,487
+-------------+----------------------------------   F(5, 6481)      =   1163.03
+       Model |  22975.2834         5  4595.05668   Prob > F        =    0.0000
+    Residual |  25606.0985     6,481   3.9509487   R-squared       =    0.4729
+-------------+----------------------------------   Adj R-squared   =    0.4725
+       Total |  48581.3819     6,486  7.49019147   Root MSE        =    1.9877
+
+(22,684 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    14,435
+-------------+----------------------------------   F(5, 14429)     =   9449.58
+       Model |  34929.6652         5  6985.93304   Prob > F        =    0.0000
+    Residual |  10667.1384    14,429  .739284665   R-squared       =    0.7661
+-------------+----------------------------------   Adj R-squared   =    0.7660
+       Total |  45596.8036    14,434  3.15898598   Root MSE        =    .85982
+
+(31,398 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    11,414
+-------------+----------------------------------   F(5, 11408)     =   3060.07
+       Model |  31480.9827         5  6296.19655   Prob > F        =    0.0000
+    Residual |  23472.3788    11,408  2.05753671   R-squared       =    0.5729
+-------------+----------------------------------   Adj R-squared   =    0.5727
+       Total |  54953.3616    11,413  4.81497955   Root MSE        =    1.4344
+
+(28,361 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =     8,675
+-------------+----------------------------------   F(5, 8669)      =   1337.28
+       Model |   27022.939         5  5404.58779   Prob > F        =    0.0000
+    Residual |  35035.6707     8,669  4.04148929   R-squared       =    0.4354
+-------------+----------------------------------   Adj R-squared   =    0.4351
+       Total |  62058.6097     8,674  7.15455495   Root MSE        =    2.0103
+
+(25,435 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    17,617
+-------------+----------------------------------   F(5, 17611)     =  10981.17
+       Model |  40195.8003         5  8039.16005   Prob > F        =    0.0000
+    Residual |  12892.7611    17,611   .73208569   R-squared       =    0.7571
+-------------+----------------------------------   Adj R-squared   =    0.7571
+       Total |  53088.5613    17,616  3.01365584   Root MSE        =    .85562
+
+(33,547 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    14,359
+-------------+----------------------------------   F(5, 14353)     =   3740.76
+       Model |  36212.3778         5  7242.47556   Prob > F        =    0.0000
+    Residual |  27788.7847    14,353  1.93609592   R-squared       =    0.5658
+-------------+----------------------------------   Adj R-squared   =    0.5657
+       Total |  64001.1625    14,358  4.45752629   Root MSE        =    1.3914
+
+(31,398 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    11,378
+-------------+----------------------------------   F(5, 11372)     =   1721.80
+       Model |  32366.6896         5  6473.33792   Prob > F        =    0.0000
+    Residual |  42754.5813    11,372  3.75963606   R-squared       =    0.4309
+-------------+----------------------------------   Adj R-squared   =    0.4306
+       Total |  75121.2708    11,377  6.60290681   Root MSE        =     1.939
+
+(28,361 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    20,955
+-------------+----------------------------------   F(5, 20949)     =  13160.31
+       Model |  45491.1166         5  9098.22331   Prob > F        =    0.0000
+    Residual |  14482.8465    20,949   .69133832   R-squared       =    0.7585
+-------------+----------------------------------   Adj R-squared   =    0.7585
+       Total |   59973.963    20,954  2.86217252   Root MSE        =    .83147
+
+(35,626 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    17,456
+-------------+----------------------------------   F(5, 17450)     =   4576.44
+       Model |  41248.3212         5  8249.66425   Prob > F        =    0.0000
+    Residual |  31456.0288    17,450  1.80263775   R-squared       =    0.5673
+-------------+----------------------------------   Adj R-squared   =    0.5672
+       Total |    72704.35    17,455  4.16524492   Root MSE        =    1.3426
+
+(33,547 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    14,269
+-------------+----------------------------------   F(5, 14263)     =   2211.94
+       Model |  37439.6611         5  7487.93222   Prob > F        =    0.0000
+    Residual |  48283.4922    14,263  3.38522696   R-squared       =    0.4368
+-------------+----------------------------------   Adj R-squared   =    0.4366
+       Total |  85723.1533    14,268  6.00807074   Root MSE        =    1.8399
+
+(31,398 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    23,077
+-------------+----------------------------------   F(5, 23071)     =  13971.38
+       Model |  48482.1941         5  9696.43881   Prob > F        =    0.0000
+    Residual |  16011.7677    23,071  .694021399   R-squared       =    0.7517
+-------------+----------------------------------   Adj R-squared   =    0.7517
+       Total |  64493.9618    23,076  2.79485014   Root MSE        =    .83308
+
+(37,564 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    20,664
+-------------+----------------------------------   F(5, 20658)     =   5469.24
+       Model |  47565.2044         5  9513.04087   Prob > F        =    0.0000
+    Residual |  35931.9228    20,658  1.73937084   R-squared       =    0.5697
+-------------+----------------------------------   Adj R-squared   =    0.5696
+       Total |  83497.1271    20,663   4.0409005   Root MSE        =    1.3189
+
+(35,626 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    17,237
+-------------+----------------------------------   F(5, 17231)     =   2743.41
+       Model |  43663.4052         5  8732.68104   Prob > F        =    0.0000
+    Residual |  54848.8769    17,231  3.18315112   R-squared       =    0.4432
+-------------+----------------------------------   Adj R-squared   =    0.4431
+       Total |  98512.2821    17,236   5.7154956   Root MSE        =    1.7841
+
+(33,547 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    25,857
+-------------+----------------------------------   F(5, 25851)     =  12440.68
+       Model |  55867.5591         5  11173.5118   Prob > F        =    0.0000
+    Residual |  23217.9064    25,851  .898143453   R-squared       =    0.7064
+-------------+----------------------------------   Adj R-squared   =    0.7064
+       Total |  79085.4656    25,856  3.05868911   Root MSE        =     .9477
+
+(39,728 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    22,673
+-------------+----------------------------------   F(5, 22667)     =   5115.00
+       Model |  51356.5462         5  10271.3092   Prob > F        =    0.0000
+    Residual |  45517.0948    22,667  2.00807759   R-squared       =    0.5301
+-------------+----------------------------------   Adj R-squared   =    0.5300
+       Total |  96873.6409    22,672  4.27283173   Root MSE        =    1.4171
+
+(37,564 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    20,335
+-------------+----------------------------------   F(5, 20329)     =   3037.83
+       Model |  51882.1158         5  10376.4232   Prob > F        =    0.0000
+    Residual |  69438.5934    20,329  3.41574073   R-squared       =    0.4276
+-------------+----------------------------------   Adj R-squared   =    0.4275
+       Total |  121320.709    20,334  5.96639664   Root MSE        =    1.8482
+
+(35,626 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    30,192
+-------------+----------------------------------   F(5, 30186)     =  14439.13
+       Model |  91046.5772         5  18209.3154   Prob > F        =    0.0000
+    Residual |  38067.8416    30,186  1.26110918   R-squared       =    0.7052
+-------------+----------------------------------   Adj R-squared   =    0.7051
+       Total |  129114.419    30,191  4.27658636   Root MSE        =     1.123
+
+(43,229 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    25,348
+-------------+----------------------------------   F(5, 25342)     =   5095.63
+       Model |  55330.3109         5  11066.0622   Prob > F        =    0.0000
+    Residual |  55034.5956    25,342  2.17167531   R-squared       =    0.5013
+-------------+----------------------------------   Adj R-squared   =    0.5012
+       Total |  110364.907    25,347  4.35416051   Root MSE        =    1.4737
+
+(39,728 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    22,238
+-------------+----------------------------------   F(5, 22232)     =   3048.64
+       Model |  53946.5428         5  10789.3086   Prob > F        =    0.0000
+    Residual |  78680.2277    22,232  3.53905306   R-squared       =    0.4068
+-------------+----------------------------------   Adj R-squared   =    0.4066
+       Total |  132626.771    22,237  5.96423845   Root MSE        =    1.8812
+
+(37,564 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    34,353
+-------------+----------------------------------   F(5, 34347)     =  21838.98
+       Model |  146176.703         5  29235.3406   Prob > F        =    0.0000
+    Residual |   45979.539    34,347    1.338677   R-squared       =    0.7607
+-------------+----------------------------------   Adj R-squared   =    0.7607
+       Total |  192156.242    34,352  5.59374248   Root MSE        =     1.157
+
+(46,692 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    29,576
+-------------+----------------------------------   F(5, 29570)     =   8075.24
+       Model |  97051.8109         5  19410.3622   Prob > F        =    0.0000
+    Residual |  71077.1025    29,570  2.40368964   R-squared       =    0.5772
+-------------+----------------------------------   Adj R-squared   =    0.5772
+       Total |  168128.913    29,575  5.68483224   Root MSE        =    1.5504
+
+(43,229 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    24,804
+-------------+----------------------------------   F(5, 24798)     =   3446.17
+       Model |  59447.1239         5  11889.4248   Prob > F        =    0.0000
+    Residual |  85554.0785    24,798  3.45003946   R-squared       =    0.4100
+-------------+----------------------------------   Adj R-squared   =    0.4099
+       Total |  145001.202    24,803  5.84611549   Root MSE        =    1.8574
+
+(39,728 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    37,903
+-------------+----------------------------------   F(5, 37897)     =  37054.35
+       Model |  299911.256         5  59982.2513   Prob > F        =    0.0000
+    Residual |  61346.2987    37,897  1.61876398   R-squared       =    0.8302
+-------------+----------------------------------   Adj R-squared   =    0.8302
+       Total |  361257.555    37,902  9.53135864   Root MSE        =    1.2723
+
+(49,948 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    33,600
+-------------+----------------------------------   F(5, 33594)     =  11738.95
+       Model |  154193.873         5  30838.7745   Prob > F        =    0.0000
+    Residual |  88252.9931    33,594  2.62704629   R-squared       =    0.6360
+-------------+----------------------------------   Adj R-squared   =    0.6359
+       Total |  242446.866    33,599  7.21589529   Root MSE        =    1.6208
+
+(46,692 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    28,891
+-------------+----------------------------------   F(5, 28885)     =   4996.87
+       Model |  91662.5141         5  18332.5028   Prob > F        =    0.0000
+    Residual |  105973.189    28,885  3.66879657   R-squared       =    0.4638
+-------------+----------------------------------   Adj R-squared   =    0.4637
+       Total |  197635.703    28,890  6.84097276   Root MSE        =    1.9154
+
+(43,229 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    41,053
+-------------+----------------------------------   F(5, 41047)     =  53242.40
+       Model |  720435.832         5  144087.166   Prob > F        =    0.0000
+    Residual |  111083.384    41,047  2.70624854   R-squared       =    0.8664
+-------------+----------------------------------   Adj R-squared   =    0.8664
+       Total |  831519.216    41,052  20.2552669   Root MSE        =    1.6451
+
+(53,026 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    36,873
+-------------+----------------------------------   F(5, 36867)     =  24751.05
+       Model |  428786.102         5  85757.2204   Prob > F        =    0.0000
+    Residual |  127736.477    36,867  3.46479174   R-squared       =    0.7705
+-------------+----------------------------------   Adj R-squared   =    0.7704
+       Total |  556522.579    36,872  15.0933657   Root MSE        =    1.8614
+
+(49,948 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    32,640
+-------------+----------------------------------   F(5, 32634)     =   9110.73
+       Model |  222771.414         5  44554.2829   Prob > F        =    0.0000
+    Residual |  159590.407    32,634  4.89031092   R-squared       =    0.5826
+-------------+----------------------------------   Adj R-squared   =    0.5826
+       Total |  382361.821    32,639  11.7148755   Root MSE        =    2.2114
+
+(46,692 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    43,412
+-------------+----------------------------------   F(5, 43406)     =  59812.19
+       Model |  2523934.98         5  504786.995   Prob > F        =    0.0000
+    Residual |  366326.418    43,406  8.43953413   R-squared       =    0.8733
+-------------+----------------------------------   Adj R-squared   =    0.8732
+       Total |   2890261.4    43,411  66.5790098   Root MSE        =    2.9051
+
+(55,802 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    39,684
+-------------+----------------------------------   F(5, 39678)     =  30995.82
+       Model |  1116945.94         5  223389.188   Prob > F        =    0.0000
+    Residual |  285962.301    39,678  7.20707448   R-squared       =    0.7962
+-------------+----------------------------------   Adj R-squared   =    0.7961
+       Total |  1402908.24    39,683  35.3528775   Root MSE        =    2.6846
+
+(53,026 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    35,586
+-------------+----------------------------------   F(5, 35580)     =  18475.08
+       Model |   653042.12         5  130608.424   Prob > F        =    0.0000
+    Residual |  251530.647    35,580  7.06943921   R-squared       =    0.7219
+-------------+----------------------------------   Adj R-squared   =    0.7219
+       Total |  904572.767    35,585  25.4200581   Root MSE        =    2.6588
+
+(49,948 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    45,387
+-------------+----------------------------------   F(5, 45381)     =  29644.64
+       Model |  3874938.96         5  774987.791   Prob > F        =    0.0000
+    Residual |  1186376.97    45,381   26.142592   R-squared       =    0.7656
+-------------+----------------------------------   Adj R-squared   =    0.7656
+       Total |  5061315.92    45,386  111.517118   Root MSE        =     5.113
+
+(58,541 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    41,715
+-------------+----------------------------------   F(5, 41709)     =  25238.84
+       Model |  1815162.33         5  363032.467   Prob > F        =    0.0000
+    Residual |  599937.313    41,709  14.3838815   R-squared       =    0.7516
+-------------+----------------------------------   Adj R-squared   =    0.7516
+       Total |  2415099.65    41,714  57.8966209   Root MSE        =    3.7926
+
+(55,802 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    38,053
+-------------+----------------------------------   F(5, 38047)     =  20747.43
+       Model |  1190821.95         5  238164.389   Prob > F        =    0.0000
+    Residual |  436749.937    38,047  11.4792214   R-squared       =    0.7317
+-------------+----------------------------------   Adj R-squared   =    0.7316
+       Total |  1627571.88    38,052  42.7723085   Root MSE        =    3.3881
+
+(53,026 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    47,168
+-------------+----------------------------------   F(5, 47162)     =  32187.51
+       Model |   5021606.8         5  1004321.36   Prob > F        =    0.0000
+    Residual |  1471558.51    47,162  31.2022074   R-squared       =    0.7734
+-------------+----------------------------------   Adj R-squared   =    0.7733
+       Total |  6493165.31    47,167  137.663309   Root MSE        =    5.5859
+
+(61,202 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    43,366
+-------------+----------------------------------   F(5, 43360)     =  21675.82
+       Model |  2930979.97         5  586195.994   Prob > F        =    0.0000
+    Residual |  1172618.28    43,360  27.0437795   R-squared       =    0.7142
+-------------+----------------------------------   Adj R-squared   =    0.7142
+       Total |  4103598.25    43,365   94.629269   Root MSE        =    5.2004
+
+(58,541 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    39,764
+-------------+----------------------------------   F(5, 39758)     =  19866.57
+       Model |  1927487.75         5  385497.551   Prob > F        =    0.0000
+    Residual |  771477.451    39,758  19.4043325   R-squared       =    0.7142
+-------------+----------------------------------   Adj R-squared   =    0.7141
+       Total |   2698965.2    39,763  67.8762971   Root MSE        =     4.405
+
+(55,802 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    48,759
+-------------+----------------------------------   F(5, 48753)     =  36288.92
+       Model |   6267954.2         5  1253590.84   Prob > F        =    0.0000
+    Residual |  1684158.98    48,753  34.5447251   R-squared       =    0.7882
+-------------+----------------------------------   Adj R-squared   =    0.7882
+       Total |  7952113.18    48,758  163.093506   Root MSE        =    5.8775
+
+(63,880 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    44,846
+-------------+----------------------------------   F(5, 44840)     =  23982.40
+       Model |  4083387.83         5  816677.566   Prob > F        =    0.0000
+    Residual |  1526945.54    44,840  34.0532012   R-squared       =    0.7278
+-------------+----------------------------------   Adj R-squared   =    0.7278
+       Total |  5610333.37    44,845  125.104992   Root MSE        =    5.8355
+
+(61,202 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    41,111
+-------------+----------------------------------   F(5, 41105)     =  13552.12
+       Model |  2436634.11         5  487326.822   Prob > F        =    0.0000
+    Residual |  1478113.43    41,105  35.9594557   R-squared       =    0.6224
+-------------+----------------------------------   Adj R-squared   =    0.6224
+       Total |  3914747.54    41,110  95.2261625   Root MSE        =    5.9966
+
+(58,541 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    51,010
+-------------+----------------------------------   F(5, 51004)     =  37267.31
+       Model |  7554832.58         5  1510966.52   Prob > F        =    0.0000
+    Residual |  2067907.05    51,004  40.5440172   R-squared       =    0.7851
+-------------+----------------------------------   Adj R-squared   =    0.7851
+       Total |  9622739.63    51,009  188.647878   Root MSE        =    6.3674
+
+(67,058 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    46,135
+-------------+----------------------------------   F(5, 46129)     =  27015.84
+       Model |  5284597.51         5   1056919.5   Prob > F        =    0.0000
+    Residual |   1804668.8    46,129  39.1222182   R-squared       =    0.7454
+-------------+----------------------------------   Adj R-squared   =    0.7454
+       Total |  7089266.31    46,134  153.666847   Root MSE        =    6.2548
+
+(63,880 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    42,339
+-------------+----------------------------------   F(5, 42333)     =  17362.74
+       Model |  3692882.69         5  738576.539   Prob > F        =    0.0000
+    Residual |  1800762.39    42,333  42.5380291   R-squared       =    0.6722
+-------------+----------------------------------   Adj R-squared   =    0.6722
+       Total |  5493645.08    42,338   129.75684   Root MSE        =    6.5221
+
+(61,202 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    52,863
+-------------+----------------------------------   F(5, 52857)     =  44315.80
+       Model |  13761788.3         5  2752357.66   Prob > F        =    0.0000
+    Residual |  3282832.72    52,857  62.1078139   R-squared       =    0.8074
+-------------+----------------------------------   Adj R-squared   =    0.8074
+       Total |    17044621    52,862  322.436174   Root MSE        =    7.8809
+
+(70,036 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    48,098
+-------------+----------------------------------   F(5, 48092)     =  20760.06
+       Model |  8864799.82         5  1772959.96   Prob > F        =    0.0000
+    Residual |  4107173.85    48,092  85.4024338   R-squared       =    0.6834
+-------------+----------------------------------   Adj R-squared   =    0.6833
+       Total |  12971973.7    48,097  269.704424   Root MSE        =    9.2413
+
+(67,058 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    43,390
+-------------+----------------------------------   F(5, 43384)     =  21701.60
+       Model |  5773294.12         5  1154658.82   Prob > F        =    0.0000
+    Residual |  2308296.09    43,384  53.2061611   R-squared       =    0.7144
+-------------+----------------------------------   Adj R-squared   =    0.7143
+       Total |  8081590.21    43,389  186.258965   Root MSE        =    7.2943
+
+(63,880 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    53,342
+-------------+----------------------------------   F(5, 53336)     =  74839.59
+       Model |  34126826.5         5  6825365.31   Prob > F        =    0.0000
+    Residual |  4864239.44    53,336  91.1999295   R-squared       =    0.8752
+-------------+----------------------------------   Adj R-squared   =    0.8752
+       Total |    38991066    53,341  730.977409   Root MSE        =    9.5499
+
+(71,699 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    49,554
+-------------+----------------------------------   F(5, 49548)     =  27996.58
+       Model |  13221094.4         5  2644218.87   Prob > F        =    0.0000
+    Residual |  4679705.88    49,548  94.4479269   R-squared       =    0.7386
+-------------+----------------------------------   Adj R-squared   =    0.7385
+       Total |  17900800.3    49,553   361.24554   Root MSE        =    9.7184
+
+(70,036 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    45,010
+-------------+----------------------------------   F(5, 45004)     =  23696.81
+       Model |  6888073.08         5  1377614.62   Prob > F        =    0.0000
+    Residual |   2616308.7    45,004  58.1350259   R-squared       =    0.7247
+-------------+----------------------------------   Adj R-squared   =    0.7247
+       Total |  9504381.78    45,009  211.166251   Root MSE        =    7.6246
+
+(67,058 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    54,049
+-------------+----------------------------------   F(5, 54043)     =  69308.22
+       Model |  96296741.6         5  19259348.3   Prob > F        =    0.0000
+    Residual |  15017453.4    54,043  277.879714   R-squared       =    0.8651
+-------------+----------------------------------   Adj R-squared   =    0.8651
+       Total |   111314195    54,048  2059.54328   Root MSE        =     16.67
+
+(73,534 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    49,625
+-------------+----------------------------------   F(5, 49619)     =  42800.49
+       Model |  36412188.9         5  7282437.77   Prob > F        =    0.0000
+    Residual |     8442597    49,619  170.148471   R-squared       =    0.8118
+-------------+----------------------------------   Adj R-squared   =    0.8118
+       Total |  44854785.9    49,624  903.892993   Root MSE        =    13.044
+
+(71,699 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    46,139
+-------------+----------------------------------   F(5, 46133)     =  27008.26
+       Model |  9393226.24         5  1878645.25   Prob > F        =    0.0000
+    Residual |  3208927.23    46,133  69.5581738   R-squared       =    0.7454
+-------------+----------------------------------   Adj R-squared   =    0.7453
+       Total |  12602153.5    46,138  273.140437   Root MSE        =    8.3402
+
+(70,036 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    54,999
+-------------+----------------------------------   F(5, 54993)     =  46489.21
+       Model |   113683271         5  22736654.2   Prob > F        =    0.0000
+    Residual |  26895635.7    54,993  489.073805   R-squared       =    0.8087
+-------------+----------------------------------   Adj R-squared   =    0.8087
+       Total |   140578907    54,998  2556.07307   Root MSE        =    22.115
+
+(75,794 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    49,981
+-------------+----------------------------------   F(5, 49975)     =  37103.93
+       Model |  57301813.4         5  11460362.7   Prob > F        =    0.0000
+    Residual |  15435873.2    49,975    308.8719   R-squared       =    0.7878
+-------------+----------------------------------   Adj R-squared   =    0.7878
+       Total |  72737686.6    49,980  1455.33587   Root MSE        =    17.575
+
+(73,534 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    45,954
+-------------+----------------------------------   F(5, 45948)     =  42186.31
+       Model |  21000677.6         5  4200135.52   Prob > F        =    0.0000
+    Residual |  4574655.06    45,948  99.5615709   R-squared       =    0.8211
+-------------+----------------------------------   Adj R-squared   =    0.8211
+       Total |  25575332.7    45,953  556.554146   Root MSE        =    9.9781
+
+(71,699 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    56,048
+-------------+----------------------------------   F(5, 56042)     =  31881.50
+       Model |   347604558         5  69520911.6   Prob > F        =    0.0000
+    Residual |   122205400    56,042  2180.60384   R-squared       =    0.7399
+-------------+----------------------------------   Adj R-squared   =    0.7399
+       Total |   469809958    56,047  8382.42829   Root MSE        =    46.697
+
+(78,240 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    50,660
+-------------+----------------------------------   F(5, 50654)     =  42647.05
+       Model |   165602084         5  33120416.7   Prob > F        =    0.0000
+    Residual |  39338744.3    50,654  776.616739   R-squared       =    0.8080
+-------------+----------------------------------   Adj R-squared   =    0.8080
+       Total |   204940828    50,659  4045.49691   Root MSE        =    27.868
+
+(75,794 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    46,113
+-------------+----------------------------------   F(5, 46107)     =  54661.02
+       Model |   161860711         5  32372142.1   Prob > F        =    0.0000
+    Residual |  27306156.3    46,107  592.234504   R-squared       =    0.8557
+-------------+----------------------------------   Adj R-squared   =    0.8556
+       Total |   189166867    46,112   4102.3349   Root MSE        =    24.336
+
+(73,534 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    57,071
+-------------+----------------------------------   F(5, 57065)     =  16935.19
+       Model |   331098492         5  66219698.4   Prob > F        =    0.0000
+    Residual |   223134556    57,065  3910.18235   R-squared       =    0.5974
+-------------+----------------------------------   Adj R-squared   =    0.5974
+       Total |   554233048    57,070  9711.46045   Root MSE        =    62.531
+
+(80,814 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    51,449
+-------------+----------------------------------   F(5, 51443)     =  43060.30
+       Model |   216119821         5  43223964.1   Prob > F        =    0.0000
+    Residual |  51638521.3    51,443  1003.80074   R-squared       =    0.8071
+-------------+----------------------------------   Adj R-squared   =    0.8071
+       Total |   267758342    51,448  5204.44608   Root MSE        =    31.683
+
+(78,240 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    46,581
+-------------+----------------------------------   F(5, 46575)     =  30667.56
+       Model |   174096257         5  34819251.5   Prob > F        =    0.0000
+    Residual |  52880193.4    46,575  1135.37721   R-squared       =    0.7670
+-------------+----------------------------------   Adj R-squared   =    0.7670
+       Total |   226976451    46,580  4872.83063   Root MSE        =    33.695
+
+(75,794 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    58,139
+-------------+----------------------------------   F(5, 58133)     =  18038.51
+       Model |   384731846         5  76946369.2   Prob > F        =    0.0000
+    Residual |   247976385    58,133  4265.67328   R-squared       =    0.6081
+-------------+----------------------------------   Adj R-squared   =    0.6080
+       Total |   632708231    58,138  10882.8689   Root MSE        =    65.312
+
+(83,271 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    52,355
+-------------+----------------------------------   F(5, 52349)     =  17995.64
+       Model |   214905191         5  42981038.3   Prob > F        =    0.0000
+    Residual |   125031089    52,349  2388.41409   R-squared       =    0.6322
+-------------+----------------------------------   Adj R-squared   =    0.6322
+       Total |   339936281    52,354  6493.03359   Root MSE        =    48.871
+
+(80,814 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    47,305
+-------------+----------------------------------   F(5, 47299)     =  26464.87
+       Model |   206976883         5  41395376.5   Prob > F        =    0.0000
+    Residual |    73983367    47,299  1564.16345   R-squared       =    0.7367
+-------------+----------------------------------   Adj R-squared   =    0.7366
+       Total |   280960250    47,304  5939.46071   Root MSE        =     39.55
+
+(78,240 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    59,262
+-------------+----------------------------------   F(5, 59256)     =  19405.06
+       Model |   431716326         5  86343265.2   Prob > F        =    0.0000
+    Residual |   263660912    59,256  4449.52262   R-squared       =    0.6208
+-------------+----------------------------------   Adj R-squared   =    0.6208
+       Total |   695377238    59,261  11734.1462   Root MSE        =    66.705
+
+(85,963 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    53,400
+-------------+----------------------------------   F(5, 53394)     =  19595.74
+       Model |   256592445         5  51318488.9   Prob > F        =    0.0000
+    Residual |   139831350    53,394  2618.85887   R-squared       =    0.6473
+-------------+----------------------------------   Adj R-squared   =    0.6472
+       Total |   396423795    53,399   7423.8056   Root MSE        =    51.175
+
+(83,271 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    48,233
+-------------+----------------------------------   F(5, 48227)     =  16581.90
+       Model |   234056412         5  46811282.4   Prob > F        =    0.0000
+    Residual |   136146519    48,227  2823.03521   R-squared       =    0.6322
+-------------+----------------------------------   Adj R-squared   =    0.6322
+       Total |   370202931    48,232  7675.46299   Root MSE        =    53.132
+
+(80,814 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    60,685
+-------------+----------------------------------   F(5, 60679)     =  20655.90
+       Model |   476416769         5  95283353.7   Prob > F        =    0.0000
+    Residual |   279905447    60,679  4612.88826   R-squared       =    0.6299
+-------------+----------------------------------   Adj R-squared   =    0.6299
+       Total |   756322215    60,684  12463.2888   Root MSE        =    67.918
+
+(88,881 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    54,651
+-------------+----------------------------------   F(5, 54645)     =  19383.67
+       Model |   307719771         5  61543954.2   Prob > F        =    0.0000
+    Residual |   173500097    54,645  3175.04066   R-squared       =    0.6395
+-------------+----------------------------------   Adj R-squared   =    0.6394
+       Total |   481219868    54,650  8805.48707   Root MSE        =    56.347
+
+(85,963 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    49,424
+-------------+----------------------------------   F(5, 49418)     =  17416.38
+       Model |   341455057         5  68291011.5   Prob > F        =    0.0000
+    Residual |   193771855    49,418  3921.07845   R-squared       =    0.6380
+-------------+----------------------------------   Adj R-squared   =    0.6379
+       Total |   535226912    49,423  10829.5108   Root MSE        =    62.619
+
+(83,271 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    61,940
+-------------+----------------------------------   F(5, 61934)     =  19660.04
+       Model |   465049772         5  93009954.4   Prob > F        =    0.0000
+    Residual |   293004443    61,934  4730.91424   R-squared       =    0.6135
+-------------+----------------------------------   Adj R-squared   =    0.6134
+       Total |   758054215    61,939  12238.7222   Root MSE        =    68.782
+
+(91,886 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    56,276
+-------------+----------------------------------   F(5, 56270)     =  18776.74
+       Model |   301466610         5    60293322   Prob > F        =    0.0000
+    Residual |   180686597    56,270  3211.06445   R-squared       =    0.6253
+-------------+----------------------------------   Adj R-squared   =    0.6252
+       Total |   482153207    56,275  8567.80465   Root MSE        =    56.666
+
+(88,881 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    50,863
+-------------+----------------------------------   F(5, 50857)     =  16247.87
+       Model |   331658871         5  66331774.2   Prob > F        =    0.0000
+    Residual |   207623195    50,857  4082.49002   R-squared       =    0.6150
+-------------+----------------------------------   Adj R-squared   =    0.6150
+       Total |   539282066    50,862  10602.8482   Root MSE        =    63.894
+
+(85,963 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    64,785
+-------------+----------------------------------   F(5, 64779)     =  20460.28
+       Model |   461177131         5  92235426.1   Prob > F        =    0.0000
+    Residual |   292025217    64,779  4508.02292   R-squared       =    0.6123
+-------------+----------------------------------   Adj R-squared   =    0.6123
+       Total |   753202347    64,784  11626.3637   Root MSE        =    67.142
+
+(95,393 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    57,540
+-------------+----------------------------------   F(5, 57534)     =  20000.06
+       Model |   317914500         5  63582900.1   Prob > F        =    0.0000
+    Residual |   182908403    57,534  3179.13586   R-squared       =    0.6348
+-------------+----------------------------------   Adj R-squared   =    0.6348
+       Total |   500822903    57,539  8704.05991   Root MSE        =    56.384
+
+(91,886 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    52,479
+-------------+----------------------------------   F(5, 52473)     =  16238.63
+       Model |   329044229         5  65808845.7   Prob > F        =    0.0000
+    Residual |   212652683    52,473   4052.6115   R-squared       =    0.6074
+-------------+----------------------------------   Adj R-squared   =    0.6074
+       Total |   541696912    52,478   10322.362   Root MSE        =     63.66
+
+(88,881 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    67,822
+-------------+----------------------------------   F(5, 67816)     =  20924.65
+       Model |   444665407         5  88933081.5   Prob > F        =    0.0000
+    Residual |   288228749    67,816   4250.1585   R-squared       =    0.6067
+-------------+----------------------------------   Adj R-squared   =    0.6067
+       Total |   732894156    67,821  10806.3012   Root MSE        =    65.193
+
+(99,032 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    60,279
+-------------+----------------------------------   F(5, 60273)     =  20858.46
+       Model |   315746379         5  63149275.9   Prob > F        =    0.0000
+    Residual |   182477298    60,273  3027.51312   R-squared       =    0.6337
+-------------+----------------------------------   Adj R-squared   =    0.6337
+       Total |   498223678    60,278  8265.43146   Root MSE        =    55.023
+
+(95,393 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    53,779
+-------------+----------------------------------   F(5, 53773)     =  16413.55
+       Model |   332025450         5  66405089.9   Prob > F        =    0.0000
+    Residual |   217552053    53,773  4045.74886   R-squared       =    0.6041
+-------------+----------------------------------   Adj R-squared   =    0.6041
+       Total |   549577503    53,778  10219.3741   Root MSE        =    63.606
+
+(91,886 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    71,410
+-------------+----------------------------------   F(5, 71404)     =  20256.36
+       Model |   399922281         5  79984456.2   Prob > F        =    0.0000
+    Residual |   281946549    71,404  3948.61001   R-squared       =    0.5865
+-------------+----------------------------------   Adj R-squared   =    0.5865
+       Total |   681868830    71,409  9548.77998   Root MSE        =    62.838
+
+(102,934 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    63,239
+-------------+----------------------------------   F(5, 63233)     =  21794.06
+       Model |   299116536         5  59823307.1   Prob > F        =    0.0000
+    Residual |   173570591    63,233  2744.93683   R-squared       =    0.6328
+-------------+----------------------------------   Adj R-squared   =    0.6328
+       Total |   472687126    63,238  7474.73238   Root MSE        =    52.392
+
+(99,032 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    56,434
+-------------+----------------------------------   F(5, 56428)     =  17101.52
+       Model |   332199430         5  66439886.1   Prob > F        =    0.0000
+    Residual |   219224417    56,428    3885.029   R-squared       =    0.6024
+-------------+----------------------------------   Adj R-squared   =    0.6024
+       Total |   551423847    56,433  9771.30131   Root MSE        =     62.33
+
+(95,393 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    74,827
+-------------+----------------------------------   F(5, 74821)     =  20530.47
+       Model |   378738041         5  75747608.2   Prob > F        =    0.0000
+    Residual |   276053706    74,821  3689.52173   R-squared       =    0.5784
+-------------+----------------------------------   Adj R-squared   =    0.5784
+       Total |   654791747    74,826  8750.85861   Root MSE        =    60.741
+
+(106,557 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    66,606
+-------------+----------------------------------   F(5, 66600)     =  19944.47
+       Model |   288212711         5  57642542.2   Prob > F        =    0.0000
+    Residual |   192484068    66,600  2890.15117   R-squared       =    0.5996
+-------------+----------------------------------   Adj R-squared   =    0.5995
+       Total |   480696779    66,605  7217.12752   Root MSE        =     53.76
+
+(102,934 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    59,158
+-------------+----------------------------------   F(5, 59152)     =  17544.43
+       Model |   322607155         5  64521430.9   Prob > F        =    0.0000
+    Residual |   217537529    59,152  3677.60227   R-squared       =    0.5973
+-------------+----------------------------------   Adj R-squared   =    0.5972
+       Total |   540144684    59,157   9130.6977   Root MSE        =    60.643
+
+(99,032 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    77,941
+-------------+----------------------------------   F(5, 77935)     =  28640.32
+       Model |   211052287         5  42210457.4   Prob > F        =    0.0000
+    Residual |   114861556    77,935  1473.81223   R-squared       =    0.6476
+-------------+----------------------------------   Adj R-squared   =    0.6475
+       Total |   325913843    77,940  4181.59922   Root MSE        =     38.39
+
+(109,774 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    69,700
+-------------+----------------------------------   F(5, 69694)     =  21218.34
+       Model |   211120649         5  42224129.7   Prob > F        =    0.0000
+    Residual |   138689859    69,694  1989.98277   R-squared       =    0.6035
+-------------+----------------------------------   Adj R-squared   =    0.6035
+       Total |   349810508    69,699  5018.87412   Root MSE        =    44.609
+
+(106,557 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    62,165
+-------------+----------------------------------   F(5, 62159)     =  19817.87
+       Model |   243073793         5  48614758.5   Prob > F        =    0.0000
+    Residual |   152480817    62,159  2453.07705   R-squared       =    0.6145
+-------------+----------------------------------   Adj R-squared   =    0.6145
+       Total |   395554609    62,164  6363.08167   Root MSE        =    49.529
+
+(102,934 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    81,614
+-------------+----------------------------------   F(5, 81608)     =  38076.97
+       Model |   167934356         5  33586871.3   Prob > F        =    0.0000
+    Residual |  71984645.9    81,608    882.0783   R-squared       =    0.7000
+-------------+----------------------------------   Adj R-squared   =    0.6999
+       Total |   239919002    81,613  2939.71551   Root MSE        =      29.7
+
+(112,980 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    72,470
+-------------+----------------------------------   F(5, 72464)     =  19587.16
+       Model |   165111016         5  33022203.3   Prob > F        =    0.0000
+    Residual |   122167854    72,464    1685.911   R-squared       =    0.5747
+-------------+----------------------------------   Adj R-squared   =    0.5747
+       Total |   287278871    72,469   3964.1622   Root MSE        =     41.06
+
+(109,774 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    64,910
+-------------+----------------------------------   F(5, 64904)     =  19443.71
+       Model |   215231060         5    43046212   Prob > F        =    0.0000
+    Residual |   143690263    64,904  2213.88918   R-squared       =    0.5997
+-------------+----------------------------------   Adj R-squared   =    0.5996
+       Total |   358921323    64,909  5529.60796   Root MSE        =    47.052
+
+(106,557 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    85,445
+-------------+----------------------------------   F(5, 85439)     =  37903.20
+       Model |   110638597         5  22127719.5   Prob > F        =    0.0000
+    Residual |  49878902.7    85,439  583.795488   R-squared       =    0.6893
+-------------+----------------------------------   Adj R-squared   =    0.6892
+       Total |   160517500    85,444  1878.62811   Root MSE        =    24.162
+
+(116,156 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    75,585
+-------------+----------------------------------   F(5, 75579)     =  22502.96
+       Model |   128482982         5  25696596.4   Prob > F        =    0.0000
+    Residual |  86305233.4    75,579  1141.92082   R-squared       =    0.5982
+-------------+----------------------------------   Adj R-squared   =    0.5982
+       Total |   214788215    75,584  2841.71538   Root MSE        =    33.792
+
+(112,980 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    67,201
+-------------+----------------------------------   F(5, 67195)     =  18168.97
+       Model |   175673593         5  35134718.6   Prob > F        =    0.0000
+    Residual |   129940064    67,195  1933.77579   R-squared       =    0.5748
+-------------+----------------------------------   Adj R-squared   =    0.5748
+       Total |   305613658    67,200  4547.82228   Root MSE        =    43.975
+
+(109,774 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    88,947
+-------------+----------------------------------   F(5, 88941)     =  30275.79
+       Model |  61255174.8         5    12251035   Prob > F        =    0.0000
+    Residual |  35989787.1    88,941   404.64788   R-squared       =    0.6299
+-------------+----------------------------------   Adj R-squared   =    0.6299
+       Total |  97244961.9    88,946  1093.30337   Root MSE        =    20.116
+
+(118,702 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    78,823
+-------------+----------------------------------   F(5, 78817)     =  20333.44
+       Model |  88500153.7         5  17700030.7   Prob > F        =    0.0000
+    Residual |  68609297.8    78,817  870.488572   R-squared       =    0.5633
+-------------+----------------------------------   Adj R-squared   =    0.5633
+       Total |   157109451    78,822  1993.21828   Root MSE        =    29.504
+
+(116,156 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    69,783
+-------------+----------------------------------   F(5, 69777)     =  19671.80
+       Model |   126163233         5  25232646.7   Prob > F        =    0.0000
+    Residual |  89501659.2    69,777  1282.68139   R-squared       =    0.5850
+-------------+----------------------------------   Adj R-squared   =    0.5850
+       Total |   215664892    69,782   3090.5519   Root MSE        =    35.815
+
+(112,980 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    91,858
+-------------+----------------------------------   F(5, 91852)     =  18211.42
+       Model |  18896286.3         5  3779257.26   Prob > F        =    0.0000
+    Residual |  19061241.6    91,852  207.521247   R-squared       =    0.4978
+-------------+----------------------------------   Adj R-squared   =    0.4978
+       Total |  37957527.9    91,857  413.224119   Root MSE        =    14.406
+
+(120,317 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    81,705
+-------------+----------------------------------   F(5, 81699)     =  14783.59
+       Model |  34613760.8         5  6922752.15   Prob > F        =    0.0000
+    Residual |  38257402.2    81,699  468.272589   R-squared       =    0.4750
+-------------+----------------------------------   Adj R-squared   =    0.4750
+       Total |    72871163    81,704  891.892233   Root MSE        =     21.64
+
+(118,702 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    72,459
+-------------+----------------------------------   F(5, 72453)     =  14273.11
+       Model |  24525684.9         5  4905136.98   Prob > F        =    0.0000
+    Residual |  24899398.6    72,453  343.662768   R-squared       =    0.4962
+-------------+----------------------------------   Adj R-squared   =    0.4962
+       Total |  49425083.5    72,458  682.120449   Root MSE        =    18.538
+
+(116,156 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    93,922
+-------------+----------------------------------   F(5, 93916)     =  59278.58
+       Model |  66733995.7         5  13346799.1   Prob > F        =    0.0000
+    Residual |  21145548.1    93,916   225.15384   R-squared       =    0.7594
+-------------+----------------------------------   Adj R-squared   =    0.7594
+       Total |  87879543.8    93,921  935.675129   Root MSE        =    15.005
+
+(120,903 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    84,106
+-------------+----------------------------------   F(5, 84100)     =  30901.49
+       Model |  48146156.2         5  9629231.24   Prob > F        =    0.0000
+    Residual |  26206447.8    84,100  311.610556   R-squared       =    0.6475
+-------------+----------------------------------   Adj R-squared   =    0.6475
+       Total |    74352604    84,105  884.044991   Root MSE        =    17.652
+
+(120,317 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    74,833
+-------------+----------------------------------   F(5, 74827)     =  15635.41
+       Model |  23851021.8         5  4770204.35   Prob > F        =    0.0000
+    Residual |  22828958.9    74,827  305.089859   R-squared       =    0.5109
+-------------+----------------------------------   Adj R-squared   =    0.5109
+       Total |  46679980.6    74,832  623.797047   Root MSE        =    17.467
+
+(118,702 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    94,324
+-------------+----------------------------------   F(5, 94318)     =  57283.99
+       Model |   356923864         5  71384772.8   Prob > F        =    0.0000
+    Residual |   117534910    94,318  1246.15566   R-squared       =    0.7523
+-------------+----------------------------------   Adj R-squared   =    0.7523
+       Total |   474458774    94,323  5030.14931   Root MSE        =    35.301
+
+(120,492 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    85,877
+-------------+----------------------------------   F(5, 85871)     =  39394.77
+       Model |  80595772.7         5  16119154.5   Prob > F        =    0.0000
+    Residual |  35135829.5    85,871  409.169911   R-squared       =    0.6964
+-------------+----------------------------------   Adj R-squared   =    0.6964
+       Total |   115731602    85,876  1347.65944   Root MSE        =    20.228
+
+(120,903 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    76,964
+-------------+----------------------------------   F(5, 76958)     =  18772.74
+       Model |  27780553.3         5  5556110.67   Prob > F        =    0.0000
+    Residual |  22777030.6    76,958  295.967029   R-squared       =    0.5495
+-------------+----------------------------------   Adj R-squared   =    0.5495
+       Total |  50557583.9    76,963  656.907656   Root MSE        =    17.204
+
+(120,317 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    94,029
+-------------+----------------------------------   F(5, 94023)     =  34516.62
+       Model |   316612051         5  63322410.2   Prob > F        =    0.0000
+    Residual |   172489759    94,023  1834.54856   R-squared       =    0.6473
+-------------+----------------------------------   Adj R-squared   =    0.6473
+       Total |   489101810    94,028  5201.66132   Root MSE        =    42.832
+
+(119,520 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    86,215
+-------------+----------------------------------   F(5, 86209)     =  54021.72
+       Model |   209166627         5  41833325.3   Prob > F        =    0.0000
+    Residual |  66758502.2    86,209   774.37973   R-squared       =    0.7581
+-------------+----------------------------------   Adj R-squared   =    0.7580
+       Total |   275925129    86,214  3200.46777   Root MSE        =    27.828
+
+(120,492 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    78,518
+-------------+----------------------------------   F(5, 78512)     =  44120.21
+       Model |  48100231.4         5  9620046.27   Prob > F        =    0.0000
+    Residual |    17118891    78,512  218.041713   R-squared       =    0.7375
+-------------+----------------------------------   Adj R-squared   =    0.7375
+       Total |  65219122.4    78,517  830.636962   Root MSE        =    14.766
+
+(120,903 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    92,725
+-------------+----------------------------------   F(5, 92719)     =  33537.68
+       Model |   311103906         5  62220781.3   Prob > F        =    0.0000
+    Residual |   172016945    92,719  1855.25021   R-squared       =    0.6439
+-------------+----------------------------------   Adj R-squared   =    0.6439
+       Total |   483120851    92,724  5210.31072   Root MSE        =    43.073
+
+(117,896 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    85,805
+-------------+----------------------------------   F(5, 85799)     =  44297.98
+       Model |   215561331         5  43112266.1   Prob > F        =    0.0000
+    Residual |    83502430    85,799  973.233138   R-squared       =    0.7208
+-------------+----------------------------------   Adj R-squared   =    0.7208
+       Total |   299063761    85,804  3485.42912   Root MSE        =    31.197
+
+(119,520 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    78,716
+-------------+----------------------------------   F(5, 78710)     =  54809.00
+       Model |   168985311         5  33797062.1   Prob > F        =    0.0000
+    Residual |  48535214.6    78,710  616.633396   R-squared       =    0.7769
+-------------+----------------------------------   Adj R-squared   =    0.7769
+       Total |   217520525    78,715  2763.39358   Root MSE        =    24.832
+
+(120,492 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    91,098
+-------------+----------------------------------   F(5, 91092)     =  31132.36
+       Model |   305177554         5  61035510.8   Prob > F        =    0.0000
+    Residual |   178587379    91,092  1960.51661   R-squared       =    0.6308
+-------------+----------------------------------   Adj R-squared   =    0.6308
+       Total |   483764933    91,097  5310.43758   Root MSE        =    44.278
+
+(116,133 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    84,476
+-------------+----------------------------------   F(5, 84470)     =  46103.45
+       Model |   196865083         5  39373016.6   Prob > F        =    0.0000
+    Residual |  72138604.8    84,470    854.0145   R-squared       =    0.7318
+-------------+----------------------------------   Adj R-squared   =    0.7318
+       Total |   269003688    84,475  3184.41773   Root MSE        =    29.224
+
+(117,896 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    78,262
+-------------+----------------------------------   F(5, 78256)     =  34705.52
+       Model |   153225562         5  30645112.4   Prob > F        =    0.0000
+    Residual |  69100361.3    78,256  883.004003   R-squared       =    0.6892
+-------------+----------------------------------   Adj R-squared   =    0.6892
+       Total |   222325924    78,261  2840.82651   Root MSE        =    29.715
+
+(119,520 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    89,539
+-------------+----------------------------------   F(5, 89533)     =  30169.96
+       Model |   303474766         5  60694953.2   Prob > F        =    0.0000
+    Residual |   180119592    89,533  2011.76764   R-squared       =    0.6275
+-------------+----------------------------------   Adj R-squared   =    0.6275
+       Total |   483594358    89,538  5400.99576   Root MSE        =    44.853
+
+(114,570 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    83,013
+-------------+----------------------------------   F(5, 83007)     =  42129.16
+       Model |   193725393         5  38745078.6   Prob > F        =    0.0000
+    Residual |    76339357    83,007  919.673726   R-squared       =    0.7173
+-------------+----------------------------------   Adj R-squared   =    0.7173
+       Total |   270064750    83,012  3253.32181   Root MSE        =    30.326
+
+(116,133 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    77,150
+-------------+----------------------------------   F(5, 77144)     =  33995.05
+       Model |   144422556         5  28884511.3   Prob > F        =    0.0000
+    Residual |  65546793.1    77,144  849.668064   R-squared       =    0.6878
+-------------+----------------------------------   Adj R-squared   =    0.6878
+       Total |   209969350    77,149  2721.60818   Root MSE        =    29.149
+
+(117,896 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    87,537
+-------------+----------------------------------   F(5, 87531)     =  29249.77
+       Model |   302333423         5  60466684.5   Prob > F        =    0.0000
+    Residual |   180948764    87,531  2067.25347   R-squared       =    0.6256
+-------------+----------------------------------   Adj R-squared   =    0.6256
+       Total |   483282186    87,536  5520.95351   Root MSE        =    45.467
+
+(112,716 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    81,803
+-------------+----------------------------------   F(5, 81797)     =  40840.14
+       Model |   192348628         5  38469725.7   Prob > F        =    0.0000
+    Residual |  77049403.3    81,797  941.958792   R-squared       =    0.7140
+-------------+----------------------------------   Adj R-squared   =    0.7140
+       Total |   269398032    81,802  3293.29395   Root MSE        =    30.691
+
+(114,570 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    76,041
+-------------+----------------------------------   F(5, 76035)     =  31550.25
+       Model |   141766917         5  28353383.4   Prob > F        =    0.0000
+    Residual |  68330672.6    76,035  898.673935   R-squared       =    0.6748
+-------------+----------------------------------   Adj R-squared   =    0.6747
+       Total |   210097590    76,040  2762.98777   Root MSE        =    29.978
+
+(116,133 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    85,326
+-------------+----------------------------------   F(5, 85320)     =  28453.11
+       Model |   301553173         5  60310634.6   Prob > F        =    0.0000
+    Residual |   180848551    85,320  2119.65015   R-squared       =    0.6251
+-------------+----------------------------------   Adj R-squared   =    0.6251
+       Total |   482401724    85,325  5653.69732   Root MSE        =     46.04
+
+(110,820 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    80,201
+-------------+----------------------------------   F(5, 80195)     =  40016.24
+       Model |   192318341         5  38463668.1   Prob > F        =    0.0000
+    Residual |  77083552.3    80,195  961.201475   R-squared       =    0.7139
+-------------+----------------------------------   Adj R-squared   =    0.7139
+       Total |   269401893    80,200  3359.12585   Root MSE        =    31.003
+
+(112,716 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    75,178
+-------------+----------------------------------   F(5, 75172)     =  31125.36
+       Model |   141323014         5  28264602.7   Prob > F        =    0.0000
+    Residual |    68262872    75,172  908.089076   R-squared       =    0.6743
+-------------+----------------------------------   Adj R-squared   =    0.6743
+       Total |   209585886    75,177  2787.89903   Root MSE        =    30.135
+
+(114,570 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    83,383
+-------------+----------------------------------   F(5, 83377)     =  29027.14
+       Model |   305827516         5  61165503.1   Prob > F        =    0.0000
+    Residual |   175690621    83,377  2107.18329   R-squared       =    0.6351
+-------------+----------------------------------   Adj R-squared   =    0.6351
+       Total |   481518137    83,382  5774.84513   Root MSE        =    45.904
+
+(109,581 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    78,369
+-------------+----------------------------------   F(5, 78363)     =  39261.38
+       Model |   192818572         5  38563714.3   Prob > F        =    0.0000
+    Residual |  76970508.1    78,363  982.230238   R-squared       =    0.7147
+-------------+----------------------------------   Adj R-squared   =    0.7147
+       Total |   269789080    78,368  3442.59238   Root MSE        =    31.341
+
+(110,820 real changes made)
+
+      Source |       SS           df       MS      Number of obs   =    73,921
+-------------+----------------------------------   F(5, 73915)     =  30679.82
+       Model |   141822194         5  28364438.7   Prob > F        =    0.0000
+    Residual |  68336691.2    73,915  924.530761   R-squared       =    0.6748
+-------------+----------------------------------   Adj R-squared   =    0.6748
+       Total |   210158885    73,920  2843.05851   Root MSE        =    30.406
+
+(112,716 real changes made)
+
+. display "RI native grouped rank coverage: groups checked=" `nchecked' " full 
+> rank with residual df=" `nfull' " rank/df failures=" `nrank' " empty groups="
+>  `nempty'
+RI native grouped rank coverage: groups checked=132 full rank with residual df=
+> 131 rank/df failures=1 empty groups=0
+
+. bysort fityear horizon: gen byte cc_tag=(_n==1)
+
+. format n_cc %9.0f
+
+. list fityear horizon n_cc rankok if cc_tag, noobs sepby(horizon)
+
+  +------------------------------------+
+  | fityear   horizon    n_cc   rankok |
+  |------------------------------------|
+  |    1969         1    8681        1 |
+  |------------------------------------|
+  |    1969         2    6487        1 |
+  |------------------------------------|
+  |    1969         3    4575        0 |
+  |------------------------------------|
+  |    1970         1   11442        1 |
+  |------------------------------------|
+  |    1970         2    8673        1 |
+  |------------------------------------|
+  |    1970         3    6487        1 |
+  |------------------------------------|
+  |    1971         1   14435        1 |
+  |------------------------------------|
+  |    1971         2   11414        1 |
+  |------------------------------------|
+  |    1971         3    8675        1 |
+  |------------------------------------|
+  |    1972         1   17617        1 |
+  |------------------------------------|
+  |    1972         2   14359        1 |
+  |------------------------------------|
+  |    1972         3   11378        1 |
+  |------------------------------------|
+  |    1973         1   20955        1 |
+  |------------------------------------|
+  |    1973         2   17456        1 |
+  |------------------------------------|
+  |    1973         3   14269        1 |
+  |------------------------------------|
+  |    1974         1   23077        1 |
+  |------------------------------------|
+  |    1974         2   20664        1 |
+  |------------------------------------|
+  |    1974         3   17237        1 |
+  |------------------------------------|
+  |    1975         1   25857        1 |
+  |------------------------------------|
+  |    1975         2   22673        1 |
+  |------------------------------------|
+  |    1975         3   20335        1 |
+  |------------------------------------|
+  |    1976         1   30192        1 |
+  |------------------------------------|
+  |    1976         2   25348        1 |
+  |------------------------------------|
+  |    1976         3   22238        1 |
+  |------------------------------------|
+  |    1977         1   34353        1 |
+  |------------------------------------|
+  |    1977         2   29576        1 |
+  |------------------------------------|
+  |    1977         3   24804        1 |
+  |------------------------------------|
+  |    1978         1   37903        1 |
+  |------------------------------------|
+  |    1978         2   33600        1 |
+  |------------------------------------|
+  |    1978         3   28891        1 |
+  |------------------------------------|
+  |    1979         1   41053        1 |
+  |------------------------------------|
+  |    1979         2   36873        1 |
+  |------------------------------------|
+  |    1979         3   32640        1 |
+  |------------------------------------|
+  |    1980         1   43412        1 |
+  |------------------------------------|
+  |    1980         2   39684        1 |
+  |------------------------------------|
+  |    1980         3   35586        1 |
+  |------------------------------------|
+  |    1981         1   45387        1 |
+  |------------------------------------|
+  |    1981         2   41715        1 |
+  |------------------------------------|
+  |    1981         3   38053        1 |
+  |------------------------------------|
+  |    1982         1   47168        1 |
+  |------------------------------------|
+  |    1982         2   43366        1 |
+  |------------------------------------|
+  |    1982         3   39764        1 |
+  |------------------------------------|
+  |    1983         1   48759        1 |
+  |------------------------------------|
+  |    1983         2   44846        1 |
+  |------------------------------------|
+  |    1983         3   41111        1 |
+  |------------------------------------|
+  |    1984         1   51010        1 |
+  |------------------------------------|
+  |    1984         2   46135        1 |
+  |------------------------------------|
+  |    1984         3   42339        1 |
+  |------------------------------------|
+  |    1985         1   52863        1 |
+  |------------------------------------|
+  |    1985         2   48098        1 |
+  |------------------------------------|
+  |    1985         3   43390        1 |
+  |------------------------------------|
+  |    1986         1   53342        1 |
+  |------------------------------------|
+  |    1986         2   49554        1 |
+  |------------------------------------|
+  |    1986         3   45010        1 |
+  |------------------------------------|
+  |    1987         1   54049        1 |
+  |------------------------------------|
+  |    1987         2   49625        1 |
+  |------------------------------------|
+  |    1987         3   46139        1 |
+  |------------------------------------|
+  |    1988         1   54999        1 |
+  |------------------------------------|
+  |    1988         2   49981        1 |
+  |------------------------------------|
+  |    1988         3   45954        1 |
+  |------------------------------------|
+  |    1989         1   56048        1 |
+  |------------------------------------|
+  |    1989         2   50660        1 |
+  |------------------------------------|
+  |    1989         3   46113        1 |
+  |------------------------------------|
+  |    1990         1   57071        1 |
+  |------------------------------------|
+  |    1990         2   51449        1 |
+  |------------------------------------|
+  |    1990         3   46581        1 |
+  |------------------------------------|
+  |    1991         1   58139        1 |
+  |------------------------------------|
+  |    1991         2   52355        1 |
+  |------------------------------------|
+  |    1991         3   47305        1 |
+  |------------------------------------|
+  |    1992         1   59262        1 |
+  |------------------------------------|
+  |    1992         2   53400        1 |
+  |------------------------------------|
+  |    1992         3   48233        1 |
+  |------------------------------------|
+  |    1993         1   60685        1 |
+  |------------------------------------|
+  |    1993         2   54651        1 |
+  |------------------------------------|
+  |    1993         3   49424        1 |
+  |------------------------------------|
+  |    1994         1   61940        1 |
+  |------------------------------------|
+  |    1994         2   56276        1 |
+  |------------------------------------|
+  |    1994         3   50863        1 |
+  |------------------------------------|
+  |    1995         1   64785        1 |
+  |------------------------------------|
+  |    1995         2   57540        1 |
+  |------------------------------------|
+  |    1995         3   52479        1 |
+  |------------------------------------|
+  |    1996         1   67822        1 |
+  |------------------------------------|
+  |    1996         2   60279        1 |
+  |------------------------------------|
+  |    1996         3   53779        1 |
+  |------------------------------------|
+  |    1997         1   71410        1 |
+  |------------------------------------|
+  |    1997         2   63239        1 |
+  |------------------------------------|
+  |    1997         3   56434        1 |
+  |------------------------------------|
+  |    1998         1   74827        1 |
+  |------------------------------------|
+  |    1998         2   66606        1 |
+  |------------------------------------|
+  |    1998         3   59158        1 |
+  |------------------------------------|
+  |    1999         1   77941        1 |
+  |------------------------------------|
+  |    1999         2   69700        1 |
+  |------------------------------------|
+  |    1999         3   62165        1 |
+  |------------------------------------|
+  |    2000         1   81614        1 |
+  |------------------------------------|
+  |    2000         2   72470        1 |
+  |------------------------------------|
+  |    2000         3   64910        1 |
+  |------------------------------------|
+  |    2001         1   85445        1 |
+  |------------------------------------|
+  |    2001         2   75585        1 |
+  |------------------------------------|
+  |    2001         3   67201        1 |
+  |------------------------------------|
+  |    2002         1   88947        1 |
+  |------------------------------------|
+  |    2002         2   78823        1 |
+  |------------------------------------|
+  |    2002         3   69783        1 |
+  |------------------------------------|
+  |    2003         1   91858        1 |
+  |------------------------------------|
+  |    2003         2   81705        1 |
+  |------------------------------------|
+  |    2003         3   72459        1 |
+  |------------------------------------|
+  |    2004         1   93922        1 |
+  |------------------------------------|
+  |    2004         2   84106        1 |
+  |------------------------------------|
+  |    2004         3   74833        1 |
+  |------------------------------------|
+  |    2005         1   94324        1 |
+  |------------------------------------|
+  |    2005         2   85877        1 |
+  |------------------------------------|
+  |    2005         3   76964        1 |
+  |------------------------------------|
+  |    2006         1   94029        1 |
+  |------------------------------------|
+  |    2006         2   86215        1 |
+  |------------------------------------|
+  |    2006         3   78518        1 |
+  |------------------------------------|
+  |    2007         1   92725        1 |
+  |------------------------------------|
+  |    2007         2   85805        1 |
+  |------------------------------------|
+  |    2007         3   78716        1 |
+  |------------------------------------|
+  |    2008         1   91098        1 |
+  |------------------------------------|
+  |    2008         2   84476        1 |
+  |------------------------------------|
+  |    2008         3   78262        1 |
+  |------------------------------------|
+  |    2009         1   89539        1 |
+  |------------------------------------|
+  |    2009         2   83013        1 |
+  |------------------------------------|
+  |    2009         3   77150        1 |
+  |------------------------------------|
+  |    2010         1   87537        1 |
+  |------------------------------------|
+  |    2010         2   81803        1 |
+  |------------------------------------|
+  |    2010         3   76041        1 |
+  |------------------------------------|
+  |    2011         1   85326        1 |
+  |------------------------------------|
+  |    2011         2   80201        1 |
+  |------------------------------------|
+  |    2011         3   75178        1 |
+  |------------------------------------|
+  |    2012         1   83383        1 |
+  |------------------------------------|
+  |    2012         2   78369        1 |
+  |------------------------------------|
+  |    2012         3   73921        1 |
+  +------------------------------------+
+
+. 
+. forvalues h=1/3 {
+  2.     preserve
+  3.     keep if horizon==`h'
+  4.     bysort fityear: gen byte raw_tag=(_n==1)
+  5.     quietly count if raw_tag & !complete
+  6.     local rawmiss=r(N)
+  7.     display "RI horizon " `h' " raw first-row tags on incomplete observati
+> ons=" `rawmiss'
+  8.     drop raw_tag
+  9.     keep if complete
+ 10.     asreg y $x, by(fityear)
+ 11.     bysort fityear: gen byte tag=(_n==1)
+ 12.     quietly count if tag & !complete
+ 13.     local postmiss=r(N)
+ 14.     display "RI horizon " `h' " tagged incomplete results after complete-c
+> ase restriction=" `postmiss'
+ 15.     assert `postmiss'==0
+ 16.     count if tag
+ 17.     local ntag=r(N)
+ 18.     assert `ntag'==44
+ 19.     count if tag & !missing(_Nobs, _R2, _adjR2, _b_cons, _b_nege, _b_rix, 
+> _b_rinegx, _b_rib, _b_ritacc)
+ 20.     local nvec=r(N)
+ 21.     assert `nvec'==44
+ 22.     list fityear n_cc rankok _Nobs _R2 _adjR2 if tag, noobs
+ 23.     foreach endpoint in 1969 2012 {
+ 24.         quietly count if tag & rankok & fityear==`endpoint'
+ 25.         local endpoint_rank=r(N)
+ 26.         if `endpoint_rank'==1 {
+ 27.             quietly summarize _b_cons if tag & fityear==`endpoint', meanon
+> ly
+ 28.             local pcons=r(mean)
+ 29.             local nvector=r(N)
+ 30.             assert `nvector'==1
+ 31.             quietly summarize _b_nege if tag & fityear==`endpoint', meanon
+> ly
+ 32.             local p_nege=r(mean)
+ 33.             quietly summarize _b_rix if tag & fityear==`endpoint', meanonl
+> y
+ 34.             local p_rix=r(mean)
+ 35.             quietly summarize _b_rinegx if tag & fityear==`endpoint', mean
+> only
+ 36.             local p_rinegx=r(mean)
+ 37.             quietly summarize _b_rib if tag & fityear==`endpoint', meanonl
+> y
+ 38.             local p_rib=r(mean)
+ 39.             quietly summarize _b_ritacc if tag & fityear==`endpoint', mean
+> only
+ 40.             local p_ritacc=r(mean)
+ 41.             quietly summarize _Nobs if tag & fityear==`endpoint', meanonly
+ 42.             local asregN=r(mean)
+ 43.             local natN=scalar(ri_nat_N_`h'_`endpoint')
+ 44.             local bdiff=max(abs(scalar(ri_nat_cons_`h'_`endpoint')-`pcons'
+> ), abs(scalar(ri_nat_nege_`h'_`endpoint')-`p_nege'), abs(scalar(ri_nat_rix_`h
+> '_`endpoint')-`p_rix'), abs(scalar(ri_nat_rinegx_`h'_`endpoint')-`p_rinegx'),
+>  abs(scalar(ri_nat_rib_`h'_`endpoint')-`p_rib'), abs(scalar(ri_nat_ritacc_`h'
+> _`endpoint')-`p_ritacc'))
+ 45.             local ndiff=abs(`natN'-`asregN')
+ 46.             display "RI horizon " `h' " year " `endpoint' " native/asreg m
+> ax coefficient difference=" %12.8g `bdiff' " N difference=" %9.0f `ndiff'
+ 47.         }
+ 48.         else {
+ 49.             display "RI horizon " `h' " year " `endpoint' " native compari
+> son skipped: full-rank check failed"
+ 50.         }
+ 51.     }
+ 52.     count if tag & rankok
+ 53.     local nfullvec=r(N)
+ 54.     display "RI horizon " `h' " native full-rank years=" `nfullvec' " of 4
+> 4 vectors"
+ 55.     keep if tag & rankok
+ 56.     count
+ 57.     local nfits=r(N)
+ 58.     if `h'==3 {
+ 59.         assert `nfits'==43
+ 60.     }
+ 61.     else {
+ 62.         assert `nfits'==44
+ 63.     }
+ 64.     display "RI qualifying complete-case asreg fits at horizon " `h' "=" `
+> nfits'
+ 65.     quietly summarize _R2, meanonly
+ 66.     local meanr2=100*r(mean)
+ 67.     local r2fits=r(N)
+ 68.     if `h'==3 {
+ 69.         assert `r2fits'==43
+ 70.     }
+ 71.     else {
+ 72.         assert `r2fits'==44
+ 73.     }
+ 74.     quietly summarize _adjR2, meanonly
+ 75.     local meanar2=100*r(mean)
+ 76.     local ar2fits=r(N)
+ 77.     if `h'==3 {
+ 78.         assert `ar2fits'==43
+ 79.     }
+ 80.     else {
+ 81.         assert `ar2fits'==44
+ 82.     }
+ 83.     quietly summarize _Nobs, meanonly
+ 84.     local meanrows=r(mean)
+ 85.     quietly summarize _Nobs
+ 86.     local minrows=r(min)
+ 87.     local maxrows=r(max)
+ 88.     display "RI horizon " `h' " mean annual N=" %9.1f `meanrows' " min=" %
+> 9.0f `minrows' " max=" %9.0f `maxrows' " mean R2/AdjR2 percentages from " `nf
+> its' " groups"
+ 89.     mean _b_cons _b_nege _b_rix _b_rinegx _b_rib _b_ritacc
+ 90.     estadd scalar r2=`meanr2', replace
+ 91.     estadd scalar r2_a=`meanar2', replace
+ 92.     est store h`h'
+ 93.     restore
+ 94. }
+(6,846,725 observations deleted)
+RI horizon 1 raw first-row tags on incomplete observations=13
+(969,400 observations deleted)
+RI horizon 1 tagged incomplete results after complete-case restriction=0
+  44
+  44
+
+  +----------------------------------------------------------+
+  | fityear    n_cc   rankok   _Nobs         _R2      _adjR2 |
+  |----------------------------------------------------------|
+  |    1969    8681        1    8681   .79288482   .79276545 |
+  |    1970   11442        1   11442   .78601393   .78592037 |
+  |    1971   14435        1   14435   .76605513   .76597406 |
+  |    1972   17617        1   17617   .75714616   .75707721 |
+  |    1973   20955        1   20955   .75851443    .7584568 |
+  |----------------------------------------------------------|
+  |    1974   23077        1   23077    .7517323   .75167849 |
+  |    1975   25857        1   25857   .70642006   .70636327 |
+  |    1976   30192        1   30192   .70516196   .70511313 |
+  |    1977   34353        1   34353   .76071795   .76068312 |
+  |    1978   37903        1   37903   .83018681    .8301644 |
+  |----------------------------------------------------------|
+  |    1979   41053        1   41053   .86640912   .86639285 |
+  |    1980   43412        1   43412   .87325492   .87324032 |
+  |    1981   45387        1   45387   .76559911   .76557328 |
+  |    1982   47168        1   47168   .77336808   .77334406 |
+  |    1983   48759        1   48759    .7882124   .78819068 |
+  |----------------------------------------------------------|
+  |    1984   51010        1   51010   .78510205   .78508098 |
+  |    1985   52863        1   52863   .80739773   .80737951 |
+  |    1986   53342        1   53342   .87524733   .87523564 |
+  |    1987   54049        1   54049    .8650895   .86507702 |
+  |    1988   54999        1   54999   .80867944   .80866204 |
+  |----------------------------------------------------------|
+  |    1989   56048        1   56048   .73988333   .73986013 |
+  |    1990   57071        1   57071    .5973994   .59736413 |
+  |    1991   58139        1   58139    .6080715   .60803779 |
+  |    1992   59262        1   59262   .62083759   .62080559 |
+  |    1993   60685        1   60685   .62991244   .62988194 |
+  |----------------------------------------------------------|
+  |    1994   61940        1   61940   .61347825   .61344704 |
+  |    1995   64785        1   64785   .61228849   .61225857 |
+  |    1996   67822        1   67822   .60672527   .60669628 |
+  |    1997   71410        1   71410   .58650911   .58648016 |
+  |    1998   74827        1   74827   .57840992   .57838175 |
+  |----------------------------------------------------------|
+  |    1999   77941        1   77941    .6475708   .64754819 |
+  |    2000   81614        1   81614   .69996272   .69994433 |
+  |    2001   85445        1   85445    .6892619   .68924372 |
+  |    2002   88947        1   88947    .6299059   .62988509 |
+  |    2003   91858        1   91858   .49782711   .49779977 |
+  |----------------------------------------------------------|
+  |    2004   93922        1   93922   .75938032   .75936751 |
+  |    2005   94324        1   94324   .75227582   .75226269 |
+  |    2006   94029        1   94029   .64733363   .64731488 |
+  |    2007   92725        1   92725   .64394635   .64392714 |
+  |    2008   91098        1   91098   .63083852   .63081826 |
+  |----------------------------------------------------------|
+  |    2009   89539        1   89539   .62753992   .62751912 |
+  |    2010   87537        1   87537   .62558363   .62556224 |
+  |    2011   85326        1   85326   .62510799   .62508602 |
+  |    2012   83383        1   83383   .63513187   .63510999 |
+  +----------------------------------------------------------+
+RI horizon 1 year 1969 native/asreg max coefficient difference= 6.47260e-14 N d
+> ifference=        0
+RI horizon 1 year 2012 native/asreg max coefficient difference= 2.44915e-13 N d
+> ifference=        0
+  44
+RI horizon 1 native full-rank years=44 of 44 vectors
+(2,586,187 observations deleted)
+  44
+RI qualifying complete-case asreg fits at horizon 1=44
+RI horizon 1 mean annual N=  58778.0 min=     8681 max=    94324 mean R2/AdjR2 
+> percentages from 44 groups
+
+Mean estimation                             Number of obs = 44
+
+--------------------------------------------------------------
+             |       Mean   Std. err.     [95% conf. interval]
+-------------+------------------------------------------------
+     _b_cons |   .5394508   .2367603      .0619783    1.016923
+     _b_nege |  -.8555447   .2112998     -1.281671   -.4294181
+      _b_rix |   .6161284   .0451042      .5251672    .7070896
+   _b_rinegx |  -.5001209   .1572776     -.8173015   -.1829404
+      _b_rib |   .0379223   .0055829      .0266632    .0491813
+   _b_ritacc |   .1765606    .055349      .0649387    .2881825
+--------------------------------------------------------------
+
+added scalar:
+                 e(r2) =  70.746307
+
+added scalar:
+               e(r2_a) =  70.743125
+(6,933,622 observations deleted)
+RI horizon 2 raw first-row tags on incomplete observations=17
+(1,134,004 observations deleted)
+RI horizon 2 tagged incomplete results after complete-case restriction=0
+  44
+  44
+
+  +----------------------------------------------------------+
+  | fityear    n_cc   rankok   _Nobs         _R2      _adjR2 |
+  |----------------------------------------------------------|
+  |    1969    6487        1    6487   .63138118    .6310968 |
+  |    1970    8673        1    8673   .59373788   .59350351 |
+  |    1971   11414        1   11414   .57286728   .57268007 |
+  |    1972   14359        1   14359   .56580813   .56565687 |
+  |    1973   17456        1   17456   .56734324   .56721927 |
+  |----------------------------------------------------------|
+  |    1974   20664        1   20664   .56966277   .56955861 |
+  |    1975   22673        1   22673   .53013953   .53003588 |
+  |    1976   25348        1   25348   .50133972   .50124133 |
+  |    1977   29576        1   29576   .57724641   .57717492 |
+  |    1978   33600        1   33600   .63599037    .6359362 |
+  |----------------------------------------------------------|
+  |    1979   36873        1   36873   .77047386   .77044274 |
+  |    1980   39684        1   39684   .79616464   .79613896 |
+  |    1981   41715        1   41715     .751589   .75155922 |
+  |    1982   43366        1   43366   .71424633   .71421337 |
+  |    1983   44846        1   44846   .72783337   .72780302 |
+  |----------------------------------------------------------|
+  |    1984   46135        1   46135   .74543645   .74540886 |
+  |    1985   48098        1   48098   .68338096   .68334804 |
+  |    1986   49554        1   49554    .7385756   .73854922 |
+  |    1987   49625        1   49625   .81177935   .81176038 |
+  |    1988   49981        1   49981   .78778713    .7877659 |
+  |----------------------------------------------------------|
+  |    1989   50660        1   50660   .80804828   .80802933 |
+  |    1990   51449        1   51449   .80714505   .80712631 |
+  |    1991   52355        1   52355   .63219257   .63215744 |
+  |    1992   53400        1   53400   .64726802   .64723499 |
+  |    1993   54651        1   54651   .63945774   .63942475 |
+  |----------------------------------------------------------|
+  |    1994   56276        1   56276   .62525066   .62521736 |
+  |    1995   57540        1   57540   .63478427   .63475253 |
+  |    1996   60279        1   60279   .63374423   .63371384 |
+  |    1997   63239        1   63239   .63280026   .63277122 |
+  |    1998   66606        1   66606   .59957279   .59954273 |
+  |----------------------------------------------------------|
+  |    1999   69700        1   69700   .60352861   .60350016 |
+  |    2000   72470        1   72470   .57474125    .5747119 |
+  |    2001   75585        1   75585    .5981845   .59815792 |
+  |    2002   78823        1   78823   .56330254   .56327484 |
+  |    2003   81705        1   81705   .47499943    .4749673 |
+  |----------------------------------------------------------|
+  |    2004   84106        1   84106   .64753827   .64751731 |
+  |    2005   85877        1   85877   .69640246   .69638478 |
+  |    2006   86215        1   86215   .75805574    .7580417 |
+  |    2007   85805        1   85805    .7207872   .72077093 |
+  |    2008   84476        1   84476   .73183042   .73181455 |
+  |----------------------------------------------------------|
+  |    2009   83013        1   83013   .71732943    .7173124 |
+  |    2010   81803        1   81803   .71399419    .7139767 |
+  |    2011   80201        1   80201   .71387153   .71385369 |
+  |    2012   78369        1   78369   .71470117   .71468297 |
+  +----------------------------------------------------------+
+RI horizon 2 year 1969 native/asreg max coefficient difference= 6.48370e-14 N d
+> ifference=        0
+RI horizon 2 year 2012 native/asreg max coefficient difference= 1.63480e-13 N d
+> ifference=        0
+  44
+RI horizon 2 native full-rank years=44 of 44 vectors
+(2,334,686 observations deleted)
+  44
+RI qualifying complete-case asreg fits at horizon 2=44
+RI horizon 2 mean annual N=  53062.0 min=     6487 max=    86215 mean R2/AdjR2 
+> percentages from 44 groups
+
+Mean estimation                             Number of obs = 44
+
+--------------------------------------------------------------
+             |       Mean   Std. err.     [95% conf. interval]
+-------------+------------------------------------------------
+     _b_cons |   .9107944   .1809319      .5459105    1.275678
+     _b_nege |  -1.812713   .2836405     -2.384729   -1.240698
+      _b_rix |   .5710832   .0460042      .4783069    .6638594
+   _b_rinegx |  -1.829753   .1879533     -2.208797   -1.450709
+      _b_rib |   .0376942   .0042698      .0290834     .046305
+   _b_ritacc |   .0573348   .1568555     -.2589944     .373664
+--------------------------------------------------------------
+
+added scalar:
+                 e(r2) =  66.277986
+
+added scalar:
+               e(r2_a) =  66.272797
+(7,024,365 observations deleted)
+RI horizon 3 raw first-row tags on incomplete observations=21
+(1,272,646 observations deleted)
+RI horizon 3 tagged incomplete results after complete-case restriction=0
+  44
+  44
+
+  +----------------------------------------------------------+
+  | fityear    n_cc   rankok   _Nobs         _R2      _adjR2 |
+  |----------------------------------------------------------|
+  |    1969    4575        0    4575   .55796822   .55758132 |
+  |    1970    6487        1    6487   .47292363     .472517 |
+  |    1971    8675        1    8675   .43544222    .4351166 |
+  |    1972   11378        1   11378   .43085919   .43060895 |
+  |    1973   14269        1   14269   .43675086   .43655341 |
+  |----------------------------------------------------------|
+  |    1974   17237        1   17237   .44322803   .44306647 |
+  |    1975   20335        1   20335   .42764435   .42750358 |
+  |    1976   22238        1   22238   .40675455   .40662113 |
+  |    1977   24804        1   24804   .40997676    .4098578 |
+  |    1978   28891        1   28891   .46379532    .4637025 |
+  |----------------------------------------------------------|
+  |    1979   32640        1   32640    .5826194   .58255545 |
+  |    1980   35586        1   35586   .72193431   .72189524 |
+  |    1981   38053        1   38053   .73165552   .73162025 |
+  |    1982   39764        1   39764   .71415806   .71412211 |
+  |    1983   41111        1   41111   .62242433    .6223784 |
+  |----------------------------------------------------------|
+  |    1984   42339        1   42339   .67220992    .6721712 |
+  |    1985   43390        1   43390     .714376   .71434309 |
+  |    1986   45010        1   45010   .72472605   .72469547 |
+  |    1987   46139        1   46139   .74536675   .74533916 |
+  |    1988   45954        1   45954   .82113018   .82111072 |
+  |----------------------------------------------------------|
+  |    1989   46113        1   46113   .85565043   .85563477 |
+  |    1990   46581        1   46581   .76702344   .76699843 |
+  |    1991   47305        1   47305   .73667675   .73664891 |
+  |    1992   48233        1   48233   .63223814   .63220001 |
+  |    1993   49424        1   49424   .63796317   .63792654 |
+  |----------------------------------------------------------|
+  |    1994   50863        1   50863   .61500074   .61496289 |
+  |    1995   52479        1   52479   .60743235   .60739494 |
+  |    1996   53779        1   53779   .60414673   .60410992 |
+  |    1997   56434        1   56434   .60243936   .60240413 |
+  |    1998   59158        1   59158   .59726063   .59722659 |
+  |----------------------------------------------------------|
+  |    1999   62165        1   62165   .61451387   .61448286 |
+  |    2000   64910        1   64910   .59966083   .59962999 |
+  |    2001   67201        1   67201   .57482246   .57479082 |
+  |    2002   69783        1   69783   .58499662   .58496688 |
+  |    2003   72459        1   72459   .49621939   .49618463 |
+  |----------------------------------------------------------|
+  |    2004   74833        1   74833   .51094755   .51091487 |
+  |    2005   76964        1   76964    .5494834   .54945413 |
+  |    2006   78518        1   78518    .7375173   .73750059 |
+  |    2007   78716        1   78716   .77687064   .77685647 |
+  |    2008   78262        1   78262   .68919341   .68917356 |
+  |----------------------------------------------------------|
+  |    2009   77150        1   77150   .68782685   .68780662 |
+  |    2010   76041        1   76041   .67476698    .6747456 |
+  |    2011   75178        1   75178   .67429643   .67427476 |
+  |    2012   73921        1   73921    .6748332   .67481121 |
+  +----------------------------------------------------------+
+RI horizon 3 year 1969 native comparison skipped: full-rank check failed
+RI horizon 3 year 2012 native/asreg max coefficient difference= 1.54654e-13 N d
+> ifference=        0
+  43
+RI horizon 3 native full-rank years=43 of 44 vectors
+(2,105,302 observations deleted)
+  43
+RI qualifying complete-case asreg fits at horizon 3=43
+RI horizon 3 mean annual N=  48855.1 min=     6487 max=    78716 mean R2/AdjR2 
+> percentages from 43 groups
+
+Mean estimation                             Number of obs = 43
+
+--------------------------------------------------------------
+             |       Mean   Std. err.     [95% conf. interval]
+-------------+------------------------------------------------
+     _b_cons |   .9135148    .150242      .6103141    1.216715
+     _b_nege |  -1.797065   .2806986     -2.363538   -1.230593
+      _b_rix |   .5443054   .0481042      .4472271    .6413837
+   _b_rinegx |  -2.065975    .240777     -2.551882   -1.580067
+      _b_rib |   .0407744   .0043427      .0320104    .0495383
+   _b_ritacc |  -.0287572   .2365248     -.5060835    .4485691
+--------------------------------------------------------------
+
+added scalar:
+                 e(r2) =  61.580828
+
+added scalar:
+               e(r2_a) =  61.574136
+
+. esttab h1 h2 h3 using "tables/ri_forecast.md", cells(b(star fmt(3)) p(par)) s
+> tarlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles("t+1" "t+2" "t
+> +3") coeflabels(_b_cons "Intercept" _b_nege "NegE" _b_rix "E" _b_rinegx "NegE
+> *E" _b_rib "B" _b_ritacc "TACC") addnotes("Each column averages annual OLS fi
+> t vectors that pass the native full-rank check; coverage counts and exception
+> s are documented in the log." "Parentheses show two-sided p-values for native
+>  tests of the mean coefficient; see logs for t statistics." "N counts annual 
+> fits; underlying regression N is summarized by year and horizon in the log." 
+> "R-squared statistics are percentages, as in Table 1.")
+(file tables/ri_forecast.md not found)
+(output written to tables/ri_forecast.md)
+
+. esttab h1 h2 h3 using "tables/ri_forecast.rtf", cells(b(star fmt(3)) p(par)) 
+> starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles("t+1" "t+2" "
+> t+3") coeflabels(_b_cons "Intercept" _b_nege "NegE" _b_rix "E" _b_rinegx "Neg
+> E*E" _b_rib "B" _b_ritacc "TACC") addnotes("Each column averages annual OLS f
+> it vectors that pass the native full-rank check; coverage counts and exceptio
+> ns are documented in the log." "Parentheses show two-sided p-values for nativ
+> e tests of the mean coefficient; see logs for t statistics." "N counts annual
+>  fits; underlying regression N is summarized by year and horizon in the log."
+>  "R-squared statistics are percentages, as in Table 1.")
+(file tables/ri_forecast.rtf not found)
+(output written to tables/ri_forecast.rtf)
+
+. esttab h1 h2 h3 using "tables/ri_forecast.csv", cells(b(star fmt(3)) p(par)) 
+> starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles("t+1" "t+2" "
+> t+3") coeflabels(_b_cons "Intercept" _b_nege "NegE" _b_rix "E" _b_rinegx "Neg
+> E*E" _b_rib "B" _b_ritacc "TACC") addnotes("Each column averages annual OLS f
+> it vectors that pass the native full-rank check; coverage counts and exceptio
+> ns are documented in the log." "Parentheses show two-sided p-values for nativ
+> e tests of the mean coefficient; see logs for t statistics." "N counts annual
+>  fits; underlying regression N is summarized by year and horizon in the log."
+>  "R-squared statistics are percentages, as in Table 1.")
+(file tables/ri_forecast.csv not found)
+(output written to tables/ri_forecast.csv)
+
+. esttab h1 h2 h3 using "tables/ri_forecast.tex", cells(b(star fmt(3)) p(par)) 
+> starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles("t+1" "t+2" "
+> t+3") coeflabels(_b_cons "Intercept" _b_nege "NegE" _b_rix "E" _b_rinegx "Neg
+> E*E" _b_rib "B" _b_ritacc "TACC") addnotes("Each column averages annual OLS f
+> it vectors that pass the native full-rank check; coverage counts and exceptio
+> ns are documented in the log." "Parentheses show two-sided p-values for nativ
+> e tests of the mean coefficient; see logs for t statistics." "N counts annual
+>  fits; underlying regression N is summarized by year and horizon in the log."
+>  "R-squared statistics are percentages, as in Table 1.")
+(file tables/ri_forecast.tex not found)
+(output written to tables/ri_forecast.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

@@ -1,0 +1,472 @@
+{
+  "schema_version": "1.2",
+  "paper_id": "W3122547505",
+  "doi": "10.2308/accr.2002.77.s-1.35",
+  "eligibility": "eligible",
+  "provenance": {
+    "models_inventory_sha256": "99fa3538c4600dfe238e16b796b87f0e11534ddb747b8330bc6184d5d4de41c8",
+    "samples_inventory_sha256": "bcb4cb5c897be4e1d19d5eb27f2249171c3b432429b3ca0ca62577d45855662e",
+    "catalog_sha256": "45894893e45d56cb56150252c2ce4e85dfa88f5d891f3e547d3e9ea8003993fb",
+    "catalog_artifact_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "5821845ace490928bbee4ab43e064acc161010641b908d2a65a5a13de7569030",
+    "model_record_sha256": "84770267a3a0d654dd6a2ccc52f2b87e83896859f2463f864623c99adf108058",
+    "sample_record_sha256": "397efa65a4d6e5bff387fa50175b0522b5a60617556370f6b5e0c4ccbdf6cb50",
+    "reading_sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+    "pdf_sha256": "92a331679dcbfd1adae4bb829afc37f173b6197336f5cb1e2c1269459e414466",
+    "work_item_sha256": "8d08f5c58d825eba09708634ece1c74e30f3c2bbbac45fd5663c27e43536539e",
+    "review_source_aggregate_sha256": "2c054a78d6515b45b20bd409e84018663c81a2ac3002944ed28baa287078ea88",
+    "review_source_assessment_sha256": "4da1ffde1f41ed532006f040fcc3ce693e9d92881072b28dc5969b70c6366145",
+    "review_source_work_item_sha256": "0763212894aa56ed466be5fa596003db9a2a3202b242ff1523d689deb1d6c369",
+    "review_source_converter_sha256": "adc57168632515ab279560dc8138f3093edf12c561dd519aacc0fe9f0c61f590",
+    "review_source_decisions_sha256": "51ca795843b3c5ff732b33b38572f00ecd2ecbabea1393a13540884851125a2d",
+    "temporal_audit_file": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/full_01_reviewed/drafts/W3122547505/temporal_audit.json",
+    "temporal_audit_sha256": "e4e83a9c5ad10565de63eb967dce9f2aba4f56f1e0f3e6bb0d57f06f3b05fa81"
+  },
+  "requirements": [
+    {
+      "requirement_id": "r_comp_measure",
+      "kind": "raw_measure",
+      "description": "Annual Compustat cash-flow statement, working-capital-change and total-assets fields to construct ΔWC and past/current/future CFO per firm.",
+      "required_coverage": {
+        "begin": 1985,
+        "end": 2000,
+        "years": [],
+        "frequency": "annual firm-year",
+        "population": "Compustat annual industrial/research firms in the firm-specific accrual-quality fits; eligible t observations 1987–1999, including the source’s lead/lag CFO and denominator history.",
+        "detail": "Union raw window: ΔWC_t and CFO_t average assets reach t−1; CFO_(t−1) scaled by average assets_(t−1) reaches t−2, so 1987−24 months=1985. CFO_(t+1) reaches 2000."
+      },
+      "routes": [
+        {
+          "route_id": "route_comp_measure",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America merged annual fundamentals (current local vintage)",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "fyr",
+            "at",
+            "oancf",
+            "recch",
+            "invch",
+            "apalch",
+            "txach",
+            "aoloch",
+            "uaoloch",
+            "aox",
+            "ib",
+            "pi",
+            "sich"
+          ],
+          "mapping_notes": "Current catalog labels directly support candidate annual fields: oancf is operating-activities net cash flow, at is total assets, and recch/invch/apalch/txach/aoloch/uaoloch are cash-flow change fields. The paper uses legacy Compustat items 302–308 and a signed item-code formula; the exact mapping/sign convention of current combined AP/accrual and other-assets fields has not been verified. The current local vintage differs from the 1987–1999 research sample files.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "The exact current annual file and all listed fields were readable in existing bounded probes. No coordinator-supplied confirmation establishes 1985–2000 coverage or the 1,725-firm target population.",
+          "evidence_ids": [
+            "probe_comp_all",
+            "probe_comp_fields",
+            "cat_comp"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No coordinator confirmation establishes complete 1985–2000 coverage for the historical Compustat population; current fields do not verify every 1987–1999 legacy item/sign mapping.",
+      "evidence_ids": [
+        "p_eq5",
+        "p_cfo_item",
+        "p_wc_item",
+        "p_scale"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "r_sample",
+      "kind": "sampling",
+      "description": "Sample-screen and preprocessing inputs: complete assets, earnings, CFO and AR/inventory-change data; 1% trimming; both lagged and leading CFO; at least eight annual observations per firm.",
+      "required_coverage": {
+        "begin": 1985,
+        "end": 2000,
+        "years": [],
+        "frequency": "annual firm-year",
+        "population": "1987–1999 source-year observations, with adjacent years needed for CFO lag/lead and average-asset scaling; final firm-specific set is 1,725 firms and 15,234 firm-years.",
+        "detail": "The paper first requires complete data, truncates the most extreme 1% of CFO, earnings and ΔWC, requires past/future CFO, then keeps firms with at least eight observations. Current exact cohort and signed field mapping are not verified."
+      },
+      "routes": [
+        {
+          "route_id": "route_comp_sample",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America merged annual fundamentals (current local vintage)",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "fyr",
+            "at",
+            "oancf",
+            "recch",
+            "invch",
+            "apalch",
+            "txach",
+            "aoloch",
+            "uaoloch",
+            "aox",
+            "ib",
+            "pi",
+            "sich"
+          ],
+          "mapping_notes": "The current fields are candidates for the source screens; the paper’s reported Compustat-vintage restrictions, outlier membership and signed item-code mapping are not verified in this current merged file.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "No coordinator-supplied coverage confirmation establishes the full 1985–2000 raw window or target firm set.",
+          "evidence_ids": [
+            "probe_comp_all",
+            "probe_comp_fields",
+            "cat_comp"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No frozen local coverage confirmation supports the target firm set and the current snapshot’s full historical fields; 1-row probes do not prove the screening population.",
+      "evidence_ids": [
+        "p_sample_years",
+        "p_sample_rules",
+        "p_trim_leads",
+        "p_min_obs"
+      ],
+      "data_status": "undetermined"
+    }
+  ],
+  "assessments": [
+    {
+      "model_id": "firm_specific_accrual_quality",
+      "result_set_id": "table3_panel_a_firm_specific",
+      "required_model_ids": [
+        "firm_specific_accrual_quality"
+      ],
+      "requirement_ids": [
+        "r_comp_measure",
+        "r_sample"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "firm_specific_accrual_quality",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "r_comp_measure"
+          ],
+          "construction": "ΔWC_t is the source-defined change in working capital (ΔAR−ΔInventory−ΔAP−ΔTP−ΔOther Assets(net)); preserve the paper’s separately printed Compustat item-coded formula using signed cash-flow statement fields. Scale by average total assets for t, i.e. TA_(t−1),TA_t.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "firm_specific_accrual_quality",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "r_comp_measure"
+          ],
+          "construction": "Past CFO is Compustat item 308 CFO_(t−1), scaled by average total assets for year t−1 (TA_(t−2),TA_(t−1)); this composes the predictor’s one-year lag and its own denominator history.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "firm_specific_accrual_quality",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "r_comp_measure"
+          ],
+          "construction": "Current CFO is Compustat item 308 CFO_t, scaled by average total assets for t (TA_(t−1),TA_t).",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "firm_specific_accrual_quality",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "r_comp_measure"
+          ],
+          "construction": "Future CFO is Compustat item 308 CFO_(t+1), scaled by average total assets for t+1 (TA_t,TA_(t+1)).",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "No individual-fit cluster or standard-error correction is reported. Table 3 instead bases t-statistics on the distribution of firm-specific coefficient estimates.",
+          "evidence_ids": [
+            "p_table3"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [
+            "r_comp_measure"
+          ],
+          "reason": "Fit Equation (5) separately for each firm; retain firms with at least eight annual observations and compute each residual standard deviation as the firm-level accrual-quality measure. Table 3 summarizes 1,725 firm fits and their coefficient distribution. The within-firm estimator is not explicitly named.",
+          "evidence_ids": [
+            "p_eq5",
+            "p_residual",
+            "p_min_obs",
+            "p_table3"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "The source describes separate firm-level time-series fits; this is not a pooled regression with firm fixed effects.",
+          "evidence_ids": [
+            "p_eq5",
+            "p_table3"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "r_comp_measure"
+          ],
+          "reason": "The fits are grouped by Compustat firm; GVKEY is available in the probed annual table. No external identifier link is required for the retained fit.",
+          "evidence_ids": [
+            "p_sample_years"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "r_comp_measure",
+            "r_sample"
+          ],
+          "reason": "Scale the variables by average total assets and apply the source’s 1% truncation to CFO, earnings and ΔWC before the firm-specific fit; preserve source-signed item-code definitions.",
+          "evidence_ids": [
+            "p_scale",
+            "p_trim_leads",
+            "p_wc_item"
+          ]
+        },
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "r_sample"
+          ],
+          "reason": "Use the Compustat annual 1987–1999 source sample, past and future CFO availability, and at least eight years per firm. The resulting Table 3 Panel A summary covers 1,725 firms and 15,234 aggregate firm-years.",
+          "evidence_ids": [
+            "p_sample_years",
+            "p_sample_rules",
+            "p_trim_leads",
+            "p_min_obs",
+            "p_table3"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported for the firm-specific Equation (5) fits.",
+          "evidence_ids": [
+            "p_eq5"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The source specifies the firm-specific time-series equation and residual standard deviation but does not identify the estimator for each firm fit.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_eq5",
+            "p_residual",
+            "p_table3"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The current Compustat fields are candidate semantic matches, but the paper’s legacy item-coded signed cash-flow formula (including item 307 and the AP/other-assets terms) must be crosswalked without assuming current field signs or equivalence.",
+          "blocking": false,
+          "evidence_ids": [
+            "p_cfo_item",
+            "p_wc_item"
+          ]
+        },
+        {
+          "kind": "vintage",
+          "description": "The paper used Compustat annual industrial/research files for 1987–1999; the local merged annual file is a current vintage.",
+          "blocking": false,
+          "evidence_ids": [
+            "p_sample_years"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "Annual t observations are 1987–1999; raw history extends to 1985 because CFO_(t−1) is itself scaled by average assets_(t−1). The lead CFO requirement reaches 2000."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "p_eq5",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 6,
+      "quote": "To derive practical measures of working capital accrual quality, we use the following firm-level time-series regression:",
+      "description": "Equation (5) is displayed immediately after this sentence and contains a lagged, current and lead CFO term plus an intercept.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_residual",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 6,
+      "quote": "the standard deviation of these residuals is a firm-level measure of accrual quality, where higher standard deviation denotes lower quality.",
+      "description": "The fit residual standard deviation is the paper’s firm-level measure.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_sample_years",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 7,
+      "quote": "Our sample is obtained from the Compustat annual industrial and research files over 1987 to 1999.",
+      "description": "Original data source and sample period.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_sample_rules",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 7,
+      "quote": "The sample is restricted to firms with complete data for assets, earnings, cash flow from operations, changes in accounts receivable, and changes in inventory.",
+      "description": "Required sample fields and construction data.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_trim_leads",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 7,
+      "quote": "Truncating the most extreme 1 percent of cash from operations, earnings, and changes in working capital",
+      "description": "Source outlier rule; page continues with the past/future CFO requirement.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_min_obs",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 8,
+      "quote": "we require at least eight years of data to estimate firm-specific regressions.",
+      "description": "Firm-specific sample minimum.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_cfo_item",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 8,
+      "quote": "Cash flow from operations is Compustat item 308.",
+      "description": "CFO source item and definition.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_wc_item",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 8,
+      "quote": "Specifically, �WC is calculated from Compustat items as �WC �� (item 302 - item 303\n\n- item 304 - item 305 - item 307).",
+      "description": "The source prints the item-coded construction immediately after this text; fields are signed statement-of-cash-flow changes.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_scale",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 9,
+      "quote": "All variables are scaled by average total assets.",
+      "description": "Common scaling rule for the regression inputs.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_table3",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/model_extraction_runs/verified_readings/W3122547505_ff1ae0bd2cb340bb.json",
+      "page": 10,
+      "quote": "The t-statistics in Panel A are determined based on the distribution of the 1,725 coefficients obtained from the firm-specific regressions requiring a minimum of eight observations per firm.",
+      "description": "Table 3 aggregation over 1,725 firm fits and coefficient t-statistics.",
+      "sha256": "ff1ae0bd2cb340bb294b28eba41799b1c02c1d5b67fac9fb95479846934f3b93",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_comp_all",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/COMP.FUNDA.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful bounded read-only probe of exact COMP.FUNDA resource at /storage/sas/base/comp/d_na/funda.sas7bdat; 949 requested columns readable, 1 row read. Probe does not establish historical or population coverage.",
+      "sha256": "dd9d66ff1debeea55773cd795f95af5f6cee0c45dc5cab8992f2eb6289e92ea5",
+      "verified_at": "2026-10-27T14:46:58.418486+00:00"
+    },
+    {
+      "evidence_id": "probe_comp_fields",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/pilot_01/drafts/W3122547505/probes/comp_funda_annual_result.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful bounded read-only probe of exact COMP.FUNDA resource at /storage/sas/base/comp/d_na/funda.sas7bdat; 17 requested columns readable, 1 row read. Probe does not establish historical or population coverage.",
+      "sha256": "1c1585de3ec937fcc7d1036fa818b638e10a56d6e1e9c2430c16efc41a89c7c8",
+      "verified_at": "2026-10-27T14:54:40.780724+00:00"
+    },
+    {
+      "evidence_id": "cat_comp",
+      "kind": "catalog",
+      "locator": "output/feasibility_runs/resources/catalog.json dataset=COMP.FUNDA lines=27500-28729",
+      "page": null,
+      "quote": null,
+      "description": "COMP.FUNDA Merged Fundamental Annual File at /storage/sas/base/comp/d_na/funda.sas7bdat; catalog lines 27500-28729. gvkey (Global Company Key); datadate (Data Date); fyear (Data Year - Fiscal); fyr (Fiscal Year-end Month); at (Assets - Total); oancf (Operating Activities - Net Cash Flow); recch (Accounts Receivable - Decrease (Increase)); invch (Inventory - Decrease (Increase)); apalch (Accounts Payable and Accrued Liabilities - Increase/(Decrease)); txach (Income Taxes - Accrued - Increase/(Decrease)); aoloch (Assets and Liabilities - Other - Net Change); uaoloch (Other Assets and Liabilities - Net Change (Statement of Cash Flows)); aox (Assets - Other - Sundry); ib (Income Before Extraordinary Items); pi (Pretax Income); sich (Standard Industrial Classification - Historical)",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    }
+  ],
+  "author_alternatives": [],
+  "review_notes": [
+    "The one-row probes verify current fields/access but provide no historical or target-cohort coverage confirmation."
+  ],
+  "summary": {
+    "outcome": "undetermined",
+    "assessment_counts": {
+      "local_ready": 0,
+      "public_acquisition_required": 0,
+      "access_blocked": 0,
+      "undetermined": 1,
+      "no_observed_data_required": 0
+    },
+    "baseline_models": 1,
+    "baseline_fits": 1,
+    "any_data_feasible": false,
+    "all_data_feasible": false,
+    "partially_data_feasible": false,
+    "attempt_ready_count": 0
+  }
+}

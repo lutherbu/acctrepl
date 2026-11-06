@@ -1,0 +1,127 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3121262606/at
+> tempt_02/runtime/20261103T042259775463Z/cell_cfo_components_cfo_sum1.do 
+
+. version 18
+
+. set more off
+
+. set linesize 120
+
+. adopath ++ "/home/luther/Dropbox/Research/Replication/git/output/reproduction_runs/ado"
+  [1]              "/home/luther/Dropbox/Research/Replication/git/output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/full_sample/reg.dta", clear
+
+. 
+. global y "cfo1_w"
+
+. global x "pf_w special_w other_w sales_w accr_w"
+
+. global sample "ok_cc1"
+
+. global nwlag "3"
+
+. 
+. preserve
+
+. asreg $y $x if $sample==1, by(fmb_q)
+
+. collapse (mean) _adjR2, by(fmb_q)
+
+. summarize _adjR2, meanonly
+
+. local avg_adj_r2 = r(mean)
+
+. local adj_r2_periods = r(N)
+
+. restore
+
+. 
+. * One report per firm/calendar quarter; retain the firm panel identifier.
+. egen long firmid = group(gvkey)
+
+. xtset firmid fmb_q
+
+Panel variable: firmid (unbalanced)
+ Time variable: fmb_q, 7953 to 8000, but with gaps
+         Delta: 1 unit
+
+. est clear
+
+. quietly xtfmb $y $x if $sample==1, lag($nwlag)
+
+. estadd scalar r2_a = `avg_adj_r2'
+
+added scalar:
+               e(r2_a) =  .38635917
+
+. estadd scalar adj_periods = `adj_r2_periods'
+
+added scalar:
+        e(adj_periods) =  48
+
+. est store m1
+
+. 
+. esttab m1 using "tables/cfo_components_cfo_sum1.md", cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r
+> 2 ar2 scalars("N_g Quarterly periods" "adj_periods Periods with adjusted R2") addnotes("Adjusted R-squared is the equa
+> l-weight mean of quarterly OLS adjusted R-squared values from asreg.") replace label
+(file tables/cfo_components_cfo_sum1.md not found)
+(output written to tables/cfo_components_cfo_sum1.md)
+
+. esttab m1 using "tables/cfo_components_cfo_sum1.rtf", cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) 
+> r2 ar2 scalars("N_g Quarterly periods" "adj_periods Periods with adjusted R2") addnotes("Adjusted R-squared is the equ
+> al-weight mean of quarterly OLS adjusted R-squared values from asreg.") replace label
+(file tables/cfo_components_cfo_sum1.rtf not found)
+(output written to tables/cfo_components_cfo_sum1.rtf)
+
+. esttab m1 using "tables/cfo_components_cfo_sum1.csv", cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) 
+> r2 ar2 scalars("N_g Quarterly periods" "adj_periods Periods with adjusted R2") addnotes("Adjusted R-squared is the equ
+> al-weight mean of quarterly OLS adjusted R-squared values from asreg.") replace label
+(file tables/cfo_components_cfo_sum1.csv not found)
+(output written to tables/cfo_components_cfo_sum1.csv)
+
+. esttab m1 using "tables/cfo_components_cfo_sum1.tex", cells(b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) 
+> r2 ar2 scalars("N_g Quarterly periods" "adj_periods Periods with adjusted R2") addnotes("Adjusted R-squared is the equ
+> al-weight mean of quarterly OLS adjusted R-squared values from asreg.") replace label
+(file tables/cfo_components_cfo_sum1.tex not found)
+(output written to tables/cfo_components_cfo_sum1.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

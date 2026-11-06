@@ -1,0 +1,1329 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend mprint msglevel=i;
+2          libname ibes '/storage/sas/base/ibes' access=readonly;
+NOTE: Libref IBES was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/ibes
+3          libname crsp '/storage/sas/base/crsp/a_stock' access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+4          libname out 'data';
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W2028237122/attempt_02/data
+5          libname aud 'scratch';
+NOTE: Libref AUD was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W2028237122/attempt_02/scratch
+6          
+7          title 'W2028237122: quarterly threshold time trends';
+8          
+9          /* Retain the full t-4 actual history before restricting the trend sample. */
+10         data work.actraw;
+11             set ibes.actu_epsus(keep=ticker cusip pends measure pdicity anndats anntims actdats acttims value curr_act usfirm
+12                 where=(pends >= '01JAN1984'd and pends < '01JAN2003'd));
+13         run;
+
+NOTE: There were 580219 observations read from the data set IBES.ACTU_EPSUS.
+      WHERE (pends>='01JAN1984'D and pends<'01JAN2003'D);
+NOTE: The data set WORK.ACTRAW has 580219 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.10 seconds
+      
+
+14         
+15         title 'IBES actual field and code audit';
+16         proc freq data=work.actraw;
+3                                                          The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+17             tables measure pdicity usfirm curr_act / missing;
+18         run;
+
+NOTE: There were 580219 observations read from the data set WORK.ACTRAW.
+NOTE: The PROCEDURE FREQ printed page 1.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+19         
+20         data work.actusd;
+21             set work.actraw;
+22             if measure ne 'EPS' or pdicity ne 'QTR' or usfirm ne 1 or curr_act ne 'USD' then delete;
+23         run;
+
+NOTE: There were 580219 observations read from the data set WORK.ACTRAW.
+NOTE: The data set WORK.ACTUSD has 456551 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+24         
+25         proc sql;
+26             create table work.actdatecheck as
+27             select year(pends) as period_year,
+28                    count(*) as n_actual_rows,
+29                    sum(missing(anndats)) as n_missing_announce_date,
+30                    sum(missing(actdats)) as n_missing_activation_date,
+31                    sum(not missing(anndats) and not missing(actdats) and anndats ne actdats)
+32                        as n_act_anndate_diff,
+33                    min(anndats) as first_announce_date format=date9.,
+34                    max(anndats) as last_announce_date format=date9.
+35             from work.actusd
+36             group by calculated period_year;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.ACTDATECHECK created, with 19 rows and 7 columns.
+
+37         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.19 seconds
+      
+
+38         title 'Actual announcement and activation date coverage by fiscal-period year';
+39         proc print data=work.actdatecheck noobs; run;
+
+NOTE: There were 19 observations read from the data set WORK.ACTDATECHECK.
+NOTE: The PROCEDURE PRINT printed page 2.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+40         
+41         proc sql;
+42             create table work.actmiss as
+4                                                          The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+43             select count(*) as n_period_rows,
+44                    sum(missing(value)) as n_missing_value,
+45                    sum(value=0) as n_zero_value,
+46                    sum(missing(anndats)) as n_missing_announce,
+47                    sum(missing(cusip)) as n_missing_cusip
+48             from work.actusd;
+NOTE: Table WORK.ACTMISS created, with 1 rows and 5 columns.
+
+49             create table work.actdup as
+50             select ticker, pends, count(*) as nrows,
+51                    count(distinct value) as nvalues,
+52                    count(distinct anndats) as nann
+53             from work.actusd
+54             where not missing(value) and not missing(anndats) and not missing(cusip)
+55             group by ticker, pends
+56             having count(*) > 1;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.ACTDUP created, with 0 rows and 5 columns.
+
+57             create table work.actdupsum as
+58             select count(*) as duplicate_ticker_periods,
+59                    sum(nrows-1) as extra_rows,
+60                    sum(nvalues>1) as periods_with_value_conflicts,
+61                    sum(nann>1) as periods_event_date_conflicts
+62             from work.actdup;
+NOTE: Table WORK.ACTDUPSUM created, with 1 rows and 4 columns.
+
+63         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.43 seconds
+      cpu time            0.48 seconds
+      
+
+64         
+65         title 'IBES actual rows and duplicate diagnostics';
+66         proc print data=work.actmiss noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.ACTMISS.
+NOTE: The PROCEDURE PRINT printed page 3.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+67         proc print data=work.actdupsum noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.ACTDUPSUM.
+NOTE: The PROCEDURE PRINT printed page 4.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+68         
+69         data work.actgood;
+70             set work.actusd;
+71             if missing(value) or missing(anndats) or missing(cusip) then delete;
+72         run;
+5                                                          The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+
+NOTE: There were 456551 observations read from the data set WORK.ACTUSD.
+NOTE: The data set WORK.ACTGOOD has 338963 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+73         proc sort data=work.actgood;
+74             by ticker pends anndats actdats acttims;
+75         run;
+
+NOTE: There were 338963 observations read from the data set WORK.ACTGOOD.
+NOTE: SAS threaded sort was used.
+NOTE: The data set WORK.ACTGOOD has 338963 observations and 12 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.12 seconds
+      
+
+76         data work.actuni;
+77             set work.actgood;
+78             by ticker pends;
+79             if first.pends;
+80         run;
+
+NOTE: There were 338963 observations read from the data set WORK.ACTGOOD.
+NOTE: The data set WORK.ACTUNI has 338963 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+81         
+82         data work.qcurr;
+83             set work.actuni;
+84             if year(pends) < 1985 or year(pends) > 2002 then delete;
+85             qyear=year(pends);
+86             qbegin=intnx('month',pends,-3,'end')+1;
+87             lagtarget=intnx('year',pends,-1,'same');
+88             rowid=_n_;
+89             format pends anndats actdats qbegin lagtarget date9.;
+90         run;
+
+NOTE: There were 338963 observations read from the data set WORK.ACTUNI.
+NOTE: The data set WORK.QCURR has 333156 observations and 16 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.22 seconds
+      cpu time            0.23 seconds
+      
+
+91         
+92         /* Exact TICKER period matching is not assumed: use the closest t-4 period
+93            within one week of the same fiscal-quarter date, requiring a unique nearest row. */
+94         proc sql;
+95             create table work.lagcand as
+96             select a.rowid, b.pends as lagpends, b.anndats as lagdate,
+97                    b.value as lagraw, abs(b.pends-a.lagtarget) as daygap
+6                                                          The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+98             from work.qcurr as a inner join work.actuni as b
+99               on a.ticker=b.ticker
+100             and b.pends >= a.lagtarget-7
+101             and b.pends <= a.lagtarget+7;
+NOTE: Table WORK.LAGCAND created, with 284934 rows and 5 columns.
+
+102            create table work.lagmind as
+103            select rowid, min(daygap) as minday
+104            from work.lagcand group by rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.LAGMIND created, with 284934 rows and 2 columns.
+
+105            create table work.lagbest as
+106            select a.rowid, a.lagpends, a.lagdate, a.lagraw, a.daygap
+107            from work.lagcand as a inner join work.lagmind as b
+108              on a.rowid=b.rowid and a.daygap=b.minday;
+NOTE: Table WORK.LAGBEST created, with 284934 rows and 5 columns.
+
+109            create table work.lagagg as
+110            select rowid, count(*) as nlagbest,
+111                   max(lagpends) as lagpends,
+112                   max(lagdate) as lagdate,
+113                   max(lagraw) as lagraw,
+114                   max(daygap) as laggap
+115            from work.lagbest group by rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.LAGAGG created, with 284934 rows and 6 columns.
+
+116        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.57 seconds
+      cpu time            0.64 seconds
+      
+
+117        
+118        /* The historical CRSP name row is selected using its effective CUSIP date range. */
+119        proc sql;
+120            create table work.linkraw as
+121            select a.rowid, b.permno, b.siccd, b.shrcd
+122            from work.qcurr as a left join crsp.dsenames as b
+123              on strip(a.cusip)=strip(b.ncusip)
+124             and b.namedt <= a.anndats
+125             and (missing(b.nameendt) or b.nameendt >= a.anndats);
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.LINKRAW created, with 333156 rows and 4 columns.
+
+126            create table work.linkagg as
+127            select rowid, count(distinct permno) as nperm,
+128                   count(distinct siccd) as nsic,
+129                   min(permno) as permno,
+130                   min(siccd) as siccd,
+131                   min(shrcd) as shrcd
+132            from work.linkraw group by rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.LINKAGG created, with 333156 rows and 6 columns.
+
+133            create table work.lagcheck as
+134            select count(*) as nbase,
+7                                                          The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+135                   sum(missing(b.rowid)) as n_no_lag,
+136                   sum(b.nlagbest=1) as n_unique_lag,
+137                   sum(b.nlagbest>1) as n_ambiguous_lag
+138            from work.qcurr as a left join work.lagagg as b on a.rowid=b.rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.LAGCHECK created, with 1 rows and 4 columns.
+
+139            create table work.linkcheck as
+140            select count(*) as nbase,
+141                   sum(missing(b.nperm) or b.nperm=0) as n_no_permno_match,
+142                   sum(b.nperm=1 and b.nsic=0) as n_missing_sic,
+143                   sum(b.nperm=1 and b.nsic=1) as n_unique_effective_links,
+144                   sum(b.nperm>1 or b.nsic>1) as n_ambiguous_effective_links
+145            from work.qcurr as a left join work.linkagg as b on a.rowid=b.rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.LINKCHECK created, with 1 rows and 5 columns.
+
+146        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.66 seconds
+      cpu time            0.82 seconds
+      
+
+147        
+148        title 'Lag and effective-dated IBES–CRSP link diagnostics';
+149        proc print data=work.lagcheck noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.LAGCHECK.
+NOTE: The PROCEDURE PRINT printed page 5.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+150        proc print data=work.linkcheck noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.LINKCHECK.
+NOTE: The PROCEDURE PRINT printed page 6.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+151        title 'Date gaps for unique t-4 actual matches';
+152        proc freq data=work.lagagg;
+153            where nlagbest=1;
+154            tables laggap;
+155        run;
+
+NOTE: There were 284934 observations read from the data set WORK.LAGAGG.
+      WHERE nlagbest=1;
+NOTE: The PROCEDURE FREQ printed page 7.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+156        
+8                                                          The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+157        /* Keep every candidate row for staged attrition; ambiguous matches stay missing. */
+158        proc sql;
+159            create table work.core0 as
+160            select a.*, b.lagpends, b.lagdate, b.lagraw, b.nlagbest,
+161                   c.permno, c.siccd, c.shrcd, c.nperm, c.nsic
+162            from work.qcurr as a
+163            left join work.lagagg as b on a.rowid=b.rowid
+164            left join work.linkagg as c on a.rowid=c.rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CORE0 created, with 333156 rows and 25 columns.
+
+165        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.29 seconds
+      
+
+166        data work.core;
+167            set work.core0;
+168            if nlagbest ne 1 then do; lagpends=.; lagdate=.; lagraw=.; end;
+169            if nperm ne 1 or nsic ne 1 then do; permno=.; siccd=.; end;
+170            format lagpends lagdate date9.;
+171        run;
+
+NOTE: There were 333156 observations read from the data set WORK.CORE0.
+NOTE: The data set WORK.CORE has 333156 observations and 25 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+172        
+173        /* Validate the quarterly EPS detail mapping before screening forecast currencies. */
+174        data work.fcraw;
+175            set ibes.detu_epsus(keep=ticker cusip fpedats fpi measure usfirm analys estimator
+176                anndats anntims actdats acttims revdats revtims value curr currfl report_curr
+177                where=(fpedats >= '01JAN1985'd and fpedats < '01JAN2003'd));
+INFO: Index FPEDATS not used.  Sorting into index order may help.
+178        run;
+
+NOTE: There were 6382523 observations read from the data set IBES.DETU_EPSUS.
+      WHERE (fpedats>='01JAN1985'D and fpedats<'01JAN2003'D);
+NOTE: The data set WORK.FCRAW has 6382523 observations and 18 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.85 seconds
+      cpu time            1.64 seconds
+      
+
+179        title 'IBES detailed estimate field and currency audit';
+180        proc freq data=work.fcraw;
+181            tables measure usfirm fpi curr*currfl*report_curr / missing;
+182        run;
+
+NOTE: There were 6382523 observations read from the data set WORK.FCRAW.
+NOTE: The PROCEDURE FREQ printed pages 8-9.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.62 seconds
+      cpu time            0.63 seconds
+9                                                          The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+      
+
+183        proc freq data=work.fcraw noprint;
+184            tables curr*currfl*report_curr / missing out=aud.forecast_currency;
+185        run;
+
+NOTE: There were 6382523 observations read from the data set WORK.FCRAW.
+NOTE: The data set AUD.FORECAST_CURRENCY has 7 observations and 5 variables.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.39 seconds
+      cpu time            0.39 seconds
+      
+
+186        title 'Raw estimate-level and company-level currency cross-tab';
+187        proc print data=aud.forecast_currency noobs; run;
+
+NOTE: There were 7 observations read from the data set AUD.FORECAST_CURRENCY.
+NOTE: The PROCEDURE PRINT printed page 10.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+188        
+189        data work.fcusd;
+190            set work.fcraw;
+191            if measure ne 'EPS' or usfirm ne 1 then delete;
+192            if fpi not in ('6','7','8','9','N','O','P','Q','R','S','T','L','Y') then delete;
+193            /* DETU values are split-unadjusted but already on the report-currency basis.
+194               CURR/CURRFL retain the estimate-level received-currency provenance. */
+195            if report_curr ne 'USD' then delete;
+196            if missing(value) or missing(anndats) or missing(analys) then delete;
+197        run;
+
+NOTE: There were 6382523 observations read from the data set WORK.FCRAW.
+NOTE: The data set WORK.FCUSD has 3073096 observations and 18 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.55 seconds
+      cpu time            0.55 seconds
+      
+
+198        
+199        /* Latest public forecast date strictly before the actual announcement; same-day
+200           estimates are averaged after retaining one time-stamped row per analyst. */
+201        proc sql;
+202            create table work.fccand as
+203            select a.rowid, f.ticker, f.fpedats, f.analys, f.estimator,
+204                   f.fpi, f.anndats, f.anntims, f.actdats, f.acttims,
+205                   f.revdats, f.revtims, f.value, f.curr, f.currfl, f.report_curr
+206            from work.core as a inner join work.fcusd as f
+207              on a.ticker=f.ticker and a.pends=f.fpedats
+208             and f.anndats < a.anndats;
+NOTE: Table WORK.FCCAND created, with 2866679 rows and 16 columns.
+
+209            create table work.fccandcheck as
+210            select count(*) as forecast_candidates,
+211                   count(distinct rowid) as firm_quarters_with_a_forecast,
+212                   sum(missing(value)) as missing_candidate_values
+10                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+213            from work.fccand;
+NOTE: Table WORK.FCCANDCHECK created, with 1 rows and 3 columns.
+
+214        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.95 seconds
+      cpu time            0.96 seconds
+      
+
+215        
+216        proc sort data=work.fccand;
+217            by rowid descending anndats descending anntims;
+218        run;
+
+NOTE: There were 2866679 observations read from the data set WORK.FCCAND.
+NOTE: SAS threaded sort was used.
+NOTE: The data set WORK.FCCAND has 2866679 observations and 16 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.47 seconds
+      cpu time            0.99 seconds
+      
+
+219        data work.fdate;
+220            set work.fccand;
+221            by rowid;
+222            if first.rowid;
+223            fdate=anndats;
+224            keep rowid fdate;
+225            format fdate date9.;
+226        run;
+
+NOTE: There were 2866679 observations read from the data set WORK.FCCAND.
+NOTE: The data set WORK.FDATE has 233463 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.13 seconds
+      
+
+227        proc sql;
+228            create table work.fclatest0 as
+229            select a.*
+230            from work.fccand as a inner join work.fdate as b
+231              on a.rowid=b.rowid and a.anndats=b.fdate;
+NOTE: Table WORK.FCLATEST0 created, with 258464 rows and 16 columns.
+
+232            create table work.fcdup as
+233            select rowid, analys, count(*) as nrows,
+234                   count(distinct value) as nvalues,
+235                   count(distinct anntims) as ntimes
+236            from work.fclatest0
+237            group by rowid, analys
+238            having count(*) > 1;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.FCDUP created, with 700 rows and 5 columns.
+
+239            create table work.fcdupsum as
+240            select count(*) as analyst_date_groups_with_repeats,
+241                   sum(nrows-1) as extra_rows,
+11                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+242                   sum(nvalues>1) as groups_with_value_conflicts,
+243                   sum(ntimes>1) as groups_with_time_conflicts
+244            from work.fcdup;
+NOTE: Table WORK.FCDUPSUM created, with 1 rows and 4 columns.
+
+245        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.74 seconds
+      cpu time            0.79 seconds
+      
+
+246        proc sort data=work.fclatest0;
+247            by rowid analys descending anntims descending actdats descending acttims
+248               descending revdats descending revtims;
+249        run;
+
+NOTE: There were 258464 observations read from the data set WORK.FCLATEST0.
+NOTE: SAS sort was used.
+NOTE: The data set WORK.FCLATEST0 has 258464 observations and 16 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+250        data work.fcperanal;
+251            set work.fclatest0;
+252            by rowid analys;
+253            if first.analys;
+254        run;
+
+NOTE: There were 258464 observations read from the data set WORK.FCLATEST0.
+NOTE: The data set WORK.FCPERANAL has 257740 observations and 16 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+255        data aud.forecast_selected;
+256            set work.fcperanal;
+257        run;
+
+NOTE: There were 257740 observations read from the data set WORK.FCPERANAL.
+NOTE: The data set AUD.FORECAST_SELECTED has 257740 observations and 16 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+258        proc sql;
+259            create table work.fcast as
+260            select rowid, mean(value) as forecast,
+261                   count(distinct analys) as analyst_n,
+262                   max(anndats) as fdate
+263            from work.fcperanal group by rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.FCAST created, with 233463 rows and 4 columns.
+
+264            create table work.fcsummary as
+12                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+265            select count(*) as n_final_forecast_rows,
+266                   mean(analyst_n) as mean_analysts_on_selected_day,
+267                   min(fdate) as earliest_selected_forecast,
+268                   max(fdate) as latest_selected_forecast
+269            from work.fcast;
+NOTE: Table WORK.FCSUMMARY created, with 1 rows and 4 columns.
+
+270        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.17 seconds
+      cpu time            0.21 seconds
+      
+
+271        title 'Forecast date, duplicate, and selected-forecast diagnostics';
+272        proc print data=work.fccandcheck noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.FCCANDCHECK.
+NOTE: The PROCEDURE PRINT printed page 11.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+273        proc print data=work.fcdupsum noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.FCDUPSUM.
+NOTE: The PROCEDURE PRINT printed page 12.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+274        proc print data=work.fcsummary noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.FCSUMMARY.
+NOTE: The PROCEDURE PRINT printed page 13.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+275        
+276        /* CRSP market calendar for event dates; fiscal 2002 observations may announce in 2003. */
+277        data work.cal;
+278            set crsp.dsi(keep=date vwretd where=(date >= '01JAN1983'd and date < '01JAN2004'd));
+INFO: Index DATE selected for WHERE clause optimization.
+279            if missing(vwretd) then delete;
+280        run;
+
+NOTE: There were 5301 observations read from the data set CRSP.DSI.
+      WHERE (date>='01JAN1983'D and date<'01JAN2004'D);
+NOTE: The data set WORK.CAL has 5301 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+281        proc sort data=work.cal; by date; run;
+13                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+
+NOTE: There were 5301 observations read from the data set WORK.CAL.
+NOTE: SAS sort was used.
+NOTE: The data set WORK.CAL has 5301 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+282        data work.cal;
+283            set work.cal;
+284            tradeidx=_n_;
+285        run;
+
+NOTE: There were 5301 observations read from the data set WORK.CAL.
+NOTE: The data set WORK.CAL has 5301 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+286        
+287        proc sql;
+288            create table work.eventdate0 as
+289            select a.rowid, min(c.date) as evdate
+290            from work.core as a left join work.cal as c
+291              on c.date >= a.anndats and c.date <= a.anndats+7
+292            group by a.rowid;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.EVENTDATE0 created, with 333156 rows and 2 columns.
+
+293            create table work.eventdate as
+294            select a.rowid, c.tradeidx as eidx, c.date as evtrade
+295            from work.eventdate0 as a left join work.cal as c on a.evdate=c.date;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.EVENTDATE created, with 333156 rows and 3 columns.
+
+296            create table work.pdate0 as
+297            select a.rowid, min(d.date) as pdate
+298            from work.core as a left join crsp.dsf as d
+299              on a.permno=d.permno
+300             and d.date >= a.qbegin and d.date <= a.qbegin+10
+301             and abs(d.prc) > 0
+302            group by a.rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.PDATE0 created, with 333156 rows and 2 columns.
+
+303            create table work.pdata as
+304            select a.rowid, a.pdate, abs(d.prc) as price,
+305                   d.cfacshr as cfac_p
+306            from work.pdate0 as a inner join work.core as c on a.rowid=c.rowid
+307            left join crsp.dsf as d
+308              on c.permno=d.permno and a.pdate=d.date;
+NOTE: SAS threaded sort was used.
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+NOTE: Table WORK.PDATA created, with 333156 rows and 4 columns.
+
+14                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+309        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1:22.62
+      cpu time            1:35.59
+      
+
+310        
+311        /* Resolve source share factors at the last security trading day on/before the
+312           actual, t-4 actual, and selected analyst forecast dates. */
+313        data work.facreqa;
+314            set work.core;
+315            length role $1;
+316            if not missing(permno) and not missing(anndats) then do;
+317                role='A'; reqdate=anndats; output;
+318            end;
+319            if not missing(permno) and nlagbest=1 and not missing(lagdate) then do;
+320                role='L'; reqdate=lagdate; output;
+321            end;
+322            format reqdate date9.;
+323            keep rowid permno role reqdate;
+324        run;
+
+NOTE: There were 333156 observations read from the data set WORK.CORE.
+NOTE: The data set WORK.FACREQA has 597933 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+325        proc sql;
+326            create table work.facreqf as
+327            select a.rowid, a.permno, 'F' as role length=1,
+328                   b.fdate as reqdate
+329            from work.core as a inner join work.fcast as b on a.rowid=b.rowid
+330            where not missing(a.permno) and not missing(b.fdate);
+NOTE: Table WORK.FACREQF created, with 229805 rows and 4 columns.
+
+331        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.14 seconds
+      
+
+332        data work.facreq2;
+333            set work.facreqa work.facreqf;
+334            if missing(permno) then delete;
+335            format reqdate date9.;
+336        run;
+
+NOTE: There were 597933 observations read from the data set WORK.FACREQA.
+NOTE: There were 229805 observations read from the data set WORK.FACREQF.
+NOTE: The data set WORK.FACREQ2 has 827738 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+337        
+15                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+338        proc sql;
+339            create table work.facdate as
+340            select r.rowid, r.role, max(d.date) as fdate
+341            from work.facreq2 as r left join crsp.dsf as d
+342              on r.permno=d.permno
+343             and d.date <= r.reqdate and d.date >= r.reqdate-7
+344            group by r.rowid, r.role;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.FACDATE created, with 827738 rows and 3 columns.
+
+345            create table work.factors0 as
+346            select a.rowid, a.role, a.fdate, d.cfacshr as cfac
+347            from work.facdate as a inner join work.core as c on a.rowid=c.rowid
+348            left join crsp.dsf as d
+349              on c.permno=d.permno and d.date=a.fdate;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.FACTORS0 created, with 827738 rows and 4 columns.
+
+350            create table work.factors as
+351            select rowid,
+352                   max(case when role='A' then cfac else . end) as cfac_a,
+353                   max(case when role='L' then cfac else . end) as cfac_l,
+354                   max(case when role='F' then cfac else . end) as cfac_f,
+355                   max(case when role='A' then fdate else . end) as fdate_a,
+356                   max(case when role='L' then fdate else . end) as fdate_l,
+357                   max(case when role='F' then fdate else . end) as fdate_f
+358            from work.factors0 group by rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.FACTORS created, with 321290 rows and 7 columns.
+
+359        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1:41.04
+      cpu time            1:41.95
+      
+
+360        
+361        /* Build the three-day market-adjusted CAR from trading days -1, 0, +1. */
+362        proc sort data=work.core; by rowid; run;
+
+NOTE: There were 333156 observations read from the data set WORK.CORE.
+NOTE: SAS threaded sort was used.
+NOTE: The data set WORK.CORE has 333156 observations and 25 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.15 seconds
+      
+
+363        proc sort data=work.eventdate; by rowid; run;
+
+NOTE: There were 333156 observations read from the data set WORK.EVENTDATE.
+NOTE: SAS threaded sort was used.
+NOTE: The data set WORK.EVENTDATE has 333156 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.09 seconds
+      
+
+16                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+364        data work.evtreq;
+365            merge work.core(in=a keep=rowid permno) work.eventdate(in=b keep=rowid eidx);
+366            by rowid;
+367            if a and not missing(permno) and not missing(eidx) then do;
+368                offset=-1; wanted=eidx-1; output;
+369                offset=0; wanted=eidx; output;
+370                offset=1; wanted=eidx+1; output;
+371            end;
+372            keep rowid permno offset wanted;
+373        run;
+
+NOTE: There were 333156 observations read from the data set WORK.CORE.
+NOTE: There were 333156 observations read from the data set WORK.EVENTDATE.
+NOTE: The data set WORK.EVTREQ has 963852 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+374        proc sql;
+375            create table work.evtdays0 as
+376            select a.rowid, a.permno, a.offset, b.date, b.vwretd
+377            from work.evtreq as a inner join work.cal as b on a.wanted=b.tradeidx;
+NOTE: Table WORK.EVTDAYS0 created, with 963852 rows and 5 columns.
+
+378            create table work.evtdays as
+379            select a.rowid, a.offset, a.date, a.vwretd, d.ret
+380            from work.evtdays0 as a left join crsp.dsf as d
+381              on a.permno=d.permno and a.date=d.date;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.EVTDAYS created, with 963852 rows and 5 columns.
+
+382            create table work.car as
+383            select rowid, count(ret) as nret,
+384                   sum(case when not missing(ret) and not missing(vwretd)
+385                            then ret-vwretd else . end) as car
+386            from work.evtdays group by rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CAR created, with 321284 rows and 3 columns.
+
+387        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           4.58 seconds
+      cpu time            4.62 seconds
+      
+
+388        
+389        proc sql;
+390            create table work.base0 as
+391            select a.*, b.lagraw, b.lagdate, b.lagpends, b.laggap, b.nlagbest,
+392                   c.permno, c.siccd, c.shrcd, c.nperm, c.nsic,
+393                   p.pdate, p.price, p.cfac_p,
+394                   e.eidx, e.evtrade,
+395                   f.forecast, f.fdate, f.analyst_n,
+396                   g.cfac_a, g.cfac_l, g.cfac_f,
+397                   g.fdate_a, g.fdate_l, g.fdate_f,
+398                   h.nret, h.car
+399            from work.qcurr as a
+17                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+400            left join work.lagagg as b on a.rowid=b.rowid
+401            left join work.linkagg as c on a.rowid=c.rowid
+402            left join work.pdata as p on a.rowid=p.rowid
+403            left join work.eventdate as e on a.rowid=e.rowid
+404            left join work.fcast as f on a.rowid=f.rowid
+405            left join work.factors as g on a.rowid=g.rowid
+406            left join work.car as h on a.rowid=h.rowid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.BASE0 created, with 333156 rows and 42 columns.
+
+407        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.72 seconds
+      cpu time            0.79 seconds
+      
+
+408        
+409        data work.base;
+410            set work.base0;
+411            if nlagbest ne 1 then lagraw=.;
+412            if nperm ne 1 or nsic ne 1 then do; permno=.; siccd=.; end;
+413            if not missing(cfac_p) and cfac_p>0 and not missing(cfac_a) and cfac_a>0 then
+414                eps_t= value * cfac_p / cfac_a;
+415            if not missing(cfac_p) and cfac_p>0 and not missing(cfac_l) and cfac_l>0 then
+416                eps_lag= lagraw * cfac_p / cfac_l;
+417            if not missing(cfac_p) and cfac_p>0 and not missing(cfac_f) and cfac_f>0 then
+418                eps_forecast= forecast * cfac_p / cfac_f;
+419            if not missing(price) and price>0 then do;
+420                loss=eps_t/price;
+421                earnchange=(eps_t-eps_lag)/price;
+422                surprise=(eps_t-eps_forecast)/price;
+423            end;
+424            if not missing(pdate) and not missing(qbegin) then price_age_days=pdate-qbegin;
+425            loss_ok=not missing(loss);
+426            change_ok=not missing(earnchange);
+427            surprise_ok=not missing(surprise);
+428            price_ok=not missing(price) and price>0 and not missing(cfac_p) and cfac_p>0;
+429            lag_ok=nlagbest=1 and not missing(lagraw);
+430            forecast_ok=not missing(forecast) and not missing(fdate) and not missing(cfac_f);
+431            link_ok=nperm=1 and nsic=1 and not missing(permno) and not missing(siccd);
+432            car_ok=nret=3 and not missing(car);
+433            industry_excluded=(siccd>=4400 and siccd<=5000) or (siccd>=6000 and siccd<=6500);
+434            format qbegin lagtarget pends anndats lagpends lagdate fdate pdate evtrade fdate_a fdate_l fdate_f date9.;
+435        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      12 at 420:19      42893 at 421:26   90043 at 422:24   
+NOTE: There were 333156 observations read from the data set WORK.BASE0.
+NOTE: The data set WORK.BASE has 333156 observations and 58 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.15 seconds
+      
+
+436        
+437        /* Diagnostic only: do not screen observations on the elapsed price age. */
+438        title 'First available CRSP price age from fiscal-quarter start, all current actuals';
+18                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+439        proc freq data=work.base;
+440            tables price_age_days / missing;
+441        run;
+
+NOTE: There were 333156 observations read from the data set WORK.BASE.
+NOTE: The PROCEDURE FREQ printed page 14.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+442        proc means data=work.base n nmiss mean p50 p90 p95 p99 max maxdec=2;
+443            var price_age_days;
+444        run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 333156 observations read from the data set WORK.BASE.
+NOTE: The PROCEDURE MEANS printed page 15.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+445        
+446        /* Staged construction and missing-versus-zero diagnostics. */
+447        proc sql;
+448            create table work.attrition as
+449            select count(*) as n_current_actuals,
+450                   sum(lag_ok) as n_with_t4_actual,
+451                   sum(forecast_ok) as n_with_timely_forecast,
+452                   sum(price_ok) as n_with_begin_price,
+453                   sum(link_ok) as n_with_unique_link_sic,
+454                   sum(car_ok) as n_with_complete_car,
+455                   sum(loss_ok and change_ok and surprise_ok) as n_with_all_threshold_inputs,
+456                   sum(not missing(value) and value=0) as n_zero_current_eps,
+457                   sum(missing(value)) as n_missing_current_eps,
+458                   sum(not missing(forecast) and forecast=0) as n_zero_forecast,
+459                   sum(missing(forecast)) as n_missing_forecast,
+460                   sum(missing(car)) as n_missing_car
+461            from work.base;
+NOTE: Table WORK.ATTRITION created, with 1 rows and 12 columns.
+
+462            create table work.sicstage as
+463            select count(*) as n_pre_sic,
+464                   sum(missing(siccd)) as n_missing_sic,
+465                   sum(industry_excluded) as n_sic_excluded
+466            from work.base;
+NOTE: Table WORK.SICSTAGE created, with 1 rows and 3 columns.
+
+467        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.12 seconds
+      
+
+468        title 'Full 1985–2002 firm-quarter construction attrition';
+469        proc print data=work.attrition noobs; run;
+
+19                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+NOTE: There were 1 observations read from the data set WORK.ATTRITION.
+NOTE: The PROCEDURE PRINT printed page 16.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+470        proc print data=work.sicstage noobs; run;
+
+NOTE: There were 1 observations read from the data set WORK.SICSTAGE.
+NOTE: The PROCEDURE PRINT printed page 17.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+471        
+472        data work.precar;
+473            set work.base;
+474            if not lag_ok or not forecast_ok or not price_ok or not link_ok or not car_ok then delete;
+475            if not loss_ok or not change_ok or not surprise_ok then delete;
+476            if industry_excluded then delete;
+477        run;
+
+NOTE: There were 333156 observations read from the data set WORK.BASE.
+NOTE: The data set WORK.PRECAR has 163938 observations and 58 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.08 seconds
+      
+
+478        proc univariate data=work.precar noprint;
+479            var car;
+480            output out=work.carpct pctlpts=1 99 pctlpre=carp_;
+481        run;
+
+NOTE: The data set WORK.CARPCT has 1 observations and 2 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+482        data _null_;
+483            set work.carpct;
+484            call symputx('carp1',carp_1);
+485            call symputx('carp99',carp_99);
+486        run;
+
+NOTE: There were 1 observations read from the data set WORK.CARPCT.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.00 seconds
+      
+
+487        data work.mainfq;
+488            set work.precar;
+489            if car < &carp1 or car > &carp99 then delete;
+490        run;
+20                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+
+NOTE: There were 163938 observations read from the data set WORK.PRECAR.
+NOTE: The data set WORK.MAINFQ has 160659 observations and 58 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.05 seconds
+      
+
+491        
+492        title 'Final main firm-quarter sample and input distributions';
+493        proc sql;
+494            select count(*) as final_firm_quarters,
+495                   min(pends) as first_period_end format=date9.,
+496                   max(pends) as last_period_end format=date9.,
+497                   min(anndats) as first_announcement format=date9.,
+498                   max(anndats) as last_announcement format=date9.,
+499                   min(pdate) as first_price_date format=date9.,
+500                   max(pdate) as last_price_date format=date9.
+501            from work.mainfq;
+502            select count(*) as main_rows_before_car_trim,
+503                   sum(car < &carp1) as low_car_removed,
+504                   sum(car > &carp99) as high_car_removed,
+505                   &carp1 as car_p1, &carp99 as car_p99
+506            from work.precar;
+507        quit;
+NOTE: The PROCEDURE SQL printed pages 18-19.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+508        proc means data=work.mainfq n nmiss mean std min p1 p50 p99 max maxdec=6;
+509            var price price_age_days eps_t eps_lag eps_forecast loss earnchange surprise car;
+510        run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 160659 observations read from the data set WORK.MAINFQ.
+NOTE: The PROCEDURE MEANS printed page 20.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.22 seconds
+      cpu time            0.64 seconds
+      
+
+511        proc freq data=work.mainfq;
+512            tables qyear price_age_days / missing;
+513        run;
+
+NOTE: There were 160659 observations read from the data set WORK.MAINFQ.
+NOTE: The PROCEDURE FREQ printed page 21.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+514        
+515        /* Preserve the constructed common firm-quarter sample under scratch for audit. */
+516        data aud.main_firmquarter;
+517            set work.mainfq(keep=rowid ticker cusip permno pends qyear qbegin pdate
+21                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+518                anndats evtrade lagpends lagdate laggap fdate siccd price price_age_days cfac_p cfac_a cfac_l cfac_f
+519                value lagraw forecast eps_t eps_lag eps_forecast loss earnchange surprise car analyst_n);
+520        run;
+
+NOTE: There were 160659 observations read from the data set WORK.MAINFQ.
+NOTE: The data set AUD.MAIN_FIRMQUARTER has 160659 observations and 32 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.05 seconds
+      
+
+521        
+522        /* Common-sample threshold distributions; zero maps to bin 0, right of zero. */
+523        data work.binned;
+524            set work.mainfq;
+525            loss_bin=floor(loss/0.0025);
+526            change_bin=floor(earnchange/0.0025);
+527            surprise_bin=floor(surprise/0.0025);
+528        run;
+
+NOTE: There were 160659 observations read from the data set WORK.MAINFQ.
+NOTE: The data set WORK.BINNED has 160659 observations and 61 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+529        proc sql;
+530            create table work.annual0 as
+531            select qyear as year, count(*) as n_firmquarter,
+532               sum(loss_bin=-2) as loss_m2,
+533               sum(loss_bin=-1) as loss_m1,
+534               sum(loss_bin=0) as loss_0,
+535               sum(change_bin=-2) as change_m2,
+536               sum(change_bin=-1) as change_m1,
+537               sum(change_bin=0) as change_0,
+538               sum(surprise_bin=-2) as surprise_m2,
+539               sum(surprise_bin=-1) as surprise_m1,
+540               sum(surprise_bin=0) as surprise_0
+541            from work.binned group by qyear;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.ANNUAL0 created, with 18 rows and 11 columns.
+
+542        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.07 seconds
+      
+
+543        data work.annual;
+544            set work.annual0;
+545            nstd=1000;
+546            pl2=loss_m2/n_firmquarter; pl1=loss_m1/n_firmquarter; p0=loss_0/n_firmquarter;
+547            loss_var=1000*pl1*(1-pl1)+250*(pl2+p0)*(1-pl2-p0);
+548            z_loss=(1000*pl1-500*(pl2+p0))/sqrt(loss_var);
+549            pl2=change_m2/n_firmquarter; pl1=change_m1/n_firmquarter; p0=change_0/n_firmquarter;
+550            change_var=1000*pl1*(1-pl1)+250*(pl2+p0)*(1-pl2-p0);
+551            z_decrease=(1000*pl1-500*(pl2+p0))/sqrt(change_var);
+22                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+552            pl2=surprise_m2/n_firmquarter; pl1=surprise_m1/n_firmquarter; p0=surprise_0/n_firmquarter;
+553            surprise_var=1000*pl1*(1-pl1)+250*(pl2+p0)*(1-pl2-p0);
+554            z_surprise=(1000*pl1-500*(pl2+p0))/sqrt(surprise_var);
+555            keep year n_firmquarter z_loss z_decrease z_surprise;
+556        run;
+
+NOTE: There were 18 observations read from the data set WORK.ANNUAL0.
+NOTE: The data set WORK.ANNUAL has 18 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+557        proc sort data=work.annual; by year; run;
+
+NOTE: There were 18 observations read from the data set WORK.ANNUAL.
+NOTE: SAS sort was used.
+NOTE: The data set WORK.ANNUAL has 18 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+558        title 'Annual standardized differences for assigned trend fits';
+559        proc means data=work.annual n nmiss mean std min max maxdec=6;
+560            var n_firmquarter z_loss z_decrease z_surprise;
+561        run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 18 observations read from the data set WORK.ANNUAL.
+NOTE: The PROCEDURE MEANS printed page 22.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+562        proc sql;
+563            select count(*) as annual_observations,
+564                   min(year) as first_year, max(year) as last_year,
+565                   sum(n_firmquarter) as total_firm_quarters
+566            from work.annual;
+567        quit;
+NOTE: The PROCEDURE SQL printed page 23.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+568        
+569        data out.main;
+570            set work.annual;
+571        run;
+
+NOTE: There were 18 observations read from the data set WORK.ANNUAL.
+NOTE: The data set OUT.MAIN has 18 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+23                                                         The SAS System                     Tuesday, November  3, 2026 03:54:00 AM
+
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           3:19.52
+      cpu time            3:34.53
+      

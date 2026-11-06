@@ -1,0 +1,28 @@
+
+|                      |          (1)    |          (2)    |          (3)    |
+|                      |          t+1    |          t+2    |          t+3    |
+|                      |          b/p    |          b/p    |          b/p    |
+| -------------------- | :-------------: | :-------------: | :-------------: |
+| Intercept            |       -0.440**  |       -0.145    |        0.376    |
+|                      |      (0.029)    |      (0.433)    |      (0.106)    |
+| A                    |        0.003*** |        0.005*** |        0.007*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| D                    |        0.145*** |        0.277*** |        0.379*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| DD                   |        1.200*** |        0.997**  |        0.063    |
+|                      |      (0.004)    |      (0.049)    |      (0.917)    |
+| E                    |        0.908*** |        0.850*** |        0.836*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| NegE                 |        1.530*** |        2.019*** |        2.261*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| AC                   |       -0.058*** |       -0.086*** |       -0.085*** |
+|                      |      (0.000)    |      (0.000)    |      (0.007)    |
+| Observations         |           44    |           44    |           44    |
+| *R*<sup>2</sup>      |       90.035    |       84.172    |       80.644    |
+| Adjusted *R*<sup>2</sup> |       90.034    |       84.171    |       80.641    |
+
+Each column averages annual OLS fit vectors that pass the native full-rank check; coverage counts and exceptions are documented in the log.<br>
+Parentheses show two-sided p-values for native tests of the mean coefficient; see logs for t statistics.<br>
+N counts annual fits; underlying regression N is summarized by year and horizon in the log.<br>
+R-squared statistics are percentages, as in Table 1.
+

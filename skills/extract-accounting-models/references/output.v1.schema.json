@@ -1,0 +1,645 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Accounting paper baseline regression extraction",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "paper_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "doi": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "status": {
+      "enum": [
+        "complete",
+        "needs_review",
+        "no_baseline_regression",
+        "text_unavailable"
+      ]
+    },
+    "paper_text_file": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/model"
+      }
+    },
+    "review_notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "paper_id",
+    "doi",
+    "status",
+    "paper_text_file",
+    "models",
+    "review_notes"
+  ],
+  "$defs": {
+    "quote": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000
+        }
+      },
+      "required": [
+        "page",
+        "quote"
+      ],
+      "description": "Literal evidence from one physical PDF page. Quotes may cover a table or equation; do not cross page boundaries."
+    },
+    "variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "definition": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "formula": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/quote"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "definition",
+        "formula",
+        "evidence"
+      ],
+      "description": "One actual dependent variable or RHS term, including operational construction, coding, scaling, timing and transformations in definition. Use null rather than inventing missing definitions/formulas."
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "table": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "panel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400
+          },
+          "uniqueItems": true
+        },
+        "equation": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "page_begin": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_end": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "table",
+        "panel",
+        "columns",
+        "equation",
+        "page_begin",
+        "page_end"
+      ]
+    },
+    "statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/quote"
+          }
+        }
+      },
+      "required": [
+        "description",
+        "evidence"
+      ]
+    },
+    "specifications": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fixed_effects": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "reported",
+                "none",
+                "not_reported",
+                "unclear"
+              ]
+            },
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "uniqueItems": true
+            },
+            "details": {
+              "type": "string",
+              "maxLength": 8000
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "groups",
+            "details",
+            "evidence"
+          ],
+          "description": "Each inner array is a joint dimension. Separate inner arrays are separate fixed effects. Empty groups require none/not_reported/unclear; none means explicitly absent."
+        },
+        "standard_errors": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "reported",
+                "not_reported",
+                "unclear"
+              ]
+            },
+            "method": {
+              "enum": [
+                "conventional",
+                "heteroskedasticity_robust",
+                "cluster_robust",
+                "hac",
+                "bootstrap",
+                "fama_macbeth",
+                "other",
+                null
+              ]
+            },
+            "cluster_groups": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "uniqueItems": true
+            },
+            "details": {
+              "type": "string",
+              "maxLength": 8000
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "method",
+            "cluster_groups",
+            "details",
+            "evidence"
+          ],
+          "description": "Record multi-way versus joint clustering accurately. Robust standard errors do not imply a robust-regression estimator."
+        },
+        "intercept": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "reported",
+                "not_reported",
+                "unclear"
+              ]
+            },
+            "included": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "included",
+            "evidence"
+          ]
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "reported",
+                "none",
+                "not_reported",
+                "unclear"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 8000
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "status",
+            "description",
+            "evidence"
+          ]
+        },
+        "estimation_procedure": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 12000
+            },
+            "grouping_variables": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400
+              },
+              "uniqueItems": true,
+              "description": "Dimensions across which regressions are separately or repeatedly estimated. Describe matching or sorting keys in procedure text when they do not define separate fits."
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "description",
+            "grouping_variables",
+            "evidence"
+          ],
+          "description": "Fama–MacBeth, difference-in-differences, matching, repeated fits, joint estimation, instruments, quantile/tuning choices and other estimation design details belong here. Grouping is not fixed effects."
+        },
+        "preprocessing": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/statement"
+          }
+        },
+        "other": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/statement"
+          }
+        }
+      },
+      "required": [
+        "fixed_effects",
+        "standard_errors",
+        "intercept",
+        "weights",
+        "estimation_procedure",
+        "preprocessing",
+        "other"
+      ]
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "maxLength": 100
+        },
+        "model_role": {
+          "enum": [
+            "baseline",
+            "supporting"
+          ]
+        },
+        "model_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/location"
+          },
+          "minItems": 1
+        },
+        "sample_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "sample_description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "sample_size": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "method": {
+          "$ref": "regression_methods.json"
+        },
+        "method_reported": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "method_details": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "dependent_variable": {
+          "$ref": "#/$defs/variable"
+        },
+        "independent_variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/variable"
+          }
+        },
+        "equation_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 16000
+        },
+        "specifications": {
+          "$ref": "#/$defs/specifications"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "model_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "purpose": {
+                "enum": [
+                  "variable_construction",
+                  "first_stage",
+                  "selection",
+                  "other"
+                ]
+              },
+              "variables": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 400
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "model_id",
+              "purpose",
+              "variables"
+            ]
+          }
+        },
+        "estimation_group_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "scope": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            },
+            "method": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            },
+            "equation": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            },
+            "sample": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            },
+            "dependencies": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/quote"
+              }
+            }
+          },
+          "required": [
+            "scope",
+            "method",
+            "equation",
+            "sample",
+            "dependencies"
+          ]
+        },
+        "missing_fields": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "review_notes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        }
+      },
+      "required": [
+        "model_id",
+        "model_role",
+        "model_label",
+        "locations",
+        "sample_id",
+        "sample_description",
+        "sample_size",
+        "method",
+        "method_reported",
+        "method_details",
+        "dependent_variable",
+        "independent_variables",
+        "equation_text",
+        "specifications",
+        "dependencies",
+        "estimation_group_id",
+        "evidence",
+        "missing_fields",
+        "review_notes"
+      ]
+    }
+  }
+}

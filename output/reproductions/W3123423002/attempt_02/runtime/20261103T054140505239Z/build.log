@@ -1,0 +1,1236 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend;
+2          
+3          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname ccm "/storage/sas/base/crsp/a_ccm" access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+5          libname crsp "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+6          libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3123423002/attempt_02/data
+7          
+8          /* Read only the annual Compustat fields needed for the current, lagged, and lead periods. */
+9          proc sql;
+10             create table work.funda0 as
+11             select substr(strip(gvkey),1,6) as gvkey length=6,
+12                    datadate, fyear, indfmt, consol, popsrc, datafmt, scf, pddur,
+13                    curcd, at, ceq, ibc, oancf, ivncf, fincf, spi, sich
+14             from comp.funda
+15             where fyear between 1987 and 2003
+16               and indfmt='INDL'
+17               and consol='C'
+18               and popsrc='D'
+19               and datafmt='STD';
+NOTE: Table WORK.FUNDA0 created, with 190159 rows and 18 columns.
+
+20         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.53 seconds
+      cpu time            0.53 seconds
+3                                                          The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+      
+
+21         
+22         data work.current0;
+23             set work.funda0;
+24             if fyear < 1988 or fyear > 2002 then delete;
+25             if scf ne 7 then delete;
+26         run;
+
+NOTE: There were 190159 observations read from the data set WORK.FUNDA0.
+NOTE: The data set WORK.CURRENT0 has 131178 observations and 18 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+27         
+28         /* Audit annual source keys before temporal joins. */
+29         proc sql;
+30             create table work.funda_dup_fy as
+31             select gvkey, fyear, count(*) as n_rows
+32             from work.funda0
+33             group by gvkey, fyear
+34             having calculated n_rows > 1;
+NOTE: Table WORK.FUNDA_DUP_FY created, with 0 rows and 3 columns.
+
+35         
+36             create table work.funda_dup_date as
+37             select gvkey, datadate, count(*) as n_rows
+38             from work.funda0
+39             group by gvkey, datadate
+40             having calculated n_rows > 1;
+NOTE: Table WORK.FUNDA_DUP_DATE created, with 0 rows and 3 columns.
+
+41         
+42             select fyear, count(*) as duplicate_firmyears,
+43                    sum(n_rows-1) as extra_rows
+44             from work.funda_dup_fy
+45             group by fyear
+46             order by fyear;
+NOTE: No rows were selected.
+47         
+48             select count(*) as duplicate_gvkey_datadates,
+49                    sum(n_rows-1) as extra_rows
+50             from work.funda_dup_date;
+51         
+52             select fyear, count(*) as source_rows,
+53                    sum(case when missing(datadate) then 1 else 0 end) as missing_datadate,
+54                    sum(case when missing(curcd) then 1 else 0 end) as missing_curcd,
+55                    sum(case when missing(sich) or sich=0 then 1 else 0 end) as missing_historical_sic,
+56                    sum(case when missing(at) or at<=0 then 1 else 0 end) as missing_or_nonpositive_at
+57             from work.current0
+58             group by fyear
+59             order by fyear;
+60         quit;
+NOTE: The PROCEDURE SQL printed pages 1-2.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.10 seconds
+4                                                          The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+      cpu time            0.17 seconds
+      
+
+61         
+62         /* Keep dated primary CCM links. LINKENDDT=.E is an open end, not a recent date. */
+63         data work.link0;
+64             set ccm.ccmxpf_lnkhist(keep=gvkey linkprim linktype lpermno linkdt linkenddt);
+65             if linkprim not in ('P','C') then delete;
+66             if linktype not in ('LC','LU') then delete;
+67             if missing(lpermno) or lpermno<=0 then delete;
+68             gvkey=substr(strip(gvkey),1,6);
+69         run;
+
+NOTE: There were 123388 observations read from the data set CCM.CCMXPF_LNKHIST.
+NOTE: The data set WORK.LINK0 has 33324 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+
+70         
+71         proc sql;
+72             select count(*) as retained_link_rows,
+73                    sum(case when linkdt=.B then 1 else 0 end) as open_start_b,
+74                    sum(case when linkdt=. then 1 else 0 end) as open_start_dot,
+75                    sum(case when missing(linkdt) and linkdt ne .B and linkdt ne . then 1 else 0 end) as other_start_special,
+76                    sum(case when linkenddt=.E then 1 else 0 end) as open_end_e,
+77                    sum(case when linkenddt=. then 1 else 0 end) as open_end_dot,
+78                    sum(case when missing(linkenddt) and linkenddt ne .E and linkenddt ne . then 1 else 0 end) as
+78       ! other_end_special
+79             from work.link0;
+80         
+81             create table work.linkcand as
+82             select f.gvkey, f.fyear, f.datadate,
+83                    l.lpermno as permno, l.linkprim, l.linktype,
+84                    l.linkdt, l.linkenddt,
+85                    case when l.linkprim='P' then 1 else 2 end as lrank
+86             from work.current0 as f inner join work.link0 as l
+87               on f.gvkey=l.gvkey
+88              and (l.linkdt=.B or l.linkdt=. or l.linkdt<=f.datadate)
+89              and (l.linkenddt=.E or l.linkenddt=. or l.linkenddt>=f.datadate);
+NOTE: Table WORK.LINKCAND created, with 91320 rows and 9 columns.
+
+90         
+91             create table work.linkcand1 as
+92             select gvkey, fyear, datadate, permno, lrank,
+93                    count(*) as same_permno_link_rows
+94             from work.linkcand
+95             group by gvkey, fyear, datadate, permno, lrank;
+NOTE: Table WORK.LINKCAND1 created, with 91320 rows and 6 columns.
+
+96         
+97             create table work.linkstats as
+98             select gvkey, fyear, datadate,
+99                    sum(case when lrank=1 then 1 else 0 end) as n_p,
+100                   sum(case when lrank=2 then 1 else 0 end) as n_c
+101            from work.linkcand1
+102            group by gvkey, fyear, datadate;
+5                                                          The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+NOTE: Table WORK.LINKSTATS created, with 91320 rows and 5 columns.
+
+103        
+104            create table work.link_audit_year as
+105            select c.fyear, count(*) as current_rows,
+106                   sum(case when missing(s.n_p) then 1 else 0 end) as no_valid_link,
+107                   sum(case when s.n_p>1 then 1 else 0 end) as ambiguous_p_links,
+108                   sum(case when coalesce(s.n_p,0)=0 and s.n_c>1 then 1 else 0 end) as ambiguous_c_links,
+109                   sum(case when coalesce(s.n_p,0)=0 and s.n_c=1 then 1 else 0 end) as c_only_links,
+110                   sum(case when s.n_p=1 then 1 else 0 end) as unique_p_links
+111            from work.current0 as c left join work.linkstats as s
+112              on c.gvkey=s.gvkey and c.fyear=s.fyear and c.datadate=s.datadate
+113            group by c.fyear
+114            order by c.fyear;
+NOTE: Table WORK.LINK_AUDIT_YEAR created, with 15 rows and 7 columns.
+
+115        
+116            create table work.linkselected as
+117            select a.gvkey, a.fyear, a.datadate, a.permno, a.lrank,
+118                   a.same_permno_link_rows
+119            from work.linkcand1 as a inner join work.linkstats as s
+120              on a.gvkey=s.gvkey and a.fyear=s.fyear and a.datadate=s.datadate
+121            where (a.lrank=1 and s.n_p=1)
+122               or (s.n_p=0 and s.n_c=1 and a.lrank=2);
+NOTE: Table WORK.LINKSELECTED created, with 91320 rows and 6 columns.
+
+123        quit;
+NOTE: The PROCEDURE SQL printed page 3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.17 seconds
+      cpu time            0.21 seconds
+      
+
+124        
+125        proc print data=work.link_audit_year noobs label;
+126            title "Dated CCM link coverage and ambiguity by fiscal year";
+127        run;
+
+NOTE: There were 15 observations read from the data set WORK.LINK_AUDIT_YEAR.
+NOTE: The PROCEDURE PRINT printed page 4.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+128        
+129        /* CRSP dated name/price-history intervals establish coverage and provide dated SIC only if SICH is absent. */
+130        proc sql;
+131            create table work.namecand as
+132            select l.gvkey, l.fyear, l.datadate, l.permno,
+133                   n.namedt, n.nameenddt, n.siccd as sic_crsp,
+134                   n.st_date, n.end_date
+135            from work.linkselected as l inner join crsp.stocknames as n
+136              on l.permno=n.permno
+137             and (n.namedt=.B or n.namedt=. or n.namedt<=l.datadate)
+138             and (n.nameenddt=.E or n.nameenddt=. or n.nameenddt>=l.datadate)
+139             and (n.st_date=.B or n.st_date=. or n.st_date<=l.datadate)
+140             and (n.end_date=.E or n.end_date=. or n.end_date>=l.datadate);
+6                                                          The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+NOTE: Table WORK.NAMECAND created, with 91211 rows and 9 columns.
+
+141        
+142            create table work.namecnt as
+143            select gvkey, fyear, datadate, permno, count(*) as n_name_rows
+144            from work.namecand
+145            group by gvkey, fyear, datadate, permno;
+NOTE: Table WORK.NAMECNT created, with 91211 rows and 5 columns.
+
+146        
+147            create table work.name_audit_year as
+148            select l.fyear, count(*) as unique_link_rows,
+149                   sum(case when missing(n.n_name_rows) then 1 else 0 end) as no_crsp_name_price_coverage,
+150                   sum(case when n.n_name_rows>1 then 1 else 0 end) as ambiguous_name_intervals
+151            from work.linkselected as l left join work.namecnt as n
+152              on l.gvkey=n.gvkey and l.fyear=n.fyear and l.datadate=n.datadate and l.permno=n.permno
+153            group by l.fyear
+154            order by l.fyear;
+NOTE: Table WORK.NAME_AUDIT_YEAR created, with 15 rows and 4 columns.
+
+155        
+156            create table work.nameselected as
+157            select a.*
+158            from work.namecand as a inner join work.namecnt as n
+159              on a.gvkey=n.gvkey and a.fyear=n.fyear and a.datadate=n.datadate and a.permno=n.permno
+160            where n.n_name_rows=1;
+NOTE: Table WORK.NAMESELECTED created, with 91211 rows and 9 columns.
+
+161        
+162            create table work.current_linked as
+163            select c.gvkey, c.fyear, c.datadate, c.curcd,
+164                   c.at, c.ceq, c.ibc, c.oancf, c.ivncf, c.fincf, c.spi,
+165                   c.sich, c.scf, c.pddur, n.permno, n.sic_crsp
+166            from work.current0 as c inner join work.nameselected as n
+167              on c.gvkey=n.gvkey and c.fyear=n.fyear and c.datadate=n.datadate;
+NOTE: Table WORK.CURRENT_LINKED created, with 91211 rows and 16 columns.
+
+168        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.21 seconds
+      cpu time            0.25 seconds
+      
+
+169        
+170        proc print data=work.name_audit_year noobs label;
+171            title "CRSP name and price-history coverage by fiscal year";
+172        run;
+
+NOTE: There were 15 observations read from the data set WORK.NAME_AUDIT_YEAR.
+NOTE: The PROCEDURE PRINT printed page 5.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+173        
+174        proc sql;
+175            create table work.sic_audit_year as
+7                                                          The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+176            select fyear, count(*) as crsp_linked_current_rows,
+177                   sum(case when missing(sich) or sich=0 then 1 else 0 end) as missing_compustat_sich,
+178                   sum(case when not missing(sic_crsp) and sic_crsp ne 0 then 1 else 0 end) as dated_crsp_sic_available,
+179                   sum(case when (missing(sich) or sich=0) and (missing(sic_crsp) or sic_crsp=0) then 1 else 0 end) as
+179      ! missing_both_sic_sources
+180            from work.current_linked
+181            group by fyear
+182            order by fyear;
+NOTE: Table WORK.SIC_AUDIT_YEAR created, with 15 rows and 5 columns.
+
+183        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+184        
+185        proc print data=work.sic_audit_year noobs label;
+186            title "Historical SIC gaps and dated CRSP fallback availability by fiscal year";
+187        run;
+
+NOTE: There were 15 observations read from the data set WORK.SIC_AUDIT_YEAR.
+NOTE: The PROCEDURE PRINT printed page 6.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+188        
+189        /* Add actual adjacent fiscal-year records; no row-position lead/lag or future-asset filling is used. */
+190        proc sql;
+191            create table work.paired as
+192            select c.gvkey, c.fyear, c.datadate, c.permno, c.curcd as curcd_t,
+193                   c.at as at_t, c.ceq as ceq_t, c.ibc as ibc_t,
+194                   c.oancf as oancf_t, c.ivncf as ivncf_t, c.fincf as fincf_t,
+195                   c.spi as spi_t, c.sich as sic_comp, c.sic_crsp,
+196                   p.datadate as datadate_prev, p.at as at_prev, p.curcd as curcd_prev,
+197                   n.datadate as datadate_next, n.ibc as ibc_next, n.at as at_next,
+198                   n.ceq as ceq_next, n.curcd as curcd_next
+199            from work.current_linked as c
+200            left join work.funda0 as p
+201              on c.gvkey=p.gvkey and p.fyear=c.fyear-1
+202            left join work.funda0 as n
+203              on c.gvkey=n.gvkey and n.fyear=c.fyear+1;
+NOTE: Table WORK.PAIRED created, with 91211 rows and 22 columns.
+
+204        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.23 seconds
+      
+
+205        
+206        proc sql;
+207            create table work.currency_audit_year as
+208            select fyear, count(*) as linked_rows,
+209                   sum(case when missing(curcd_t) or missing(curcd_prev) then 1 else 0 end) as missing_current_or_prior_curcd,
+210                   sum(case when not missing(curcd_t) and not missing(curcd_prev) and curcd_t ne curcd_prev then 1 else 0 end) as
+8                                                          The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+210      !  current_prior_currency_mismatch,
+211                   sum(case when not missing(curcd_t) and not missing(curcd_prev) and curcd_t=curcd_prev then 1 else 0 end) as
+211      ! current_prior_same_currency,
+212                   sum(case when not missing(ibc_next) and (missing(curcd_next) or curcd_next ne curcd_t) then 1 else 0 end) as
+212      ! lead_cur_mismatch,
+213                   sum(case when not missing(ibc_next) and (missing(at_next) or at_next<=0) then 1 else 0 end) as lead_badassets
+214            from work.paired
+215            group by fyear
+216            order by fyear;
+NOTE: Table WORK.CURRENCY_AUDIT_YEAR created, with 15 rows and 7 columns.
+
+217        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+218        
+219        proc print data=work.currency_audit_year noobs label;
+220            title "Own-period reporting currencies and actual lead denominator coverage by fiscal year";
+221        run;
+
+NOTE: There were 15 observations read from the data set WORK.CURRENCY_AUDIT_YEAR.
+NOTE: The PROCEDURE PRINT printed page 7.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+222        
+223        data work.metrics;
+224            set work.paired;
+225            length sic_source 8;
+226            sic_final=sic_comp;
+227            sic_source=1;
+228            if missing(sic_final) or sic_final=0 then do;
+229                sic_final=sic_crsp;
+230                sic_source=2;
+231            end;
+232            if missing(sic_final) or sic_final=0 then delete;
+233            if sic_final>=6000 and sic_final<=6999 then delete;
+234            if missing(curcd_t) or missing(curcd_prev) then delete;
+235            if curcd_t ne curcd_prev then delete;
+236            if missing(at_t) or missing(at_prev) then delete;
+237            if at_t<=0 or at_prev<=0 then delete;
+238            if missing(ibc_t) or missing(oancf_t) or missing(ivncf_t) then delete;
+239        
+240            avg_at_t=(at_t+at_prev)/2;
+241            if missing(avg_at_t) or avg_at_t<=0 then delete;
+242            earnings_t=ibc_t/avg_at_t;
+243            cfo_t=oancf_t/avg_at_t;
+244            cfi_t=ivncf_t/avg_at_t;
+245            if missing(fincf_t) then cff_t=.;
+246            else cff_t=fincf_t/avg_at_t;
+247            fcf_t=(oancf_t+ivncf_t)/avg_at_t;
+248            opacc_t=(ibc_t-oancf_t)/avg_at_t;
+249            tacc_t=(ibc_t-(oancf_t+ivncf_t))/avg_at_t;
+250        
+9                                                          The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+251            spi_missing=missing(spi_t);
+252            if spi_missing then spi0=0;
+253            else spi0=spi_t;
+254            spi_ratio=spi0/avg_at_t;
+255            si=(spi_ratio<=-0.02);
+256            format datadate datadate_prev datadate_next yymmdd10.;
+257        run;
+
+NOTE: There were 91211 observations read from the data set WORK.PAIRED.
+NOTE: The data set WORK.METRICS has 80597 observations and 36 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+258        
+259        proc sql;
+260            create table work.current_screen_year as
+261            select fyear, count(*) as eligible_current_rows,
+262                   sum(case when sic_source=2 then 1 else 0 end) as dated_crsp_sic_fallback,
+263                   sum(case when spi_missing=1 then 1 else 0 end) as spi_zero_replacements,
+264                   sum(case when missing(cff_t) then 1 else 0 end) as missing_financing_flow,
+265                   sum(case when missing(datadate_prev) then 1 else 0 end) as no_fyear_lag_row,
+266                   sum(case when missing(datadate_next) then 1 else 0 end) as no_fyear_lead_row
+267            from work.metrics
+268            group by fyear
+269            order by fyear;
+NOTE: Table WORK.CURRENT_SCREEN_YEAR created, with 15 rows and 7 columns.
+
+270        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+271        
+272        proc print data=work.current_screen_year noobs label;
+273            title "Current-year accounting eligibility and support counts";
+274        run;
+
+NOTE: There were 15 observations read from the data set WORK.CURRENT_SCREEN_YEAR.
+NOTE: The PROCEDURE PRINT printed page 8.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+275        
+276        /* The future outcome may be replaced only when raw IBC is absent and a dated performance delist is verified. */
+277        data work.metrics_window;
+278            set work.metrics;
+279            if not missing(datadate_next) then event_end=datadate_next;
+280            else event_end=intnx('year',datadate,1,'same');
+281            format event_end yymmdd10.;
+282        run;
+
+NOTE: There were 80597 observations read from the data set WORK.METRICS.
+NOTE: The data set WORK.METRICS_WINDOW has 80597 observations and 37 variables.
+10                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+283        
+284        data work.performance_delists;
+285            set crsp.dsedelist(keep=permno dlstdt dlstcd);
+286            if missing(dlstdt) then delete;
+287            if not (dlstcd=500 or (dlstcd>=520 and dlstcd<=584)) then delete;
+288        run;
+
+NOTE: There were 38872 observations read from the data set CRSP.DSEDELIST.
+NOTE: The data set WORK.PERFORMANCE_DELISTS has 10468 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+289        
+290        proc sql;
+291            create table work.eventcand as
+292            select m.gvkey, m.fyear, m.datadate, d.dlstdt, d.dlstcd
+293            from work.metrics_window as m inner join work.performance_delists as d
+294              on m.permno=d.permno
+295             and d.dlstdt>m.datadate
+296             and d.dlstdt<=m.event_end;
+NOTE: Table WORK.EVENTCAND created, with 3039 rows and 5 columns.
+
+297        
+298            create table work.eventagg as
+299            select gvkey, fyear, datadate, count(*) as n_perf_events,
+300                   min(dlstdt) as perf_dlstdt format=yymmdd10.
+301            from work.eventcand
+302            group by gvkey, fyear, datadate;
+NOTE: Table WORK.EVENTAGG created, with 3039 rows and 5 columns.
+
+303        
+304            create table work.perf_event as
+305            select a.gvkey, a.fyear, a.datadate, a.perf_dlstdt,
+306                   a.n_perf_events, min(e.dlstcd) as perf_dlstcd
+307            from work.eventagg as a inner join work.eventcand as e
+308              on a.gvkey=e.gvkey and a.fyear=e.fyear and a.datadate=e.datadate
+309             and a.perf_dlstdt=e.dlstdt
+310            group by a.gvkey, a.fyear, a.datadate, a.perf_dlstdt, a.n_perf_events;
+NOTE: Table WORK.PERF_EVENT created, with 3039 rows and 6 columns.
+
+311        
+312            create table work.outcome_join as
+313            select m.*, e.perf_dlstdt, e.perf_dlstcd,
+314                   coalesce(e.n_perf_events,0) as n_perf_events
+315            from work.metrics_window as m left join work.perf_event as e
+316              on m.gvkey=e.gvkey and m.fyear=e.fyear and m.datadate=e.datadate;
+NOTE: Table WORK.OUTCOME_JOIN created, with 80597 rows and 40 columns.
+
+317        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+11                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+      cpu time            0.11 seconds
+      
+
+318        
+319        data work.outcomes;
+320            set work.outcome_join;
+321            length outcome_source 8 book_source 8 deflator_source 8;
+322            length event_state 8;
+323            earnings_next=.;
+324            book_used=.;
+325            book_date=.;
+326            avg_at_next=.;
+327            deflator_date=.;
+328            outcome_source=0;
+329            book_source=0;
+330            deflator_source=0;
+331            event_state=0;
+332            raw_lead_missing=missing(ibc_next);
+333            no_lead_statement=missing(datadate_next);
+334            observed_lead_unscaled=0;
+335            book_negative=.;
+336            book_nonnegative=.;
+337        
+338            if not missing(ibc_next) then do;
+339                event_state=1;
+340                if not missing(at_next) and at_next>0
+341                   and not missing(curcd_next) and curcd_next=curcd_t then do;
+342                    avg_at_next=(at_t+at_next)/2;
+343                    if avg_at_next>0 then do;
+344                        earnings_next=ibc_next/avg_at_next;
+345                        outcome_source=1;
+346                        deflator_source=1;
+347                        deflator_date=datadate_next;
+348                    end;
+349                end;
+350                if missing(earnings_next) then observed_lead_unscaled=1;
+351            end;
+352            else if not missing(perf_dlstdt) then do;
+353                event_state=2;
+354                /* A delisting replacement can use only book equity dated by the event. */
+355                if not missing(ceq_next) and not missing(curcd_next)
+356                   and not missing(datadate_next) and datadate_next<=perf_dlstdt
+357                   and curcd_next=curcd_t then do;
+358                    book_used=ceq_next;
+359                    book_date=datadate_next;
+360                    book_source=1;
+361                end;
+362                else if not missing(ceq_t) then do;
+363                    book_used=ceq_t;
+364                    book_date=datadate;
+365                    book_source=2;
+366                end;
+367        
+368                if not missing(book_used) then do;
+369                    if book_used<0 then do;
+370                        earnings_num=0;
+371                        book_negative=1;
+372                    end;
+12                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+373                    else do;
+374                        earnings_num=-book_used;
+375                        book_nonnegative=1;
+376                    end;
+377        
+378                    /* Keep the deflator within the event information date as well. */
+379                    if not missing(at_next) and at_next>0
+380                       and not missing(datadate_next) and datadate_next<=perf_dlstdt
+381                       and not missing(curcd_next) and curcd_next=curcd_t then do;
+382                        avg_at_next=(at_t+at_next)/2;
+383                        deflator_source=1;
+384                        deflator_date=datadate_next;
+385                    end;
+386                    else do;
+387                        avg_at_next=avg_at_t;
+388                        deflator_source=2;
+389                        deflator_date=datadate;
+390                    end;
+391                    if avg_at_next>0 then do;
+392                        earnings_next=earnings_num/avg_at_next;
+393                        outcome_source=2;
+394                    end;
+395                end;
+396            end;
+397            else event_state=3;
+398        
+399            format datadate datadate_prev datadate_next event_end perf_dlstdt book_date deflator_date yymmdd10.;
+400        run;
+
+NOTE: There were 80597 observations read from the data set WORK.OUTCOME_JOIN.
+NOTE: The data set WORK.OUTCOMES has 80597 observations and 55 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.02 seconds
+      
+
+401        
+402        /* Percentiles are pooled across fiscal years and use the eligible observations before trimming. */
+403        proc means data=work.metrics noprint;
+404            var earnings_t cfo_t cfi_t cff_t fcf_t opacc_t tacc_t;
+405            output out=work.currentcuts
+406                p1=earn_p1 cfo_p1 cfi_p1 cff_p1 fcf_p1 opacc_p1 tacc_p1
+407                p99=earn_p99 cfo_p99 cfi_p99 cff_p99 fcf_p99 opacc_p99 tacc_p99;
+408        run;
+
+NOTE: There were 80597 observations read from the data set WORK.METRICS.
+NOTE: The data set WORK.CURRENTCUTS has 1 observations and 16 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.22 seconds
+      cpu time            0.55 seconds
+      
+
+409        
+410        proc means data=work.outcomes noprint;
+411            var earnings_next;
+412            output out=work.futurecuts p1=lead_p1 p99=lead_p99;
+413        run;
+
+13                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+NOTE: There were 80597 observations read from the data set WORK.OUTCOMES.
+NOTE: The data set WORK.FUTURECUTS has 1 observations and 4 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.07 seconds
+      
+
+414        
+415        /* Unequal dates/amounts and signed CFI expose denominator and sign mistakes. */
+416        data work.formula_probe;
+417            at_prev=80; at_t=120; at_next=180;
+418            ibc_t=24; oancf_t=15; ivncf_t=-21; fincf_t=8;
+419            spi_t=.; ibc_next=30; ceq_t=12; ceq_negative=-6;
+420            avg_at_t=(at_t+at_prev)/2;
+421            earnings_t=ibc_t/avg_at_t;
+422            cfo_t=oancf_t/avg_at_t;
+423            cfi_t=ivncf_t/avg_at_t;
+424            cff_t=fincf_t/avg_at_t;
+425            fcf_t=(oancf_t+ivncf_t)/avg_at_t;
+426            opacc_t=(ibc_t-oancf_t)/avg_at_t;
+427            tacc_t=(ibc_t-(oancf_t+ivncf_t))/avg_at_t;
+428            if missing(spi_t) then spi0=0;
+429            spi_ratio=spi0/avg_at_t;
+430            si=(spi_ratio<=-0.02);
+431            avg_at_next=(at_t+at_next)/2;
+432            earnings_next=ibc_next/avg_at_next;
+433            delist_pos_book=-ceq_t/avg_at_next;
+434            delist_neg_book=0/avg_at_next;
+435            formula_probe_errors=0;
+436            if abs(avg_at_t-100)>1e-12 then formula_probe_errors+1;
+437            if abs(earnings_t-0.24)>1e-12 then formula_probe_errors+1;
+438            if abs(cfo_t-0.15)>1e-12 then formula_probe_errors+1;
+439            if abs(cfi_t-(-0.21))>1e-12 then formula_probe_errors+1;
+440            if abs(cff_t-0.08)>1e-12 then formula_probe_errors+1;
+441            if abs(fcf_t-(-0.06))>1e-12 then formula_probe_errors+1;
+442            if abs(opacc_t-0.09)>1e-12 then formula_probe_errors+1;
+443            if abs(tacc_t-0.30)>1e-12 then formula_probe_errors+1;
+444            if spi_ratio ne 0 or si ne 0 then formula_probe_errors+1;
+445            if abs(avg_at_next-150)>1e-12 then formula_probe_errors+1;
+446            if abs(earnings_next-0.20)>1e-12 then formula_probe_errors+1;
+447            if abs(delist_pos_book-(-0.08))>1e-12 then formula_probe_errors+1;
+448            if delist_neg_book ne 0 then formula_probe_errors+1;
+449        run;
+
+NOTE: The data set WORK.FORMULA_PROBE has 1 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+450        
+451        proc sql;
+452            select max(formula_probe_errors) as formula_probe_errors
+453            from work.formula_probe;
+454        quit;
+NOTE: The PROCEDURE SQL printed page 9.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+14                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+      cpu time            0.01 seconds
+      
+
+455        
+456        data work.trimmed;
+457            if _n_=1 then do;
+458                set work.currentcuts;
+459                set work.futurecuts;
+460            end;
+461            set work.outcomes;
+462        
+463            bad_current=0;
+464            if earnings_t<earn_p1 or earnings_t>earn_p99 then bad_current=1;
+465            if cfo_t<cfo_p1 or cfo_t>cfo_p99 then bad_current=1;
+466            if cfi_t<cfi_p1 or cfi_t>cfi_p99 then bad_current=1;
+467            if not missing(cff_t) and (cff_t<cff_p1 or cff_t>cff_p99) then bad_current=1;
+468            if fcf_t<fcf_p1 or fcf_t>fcf_p99 then bad_current=1;
+469            if opacc_t<opacc_p1 or opacc_t>opacc_p99 then bad_current=1;
+470            if tacc_t<tacc_p1 or tacc_t>tacc_p99 then bad_current=1;
+471        
+472            bad_lead=0;
+473            if not missing(earnings_next) then do;
+474                if earnings_next<lead_p1 or earnings_next>lead_p99 then bad_lead=1;
+475            end;
+476        
+477            table1_sample=(bad_current=0);
+478            table2_pre=(table1_sample=1 and not missing(earnings_next) and bad_lead=0);
+479            format datadate datadate_prev datadate_next event_end perf_dlstdt book_date yymmdd10.;
+480        run;
+
+NOTE: There were 1 observations read from the data set WORK.CURRENTCUTS.
+NOTE: There were 1 observations read from the data set WORK.FUTURECUTS.
+NOTE: There were 80597 observations read from the data set WORK.OUTCOMES.
+NOTE: The data set WORK.TRIMMED has 80597 observations and 77 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+481        
+482        proc sql;
+483            select * from work.currentcuts;
+484            select * from work.futurecuts;
+485        
+486            create table work.trim_attrition as
+487            select fyear, count(*) as eligible_before_trim,
+488                   sum(case when table1_sample=1 then 1 else 0 end) as table1_after_current_trim,
+489                   sum(case when table2_pre=1 then 1 else 0 end) as table2_before_deciles,
+490                   sum(case when table1_sample=1 and not missing(earnings_next) then 1 else 0 end) as
+490      ! t1_with_usable_lead_before_trim,
+491                   sum(case when table1_sample=1 and missing(earnings_next) then 1 else 0 end) as t1_without_usable_lead,
+492                   sum(case when table1_sample=1 and bad_lead=1 then 1 else 0 end) as lead_tail_drops,
+493                   sum(case when table1_sample=0 then 1 else 0 end) as current_tail_drops
+494            from work.trimmed
+495            group by fyear
+496            order by fyear;
+NOTE: Table WORK.TRIM_ATTRITION created, with 15 rows and 8 columns.
+
+15                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+497        quit;
+NOTE: The PROCEDURE SQL printed pages 10-11.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+498        
+499        proc print data=work.trim_attrition noobs label;
+500            title "Pooled 1% tail-trim attrition by fiscal year";
+501        run;
+
+NOTE: There were 15 observations read from the data set WORK.TRIM_ATTRITION.
+NOTE: The PROCEDURE PRINT printed page 12.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+502        
+503        proc sort data=work.trimmed out=work.trimmed_rank_s;
+504            by fyear gvkey datadate;
+505        run;
+
+NOTE: There were 80597 observations read from the data set WORK.TRIMMED.
+NOTE: The data set WORK.TRIMMED_RANK_S has 80597 observations and 77 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.08 seconds
+      
+
+506        
+507        data work.t2_rankbase;
+508            set work.trimmed_rank_s;
+509            if table2_pre=1;
+510        run;
+
+NOTE: There were 80597 observations read from the data set WORK.TRIMMED_RANK_S.
+NOTE: The data set WORK.T2_RANKBASE has 70084 observations and 77 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+511        
+512        proc sort data=work.t2_rankbase;
+513            by fyear;
+514        run;
+
+NOTE: There were 70084 observations read from the data set WORK.T2_RANKBASE.
+NOTE: The data set WORK.T2_RANKBASE has 70084 observations and 77 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+515        
+516        proc rank data=work.t2_rankbase out=work.ranked groups=10 ties=mean;
+16                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+517            by fyear;
+518            var opacc_t tacc_t;
+519            ranks op_rank tacc_rank;
+520        run;
+
+NOTE: There were 70084 observations read from the data set WORK.T2_RANKBASE.
+NOTE: The data set WORK.RANKED has 70084 observations and 79 variables.
+NOTE: PROCEDURE RANK used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+521        
+522        proc sort data=work.ranked out=work.ranked_s;
+523            by gvkey fyear datadate;
+524        run;
+
+NOTE: There were 70084 observations read from the data set WORK.RANKED.
+NOTE: The data set WORK.RANKED_S has 70084 observations and 79 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+525        
+526        proc sort data=work.trimmed out=work.trimmed_key;
+527            by gvkey fyear datadate;
+528        run;
+
+NOTE: There were 80597 observations read from the data set WORK.TRIMMED.
+NOTE: The data set WORK.TRIMMED_KEY has 80597 observations and 77 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+529        
+530        data work.final;
+531            merge work.trimmed_key(in=in_table1)
+532                  work.ranked_s(keep=gvkey fyear datadate op_rank tacc_rank in=in_table2);
+533            by gvkey fyear datadate;
+534            if in_table1 and table1_sample=1;
+535            table2_sample=in_table2;
+536        
+537            if table2_sample then do;
+538                low_op=(op_rank=0);
+539                low_tacc=(tacc_rank=0);
+540                earn_low_op=earnings_t*low_op;
+541                earn_low_op_si=earnings_t*low_op*si;
+542                earn_low_tacc=earnings_t*low_tacc;
+543                earn_low_tacc_si=earnings_t*low_tacc*si;
+544            end;
+545            else do;
+546                low_op=.;
+547                low_tacc=.;
+548                earn_low_op=.;
+549                earn_low_op_si=.;
+550                earn_low_tacc=.;
+17                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+551                earn_low_tacc_si=.;
+552            end;
+553        
+554            formula_bad=0;
+555            if abs(earnings_t-(ibc_t/avg_at_t))>1e-12 then formula_bad=1;
+556            if abs(cfo_t-(oancf_t/avg_at_t))>1e-12 then formula_bad=1;
+557            if abs(cfi_t-(ivncf_t/avg_at_t))>1e-12 then formula_bad=1;
+558            if not missing(cff_t) and abs(cff_t-(fincf_t/avg_at_t))>1e-12 then formula_bad=1;
+559            if abs(fcf_t-((oancf_t+ivncf_t)/avg_at_t))>1e-12 then formula_bad=1;
+560            if abs(opacc_t-((ibc_t-oancf_t)/avg_at_t))>1e-12 then formula_bad=1;
+561            if abs(tacc_t-((ibc_t-(oancf_t+ivncf_t))/avg_at_t))>1e-12 then formula_bad=1;
+562            if abs(spi_ratio-(spi0/avg_at_t))>1e-12 then formula_bad=1;
+563            if table2_sample then do;
+564                if abs(earn_low_op-(earnings_t*low_op))>1e-12 then formula_bad=1;
+565                if abs(earn_low_op_si-(earnings_t*low_op*si))>1e-12 then formula_bad=1;
+566                if abs(earn_low_tacc-(earnings_t*low_tacc))>1e-12 then formula_bad=1;
+567                if abs(earn_low_tacc_si-(earnings_t*low_tacc*si))>1e-12 then formula_bad=1;
+568                if outcome_source=1 and
+569                   abs(earnings_next-(ibc_next/((at_t+at_next)/2)))>1e-12 then formula_bad=1;
+570                if outcome_source=2 and
+571                   abs(earnings_next-(earnings_num/avg_at_next))>1e-12 then formula_bad=1;
+572                if outcome_source=2 and
+573                   (book_date>perf_dlstdt or deflator_date>perf_dlstdt) then formula_bad=1;
+574            end;
+575        
+576            label gvkey="Compustat GVKEY"
+577                  fyear="Fiscal year"
+578                  datadate="Current Compustat data date"
+579                  permno="Matched CRSP PERMNO"
+580                  sic_final="Historical SIC used for the financial-firm screen"
+581                  curcd_t="Reporting currency at t"
+582                  earnings_t="Earnings before extraordinary items (IBC) / average assets"
+583                  earnings_next="One-year-ahead earnings or eligible delisting substitute / deflator"
+584                  cfo_t="Cash flow from operations (OANCF) / average assets"
+585                  cfi_t="Cash flow from investing (IVNCF) / average assets"
+586                  cff_t="Cash flow from financing (FINCF) / average assets"
+587                  fcf_t="Free cash flow (OANCF + IVNCF) / average assets"
+588                  opacc_t="Operating accruals (IBC - OANCF) / average assets"
+589                  tacc_t="Total accruals (IBC - FCF) / average assets"
+590                  spi_ratio="Special items (SPI; missing set to zero) / average assets"
+591                  si="Negative special items at least 2% of average assets"
+592                  low_op="Annual bottom OPACC decile"
+593                  low_tacc="Annual bottom TACC decile"
+594                  earn_low_op="Earnings x Low OPACC"
+595                  earn_low_op_si="Earnings x Low OPACC x SI"
+596                  earn_low_tacc="Earnings x Low TACC"
+597                  earn_low_tacc_si="Earnings x Low TACC x SI"
+598                  table1_sample="Eligible trimmed Table 1 current-year pool"
+599                  table2_sample="Common eligible Table 2 equation (6) sample"
+600                  outcome_source="1=reported future IBC; 2=verified delisting substitution"
+601                  book_source="1=event-date-supported next-year CEQ; 2=current-year CEQ"
+602                  book_date="Date of book-equity observation used for delisting replacement"
+603                  deflator_source="1=event-supported next-year average assets; 2=current average assets"
+604                  deflator_date="Date of latest assets observation used for delisting replacement"
+605                  perf_dlstcd="Performance-related CRSP delisting code";
+606            format datadate datadate_prev datadate_next event_end perf_dlstdt book_date deflator_date yymmdd10.;
+607        run;
+
+18                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+NOTE: There were 80597 observations read from the data set WORK.TRIMMED_KEY.
+NOTE: There were 70084 observations read from the data set WORK.RANKED_S.
+NOTE: The data set WORK.FINAL has 74848 observations and 87 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+608        
+609        proc sort data=work.final out=out.accrual_persistence_main;
+610            by gvkey fyear;
+611        run;
+
+NOTE: There were 74848 observations read from the data set WORK.FINAL.
+NOTE: The data set OUT.ACCRUAL_PERSISTENCE_MAIN has 74848 observations and 87 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+612        
+613        proc sql;
+614            create table work.final_counts as
+615            select fyear, count(*) as table1_n,
+616                   sum(table2_sample) as table2_n,
+617                   sum(case when outcome_source=1 then 1 else 0 end) as reported_future_outcomes,
+618                   sum(case when outcome_source=2 then 1 else 0 end) as delist_replacements,
+619                   sum(case when outcome_source=2 and book_negative=1 then 1 else 0 end) as negative_book_to_zero,
+620                   sum(case when outcome_source=2 and book_nonnegative=1 then 1 else 0 end) as nonnegative_book_to_negative,
+621                   sum(case when outcome_source=2 and book_source=1 then 1 else 0 end) as next_year_book_used,
+622                   sum(case when outcome_source=2 and book_source=2 then 1 else 0 end) as current_book_used,
+623                   sum(case when outcome_source=2 and book_date>perf_dlstdt then 1 else 0 end) as book_date_after_event,
+624                   sum(case when outcome_source=2 and deflator_source=1 then 1 else 0 end) as actual_future_deflator_used,
+625                   sum(case when outcome_source=2 and deflator_source=2 then 1 else 0 end) as current_deflator_used,
+626                   sum(case when outcome_source=2 and deflator_date>perf_dlstdt then 1 else 0 end) as deflator_date_after_event,
+627                   sum(case when raw_lead_missing=1 and missing(perf_dlstdt) then 1 else 0 end) as leadmiss_noperf,
+628                   sum(observed_lead_unscaled) as lead_unscaled,
+629                   sum(no_lead_statement) as absent_next_statement,
+630                   sum(case when table2_sample=1 and outcome_source=1 then 1 else 0 end) as t2_reported_future,
+631                   sum(case when table2_sample=1 and outcome_source=2 then 1 else 0 end) as t2_delist_replacements,
+632                   sum(case when table2_sample=1 and outcome_source=2 and book_negative=1 then 1 else 0 end) as
+632      ! t2_negative_book_to_zero,
+633                   sum(case when table2_sample=1 and outcome_source=2 and book_nonnegative=1 then 1 else 0 end) as
+633      ! t2_nonnegative_book_to_negative,
+634                   sum(case when table2_sample=1 and outcome_source=2 and book_source=1 then 1 else 0 end) as
+634      ! t2_next_year_book_used,
+635                   sum(case when table2_sample=1 and outcome_source=2 and book_source=2 then 1 else 0 end) as
+635      ! t2_current_book_used,
+636                   sum(case when table2_sample=1 and outcome_source=2 and book_date>perf_dlstdt then 1 else 0 end) as
+636      ! t2_book_date_after_event,
+637                   sum(case when table2_sample=1 and outcome_source=2 and deflator_date>perf_dlstdt then 1 else 0 end) as
+637      ! t2_deflator_date_after_event,
+638                   sum(case when table2_sample=1 and raw_lead_missing=1 and not missing(perf_dlstdt) then 1 else 0 end) as
+638      ! t2_missing_ibc_with_perf,
+639                   sum(case when table2_sample=1 and raw_lead_missing=1 and missing(perf_dlstdt) then 1 else 0 end) as
+639      ! t2_missing_ibc_without_perf,
+640                   sum(case when table2_sample=1 and observed_lead_unscaled=1 then 1 else 0 end) as t2_observed_ibc_unscaled
+641            from out.accrual_persistence_main
+19                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+642            group by fyear
+643            order by fyear;
+NOTE: Table WORK.FINAL_COUNTS created, with 15 rows and 27 columns.
+
+644        
+645            create table work.event_code_counts as
+646            select fyear, dlstcd, count(*) as event_matches
+647            from work.eventcand
+648            group by fyear, dlstcd
+649            order by fyear, dlstcd;
+NOTE: Table WORK.EVENT_CODE_COUNTS created, with 177 rows and 3 columns.
+
+650        
+651            select count(*) as output_rows,
+652                   count(distinct gvkey) as output_gvkeys,
+653                   sum(table1_sample) as table1_rows,
+654                   sum(table2_sample) as table2_rows,
+655                   sum(formula_bad) as handoff_formula_errors
+656            from out.accrual_persistence_main;
+657        quit;
+NOTE: The PROCEDURE SQL printed page 13.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.08 seconds
+      
+
+658        
+659        proc print data=work.final_counts noobs label;
+660            title "Table 1/Table 2 and delisting construction counts by fiscal year";
+661        run;
+
+NOTE: There were 15 observations read from the data set WORK.FINAL_COUNTS.
+NOTE: The PROCEDURE PRINT printed pages 14-15.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+662        
+663        proc print data=work.event_code_counts noobs label;
+664            title "Performance-related CRSP event codes in the t-to-t+1 chronology window";
+665        run;
+
+NOTE: There were 177 observations read from the data set WORK.EVENT_CODE_COUNTS.
+NOTE: The PROCEDURE PRINT printed pages 16-19.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+666        
+667        proc sql;
+668            create table work.delist_date_audit as
+669            select gvkey, fyear, datadate, event_end, datadate_next,
+670                   perf_dlstdt, perf_dlstcd, no_lead_statement,
+671                   book_date, book_source, deflator_date, deflator_source, book_used,
+672                   earnings_next
+673            from out.accrual_persistence_main
+20                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+674            where table2_sample=1 and outcome_source=2
+675            order by perf_dlstdt, gvkey;
+NOTE: Table WORK.DELIST_DATE_AUDIT created, with 1008 rows and 14 columns.
+
+676        
+677            select count(*) as delist_date_cases,
+678                   sum(case when perf_dlstdt>datadate and perf_dlstdt<=event_end then 1 else 0 end) as inside_actual_window,
+679                   sum(case when not missing(datadate_next) and perf_dlstdt<datadate_next then 1 else 0 end) as
+679      ! before_observed_lead_statement,
+680                   sum(case when missing(datadate_next) and event_end=intnx('year',datadate,1,'same') then 1 else 0 end) as
+680      ! anniversary_window_cases
+681            from work.delist_date_audit;
+682        quit;
+NOTE: The PROCEDURE SQL printed page 20.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+683        
+684        proc print data=work.delist_date_audit noobs label;
+685            title "All Table 2 delisting replacements with event-dated book and deflator sources";
+686        run;
+
+NOTE: There were 1008 observations read from the data set WORK.DELIST_DATE_AUDIT.
+NOTE: The PROCEDURE PRINT printed pages 21-71.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+687        
+688        proc freq data=out.accrual_persistence_main;
+689            tables fyear*table2_sample / norow nocol nopercent;
+690            tables fyear*low_op fyear*low_tacc / norow nocol nopercent;
+691            title "Final sample and annual bottom-decile group counts";
+692        run;
+
+NOTE: There were 74848 observations read from the data set OUT.ACCRUAL_PERSISTENCE_MAIN.
+NOTE: The PROCEDURE FREQ printed pages 72-74.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+693        
+694        proc means data=out.accrual_persistence_main n mean std min p25 median p75 max;
+695            var earnings_t cfo_t cfi_t cff_t fcf_t opacc_t tacc_t spi_ratio earnings_next;
+696            title "Final handoff distribution checks, all retained current-year rows";
+697        run;
+
+NOTE: There were 74848 observations read from the data set OUT.ACCRUAL_PERSISTENCE_MAIN.
+NOTE: The PROCEDURE MEANS printed page 75.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.25 seconds
+      cpu time            0.67 seconds
+      
+
+21                                                         The SAS System                     Tuesday, November  3, 2026 01:41:00 PM
+
+698        
+699        proc means data=out.accrual_persistence_main n mean std min p25 median p75 max;
+700            where table2_sample=1;
+701            var earnings_next cfo_t opacc_t fcf_t tacc_t earn_low_op earn_low_op_si earn_low_tacc earn_low_tacc_si;
+702            title "Final handoff distribution checks, common Table 2 sample";
+703        run;
+
+NOTE: There were 70084 observations read from the data set OUT.ACCRUAL_PERSISTENCE_MAIN.
+      WHERE table2_sample=1;
+NOTE: The PROCEDURE MEANS printed page 76.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.36 seconds
+      
+
+704        
+705        proc contents data=out.accrual_persistence_main varnum;
+706            title "Declared SAS handoff fields";
+707        run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+NOTE: The PROCEDURE CONTENTS printed pages 77-79.
+
+708        
+709        title;
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           2.82 seconds
+      cpu time            4.11 seconds
+      

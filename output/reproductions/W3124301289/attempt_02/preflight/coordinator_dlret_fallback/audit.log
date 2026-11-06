@@ -1,0 +1,336 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 04:00:00 PM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 04:00:00 PM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+1          options errorabend msglevel=i;
+2          libname crsp "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+3          
+4          /* Bounded audit of delist-month keys absent from the filtered common-stock
+5             monthly file. Summaries only; no source observations are exported. */
+6          data work.msf0;
+7              set crsp.msf(keep=permno permco date ret);
+8              if date < "01DEC1977"d or date > "30JUN2001"d then delete;
+9              monthkey=intnx("month",date,0,"beginning");
+10             format date monthkey date9.;
+11         run;
+
+NOTE: There were 5153763 observations read from the data set CRSP.MSF.
+NOTE: The data set WORK.MSF0 has 2022471 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.41 seconds
+      cpu time            0.42 seconds
+      
+
+12         
+13         data work.names_range;
+14             set crsp.msenames(keep=permno permco namedt nameendt shrcd);
+15             if nameendt=.E then name_end="30JUN2001"d;
+16             else if not missing(nameendt) then name_end=nameendt;
+17             else delete;
+18             if namedt=.B then name_start="01DEC1977"d;
+19             else if not missing(namedt) then name_start=namedt;
+20             else delete;
+21             if name_end < "01DEC1977"d or name_start > "30JUN2001"d then delete;
+22             name_start=max(name_start,"01DEC1977"d);
+23             name_end=min(name_end,"30JUN2001"d);
+24             keep permno permco name_start name_end shrcd;
+25             format name_start name_end date9.;
+26         run;
+3                                                          The SAS System                     Tuesday, November  3, 2026 04:00:00 PM
+
+
+NOTE: There were 117830 observations read from the data set CRSP.MSENAMES.
+NOTE: The data set WORK.NAMES_RANGE has 50754 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+27         
+28         data work.delist0;
+29             set crsp.msedelist(keep=permno dlstdt dlret);
+30             if missing(dlstdt) or dlstdt < "01DEC1977"d or dlstdt > "30JUN2001"d then delete;
+31             dlmonth=intnx("month",dlstdt,0,"beginning");
+32             format dlstdt dlmonth date9.;
+33         run;
+
+NOTE: There were 38843 observations read from the data set CRSP.MSEDELIST.
+NOTE: The data set WORK.DELIST0 has 13927 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+34         
+35         proc sql;
+36             create table work.delist_month as
+37             select permno, dlmonth, min(dlstdt) as dlstdt format=date9.,
+38                    count(*) as event_rows,
+39                    count(distinct dlret) as distinct_dlret,
+40                    min(dlret) as dlret
+41             from work.delist0
+42             group by permno, dlmonth;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.DELIST_MONTH created, with 13927 rows and 6 columns.
+
+43             create table work.filtered_candidates as
+44             select m.permno, m.permco as msf_permco, n.permco as name_permco,
+45                    m.date, m.monthkey, m.ret, n.name_start, n.shrcd
+46             from work.msf0 as m
+47             left join work.names_range as n
+48               on m.permno=n.permno and m.date>=n.name_start and m.date<=n.name_end;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.FILTERED_CANDIDATES created, with 2022471 rows and 8 columns.
+
+49         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.56 seconds
+      cpu time            0.82 seconds
+      
+
+50         
+51         proc sort data=work.filtered_candidates out=work.filtered_candidates_sort;
+52             by permno monthkey descending name_start;
+53         run;
+
+NOTE: There were 2022471 observations read from the data set WORK.FILTERED_CANDIDATES.
+NOTE: SAS threaded sort was used.
+NOTE: The data set WORK.FILTERED_CANDIDATES_SORT has 2022471 observations and 8 variables.
+4                                                          The SAS System                     Tuesday, November  3, 2026 04:00:00 PM
+
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.19 seconds
+      cpu time            0.56 seconds
+      
+
+54         
+55         data work.stock_month;
+56             set work.filtered_candidates_sort;
+57             by permno monthkey;
+58             if first.monthkey;
+59             if shrcd not in (10,11) then delete;
+60         run;
+
+NOTE: There were 2022471 observations read from the data set WORK.FILTERED_CANDIDATES_SORT.
+NOTE: The data set WORK.STOCK_MONTH has 1717122 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.21 seconds
+      cpu time            0.22 seconds
+      
+
+61         
+62         proc sql;
+63             create table work.event_only as
+64             select d.*
+65             from work.delist_month as d
+66             left join work.stock_month as s
+67               on d.permno=s.permno and d.dlmonth=s.monthkey
+68             where missing(s.permno) and d.distinct_dlret=1 and not missing(d.dlret);
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.EVENT_ONLY created, with 12439 rows and 6 columns.
+
+69         
+70             create table work.raw_month_summary as
+71             select d.permno, d.dlmonth,
+72                    count(m.permno) as raw_msf_rows,
+73                    sum(not missing(m.ret)) as raw_ret_rows,
+74                    count(distinct m.permco) as raw_permco_options,
+75                    min(m.permco) as raw_permco,
+76                    max(m.date) as raw_date format=date9.
+77             from work.event_only as d
+78             left join work.msf0 as m
+79               on d.permno=m.permno and d.dlmonth=m.monthkey
+80             group by d.permno, d.dlmonth;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.RAW_MONTH_SUMMARY created, with 12439 rows and 7 columns.
+
+81         
+82             create table work.event_name_summary as
+83             select d.permno, d.dlmonth,
+84                    count(n.permno) as event_name_rows,
+85                    count(distinct n.permco) as event_permco_options,
+86                    min(n.permco) as event_permco,
+87                    count(distinct n.shrcd) as event_shrcd_options,
+88                    min(n.shrcd) as event_shrcd,
+89                    max(case when n.shrcd in (10,11) and not missing(n.permco)
+90                             then n.name_end else . end) as event_common_name_end format=date9.
+91             from work.event_only as d
+92             left join work.names_range as n
+5                                                          The SAS System                     Tuesday, November  3, 2026 04:00:00 PM
+
+93               on d.permno=n.permno and d.dlstdt>=n.name_start and d.dlstdt<=n.name_end
+94             group by d.permno, d.dlmonth;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.EVENT_NAME_SUMMARY created, with 12439 rows and 8 columns.
+
+95         
+96             create table work.raw_name_interval as
+97             select d.permno, d.dlmonth,
+98                    sum(case when m.permno is not null and n.permno is not null then 1 else 0 end) as raw_rows_in_any_name,
+99                    sum(case when m.permno is not null and n.permno is null then 1 else 0 end) as raw_rows_outside_all_names,
+100                   sum(case when m.permno is not null and not missing(e.event_common_name_end) and
+101                                 m.date>e.event_common_name_end then 1 else 0 end) as raw_after_end
+102            from work.event_only as d
+103            left join work.msf0 as m
+104              on d.permno=m.permno and d.dlmonth=m.monthkey
+105            left join work.names_range as n
+106              on m.permno=n.permno and m.date>=n.name_start and m.date<=n.name_end
+107            left join work.event_name_summary as e
+108              on d.permno=e.permno and d.dlmonth=e.dlmonth
+109            group by d.permno, d.dlmonth;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.RAW_NAME_INTERVAL created, with 12439 rows and 5 columns.
+
+110        
+111            create table work.audit as
+112            select d.*, r.raw_msf_rows, r.raw_ret_rows, r.raw_permco_options,
+113                   r.raw_permco, r.raw_date,
+114                   e.event_name_rows, e.event_permco_options, e.event_permco,
+115                   e.event_shrcd_options, e.event_shrcd, e.event_common_name_end,
+116                   i.raw_rows_in_any_name, i.raw_rows_outside_all_names,
+117                   i.raw_after_end
+118            from work.event_only as d
+119            left join work.raw_month_summary as r
+120              on d.permno=r.permno and d.dlmonth=r.dlmonth
+121            left join work.event_name_summary as e
+122              on d.permno=e.permno and d.dlmonth=e.dlmonth
+123            left join work.raw_name_interval as i
+124              on d.permno=i.permno and d.dlmonth=i.dlmonth;
+NOTE: Table WORK.AUDIT created, with 12439 rows and 20 columns.
+
+125        
+126            title "Bounded raw-MSF audit of filtered DLRET-only events";
+127            select count(*) as filtered_dlret_only_events,
+128                   sum(raw_msf_rows>0) as with_raw_msf,
+129                   sum(raw_ret_rows>0) as with_nonmissing_raw_ret,
+130                   sum(event_name_rows>0 and event_permco_options=1 and
+131                       event_shrcd_options=1 and event_shrcd in (10,11)) as with_unique_dated_common_link,
+132                   sum(raw_ret_rows>0 and event_name_rows>0 and event_permco_options=1 and
+133                       event_shrcd_options=1 and event_shrcd in (10,11)) as ret_common_link,
+134                   sum(raw_ret_rows=1 and raw_msf_rows=1 and raw_permco_options=1 and
+135                       raw_permco=event_permco and event_name_rows>0 and
+136                       event_permco_options=1 and event_shrcd_options=1 and
+137                       event_shrcd in (10,11)) as ret_match_link,
+138                   sum(raw_rows_outside_all_names>0) as raw_outside_names,
+139                   sum(raw_after_end>0) as raw_after_common_end,
+140                   sum(raw_ret_rows>0 and raw_rows_outside_all_names>0) as ret_outside_names,
+141                   sum(raw_ret_rows>0 and raw_after_end>0) as ret_after_common_end
+142            from work.audit;
+6                                                          The SAS System                     Tuesday, November  3, 2026 04:00:00 PM
+
+143        quit;
+NOTE: The PROCEDURE SQL printed page 1.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.86 seconds
+      cpu time            1.49 seconds
+      
+
+144        
+145        
+146        proc sql;
+147         title 'Coordinator check: raw returns under the production prior-month fallback';
+148         select count(*) as raw_ret_events,
+149                sum(not missing(p.permno)) as prior_common_rows,
+150                sum(not missing(p.permno) and p.msf_permco>0 and
+151                    p.msf_permco=p.name_permco) as supported_prior_permco,
+152                sum(not missing(p.permno) and p.msf_permco>0 and
+153                    p.msf_permco=p.name_permco and a.raw_permco=p.msf_permco)
+154                    as raw_and_prior_permco_agree
+155         from work.audit as a left join work.stock_month as p
+156           on a.permno=p.permno and p.monthkey=intnx('month',a.dlmonth,-1,'beginning')
+157         where a.raw_ret_rows>0;
+NOTE: SAS threaded sort was used.
+158        quit;
+NOTE: The PROCEDURE SQL printed page 2.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.28 seconds
+      cpu time            0.48 seconds
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           2.58 seconds
+      cpu time            4.02 seconds
+      

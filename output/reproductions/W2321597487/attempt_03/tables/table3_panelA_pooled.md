@@ -1,0 +1,27 @@
+
+|                      |          (1)    |          (2)    |          (3)    |
+|                      | Accruals / average assets    | Accruals / average assets    | Accruals / average assets    |
+|                      |          b/p    |          b/p    |          b/p    |
+| -------------------- | :-------------: | :-------------: | :-------------: |
+| Operating cash flow / average assets |       -0.412*** |       -0.676*** |       -0.467*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| Indicator: CF < 0    |        0.060*** |        0.063*** |        0.053*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| CF loss indicator x CF |        1.053*** |        0.822*** |        1.097*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| Prior-year CFO / current-year average assets |                 |        0.346*** |                 |
+|                      |                 |      (0.000)    |                 |
+| Following-year CFO / current-year average assets |                 |        0.176*** |                 |
+|                      |                 |      (0.000)    |                 |
+| Change in net sales / average assets |                 |                 |        0.137*** |
+|                      |                 |                 |      (0.000)    |
+| Gross PPE / average assets |                 |                 |       -0.037*** |
+|                      |                 |                 |      (0.000)    |
+| Constant             |       -0.040*** |       -0.048*** |       -0.017*** |
+|                      |      (0.000)    |      (0.000)    |      (0.000)    |
+| Observations         |        78963    |        66210    |        75590    |
+| *R*<sup>2</sup>      |       18.507    |       25.212    |       20.904    |
+| Adjusted *R*<sup>2</sup> |       18.504    |       25.206    |       20.899    |
+
+R-squared and adjusted R-squared are percent.
+

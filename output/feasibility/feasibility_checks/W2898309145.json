@@ -1,0 +1,919 @@
+{
+  "schema_version": "1.2",
+  "paper_id": "W2898309145",
+  "doi": "10.1007/s11142-018-9448-0",
+  "eligibility": "eligible",
+  "provenance": {
+    "models_inventory_sha256": "99fa3538c4600dfe238e16b796b87f0e11534ddb747b8330bc6184d5d4de41c8",
+    "samples_inventory_sha256": "bcb4cb5c897be4e1d19d5eb27f2249171c3b432429b3ca0ca62577d45855662e",
+    "catalog_sha256": "45894893e45d56cb56150252c2ce4e85dfa88f5d891f3e547d3e9ea8003993fb",
+    "catalog_artifact_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "5821845ace490928bbee4ab43e064acc161010641b908d2a65a5a13de7569030",
+    "model_record_sha256": "3960b2a8a3e7ab6771273b4a2844f8abc197f92dd78cc819ee247f45ec8f3881",
+    "sample_record_sha256": "35601bac88d63213e66c7525fe3c067fbffa2669d41fe81474ce396bfd62f5b5",
+    "reading_sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+    "pdf_sha256": "f60ae914bb0a1e3a0c0739214a0712a18f60889845db445430ca158e9ebbdb4e",
+    "work_item_sha256": "a43ba99744feab7b4ee4ac4458bcf6fbdeaaf4694addda4edf701c01ee28eda5",
+    "review_source_aggregate_sha256": "2c054a78d6515b45b20bd409e84018663c81a2ac3002944ed28baa287078ea88",
+    "review_source_assessment_sha256": "9f736b0f217427df9237a3a32d9985994a91f46d24295deec78b316eeac2c077",
+    "review_source_work_item_sha256": "06255344580ae48325d3f928e982c95e5d5bf4f41af90abce1ada108b8547857",
+    "review_source_converter_sha256": "adc57168632515ab279560dc8138f3093edf12c561dd519aacc0fe9f0c61f590",
+    "review_source_decisions_sha256": "51ca795843b3c5ff732b33b38572f00ecd2ecbabea1393a13540884851125a2d",
+    "temporal_audit_file": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/full_01_reviewed/drafts/W2898309145/temporal_audit.json",
+    "temporal_audit_sha256": "9aae11e7985487849f6ed10635c97e4561ce88d53deaea52f480051cfc6f8669"
+  },
+  "requirements": [
+    {
+      "requirement_id": "delta_annual",
+      "kind": "raw_measure",
+      "description": "Annual raw Compustat inputs for Δ: TXPD_t, TXR_t, TXR_(t−1), and PI_t, with GVKEY/DATADATE/FYEAR to identify annual firm-years. Table 4 applies the .35×PI term. The TXR source meaning is inconsistent between sections.",
+      "required_coverage": {
+        "begin": 1987,
+        "end": 2014,
+        "years": [],
+        "frequency": "annual fiscal-year firm-year observations",
+        "population": "Full-sample U.S. corporation firm-years used in Table 6 Panel C, outcome years 1988-2014.",
+        "detail": "The baseline outcome period is 1988-2014. Table 4 uses TXR_t−TXR_(t−1), so the numerator needs one 12-month prior-year TXR: window(1988,2014; lookback=12) = 1987-2014. This is a calendar-year envelope for annual firm-years."
+      },
+      "routes": [
+        {
+          "route_id": "funda_delta",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America annual fundamentals",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "datadate",
+            "fyear",
+            "gvkey",
+            "pi",
+            "txpd",
+            "txr"
+          ],
+          "mapping_notes": "The paper names TXPD, TXR and PI. Current annual Compustat has txpd (Income Taxes Paid), pi (Pretax Income) and txr (Income Tax Refund), plus firm/date fields. Section 2.2 calls TXR a tax refund receivable, but Table 4 calls the amount tax reserves. Exact input presence is verified; this conflict prevents verified semantic mapping.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "The exact local SAS resource and listed live columns were verified by bounded probe; no coordinator coverage confirmation is supplied. The probe is a one-row slice and does not establish complete 1987-2014 historical or U.S.-corporation coverage. The TXR concept conflict is also unresolved.",
+          "evidence_ids": [
+            "p7_txr",
+            "p16_delta",
+            "catalog_funda",
+            "probe_funda"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Local access and the fields are verified, but complete population/year coverage is not; TXR semantics conflict between Section 2.2 and Table 4. No coverage confirmation or checked independent route was supplied.",
+      "evidence_ids": [
+        "p7_txr",
+        "p16_delta",
+        "catalog_funda",
+        "probe_funda"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "mva_annual",
+      "kind": "raw_measure",
+      "description": "Annual Compustat components for the beginning MVA1 denominator and its BVA fallback: AT, CSHO and SEQ, with GVKEY/DATADATE/FYEAR. BVA is AT.",
+      "required_coverage": {
+        "begin": 1987,
+        "end": 2014,
+        "years": [],
+        "frequency": "annual fiscal-year firm-year observations",
+        "population": "Full-sample U.S. corporation firm-years used in Table 6 Panel C, outcome years 1988-2014.",
+        "detail": "MVA1 is a beginning-of-year scalar. The previous fiscal-year-end annual fields supply the denominator for outcomes in 1988-2014; one 12-month lookback gives window(1988,2014; lookback=12) = 1987-2014. Quarterly PRCC_Q is a separate required input. AT also supplies the stated BVA fallback."
+      },
+      "routes": [
+        {
+          "route_id": "funda_mva_annual",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America annual fundamentals",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "at",
+            "csho",
+            "datadate",
+            "fyear",
+            "gvkey",
+            "seq"
+          ],
+          "mapping_notes": "Table 1 and Table 4 explicitly specify AT, CSHO and SEQ in the MVA expression, with BVA equal to AT. Current annual Compustat labels these fields consistently. GVKEY and dates support within-provider firm-year construction.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "verified"
+          },
+          "coverage_notes": "The exact local SAS resource and listed live columns were verified by bounded probe; no coordinator coverage confirmation is supplied. The probe is a one-row slice and does not establish complete 1987-2014 historical or U.S.-corporation coverage.",
+          "evidence_ids": [
+            "p10_mva",
+            "p16_mva",
+            "catalog_funda",
+            "probe_funda"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Annual field presence and access are verified, but no frozen confirmation establishes 1987-2014 historical coverage for the required U.S. corporation population.",
+      "evidence_ids": [
+        "p10_mva",
+        "p16_mva",
+        "catalog_funda",
+        "probe_funda"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "mva_quarterly_price",
+      "kind": "raw_measure",
+      "description": "Quarter-end Compustat price input PRCC_Q for beginning MVA1, linked by GVKEY and fiscal-year-end date to annual AT, CSHO and SEQ.",
+      "required_coverage": {
+        "begin": 1987,
+        "end": 2014,
+        "years": [],
+        "frequency": "quarter-end observations matched to annual fiscal years",
+        "population": "Full-sample U.S. corporation firm-years used in Table 6 Panel C, outcome years 1988-2014.",
+        "detail": "The source specifies PRCC_Q in MVA=AT+((PRCC_Q×CSHO)-SEQ) and MVA1 as beginning market value. Use the prior fiscal-year-end quarter close for the beginning denominator; one 12-month lookback gives the conservative envelope 1987-2014. The exact quarter-to-fiscal-year matching rule is not stated."
+      },
+      "routes": [
+        {
+          "route_id": "fundq_mva_price",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America quarterly fundamentals",
+          "dataset": "COMP.FUNDQ",
+          "location": "/storage/sas/base/comp/d_na/fundq.sas7bdat",
+          "fields": [
+            "datadate",
+            "gvkey",
+            "prccq"
+          ],
+          "mapping_notes": "The paper explicitly names PRCC_Q; the current quarterly Compustat field prccq is labeled Price Close - Quarter, supporting its field-level semantic mapping. GVKEY and DATADATE support matching to annual records; exact fiscal-year-end quarter selection remains a construction detail.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "verified"
+          },
+          "coverage_notes": "The exact local SAS resource and listed live columns were verified by bounded probe; no coordinator coverage confirmation is supplied. The probe is a one-row slice and does not establish complete 1987-2014 historical or U.S.-corporation coverage.",
+          "evidence_ids": [
+            "p10_mva",
+            "p16_mva",
+            "catalog_fundq",
+            "probe_fundq"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Quarterly field presence and access are verified, but historical coverage and the exact annual-quarter match are not established by a one-row probe or coverage confirmation.",
+      "evidence_ids": [
+        "p10_mva",
+        "p16_mva",
+        "catalog_fundq",
+        "probe_fundq"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "study_panel",
+      "kind": "sampling",
+      "description": "Full-sample annual panel period and firm-history rule: U.S. Compustat corporation firm-years with nonmissing Δ/MVA1 from 1988-2014; Table 6 Panel C retains firms with at least five observations.",
+      "required_coverage": {
+        "begin": 1988,
+        "end": 2014,
+        "years": [],
+        "frequency": "annual firm-year observations",
+        "population": "U.S. corporation firm-years with nonmissing Δ/MVA1; Table 6 Panel C all-firms fit, firms with at least five observations.",
+        "detail": "Section 3.1 reports 1988-2014 and 124,514 nonmissing one-year Δ/MVA1 observations before the Table 6 fit threshold. Table 6 Panel C reports 111,558 after requiring at least five observations per firm. Period is the source observation-year interval; exact FYEAR versus calendar-year basis is not explicit."
+      },
+      "routes": [
+        {
+          "route_id": "funda_panel",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America annual fundamentals",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "datadate",
+            "fyear",
+            "gvkey"
+          ],
+          "mapping_notes": "The current annual file has GVKEY, DATADATE and FYEAR (Data Year - Fiscal), matching the firm-year panel fields. Table 6 calls the time basis observation year without specifying whether it is fiscal-year label or calendar year of DATADATE.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "verified"
+          },
+          "coverage_notes": "Exact fields and local access are verified, but no coordinator confirmation establishes a complete 1988-2014 U.S. corporation panel or the five-observation sample coverage.",
+          "evidence_ids": [
+            "p13_period",
+            "p13_n",
+            "p24_time",
+            "p24_five",
+            "p24_panel",
+            "catalog_funda",
+            "probe_funda"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Local GVKEY/date fields are present, but full historical population coverage is unverified; the exact observation-year field used for TIME is not specified.",
+      "evidence_ids": [
+        "p13_period",
+        "p13_n",
+        "p24_time",
+        "p24_five",
+        "p24_panel",
+        "catalog_funda",
+        "probe_funda"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "noncorp_exclusions",
+      "kind": "sampling",
+      "description": "Historical firm-year exclusions in footnote 14: SIC 6798 (REITs), company names ending “-LP” and containing “TRUST,” and six-digit CUSIPs ending “Y” or “Z.”",
+      "required_coverage": {
+        "begin": 1988,
+        "end": 2014,
+        "years": [],
+        "frequency": "annual firm-year observations",
+        "population": "Compustat U.S. corporation candidates before the paper’s noncorporate exclusions.",
+        "detail": "The PDF footnote was visually checked: parsed JSON misrenders the endings. Use the actual PDF rules (-LP, TRUST, CUSIP suffix Y or Z). Annual historical SIC is available as a cataloged field; exact historical CUSIP format/version and coverage remain unverified."
+      },
+      "routes": [
+        {
+          "route_id": "funda_noncorp",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America annual fundamentals",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "conm",
+            "cusip",
+            "datadate",
+            "fyear",
+            "gvkey",
+            "sich"
+          ],
+          "mapping_notes": "Current annual Compustat includes company name (conm), CUSIP and historical SIC (sich), corresponding to the paper’s stated filters. PDF page 13 footnote was checked directly for the exact -LP/TRUST and CUSIP Y/Z endings. Whether the local CUSIP value is the same six-digit historical representation used by the paper is unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "The exact local SAS resource and listed live columns were verified by bounded probe; no coordinator coverage confirmation is supplied. The probe is a one-row slice and does not establish complete 1987-2014 historical or U.S.-corporation coverage. Historical name/CUSIP representation for the paper’s period is not confirmed.",
+          "evidence_ids": [
+            "p13_noncorp",
+            "catalog_funda",
+            "probe_funda"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The local fields exist, but no evidence confirms the historical CUSIP/name versions or complete 1988-2014 coverage for applying these exclusions.",
+      "evidence_ids": [
+        "p13_noncorp",
+        "catalog_funda",
+        "probe_funda"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "finc_corporate_code",
+      "kind": "sampling",
+      "description": "Compustat FINC=0 U.S.-corporation classification required by footnote 14.",
+      "required_coverage": {
+        "begin": 1988,
+        "end": 2014,
+        "years": [],
+        "frequency": "annual firm-year observations",
+        "population": "Compustat corporation candidates in the 1988-2014 full sample.",
+        "detail": "The paper requires exact item FINC=0. The cataloged COMP.FUNDA and COMP.COMPANY have FIC (Current ISO Country Code - Incorporation) but no exact FINC field; FIC cannot be substituted by name resemblance or without a source-supported code translation."
+      },
+      "routes": [
+        {
+          "route_id": "funda_finc_candidate",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America annual fundamentals",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "datadate",
+            "fic",
+            "fyear",
+            "gvkey"
+          ],
+          "mapping_notes": "FIC is a current ISO incorporation-country code, not the paper’s exact FINC item or its numeric code 0. This route verifies a candidate local field only; it does not map the FINC=0 rule.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "The exact local SAS resource and listed live columns were verified by bounded probe; no coordinator coverage confirmation is supplied. The probe is a one-row slice and does not establish complete 1987-2014 historical or U.S.-corporation coverage. No exact FINC column is present in the cataloged annual/company files; the related FIC field is not mapped to the paper criterion.",
+          "evidence_ids": [
+            "p13_finc",
+            "catalog_funda",
+            "catalog_company",
+            "probe_funda"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The paper requires FINC=0, while the cataloged exact local annual/company products expose FIC rather than FINC. No source-supported code translation or complete route is available.",
+      "evidence_ids": [
+        "p13_finc",
+        "catalog_funda",
+        "catalog_company",
+        "probe_funda"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "stko_subsidiary_filter",
+      "kind": "sampling",
+      "description": "Firm-year subsidiary/public-company exclusion using Compustat STKO codes 1, 2, and 0 as described in footnote 14.",
+      "required_coverage": {
+        "begin": 1988,
+        "end": 2014,
+        "years": [],
+        "frequency": "annual firm-year observations",
+        "population": "Compustat U.S. corporation firm-years in 1988-2014, with the paper’s STKO ownership exclusions.",
+        "detail": "The footnote identifies STKO=1/2 as subsidiaries and STKO=0 as publicly traded (then subject to a share-price-missing exclusion). The current COMP.COMPANY table has stko but no DATADATE/FYEAR; its current ownership value does not establish year-valid status for 1988-2014."
+      },
+      "routes": [
+        {
+          "route_id": "company_stko",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America company file",
+          "dataset": "COMP.COMPANY",
+          "location": "/storage/sas/base/comp/d_na/company/company.sas7bdat",
+          "fields": [
+            "gvkey",
+            "stko"
+          ],
+          "mapping_notes": "The paper names STKO and the current Company table exposes a same-named Stock Ownership Code field; the paper supplies code meanings. The cataloged Company table has no date/year validity field, so the mapping is field-level only and historical coverage is unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "verified"
+          },
+          "coverage_notes": "The exact Company file and stko field are readable, but the table has no DATADATE/FYEAR and no historical ownership coverage confirmation.",
+          "evidence_ids": [
+            "p13_stko",
+            "catalog_company",
+            "probe_company"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The same-named STKO field is present, but the local Company table has no historical validity date and no coordinator confirmation establishes the required 1988-2014 codes.",
+      "evidence_ids": [
+        "p13_stko",
+        "catalog_company",
+        "probe_company"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "shareprice_sample_rule",
+      "kind": "sampling",
+      "description": "Share-price availability screen applied to STKO=0 observations in footnote 14.",
+      "required_coverage": {
+        "begin": 1988,
+        "end": 2014,
+        "years": [],
+        "frequency": "annual firm-year observations with quarter-end price candidate",
+        "population": "Publicly traded Compustat firm-years in the full 1988-2014 sample.",
+        "detail": "The source says a publicly traded observation is deleted when share price is missing but does not identify the exact price item or date. PRCC_Q is explicit for the MVA formula, but its use in this separate sample screen is not stated; do not assume the same field/timing."
+      },
+      "routes": [
+        {
+          "route_id": "fundq_shareprice_candidate",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America quarterly fundamentals",
+          "dataset": "COMP.FUNDQ",
+          "location": "/storage/sas/base/comp/d_na/fundq.sas7bdat",
+          "fields": [
+            "datadate",
+            "gvkey",
+            "prccq"
+          ],
+          "mapping_notes": "PRCC_Q/prccq is a source-supported candidate because Table 1/4 uses it for MVA, but the footnote’s generic “share price” does not establish that same field or the screening quarter. Field presence is verified; criterion mapping is not.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "Quarterly price access and field presence are verified; the paper’s exact screening price item/date and historical coverage are not established.",
+          "evidence_ids": [
+            "p13_stko",
+            "p10_mva",
+            "catalog_fundq",
+            "probe_fundq"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No exact share-price item/date is reported for the STKO=0 screen, and complete 1988-2014 coverage is unverified.",
+      "evidence_ids": [
+        "p13_stko",
+        "p10_mva",
+        "catalog_fundq",
+        "probe_fundq"
+      ],
+      "data_status": "undetermined"
+    }
+  ],
+  "assessments": [
+    {
+      "model_id": "full_sample_delta_trend",
+      "result_set_id": "table6_panel_c_all_firms",
+      "required_model_ids": [
+        "full_sample_delta_trend"
+      ],
+      "requirement_ids": [
+        "delta_annual",
+        "mva_annual",
+        "mva_quarterly_price",
+        "study_panel",
+        "noncorp_exclusions",
+        "finc_corporate_code",
+        "stko_subsidiary_filter",
+        "shareprice_sample_rule"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "full_sample_delta_trend",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "delta_annual",
+            "mva_annual",
+            "mva_quarterly_price"
+          ],
+          "construction": "For each annual observation t, Δ = TXPD_t − (TXR_t − TXR_(t−1)) − 0.35×PI_t; MVA1 is beginning market value of assets based on AT+((PRCC_Q×CSHO)−SEQ), with beginning AT/BVA substituted when MVA is missing. Divide Δ by MVA1. TXR meaning, statutory rate and exact fiscal-quarter matching remain source ambiguities.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "full_sample_delta_trend",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "study_panel"
+          ],
+          "construction": "TIME = observation year − 1988 (0 to 26). The paper does not state whether its observation year is the Compustat fiscal-year label (FYEAR) or calendar year of DATADATE; this anchor choice remains unresolved.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "study_panel",
+            "noncorp_exclusions",
+            "finc_corporate_code",
+            "stko_subsidiary_filter",
+            "shareprice_sample_rule"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p13_period",
+            "p13_finc",
+            "p13_noncorp",
+            "p13_stko",
+            "p24_five"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "delta_annual",
+            "mva_annual",
+            "mva_quarterly_price",
+            "study_panel",
+            "stko_subsidiary_filter"
+          ],
+          "reason": "Compustat GVKEY is the within-provider firm key and is present in annual, quarterly and Company products; no external database link is specified. Historical STKO coverage is separately unresolved.",
+          "evidence_ids": [
+            "catalog_funda",
+            "catalog_fundq",
+            "catalog_company",
+            "probe_funda",
+            "probe_fundq",
+            "probe_company"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "Table 6 Panel C does not report fixed-effect families; no additional fixed-effect data input is specified.",
+          "evidence_ids": [
+            "p24_layout"
+          ]
+        },
+        {
+          "aspect": "clusters",
+          "requirement_ids": [
+            "study_panel"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p24_cluster",
+            "catalog_funda",
+            "probe_funda"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "Table 6 Panel C reports no weighting scheme or weight variable; no weight input is specified.",
+          "evidence_ids": [
+            "p24_layout"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [
+            "delta_annual",
+            "mva_annual",
+            "mva_quarterly_price",
+            "study_panel"
+          ],
+          "reason": "The paper identifies a linear time-trend regression and an intercept but does not identify the estimator; this remains a blocking specification issue.",
+          "evidence_ids": [
+            "p24_estimator",
+            "p24_cluster"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "delta_annual",
+            "mva_annual",
+            "mva_quarterly_price",
+            "study_panel"
+          ],
+          "reason": "The source states 1st/99th percentile winsorization of Δ/MVA but does not specify the percentile pool; the scope ambiguity is retained below.",
+          "evidence_ids": [
+            "p16_winsor",
+            "p24_panel"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The source’s TXR concept is inconsistent: Section 2.2 calls TXR a tax refund receivable, while Table 4 calls it tax reserves; the local field is labeled Income Tax Refund. Section 2.2 also prints 34% for fiscal years ended “1998 through 1992” and 35% for 1993-2014, while Table 4 applies .35×PI. The paper does not reconcile the definitions/rate schedule. The extracted baseline follows Table 4 but an exact Δ construction remains unresolved.",
+          "blocking": true,
+          "evidence_ids": [
+            "p7_txr",
+            "p7_rate",
+            "p16_delta",
+            "catalog_funda"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "Table 6 describes a regression of Δ/MVA1 on a linear time trend, but does not name the estimator. No estimator is inferred from the reported table statistics.",
+          "blocking": true,
+          "evidence_ids": [
+            "p24_estimator",
+            "p24_cluster"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The source defines TIME using “observation year” but does not identify whether this is Compustat FYEAR or calendar year of DATADATE. The period is 1988-2014; the exact year-field choice remains unresolved.",
+          "blocking": false,
+          "evidence_ids": [
+            "p13_period",
+            "p24_time",
+            "catalog_funda"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The paper states Δ/MVA is winsorized at the 1st and 99th percentiles but does not define whether cutpoints are pooled over all firm-years, calculated by year, or based on a different sample. This affects the outcome used in the trend fit.",
+          "blocking": true,
+          "evidence_ids": [
+            "p16_winsor",
+            "p24_panel"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The paper specifies PRCC_Q for MVA but does not state the exact quarter-to-annual match rule for beginning MVA1. The local quarterly close and annual date fields permit a candidate alignment; fiscal-year-end matching remains a construction choice.",
+          "blocking": false,
+          "evidence_ids": [
+            "p10_mva",
+            "p16_mva",
+            "catalog_fundq",
+            "probe_fundq"
+          ]
+        },
+        {
+          "kind": "vintage",
+          "description": "The local routes are cataloged Compustat products, while the paper reports a 1988-2014 sample in a 2018 article. No evidence establishes that the current local vintage reproduces the paper’s historical coverage or values; report any later vintage differences if reconstruction proceeds.",
+          "blocking": false,
+          "evidence_ids": [
+            "p13_period",
+            "catalog_funda",
+            "catalog_fundq",
+            "probe_funda",
+            "probe_fundq"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "Table 6 Panel C all-firms fit only; keep one-year Δ/MVA1, full-sample period 1988-2014, and firm minimum of five observations.",
+        "Local field presence and read access are evidenced; historical/population coverage is not. The FINC, STKO history, CUSIP version and share-price screen gaps remain explicit rather than treated as access barriers."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "p7_txr",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 7,
+      "quote": "Therefore, we adjust cash taxes paid by the change (δ) in a firm’s tax refund receivable (TXR).",
+      "description": "Section 2.2 describes TXR as a tax refund receivable; the PDF page was visually checked.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p7_rate",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 7,
+      "quote": "We set τ equal to 34% for fiscal years ended 1998 through 1992 and to 35% for fiscal years ended 1993 through 2014 in our analyses.",
+      "description": "Section 2.2 rate schedule as printed; 1998 through 1992 is the literal source text.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p10_mva",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 10,
+      "quote": "MVA is computed as Compustat AT+((PRCC_Q*CSHO)-SEQ). BVA is equal to total assets (AT), and PTI is equal to pre-tax income (PI).",
+      "description": "Table 1 states the raw Compustat scalar fields and defines BVA and PTI.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p13_period",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 13,
+      "quote": "We begin our examination of the effect of deleting loss firms and firms with negative CTE by constructing a sample of U.S. corporations from 1988 to 2014.",
+      "description": "Section 3.1 source period and population.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p13_finc",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 13,
+      "quote": "Following Dyreng et al. (2008), we consider firms to be U.S. corporations if Compustat data item FINC is equal to zero.",
+      "description": "Footnote 14 first defines the U.S. corporation criterion.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p13_noncorp",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 13,
+      "quote": "We eliminated non-corporate firms by deleting firms with a SIC code of 6798 (REITs)",
+      "description": "Footnote 14. PDF cross-check (assigned PDF SHA-256 f60ae914bb0a1e3a0c0739214a0712a18f60889845db445430ca158e9ebbdb4e) confirms the remaining rules are names ending “-LP” containing “TRUST” and six-digit CUSIPs ending “Y” or “Z”; parsed JSON misreads these tokens.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p13_stko",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 13,
+      "quote": "In addition, we delete observations where Compustat data item STKO is equal to 1 (subsidiary of a publicly traded company) or 2 (subsidiary of a non-publicly traded company), and when STKO is equal to zero (publicly traded company) but share price is missing.",
+      "description": "Footnote 14 gives STKO code meanings and the share-price-missing rule.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p13_n",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 13,
+      "quote": "yielding a one-year sample of 124,514 firm-year observations with non-missing Δ/MVA1",
+      "description": "Section 3.1 reports the one-year nonmissing measure count before the Table 6 minimum-observations filter.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p16_delta",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 16,
+      "quote": "Δ is equal to cash taxes paid minus the change in tax reserves (TXPD – (TXRt – TXRt-1)) less the statutory rate times pre-tax book income (.35 * PI).",
+      "description": "Table 4 defines the numerator and uses .35×PI.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p16_mva",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 16,
+      "quote": "MVA1, MVA5, and MVA10 are equal to the sum of beginning market value of assets (AT+((PRCC_Q*CSHO)-SEQ)) over 1, 5, and 10 years, respectively. MVA is replaced with beginning book value of assets (BVA) when missing.",
+      "description": "Table 4 defines the beginning-year scalar, raw inputs and BVA fallback.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p16_winsor",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 16,
+      "quote": "Δ/MVA and Δ/BVA are winsorized at 1 and 99%",
+      "description": "Table 4 states the winsorization cutoffs but not the percentile universe.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p24_time",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 24,
+      "quote": "TIME is equal to the observation year minus the base year of the sample (1988) and thus ranges from 0 to 26.",
+      "description": "Table 6 note defines the trend variable; it does not identify the underlying Compustat year field.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p24_panel",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 24,
+      "quote": "Panel C includes results from regressing Δ/MVA1 on TIME for the full sample of firms.",
+      "description": "Table 6 Panel C is the retained full-sample all-firms result.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p24_five",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 24,
+      "quote": "Consistent with Dyreng et al. (2017), we only include firms with at least five observations.",
+      "description": "Table 6 note gives the per-firm history threshold.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p24_cluster",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 24,
+      "quote": "Standard errors are clustered by firm and year, and T-statistics are reported in parentheses.",
+      "description": "Table 6 note specifies two-way clustering.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p24_estimator",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 24,
+      "quote": "This table reports the results of regressing CETR1 and Δ/MVA1 on a linear time trend.",
+      "description": "The table identifies a linear trend regression but no estimator.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p24_layout",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2898309145.json",
+      "page": 24,
+      "quote": "Panel C: Regressions of Δ/MVA1 on time for the full sample",
+      "description": "Table 6 Panel C lists intercept and TIME, N and adjusted R-squared; no fixed effects or weights are stated.",
+      "sha256": "e02fcdb8ddc71ed5447370abedc77280c9e822cf603272216d8fc2d4fb4f7f51",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "catalog_funda",
+      "kind": "catalog",
+      "locator": "output/feasibility_runs/resources/catalog.json (COMP.FUNDA, lines 27500-28729)",
+      "page": null,
+      "quote": null,
+      "description": "Merged Fundamental Annual File at /storage/sas/base/comp/d_na/funda.sas7bdat. Catalog labels include gvkey, datadate, fyear, txpd, txr (Income Tax Refund), pi, at, csho, seq, sich, cusip, conm, fic and prcc_f; exact fields FINC and STKO are absent. Catalog metadata is discovery evidence, not coverage proof.",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "catalog_fundq",
+      "kind": "catalog",
+      "locator": "output/feasibility_runs/resources/catalog.json (COMP.FUNDQ, lines 28730-29583)",
+      "page": null,
+      "quote": null,
+      "description": "Merged Fundamental Quarterly File at /storage/sas/base/comp/d_na/fundq.sas7bdat. Catalog includes gvkey, datadate and prccq labeled Price Close - Quarter. Catalog metadata is discovery evidence, not coverage proof.",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "catalog_company",
+      "kind": "catalog",
+      "locator": "output/feasibility_runs/resources/catalog.json (COMP.COMPANY, lines 25768-25878)",
+      "page": null,
+      "quote": null,
+      "description": "Company file at /storage/sas/base/comp/d_na/company/company.sas7bdat. Catalog includes gvkey, stko (Stock Ownership Code), fic (Current ISO Country Code - Incorporation), sic and conm; it has no FINC, DATADATE, FYEAR or CUSIP field.",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "probe_funda",
+      "kind": "probe",
+      "locator": "output/feasibility_runs/resources/probes/COMP.FUNDA.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful bounded exact-resource probe of COMP.FUNDA. The annual file is readable and its returned columns include the listed Compustat fields; one sampled row does not verify historical or population coverage.",
+      "sha256": "dd9d66ff1debeea55773cd795f95af5f6cee0c45dc5cab8992f2eb6289e92ea5",
+      "verified_at": "2026-10-27T14:46:58.418486+00:00"
+    },
+    {
+      "evidence_id": "probe_fundq",
+      "kind": "probe",
+      "locator": "output/feasibility_runs/resources/probes/COMP.FUNDQ.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful bounded exact-resource probe of COMP.FUNDQ. The quarterly file is readable and its returned columns include gvkey, datadate and prccq; one sampled row does not verify historical or population coverage.",
+      "sha256": "388d8a1419129c0945e03dfec26d999bfd5bfa37387b784fbfc020ac2034180f",
+      "verified_at": "2026-10-27T14:46:58.967449+00:00"
+    },
+    {
+      "evidence_id": "probe_company",
+      "kind": "probe",
+      "locator": "output/feasibility_runs/full_01/drafts/W2898309145/probes/company_fields_result.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful bounded exact-resource probe of COMP.COMPANY. The company file is readable and returned columns include gvkey, stko, fic, sic and conm; the one-row probe does not verify historical ownership or population coverage.",
+      "sha256": "67052a6b02dc758ddcc5074154462d89afb097dcf6ebf0e47b1a743d61fdd98b",
+      "verified_at": "2026-10-27T23:53:22.584770+00:00"
+    }
+  ],
+  "author_alternatives": [],
+  "review_notes": [
+    "The retained fit is Table 6 Panel C, All firms: Δ/MVA1 on TIME. The five-observation firm threshold applies; subgroup fits and the paper’s five-/ten-year measures are not added to this assigned baseline.",
+    "The page 13 footnote was visually checked against the assigned PDF because parsed text contains OCR errors: the PDF specifies names ending “-LP” and containing “TRUST,” and six-digit CUSIPs ending “Y” or “Z.” The assessment uses those PDF rules rather than the OCR variants in the parsed text.",
+    "Exact local COMP.FUNDA, COMP.FUNDQ and COMP.COMPANY access/field probes are successful. They do not establish population or historical coverage; no coordinator coverage confirmation was supplied, so no route claims verified coverage.",
+    "The paper’s TXR meaning and statutory-rate descriptions conflict: Section 2.2 describes a tax refund receivable and a 34%/35% schedule (with “1998 through 1992” as printed), whereas Table 4 calls TXR tax reserves and uses .35×PI. The assessment follows the Table 4 formula as extracted but retains the source conflict as blocking.",
+    "The paper defines TIME from “observation year” but does not specify Compustat fiscal-year label versus calendar year of DATADATE. Current local COMP.COMPANY STKO has no date/year field; FINC=0 is not an exact field in the cataloged Funda/Company files, and FIC is not substituted."
+  ],
+  "summary": {
+    "outcome": "undetermined",
+    "assessment_counts": {
+      "local_ready": 0,
+      "public_acquisition_required": 0,
+      "access_blocked": 0,
+      "undetermined": 1,
+      "no_observed_data_required": 0
+    },
+    "baseline_models": 1,
+    "baseline_fits": 1,
+    "any_data_feasible": false,
+    "all_data_feasible": false,
+    "partially_data_feasible": false,
+    "attempt_ready_count": 0
+  }
+}

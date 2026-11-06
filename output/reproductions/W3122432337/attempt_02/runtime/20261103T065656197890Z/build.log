@@ -1,0 +1,1988 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend mprint mlogic symbolgen;
+2          libname comp '/storage/sas/base/comp/d_na' access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+3          libname ibes '/storage/sas/base/ibes' access=readonly;
+NOTE: Libref IBES was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/ibes
+4          libname sec '/storage/sas/base/comp/d_na/security' access=readonly;
+NOTE: Libref SEC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+5          libname fxsrc '/storage/sas/base/comp/d_global/currency' access=readonly;
+NOTE: Libref FXSRC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_global/currency
+6          libname crspstk '/storage/sas/base/crsp/a_stock' access=readonly;
+NOTE: Libref CRSPSTK was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+7          libname crspccm '/storage/sas/base/crsp/a_ccm' access=readonly;
+NOTE: Libref CRSPCCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+8          libname outval 'data/table2_valuation';
+NOTE: Libref OUTVAL was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3122432337/attempt_02/data/table2_valuation
+9          libname outinfo 'data/table3_information';
+NOTE: Libref OUTINFO was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3122432337/attempt_02/data/table3_information
+10         
+11         /* Restrict the Compustat population first; reject duplicate firm-quarter keys. */
+12         data work.q_raw;
+13           set comp.fundq(keep=gvkey datadate fyearq fqtr fyr indfmt consol popsrc datafmt curcdq
+3                                                          The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+14             ceqq cshprq epspiq epspxq opepsq rdq iid hiid ajexq
+15             where=(datadate ge '01JAN1989'd and datadate le '31DEC1997'd
+16               and indfmt='INDL' and consol='C' and popsrc='D' and datafmt='STD'));
+17           if missing(gvkey) or missing(datadate) then delete;
+18         run;
+
+NOTE: There were 378054 observations read from the data set COMP.FUNDQ.
+      WHERE (datadate>='01JAN1989'D and datadate<='31DEC1997'D) and (indfmt='INDL') and (consol='C') and (popsrc='D') and 
+      (datafmt='STD');
+NOTE: The data set WORK.Q_RAW has 378054 observations and 19 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.65 seconds
+      cpu time            1.65 seconds
+      
+
+19         proc sql;
+20           create table work.q_counts as
+21           select gvkey, datadate, count(*) as n_source_rows
+22           from work.q_raw group by gvkey, datadate;
+NOTE: Table WORK.Q_COUNTS created, with 377714 rows and 3 columns.
+
+23           create table work.q_unique as
+24           select a.* from work.q_raw as a inner join work.q_counts as b
+25             on a.gvkey=b.gvkey and a.datadate=b.datadate
+26           where b.n_source_rows=1;
+NOTE: Table WORK.Q_UNIQUE created, with 377374 rows and 19 columns.
+
+27           select count(*) as rows_after_descriptor_screens,
+28             sum(n_source_rows ne 1) as duplicate_firm_quarter_keys
+29             from work.q_counts;
+30         quit;
+NOTE: The PROCEDURE SQL printed page 1.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.59 seconds
+      cpu time            0.65 seconds
+      
+
+31         
+32         /* GBP-primary exchange factors. No provider rate-type filter is applied. Each horizon
+33            is validated separately so an unused missing/ambiguous leg does not remove a usable one. */
+34         data work.fx_d0;
+35           set fxsrc.g_exrt_dly(keep=datadate fromcurd tocurd exratd
+36             where=(datadate ge '01JAN1988'd and datadate le '31DEC1999'd
+37               and upcase(strip(fromcurd))='GBP' and exratd>0));
+38           length currency $4;
+39           currency=upcase(strip(tocurd));
+40           keep datadate currency exratd;
+41         run;
+
+NOTE: There were 511231 observations read from the data set FXSRC.G_EXRT_DLY.
+      WHERE (datadate>='01JAN1988'D and datadate<='31DEC1999'D) and (UPCASE(STRIP(fromcurd))='GBP') and (exratd>0);
+NOTE: The data set WORK.FX_D0 has 511231 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.24 seconds
+      
+
+42         proc sql;
+4                                                          The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+43           create table work.fx_dly_pair as
+44           select a.datadate,a.currency,a.exratd as source_rate,b.exratd as usd_rate
+45           from work.fx_d0 as a inner join work.fx_d0 as b
+46             on a.datadate=b.datadate and b.currency='USD';
+NOTE: Table WORK.FX_DLY_PAIR created, with 511231 rows and 4 columns.
+
+47           create table work.fx_dly_unique as
+48           select datadate,currency,count(distinct source_rate) as n_source_rates,
+49             count(distinct usd_rate) as n_usd_rates,min(source_rate) as source_rate,
+50             min(usd_rate) as usd_rate
+51           from work.fx_dly_pair group by datadate,currency;
+NOTE: Table WORK.FX_DLY_UNIQUE created, with 511231 rows and 6 columns.
+
+52           create table work.fx_dly as
+53           select datadate,currency,
+54             case when currency='USD' then 1 else usd_rate/source_rate end as usd_factor
+55           from work.fx_dly_unique
+56           where currency not in ('GBP','USD') and n_source_rates=1 and n_usd_rates=1
+57             and source_rate>0 and usd_rate>0
+58           union all
+59           select datadate,'USD' as currency length=4,1 as usd_factor
+60           from work.fx_dly_unique where currency='USD' and n_usd_rates=1 and usd_rate>0
+61           union all
+62           select datadate,'GBP' as currency length=4,usd_rate as usd_factor
+63           from work.fx_dly_unique where currency='USD' and n_usd_rates=1 and usd_rate>0;
+NOTE: Table WORK.FX_DLY created, with 511266 rows and 3 columns.
+
+64         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.74 seconds
+      cpu time            0.84 seconds
+      
+
+65         data work.fx_m0;
+66           set fxsrc.g_exrt_mth(keep=datadate fromcurm tocurm exrat1m exrat3m exrat12m
+67             where=(datadate ge '01JAN1988'd and datadate le '31DEC1999'd
+68               and upcase(strip(fromcurm))='GBP'));
+69           length currency $4;
+70           currency=upcase(strip(tocurm));
+71           keep datadate currency exrat1m exrat3m exrat12m;
+72         run;
+
+NOTE: There were 17567 observations read from the data set FXSRC.G_EXRT_MTH.
+      WHERE (datadate>='01JAN1988'D and datadate<='31DEC1999'D) and (UPCASE(STRIP(fromcurm))='GBP');
+NOTE: The data set WORK.FX_M0 has 17567 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+73         proc sql;
+74           create table work.fx_m_pair as
+75           select a.datadate,a.currency,a.exrat1m as source1,b.exrat1m as usd1,
+76             a.exrat3m as source3,b.exrat3m as usd3,a.exrat12m as source12,b.exrat12m as usd12
+77           from work.fx_m0 as a inner join work.fx_m0 as b
+78             on a.datadate=b.datadate and b.currency='USD';
+NOTE: Table WORK.FX_M_PAIR created, with 17567 rows and 8 columns.
+
+5                                                          The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+79           create table work.fx_m_unique as
+80           select datadate,currency,count(distinct source1) as n_source1,
+81             count(distinct usd1) as n_usd1,min(source1) as source1,min(usd1) as usd1,
+82             count(distinct source3) as n_source3,count(distinct usd3) as n_usd3,
+83             min(source3) as source3,min(usd3) as usd3,
+84             count(distinct source12) as n_source12,count(distinct usd12) as n_usd12,
+85             min(source12) as source12,min(usd12) as usd12
+86           from work.fx_m_pair group by datadate,currency;
+NOTE: Table WORK.FX_M_UNIQUE created, with 17567 rows and 14 columns.
+
+87           create table work.fx_mth as
+88           select datadate,currency,
+89             case when currency='USD' then 1
+90               when n_source1=1 and n_usd1=1 and source1>0 and usd1>0 then usd1/source1 else . end as usd_factor_1m,
+91             case when currency='USD' then 1
+92               when n_source3=1 and n_usd3=1 and source3>0 and usd3>0 then usd3/source3 else . end as usd_factor_3m,
+93             case when currency='USD' then 1
+94               when n_source12=1 and n_usd12=1 and source12>0 and usd12>0 then usd12/source12 else . end as usd_factor_12m
+95           from work.fx_m_unique where currency not in ('GBP','USD')
+96           union all
+97           select datadate,'USD' as currency length=4,1 as usd_factor_1m,1 as usd_factor_3m,1 as usd_factor_12m
+98           from work.fx_m_unique where currency='USD'
+99           union all
+100          select datadate,'GBP' as currency length=4,
+101            case when n_usd1=1 and usd1>0 then usd1 else . end as usd_factor_1m,
+102            case when n_usd3=1 and usd3>0 then usd3 else . end as usd_factor_3m,
+103            case when n_usd12=1 and usd12>0 then usd12 else . end as usd_factor_12m
+104          from work.fx_m_unique where currency='USD';
+NOTE: Table WORK.FX_MTH created, with 17567 rows and 5 columns.
+
+105        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+106        proc sql;
+107          select count(*) as daily_currency_date_rows,count(distinct currency) as daily_currencies,
+108            sum(n_source_rates ne 1 or n_usd_rates ne 1) as daily_rate_ambiguities
+109            from work.fx_dly_unique;
+110          select count(*) as monthly_currency_date_rows,count(distinct currency) as monthly_currencies,
+111            sum(n_source1 ne 1 or n_usd1 ne 1) as monthly_1m_ambiguities,
+112            sum(n_source3 ne 1 or n_usd3 ne 1) as monthly_3m_ambiguities,
+113            sum(n_source12 ne 1 or n_usd12 ne 1) as monthly_12m_ambiguities
+114            from work.fx_m_unique;
+115        quit;
+NOTE: The PROCEDURE SQL printed pages 2-3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.07 seconds
+      
+
+116        
+117        /* Dated security-price inputs; retain the month-end quote date and currency. */
+118        data work.sec_mth0;
+119          set sec.sec_mth(keep=gvkey iid datadate primiss
+120            where=(datadate ge '01JAN1988'd and datadate le '31DEC1999'd));
+121          length marker $2;
+6                                                          The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+122          monthkey=intnx('month',datadate,0,'end');
+123          marker=upcase(strip(primiss));
+124          keep gvkey iid datadate monthkey marker;
+125        run;
+
+NOTE: There were 1515887 observations read from the data set SEC.SEC_MTH.
+      WHERE (datadate>='01JAN1988'D and datadate<='31DEC1999'D);
+NOTE: The data set WORK.SEC_MTH0 has 1515887 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.64 seconds
+      cpu time            0.64 seconds
+      
+
+126        proc sql;
+127          create table work.sec_price_raw as
+128          select a.gvkey, a.iid, a.monthkey, b.datadate as quote_date,
+129            a.marker, b.prccm, upcase(strip(b.curcdm)) as curcdm length=4
+130          from work.sec_mth0 as a inner join sec.sec_mthprc as b
+131            on a.gvkey=b.gvkey and a.iid=b.iid and a.datadate=b.datadate
+132          where b.datadate ge '01JAN1988'd and b.datadate le '31DEC1999'd
+133            and b.prccm>0 and not missing(b.curcdm);
+NOTE: Table WORK.SEC_PRICE_RAW created, with 1489301 rows and 7 columns.
+
+134          create table work.sec_price_counts as
+135          select gvkey, iid, monthkey, count(*) as n_quotes,
+136            count(distinct quote_date) as n_dates, count(distinct prccm) as n_prices,
+137            count(distinct curcdm) as n_currencies
+138          from work.sec_price_raw group by gvkey, iid, monthkey;
+NOTE: Table WORK.SEC_PRICE_COUNTS created, with 1489301 rows and 7 columns.
+
+139          create table work.sec_price as
+140          select a.* from work.sec_price_raw as a inner join work.sec_price_counts as b
+141            on a.gvkey=b.gvkey and a.iid=b.iid and a.monthkey=b.monthkey
+142          where b.n_quotes=1;
+NOTE: Table WORK.SEC_PRICE created, with 1489301 rows and 7 columns.
+
+143          create table work.primary_marker as
+144          select distinct gvkey, iid, monthkey from work.sec_mth0 where marker='P';
+NOTE: Table WORK.PRIMARY_MARKER created, with 1468264 rows and 3 columns.
+
+145          select count(*) as issue_month_keys, sum(n_quotes ne 1) as ambiguous_issue_month_prices
+146            from work.sec_price_counts;
+147        quit;
+NOTE: The PROCEDURE SQL printed page 4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           7.43 seconds
+      cpu time            7.88 seconds
+      
+
+148        
+149        /* Select each price role at its own target month. A unique contemporaneous P wins.
+150           With an absent marker only, continuity is accepted if the same issue is P in both
+151           immediately adjacent months. Quarter HIID is audit evidence only, never a role-date key. */
+152        %macro build_price_role(role=,offset=,out=);
+153          proc sql;
+154            create table work.&role._cand as
+155            select q.gvkey, q.datadate, q.hiid, intnx('month',q.datadate,&offset,'end') as target_month,
+156              p.iid, p.quote_date, p.curcdm, p.prccm, p.marker,
+7                                                          The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+157              case when p.iid ne '' and prev.iid ne '' and next.iid ne '' then 1 else 0 end as continuity_support
+158            from work.q_unique as q left join work.sec_price as p
+159              on q.gvkey=p.gvkey and intnx('month',q.datadate,&offset,'end')=p.monthkey
+160            left join work.primary_marker as prev
+161              on p.gvkey=prev.gvkey and p.iid=prev.iid
+162              and prev.monthkey=intnx('month',p.monthkey,-1,'end')
+163            left join work.primary_marker as next
+164              on p.gvkey=next.gvkey and p.iid=next.iid
+165              and next.monthkey=intnx('month',p.monthkey,1,'end');
+166            create table work.&role._count as
+167            select gvkey, datadate, sum(marker='P') as n_primary,
+168              sum(missing(strip(marker)) and continuity_support=1) as n_supported_blank,
+169              count(iid) as n_quoted_issues
+170            from work.&role._cand group by gvkey, datadate;
+171            create table work.&role._eligible as
+172            select c.* from work.&role._cand as c inner join work.&role._count as n
+173              on c.gvkey=n.gvkey and c.datadate=n.datadate
+174            where (n.n_primary=1 and c.marker='P')
+175               or (n.n_primary=0 and n.n_supported_blank=1 and missing(strip(c.marker))
+176                    and c.continuity_support=1);
+177            create table work.&role._selected as
+178            select c.*, n.n_primary, n.n_supported_blank, n.n_quoted_issues,
+179              case when c.marker='P' then 'DATE_P' else 'ADJACENT_P_CONTINUITY' end as price_route length=28,
+180              (not missing(c.hiid) and c.iid ne c.hiid) as differs_from_quarter_hiid
+181            from work.&role._eligible as c inner join work.&role._count as n
+182              on c.gvkey=n.gvkey and c.datadate=n.datadate;
+183            create table work.&role._unique as
+184            select gvkey, datadate, count(*) as n_selected from work.&role._selected
+185              group by gvkey, datadate;
+186            create table work.&role as
+187            select a.gvkey, a.datadate, a.iid as &role._iid, a.quote_date as &role._date,
+188              a.curcdm as &role._currency, a.prccm as &role._price,
+189              a.price_route as &role._route, a.differs_from_quarter_hiid as &role._hiid_diff,
+190              a.n_primary as &role._n_primary, a.n_quoted_issues as &role._n_issues
+191            from work.&role._selected as a inner join work.&role._unique as b
+192              on a.gvkey=b.gvkey and a.datadate=b.datadate
+193            where b.n_selected=1;
+194            select count(*) as &role._selected_rows,
+195              sum(&role._hiid_diff=1) as &role._hiid_diff_count
+196              from work.&role;
+197          quit;
+198        %mend;
+199        %build_price_role(role=price3,offset=3,out=work.price3);
+MLOGIC(BUILD_PRICE_ROLE):  Beginning execution.
+MLOGIC(BUILD_PRICE_ROLE):  Parameter ROLE has value price3
+MLOGIC(BUILD_PRICE_ROLE):  Parameter OFFSET has value 3
+MLOGIC(BUILD_PRICE_ROLE):  Parameter OUT has value work.price3
+MPRINT(BUILD_PRICE_ROLE):   proc sql;
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable OFFSET resolves to 3
+SYMBOLGEN:  Macro variable OFFSET resolves to 3
+MPRINT(BUILD_PRICE_ROLE):   create table work.price3_cand as select q.gvkey, q.datadate, q.hiid, intnx('month',q.datadate,3,'end') 
+as target_month, p.iid, p.quote_date, p.curcdm, p.prccm, p.marker, case when p.iid ne '' and prev.iid ne '' and next.iid ne '' then 
+1 else 0 end as continuity_support from work.q_unique as q left join work.sec_price as p on q.gvkey=p.gvkey and 
+intnx('month',q.datadate,3,'end')=p.monthkey left join work.primary_marker as prev on p.gvkey=prev.gvkey and p.iid=prev.iid and 
+prev.monthkey=intnx('month',p.monthkey,-1,'end') left join work.primary_marker as next on p.gvkey=next.gvkey and p.iid=next.iid and 
+next.monthkey=intnx('month',p.monthkey,1,'end');
+NOTE: Invalid (or missing) arguments to the INTNX function have caused the function to return a missing value.
+8                                                          The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: Invalid (or missing) arguments to the INTNX function have caused the function to return a missing value.
+NOTE: Table WORK.PRICE3_CAND created, with 390616 rows and 10 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+MPRINT(BUILD_PRICE_ROLE):   create table work.price3_count as select gvkey, datadate, sum(marker='P') as n_primary, 
+sum(missing(strip(marker)) and continuity_support=1) as n_supported_blank, count(iid) as n_quoted_issues from work.price3_cand 
+group by gvkey, datadate;
+NOTE: Table WORK.PRICE3_COUNT created, with 377374 rows and 5 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+MPRINT(BUILD_PRICE_ROLE):   create table work.price3_eligible as select c.* from work.price3_cand as c inner join work.price3_count 
+as n on c.gvkey=n.gvkey and c.datadate=n.datadate where (n.n_primary=1 and c.marker='P') or (n.n_primary=0 and 
+n.n_supported_blank=1 and missing(strip(c.marker)) and c.continuity_support=1);
+NOTE: Table WORK.PRICE3_ELIGIBLE created, with 293534 rows and 10 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+MPRINT(BUILD_PRICE_ROLE):   create table work.price3_selected as select c.*, n.n_primary, n.n_supported_blank, n.n_quoted_issues, 
+case when c.marker='P' then 'DATE_P' else 'ADJACENT_P_CONTINUITY' end as price_route length=28, (not missing(c.hiid) and c.iid ne 
+c.hiid) as differs_from_quarter_hiid from work.price3_eligible as c inner join work.price3_count as n on c.gvkey=n.gvkey and 
+c.datadate=n.datadate;
+NOTE: Table WORK.PRICE3_SELECTED created, with 293534 rows and 15 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+MPRINT(BUILD_PRICE_ROLE):   create table work.price3_unique as select gvkey, datadate, count(*) as n_selected from 
+work.price3_selected group by gvkey, datadate;
+NOTE: Table WORK.PRICE3_UNIQUE created, with 293534 rows and 3 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+MPRINT(BUILD_PRICE_ROLE):   create table work.price3 as select a.gvkey, a.datadate, a.iid as price3_iid, a.quote_date as 
+price3_date, a.curcdm as price3_currency, a.prccm as price3_price, a.price_route as price3_route, a.differs_from_quarter_hiid as 
+price3_hiid_diff, a.n_primary as price3_n_primary, a.n_quoted_issues as price3_n_issues from work.price3_selected as a inner join 
+work.price3_unique as b on a.gvkey=b.gvkey and a.datadate=b.datadate where b.n_selected=1;
+NOTE: Table WORK.PRICE3 created, with 293534 rows and 10 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+SYMBOLGEN:  Macro variable ROLE resolves to price3
+MPRINT(BUILD_PRICE_ROLE):   select count(*) as price3_selected_rows, sum(price3_hiid_diff=1) as price3_hiid_diff_count from 
+work.price3;
+MPRINT(BUILD_PRICE_ROLE):   quit;
+NOTE: The PROCEDURE SQL printed page 5.
+9                                                          The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.88 seconds
+      cpu time            2.48 seconds
+      
+
+MLOGIC(BUILD_PRICE_ROLE):  Ending execution.
+200        %build_price_role(role=price0,offset=-3,out=work.price0);
+MLOGIC(BUILD_PRICE_ROLE):  Beginning execution.
+MLOGIC(BUILD_PRICE_ROLE):  Parameter ROLE has value price0
+MLOGIC(BUILD_PRICE_ROLE):  Parameter OFFSET has value -3
+MLOGIC(BUILD_PRICE_ROLE):  Parameter OUT has value work.price0
+MPRINT(BUILD_PRICE_ROLE):   proc sql;
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable OFFSET resolves to -3
+SYMBOLGEN:  Macro variable OFFSET resolves to -3
+MPRINT(BUILD_PRICE_ROLE):   create table work.price0_cand as select q.gvkey, q.datadate, q.hiid, intnx('month',q.datadate,-3,'end') 
+as target_month, p.iid, p.quote_date, p.curcdm, p.prccm, p.marker, case when p.iid ne '' and prev.iid ne '' and next.iid ne '' then 
+1 else 0 end as continuity_support from work.q_unique as q left join work.sec_price as p on q.gvkey=p.gvkey and 
+intnx('month',q.datadate,-3,'end')=p.monthkey left join work.primary_marker as prev on p.gvkey=prev.gvkey and p.iid=prev.iid and 
+prev.monthkey=intnx('month',p.monthkey,-1,'end') left join work.primary_marker as next on p.gvkey=next.gvkey and p.iid=next.iid and 
+next.monthkey=intnx('month',p.monthkey,1,'end');
+NOTE: Invalid (or missing) arguments to the INTNX function have caused the function to return a missing value.
+NOTE: Invalid (or missing) arguments to the INTNX function have caused the function to return a missing value.
+NOTE: Table WORK.PRICE0_CAND created, with 390221 rows and 10 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+MPRINT(BUILD_PRICE_ROLE):   create table work.price0_count as select gvkey, datadate, sum(marker='P') as n_primary, 
+sum(missing(strip(marker)) and continuity_support=1) as n_supported_blank, count(iid) as n_quoted_issues from work.price0_cand 
+group by gvkey, datadate;
+NOTE: Table WORK.PRICE0_COUNT created, with 377374 rows and 5 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+MPRINT(BUILD_PRICE_ROLE):   create table work.price0_eligible as select c.* from work.price0_cand as c inner join work.price0_count 
+as n on c.gvkey=n.gvkey and c.datadate=n.datadate where (n.n_primary=1 and c.marker='P') or (n.n_primary=0 and 
+n.n_supported_blank=1 and missing(strip(c.marker)) and c.continuity_support=1);
+NOTE: Table WORK.PRICE0_ELIGIBLE created, with 282021 rows and 10 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+MPRINT(BUILD_PRICE_ROLE):   create table work.price0_selected as select c.*, n.n_primary, n.n_supported_blank, n.n_quoted_issues, 
+case when c.marker='P' then 'DATE_P' else 'ADJACENT_P_CONTINUITY' end as price_route length=28, (not missing(c.hiid) and c.iid ne 
+c.hiid) as differs_from_quarter_hiid from work.price0_eligible as c inner join work.price0_count as n on c.gvkey=n.gvkey and 
+c.datadate=n.datadate;
+NOTE: Table WORK.PRICE0_SELECTED created, with 282021 rows and 15 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+MPRINT(BUILD_PRICE_ROLE):   create table work.price0_unique as select gvkey, datadate, count(*) as n_selected from 
+work.price0_selected group by gvkey, datadate;
+NOTE: Table WORK.PRICE0_UNIQUE created, with 282021 rows and 3 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+10                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+MPRINT(BUILD_PRICE_ROLE):   create table work.price0 as select a.gvkey, a.datadate, a.iid as price0_iid, a.quote_date as 
+price0_date, a.curcdm as price0_currency, a.prccm as price0_price, a.price_route as price0_route, a.differs_from_quarter_hiid as 
+price0_hiid_diff, a.n_primary as price0_n_primary, a.n_quoted_issues as price0_n_issues from work.price0_selected as a inner join 
+work.price0_unique as b on a.gvkey=b.gvkey and a.datadate=b.datadate where b.n_selected=1;
+NOTE: Table WORK.PRICE0 created, with 282021 rows and 10 columns.
+
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+SYMBOLGEN:  Macro variable ROLE resolves to price0
+MPRINT(BUILD_PRICE_ROLE):   select count(*) as price0_selected_rows, sum(price0_hiid_diff=1) as price0_hiid_diff_count from 
+work.price0;
+MPRINT(BUILD_PRICE_ROLE):   quit;
+NOTE: The PROCEDURE SQL printed page 6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.84 seconds
+      cpu time            2.46 seconds
+      
+
+MLOGIC(BUILD_PRICE_ROLE):  Ending execution.
+201        
+202        /* Effective-dated CUSIP-to-issue links for I/B/E/S company-level rows. */
+203        data work.cusip_hist0;
+204          set sec.sec_idhist(keep=gvkey iid item itemvalue efffrom effthru
+205            where=(upcase(strip(item))='CUSIP'));
+206          length cusip8 $8;
+207          if missing(itemvalue) then delete;
+208          cusip8=substr(strip(itemvalue),1,8);
+209          if missing(cusip8) then delete;
+210          if missing(efffrom) then efffrom='01JAN1900'd;
+211          if missing(effthru) then effthru='31DEC9999'd;
+212          keep gvkey iid cusip8 efffrom effthru;
+213        run;
+
+NOTE: There were 131864 observations read from the data set SEC.SEC_IDHIST.
+      WHERE UPCASE(STRIP(item))='CUSIP';
+NOTE: The data set WORK.CUSIP_HIST0 has 131864 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.14 seconds
+      
+
+214        
+215        /* Use unadjusted ACTU; its share basis is the announcement/report date. */
+216        data work.act_scope;
+217          set ibes.actu_epsus(keep=ticker cusip pends measure pdicity anndats actdats value curr_act usfirm);
+218          where upcase(strip(measure))='EPS' and upcase(strip(pdicity))='QTR' and usfirm=1
+219            and pends ge '01JAN1989'd and pends le '31DEC1997'd and not missing(value);
+220          length cusip8 $8;
+221          if missing(cusip) or missing(curr_act) then delete;
+11                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+222          cusip8=substr(cusip,1,8); mapdate=coalesce(anndats,actdats,pends);
+223          keep ticker cusip8 pends anndats actdats mapdate value curr_act;
+224        run;
+
+NOTE: There were 204286 observations read from the data set IBES.ACTU_EPSUS.
+      WHERE (UPCASE(STRIP(measure))='EPS') and (UPCASE(STRIP(pdicity))='QTR') and (usfirm=1) and (pends>='01JAN1989'D and 
+      pends<='31DEC1997'D) and (not MISSING(value));
+NOTE: The data set WORK.ACT_SCOPE has 182219 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.40 seconds
+      cpu time            0.40 seconds
+      
+
+225        proc sql;
+226          create table work.act_mapped0 as
+227          select distinct q.gvkey,q.datadate,q.rdq,q.hiid,a.ticker,a.anndats,a.actdats,
+228            a.value as street_raw,upcase(strip(a.curr_act)) as street_currency length=3,
+229            h.iid as actual_iid length=4
+230          from work.act_scope as a inner join work.cusip_hist0 as h
+231            on a.cusip8=h.cusip8 and a.mapdate ge h.efffrom and a.mapdate le h.effthru
+232          inner join work.q_unique as q on q.gvkey=h.gvkey and q.datadate=a.pends;
+NOTE: Table WORK.ACT_MAPPED0 created, with 177102 rows and 10 columns.
+
+233          create table work.act_first_ann as
+234          select gvkey,datadate,ticker,min(anndats) as first_ann
+235          from work.act_mapped0 group by gvkey,datadate,ticker;
+NOTE: Table WORK.ACT_FIRST_ANN created, with 173608 rows and 4 columns.
+
+236          create table work.act_at_first_ann as
+237          select a.* from work.act_mapped0 as a inner join work.act_first_ann as b
+238            on a.gvkey=b.gvkey and a.datadate=b.datadate and a.ticker=b.ticker and a.anndats=b.first_ann;
+NOTE: Table WORK.ACT_AT_FIRST_ANN created, with 177102 rows and 10 columns.
+
+239          create table work.act_first_actdats as
+240          select gvkey,datadate,ticker,anndats,min(actdats) as first_actdats
+241          from work.act_at_first_ann group by gvkey,datadate,ticker,anndats;
+NOTE: Table WORK.ACT_FIRST_ACTDATS created, with 173608 rows and 5 columns.
+
+242          create table work.act_record_stats as
+243          select a.gvkey,a.datadate,a.ticker,a.anndats,a.actdats,
+244            count(distinct a.street_raw) as n_values,count(distinct a.street_currency) as n_currencies,
+245            count(distinct a.actual_iid) as n_issues,min(a.street_raw) as street_raw,
+246            min(a.street_currency) as street_currency,min(a.actual_iid) as actual_iid
+247          from work.act_at_first_ann as a inner join work.act_first_actdats as b
+248            on a.gvkey=b.gvkey and a.datadate=b.datadate and a.ticker=b.ticker
+249              and a.anndats=b.anndats and a.actdats=b.first_actdats
+250          group by a.gvkey,a.datadate,a.ticker,a.anndats,a.actdats;
+NOTE: Table WORK.ACT_RECORD_STATS created, with 173608 rows and 11 columns.
+
+251          create table work.act_candidates as select * from work.act_record_stats
+252            where n_values=1 and n_currencies=1 and n_issues=1;
+NOTE: Table WORK.ACT_CANDIDATES created, with 170120 rows and 11 columns.
+
+253          create table work.act_key_counts as
+254          select gvkey,datadate,count(distinct ticker) as n_tickers,
+255            count(distinct actual_iid) as n_issues from work.act_candidates group by gvkey,datadate;
+NOTE: Table WORK.ACT_KEY_COUNTS created, with 170086 rows and 4 columns.
+
+12                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+256          create table work.actual as
+257          select a.* from work.act_candidates as a inner join work.act_key_counts as c
+258            on a.gvkey=c.gvkey and a.datadate=c.datadate where c.n_tickers=1 and c.n_issues=1;
+NOTE: Table WORK.ACTUAL created, with 170052 rows and 11 columns.
+
+259          select count(*) as unique_actual_firm_quarters,
+260            sum(n_tickers ne 1 or n_issues ne 1) as ambiguous_actual_firm_quarters
+261          from work.act_key_counts;
+262        quit;
+NOTE: The PROCEDURE SQL printed page 7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.04 seconds
+      cpu time            1.18 seconds
+      
+
+263        
+264        /* Exact adjusted/unadjusted ACT pairs audit product scale and currencies only. */
+265        data work.act_adj_scope;
+266          set ibes.act_epsus(keep=ticker pends measure pdicity anndats actdats value curr_act usfirm);
+267          where upcase(strip(measure))='EPS' and upcase(strip(pdicity))='QTR' and usfirm=1
+268            and pends ge '01JAN1989'd and pends le '31DEC1997'd and not missing(value);
+269          curr_act=upcase(strip(curr_act)); keep ticker pends anndats actdats value curr_act;
+270        run;
+
+NOTE: There were 204275 observations read from the data set IBES.ACT_EPSUS.
+      WHERE (UPCASE(STRIP(measure))='EPS') and (UPCASE(STRIP(pdicity))='QTR') and (usfirm=1) and (pends>='01JAN1989'D and 
+      pends<='31DEC1997'D) and (not MISSING(value));
+NOTE: The data set WORK.ACT_ADJ_SCOPE has 204275 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.41 seconds
+      cpu time            0.42 seconds
+      
+
+271        proc sql;
+272          create table work.act_adj_exact as
+273          select ticker,pends,anndats,actdats,curr_act,count(distinct value) as n_values,
+274            min(value) as adjusted_value from work.act_adj_scope
+275          group by ticker,pends,anndats,actdats,curr_act;
+NOTE: Table WORK.ACT_ADJ_EXACT created, with 204275 rows and 7 columns.
+
+276          create table work.actual_product_check as
+277          select a.gvkey,a.datadate,a.ticker,a.anndats,a.actdats,a.street_raw,a.street_currency,
+278            b.adjusted_value,b.n_values as n_adjusted
+279          from work.actual as a left join work.act_adj_exact as b
+280            on a.ticker=b.ticker and a.datadate=b.pends and a.anndats=b.anndats
+281              and a.actdats=b.actdats and a.street_currency=b.curr_act;
+NOTE: Table WORK.ACTUAL_PRODUCT_CHECK created, with 170052 rows and 9 columns.
+
+282          select count(*) as raw_actual_rows,sum(n_adjusted=1) as exact_adjusted_pairs,
+283            sum(n_adjusted>1) as ambiguous_adjusted_pairs from work.actual_product_check;
+284          select sum(n_adjusted=1 and adjusted_value ne street_raw) as nonunit_adjustment_pairs
+285            from work.actual_product_check;
+286        quit;
+NOTE: The PROCEDURE SQL printed pages 8-9.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.31 seconds
+      
+13                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+
+287        data work.actual_product_ratio;
+288          set work.actual_product_check;
+289          if n_adjusted=1 and abs(street_raw)>.001 then product_ratio=adjusted_value/street_raw;
+290        run;
+
+NOTE: There were 170052 observations read from the data set WORK.ACTUAL_PRODUCT_CHECK.
+NOTE: The data set WORK.ACTUAL_PRODUCT_RATIO has 170052 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+291        proc means data=work.actual_product_ratio n mean median p25 p75; var product_ratio; run;
+
+NOTE: There were 170052 observations read from the data set WORK.ACTUAL_PRODUCT_RATIO.
+NOTE: The PROCEDURE MEANS printed page 10.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+      
+
+292        
+293        /* Latest unadjusted mean primary consensus strictly before RDQ; its basis is STATPERS. */
+294        data work.sum_scope;
+295          set ibes.statsumu_epsus(keep=ticker cusip statpers measure fiscalp estflag curcode meanest usfirm fpedats);
+296          where upcase(strip(measure))='EPS' and upcase(strip(fiscalp))='QTR'
+297            and upcase(strip(estflag))='P' and usfirm=1 and fpedats ge '01JAN1989'd
+298            and fpedats le '31DEC1997'd and not missing(meanest) and not missing(statpers);
+299          length cusip8 $8;
+300          if missing(cusip) or missing(curcode) then delete;
+301          cusip8=substr(cusip,1,8); curcode=upcase(strip(curcode));
+302          keep ticker cusip8 statpers fpedats meanest curcode;
+303        run;
+
+NOTE: There were 1041558 observations read from the data set IBES.STATSUMU_EPSUS.
+      WHERE (UPCASE(STRIP(measure))='EPS') and (UPCASE(STRIP(fiscalp))='QTR') and (UPCASE(STRIP(estflag))='P') and (usfirm=1) and 
+      (fpedats>='01JAN1989'D and fpedats<='31DEC1997'D) and (not MISSING(meanest)) and (not MISSING(statpers));
+NOTE: The data set WORK.SUM_SCOPE has 1041558 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           5.01 seconds
+      cpu time            5.01 seconds
+      
+
+304        proc sql;
+305          create table work.sum_mapped0 as
+306          select q.gvkey,q.datadate,q.rdq,a.ticker,s.statpers,s.meanest as forecast_raw,
+307            s.curcode as forecast_currency length=3,h.iid as forecast_iid length=4
+308          from work.sum_scope as s inner join work.cusip_hist0 as h
+309            on s.cusip8=h.cusip8 and s.statpers ge h.efffrom and s.statpers le h.effthru
+310          inner join work.actual as a on a.gvkey=h.gvkey and a.datadate=s.fpedats and a.ticker=s.ticker
+311          inner join work.q_unique as q on q.gvkey=a.gvkey and q.datadate=a.datadate
+312          where s.statpers<q.rdq;
+NOTE: Table WORK.SUM_MAPPED0 created, with 911434 rows and 8 columns.
+
+313          create table work.sum_period as
+314          select gvkey,datadate,ticker,statpers,count(distinct forecast_raw) as n_means,
+315            count(distinct forecast_currency) as n_currencies,count(distinct forecast_iid) as n_issues,
+14                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+316            min(forecast_raw) as forecast_raw,min(forecast_currency) as forecast_currency,
+317            min(forecast_iid) as forecast_iid
+318          from work.sum_mapped0 group by gvkey,datadate,ticker,statpers;
+NOTE: Table WORK.SUM_PERIOD created, with 911434 rows and 10 columns.
+
+319        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.00 seconds
+      cpu time            2.25 seconds
+      
+
+320        /* Select the latest mapped ticker-period STATPERS first. If that date is ambiguous,
+321           it stays unsupported; do not fall back to an earlier consensus date. */
+322        proc sort data=work.sum_period out=work.sum_period_sorted;
+323          by gvkey datadate descending statpers;
+324        run;
+
+NOTE: There were 911434 observations read from the data set WORK.SUM_PERIOD.
+NOTE: The data set WORK.SUM_PERIOD_SORTED has 911434 observations and 10 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.15 seconds
+      cpu time            0.41 seconds
+      
+
+325        data work.forecast_latest;
+326          set work.sum_period_sorted;
+327          by gvkey datadate;
+328          if first.datadate;
+329        run;
+
+NOTE: There were 911434 observations read from the data set WORK.SUM_PERIOD_SORTED.
+NOTE: The data set WORK.FORECAST_LATEST has 111302 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+330        proc sql;
+331          select count(*) as quarters_with_pre_rdq_consensus,
+332            sum(n_means=1 and n_currencies=1 and n_issues=1) as unambiguous_latest_consensus,
+333            sum(n_means ne 1) as latest_mean_ambiguity,
+334            sum(n_currencies ne 1) as latest_currency_ambiguity,
+335            sum(n_issues ne 1) as latest_issue_ambiguity
+336          from work.forecast_latest;
+337        quit;
+NOTE: The PROCEDURE SQL printed page 11.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+338        data work.forecast;
+339          set work.forecast_latest;
+340          if n_means=1 and n_currencies=1 and n_issues=1;
+341        run;
+
+NOTE: There were 111302 observations read from the data set WORK.FORECAST_LATEST.
+NOTE: The data set WORK.FORECAST has 111302 observations and 10 variables.
+15                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+342        
+343        /* Exact adjusted/unadjusted Summary matches audit split products and currencies. */
+344        data work.sum_adj_scope;
+345          set ibes.statsum_epsus(keep=ticker statpers measure fiscalp estflag curcode meanest usfirm fpedats);
+346          where upcase(strip(measure))='EPS' and upcase(strip(fiscalp))='QTR'
+347            and upcase(strip(estflag))='P' and usfirm=1 and not missing(meanest);
+348          curcode=upcase(strip(curcode)); keep ticker statpers fpedats curcode meanest;
+349        run;
+
+NOTE: There were 6790395 observations read from the data set IBES.STATSUM_EPSUS.
+      WHERE (UPCASE(STRIP(measure))='EPS') and (UPCASE(STRIP(fiscalp))='QTR') and (UPCASE(STRIP(estflag))='P') and (usfirm=1) and 
+      (not MISSING(meanest));
+NOTE: The data set WORK.SUM_ADJ_SCOPE has 6790395 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           5.64 seconds
+      cpu time            5.64 seconds
+      
+
+350        proc sql;
+351          create table work.sum_adj_exact as
+352          select ticker,fpedats,statpers,curcode,count(distinct meanest) as n_means,
+353            min(meanest) as adjusted_mean from work.sum_adj_scope
+354          group by ticker,fpedats,statpers,curcode;
+NOTE: Table WORK.SUM_ADJ_EXACT created, with 6789042 rows and 6 columns.
+
+355          create table work.forecast_product_check as
+356          select f.gvkey,f.datadate,f.ticker,f.statpers,f.forecast_raw,f.forecast_currency,
+357            a.adjusted_mean,a.n_means from work.forecast as f left join work.sum_adj_exact as a
+358          on f.ticker=a.ticker and f.datadate=a.fpedats and f.statpers=a.statpers and f.forecast_currency=a.curcode;
+NOTE: Table WORK.FORECAST_PRODUCT_CHECK created, with 111302 rows and 8 columns.
+
+359          select count(*) as raw_forecast_rows,sum(n_means=1) as exact_adjusted_pairs,
+360            sum(n_means>1) as ambiguous_adjusted_pairs from work.forecast_product_check;
+361          select sum(n_means=1 and adjusted_mean ne forecast_raw) as nonunit_adjustment_pairs
+362            from work.forecast_product_check;
+363        quit;
+NOTE: The PROCEDURE SQL printed pages 12-13.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           5.17 seconds
+      cpu time            6.54 seconds
+      
+
+364        data work.forecast_product_ratio;
+365          set work.forecast_product_check;
+366          if n_means=1 and abs(forecast_raw)>.001 then product_ratio=adjusted_mean/forecast_raw;
+367        run;
+
+NOTE: There were 111302 observations read from the data set WORK.FORECAST_PRODUCT_CHECK.
+NOTE: The data set WORK.FORECAST_PRODUCT_RATIO has 111302 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+16                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+
+368        proc means data=work.forecast_product_ratio n mean median p25 p75; var product_ratio; run;
+
+NOTE: There were 111302 observations read from the data set WORK.FORECAST_PRODUCT_RATIO.
+NOTE: The PROCEDURE MEANS printed page 14.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+369        
+370        /* Bounded source-date AJEXDI requests; missing source dates remain unsupported. */
+371        data work.req_anchor;
+372          set work.q_unique(keep=gvkey datadate hiid);
+373          length req_role $8 issue_iid $4; req_role='ANCHOR';issue_iid=hiid;obsdate=datadate;
+374          keep gvkey datadate req_role issue_iid obsdate;
+375        run;
+
+NOTE: There were 377374 observations read from the data set WORK.Q_UNIQUE.
+NOTE: The data set WORK.REQ_ANCHOR has 377374 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+376        data work.req_street;
+377          set work.actual(keep=gvkey datadate actual_iid anndats);
+378          length req_role $8 issue_iid $4;req_role='STREET';issue_iid=actual_iid;obsdate=anndats;
+379          keep gvkey datadate req_role issue_iid obsdate;
+380        run;
+
+NOTE: There were 170052 observations read from the data set WORK.ACTUAL.
+NOTE: The data set WORK.REQ_STREET has 170052 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+381        data work.req_forecast;
+382          set work.forecast(keep=gvkey datadate forecast_iid statpers);
+383          length req_role $8 issue_iid $4;req_role='FORECAST';issue_iid=forecast_iid;obsdate=statpers;
+384          keep gvkey datadate req_role issue_iid obsdate;
+385        run;
+
+NOTE: There were 111302 observations read from the data set WORK.FORECAST.
+NOTE: The data set WORK.REQ_FORECAST has 111302 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+386        data work.req_price3;
+387          set work.price3(keep=gvkey datadate price3_iid price3_date);
+388          length req_role $8 issue_iid $4;req_role='PRICE3';issue_iid=price3_iid;obsdate=price3_date;
+389          keep gvkey datadate req_role issue_iid obsdate;
+390        run;
+
+NOTE: There were 293534 observations read from the data set WORK.PRICE3.
+17                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: The data set WORK.REQ_PRICE3 has 293534 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+391        data work.req_price0;
+392          set work.price0(keep=gvkey datadate price0_iid price0_date);
+393          length req_role $8 issue_iid $4;req_role='PRICE0';issue_iid=price0_iid;obsdate=price0_date;
+394          keep gvkey datadate req_role issue_iid obsdate;
+395        run;
+
+NOTE: There were 282021 observations read from the data set WORK.PRICE0.
+NOTE: The data set WORK.REQ_PRICE0 has 282021 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+396        data work.factor_req;
+397          set work.req_anchor work.req_street work.req_forecast work.req_price3 work.req_price0;
+398          if missing(gvkey) or missing(issue_iid) or missing(obsdate) then delete;
+399        run;
+
+NOTE: There were 377374 observations read from the data set WORK.REQ_ANCHOR.
+NOTE: There were 170052 observations read from the data set WORK.REQ_STREET.
+NOTE: There were 111302 observations read from the data set WORK.REQ_FORECAST.
+NOTE: There were 293534 observations read from the data set WORK.REQ_PRICE3.
+NOTE: There were 282021 observations read from the data set WORK.REQ_PRICE0.
+NOTE: The data set WORK.FACTOR_REQ has 1228834 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+400        proc sql;
+401          create table work.factor_candidates as
+402          select r.gvkey,r.datadate,r.req_role,r.issue_iid,r.obsdate,
+403            d.datadate as factor_date format=date9.,d.ajexdi as share_factor
+404          from work.factor_req as r left join sec.sec_dprc as d
+405            on r.gvkey=d.gvkey and r.issue_iid=d.iid and d.datadate le r.obsdate
+406              and d.datadate ge r.obsdate-7 and d.datadate ge '01JAN1988'd
+407              and d.datadate le '31DEC1999'd and d.ajexdi>0;
+NOTE: Table WORK.FACTOR_CANDIDATES created, with 6371115 rows and 7 columns.
+
+408          create table work.factor_latest as
+409          select gvkey,datadate,req_role,issue_iid,obsdate,max(factor_date) as factor_date format=date9.
+410          from work.factor_candidates group by gvkey,datadate,req_role,issue_iid,obsdate;
+NOTE: Table WORK.FACTOR_LATEST created, with 1228834 rows and 6 columns.
+
+411          create table work.factor_values as
+412          select a.gvkey,a.datadate,a.req_role,a.issue_iid,a.obsdate,a.factor_date,
+413            count(distinct b.share_factor) as n_factors,min(b.share_factor) as share_factor
+414          from work.factor_latest as a left join work.factor_candidates as b
+415            on a.gvkey=b.gvkey and a.datadate=b.datadate and a.req_role=b.req_role
+416              and a.issue_iid=b.issue_iid and a.obsdate=b.obsdate and a.factor_date=b.factor_date
+417          group by a.gvkey,a.datadate,a.req_role,a.issue_iid,a.obsdate,a.factor_date;
+NOTE: Table WORK.FACTOR_VALUES created, with 1228834 rows and 8 columns.
+18                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+
+418          select req_role,count(*) as role_rows,sum(n_factors=1) as unique_factor_rows,
+419            sum(n_factors=1 and share_factor ne 1) as nonunit_factor_rows,
+420            min(share_factor) as minimum_factor,max(share_factor) as maximum_factor
+421          from work.factor_values group by req_role;
+422        quit;
+NOTE: The PROCEDURE SQL printed page 15.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1:26.94
+      cpu time            1:35.57
+      
+
+423        %macro split_factor_role(role=,out=,prefix=);
+424          data &out;
+425            set work.factor_values(where=(req_role="&role"));
+426            &prefix._factor=share_factor;&prefix._date=factor_date;&prefix._n=n_factors;&prefix._iid=issue_iid;
+427            keep gvkey datadate &prefix._factor &prefix._date &prefix._n &prefix._iid;
+428          run;
+429        %mend;
+430        %split_factor_role(role=ANCHOR,out=work.factor_anchor,prefix=anchor);
+MLOGIC(SPLIT_FACTOR_ROLE):  Beginning execution.
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter ROLE has value ANCHOR
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter OUT has value work.factor_anchor
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter PREFIX has value anchor
+SYMBOLGEN:  Macro variable OUT resolves to work.factor_anchor
+MPRINT(SPLIT_FACTOR_ROLE):   data work.factor_anchor;
+SYMBOLGEN:  Macro variable ROLE resolves to ANCHOR
+MPRINT(SPLIT_FACTOR_ROLE):   set work.factor_values(where=(req_role="ANCHOR"));
+SYMBOLGEN:  Macro variable PREFIX resolves to anchor
+MPRINT(SPLIT_FACTOR_ROLE):   anchor_factor=share_factor;
+SYMBOLGEN:  Macro variable PREFIX resolves to anchor
+MPRINT(SPLIT_FACTOR_ROLE):  anchor_date=factor_date;
+SYMBOLGEN:  Macro variable PREFIX resolves to anchor
+MPRINT(SPLIT_FACTOR_ROLE):  anchor_n=n_factors;
+SYMBOLGEN:  Macro variable PREFIX resolves to anchor
+MPRINT(SPLIT_FACTOR_ROLE):  anchor_iid=issue_iid;
+SYMBOLGEN:  Macro variable PREFIX resolves to anchor
+SYMBOLGEN:  Macro variable PREFIX resolves to anchor
+SYMBOLGEN:  Macro variable PREFIX resolves to anchor
+SYMBOLGEN:  Macro variable PREFIX resolves to anchor
+MPRINT(SPLIT_FACTOR_ROLE):   keep gvkey datadate anchor_factor anchor_date anchor_n anchor_iid;
+MPRINT(SPLIT_FACTOR_ROLE):   run;
+
+NOTE: There were 373412 observations read from the data set WORK.FACTOR_VALUES.
+      WHERE req_role='ANCHOR';
+NOTE: The data set WORK.FACTOR_ANCHOR has 373412 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+MLOGIC(SPLIT_FACTOR_ROLE):  Ending execution.
+431        %split_factor_role(role=STREET,out=work.factor_street,prefix=street);
+MLOGIC(SPLIT_FACTOR_ROLE):  Beginning execution.
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter ROLE has value STREET
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter OUT has value work.factor_street
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter PREFIX has value street
+SYMBOLGEN:  Macro variable OUT resolves to work.factor_street
+19                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+MPRINT(SPLIT_FACTOR_ROLE):   data work.factor_street;
+SYMBOLGEN:  Macro variable ROLE resolves to STREET
+MPRINT(SPLIT_FACTOR_ROLE):   set work.factor_values(where=(req_role="STREET"));
+SYMBOLGEN:  Macro variable PREFIX resolves to street
+MPRINT(SPLIT_FACTOR_ROLE):   street_factor=share_factor;
+SYMBOLGEN:  Macro variable PREFIX resolves to street
+MPRINT(SPLIT_FACTOR_ROLE):  street_date=factor_date;
+SYMBOLGEN:  Macro variable PREFIX resolves to street
+MPRINT(SPLIT_FACTOR_ROLE):  street_n=n_factors;
+SYMBOLGEN:  Macro variable PREFIX resolves to street
+MPRINT(SPLIT_FACTOR_ROLE):  street_iid=issue_iid;
+SYMBOLGEN:  Macro variable PREFIX resolves to street
+SYMBOLGEN:  Macro variable PREFIX resolves to street
+SYMBOLGEN:  Macro variable PREFIX resolves to street
+SYMBOLGEN:  Macro variable PREFIX resolves to street
+MPRINT(SPLIT_FACTOR_ROLE):   keep gvkey datadate street_factor street_date street_n street_iid;
+MPRINT(SPLIT_FACTOR_ROLE):   run;
+
+NOTE: There were 168565 observations read from the data set WORK.FACTOR_VALUES.
+      WHERE req_role='STREET';
+NOTE: The data set WORK.FACTOR_STREET has 168565 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+MLOGIC(SPLIT_FACTOR_ROLE):  Ending execution.
+432        %split_factor_role(role=FORECAST,out=work.factor_forecast,prefix=forecast);
+MLOGIC(SPLIT_FACTOR_ROLE):  Beginning execution.
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter ROLE has value FORECAST
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter OUT has value work.factor_forecast
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter PREFIX has value forecast
+SYMBOLGEN:  Macro variable OUT resolves to work.factor_forecast
+MPRINT(SPLIT_FACTOR_ROLE):   data work.factor_forecast;
+SYMBOLGEN:  Macro variable ROLE resolves to FORECAST
+MPRINT(SPLIT_FACTOR_ROLE):   set work.factor_values(where=(req_role="FORECAST"));
+SYMBOLGEN:  Macro variable PREFIX resolves to forecast
+MPRINT(SPLIT_FACTOR_ROLE):   forecast_factor=share_factor;
+SYMBOLGEN:  Macro variable PREFIX resolves to forecast
+MPRINT(SPLIT_FACTOR_ROLE):  forecast_date=factor_date;
+SYMBOLGEN:  Macro variable PREFIX resolves to forecast
+MPRINT(SPLIT_FACTOR_ROLE):  forecast_n=n_factors;
+SYMBOLGEN:  Macro variable PREFIX resolves to forecast
+MPRINT(SPLIT_FACTOR_ROLE):  forecast_iid=issue_iid;
+SYMBOLGEN:  Macro variable PREFIX resolves to forecast
+SYMBOLGEN:  Macro variable PREFIX resolves to forecast
+SYMBOLGEN:  Macro variable PREFIX resolves to forecast
+SYMBOLGEN:  Macro variable PREFIX resolves to forecast
+MPRINT(SPLIT_FACTOR_ROLE):   keep gvkey datadate forecast_factor forecast_date forecast_n forecast_iid;
+MPRINT(SPLIT_FACTOR_ROLE):   run;
+
+NOTE: There were 111302 observations read from the data set WORK.FACTOR_VALUES.
+      WHERE req_role='FORECAST';
+NOTE: The data set WORK.FACTOR_FORECAST has 111302 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+20                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+
+MLOGIC(SPLIT_FACTOR_ROLE):  Ending execution.
+433        %split_factor_role(role=PRICE3,out=work.factor_price3,prefix=price3);
+MLOGIC(SPLIT_FACTOR_ROLE):  Beginning execution.
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter ROLE has value PRICE3
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter OUT has value work.factor_price3
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter PREFIX has value price3
+SYMBOLGEN:  Macro variable OUT resolves to work.factor_price3
+MPRINT(SPLIT_FACTOR_ROLE):   data work.factor_price3;
+SYMBOLGEN:  Macro variable ROLE resolves to PRICE3
+MPRINT(SPLIT_FACTOR_ROLE):   set work.factor_values(where=(req_role="PRICE3"));
+SYMBOLGEN:  Macro variable PREFIX resolves to price3
+MPRINT(SPLIT_FACTOR_ROLE):   price3_factor=share_factor;
+SYMBOLGEN:  Macro variable PREFIX resolves to price3
+MPRINT(SPLIT_FACTOR_ROLE):  price3_date=factor_date;
+SYMBOLGEN:  Macro variable PREFIX resolves to price3
+MPRINT(SPLIT_FACTOR_ROLE):  price3_n=n_factors;
+SYMBOLGEN:  Macro variable PREFIX resolves to price3
+MPRINT(SPLIT_FACTOR_ROLE):  price3_iid=issue_iid;
+SYMBOLGEN:  Macro variable PREFIX resolves to price3
+SYMBOLGEN:  Macro variable PREFIX resolves to price3
+SYMBOLGEN:  Macro variable PREFIX resolves to price3
+SYMBOLGEN:  Macro variable PREFIX resolves to price3
+MPRINT(SPLIT_FACTOR_ROLE):   keep gvkey datadate price3_factor price3_date price3_n price3_iid;
+MPRINT(SPLIT_FACTOR_ROLE):   run;
+
+NOTE: There were 293534 observations read from the data set WORK.FACTOR_VALUES.
+      WHERE req_role='PRICE3';
+NOTE: The data set WORK.FACTOR_PRICE3 has 293534 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+MLOGIC(SPLIT_FACTOR_ROLE):  Ending execution.
+434        %split_factor_role(role=PRICE0,out=work.factor_price0,prefix=price0);
+MLOGIC(SPLIT_FACTOR_ROLE):  Beginning execution.
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter ROLE has value PRICE0
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter OUT has value work.factor_price0
+MLOGIC(SPLIT_FACTOR_ROLE):  Parameter PREFIX has value price0
+SYMBOLGEN:  Macro variable OUT resolves to work.factor_price0
+MPRINT(SPLIT_FACTOR_ROLE):   data work.factor_price0;
+SYMBOLGEN:  Macro variable ROLE resolves to PRICE0
+MPRINT(SPLIT_FACTOR_ROLE):   set work.factor_values(where=(req_role="PRICE0"));
+SYMBOLGEN:  Macro variable PREFIX resolves to price0
+MPRINT(SPLIT_FACTOR_ROLE):   price0_factor=share_factor;
+SYMBOLGEN:  Macro variable PREFIX resolves to price0
+MPRINT(SPLIT_FACTOR_ROLE):  price0_date=factor_date;
+SYMBOLGEN:  Macro variable PREFIX resolves to price0
+MPRINT(SPLIT_FACTOR_ROLE):  price0_n=n_factors;
+SYMBOLGEN:  Macro variable PREFIX resolves to price0
+MPRINT(SPLIT_FACTOR_ROLE):  price0_iid=issue_iid;
+SYMBOLGEN:  Macro variable PREFIX resolves to price0
+SYMBOLGEN:  Macro variable PREFIX resolves to price0
+SYMBOLGEN:  Macro variable PREFIX resolves to price0
+SYMBOLGEN:  Macro variable PREFIX resolves to price0
+MPRINT(SPLIT_FACTOR_ROLE):   keep gvkey datadate price0_factor price0_date price0_n price0_iid;
+MPRINT(SPLIT_FACTOR_ROLE):   run;
+21                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+
+NOTE: There were 282021 observations read from the data set WORK.FACTOR_VALUES.
+      WHERE req_role='PRICE0';
+NOTE: The data set WORK.FACTOR_PRICE0 has 282021 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+MLOGIC(SPLIT_FACTOR_ROLE):  Ending execution.
+435        proc sql;
+436          create table work.share_basis as
+437          select q.gvkey,q.datadate,q.hiid,q.ajexq,a.anchor_factor,a.anchor_date,a.anchor_n,a.anchor_iid
+438          from work.q_unique as q left join work.factor_anchor as a
+439            on q.gvkey=a.gvkey and q.datadate=a.datadate;
+NOTE: Table WORK.SHARE_BASIS created, with 377374 rows and 8 columns.
+
+440        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.39 seconds
+      
+
+441        data work.share_basis;
+442          set work.share_basis;
+443          anchor_iid_match=(not missing(hiid) and anchor_iid=hiid);
+444          ajexq_difference=abs(anchor_factor-ajexq);
+445          anchor_ok=(anchor_n=1 and anchor_iid_match=1 and anchor_factor>0 and ajexq>0
+446            and ajexq_difference le 1e-6*max(1,abs(anchor_factor)));
+447        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      75617 at 444:20   75617 at 444:37   75617 at 446:40   
+NOTE: There were 377374 observations read from the data set WORK.SHARE_BASIS.
+NOTE: The data set WORK.SHARE_BASIS has 377374 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.08 seconds
+      
+
+448        proc sql;
+449          select count(*) as quarter_keys,sum(anchor_n=1) as unique_daily_anchor_factors,
+450            sum(anchor_ok=1) as anchor_factor_matches_ajexq,
+451            sum(not missing(anchor_factor) and not missing(ajexq) and anchor_ok=0) as ajexq_disagreements,
+452            sum(anchor_n=1 and anchor_factor ne 1) as nonunit_quarter_anchor_factors
+453          from work.share_basis;
+454        quit;
+NOTE: The PROCEDURE SQL printed page 16.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+455        
+456        proc sql;
+457          create table work.share_factor_wide as
+458          select a.*,s.street_factor,s.street_date,s.street_n,s.street_iid,
+22                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+459            f.forecast_factor,f.forecast_date,f.forecast_n,f.forecast_iid,
+460            p3.price3_factor,p3.price3_date as price3_factor_date,p3.price3_n,p3.price3_iid,
+461            p0.price0_factor,p0.price0_date as price0_factor_date,p0.price0_n,p0.price0_iid
+462          from work.share_basis as a
+463          left join work.factor_street as s on a.gvkey=s.gvkey and a.datadate=s.datadate
+464          left join work.factor_forecast as f on a.gvkey=f.gvkey and a.datadate=f.datadate
+465          left join work.factor_price3 as p3 on a.gvkey=p3.gvkey and a.datadate=p3.datadate
+466          left join work.factor_price0 as p0 on a.gvkey=p0.gvkey and a.datadate=p0.datadate;
+NOTE: Table WORK.SHARE_FACTOR_WIDE created, with 377374 rows and 27 columns.
+
+467        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.50 seconds
+      cpu time            0.70 seconds
+      
+
+468        data work.share_factor_wide;
+469          set work.share_factor_wide;
+470          street_iid_match=(not missing(hiid) and street_iid=hiid);
+471          forecast_iid_match=(not missing(hiid) and forecast_iid=hiid);
+472          price3_iid_match=(not missing(hiid) and price3_iid=hiid);
+473          price0_iid_match=(not missing(hiid) and price0_iid=hiid);
+474          street_basis_ok=(anchor_ok and street_n=1 and street_iid_match and street_factor>0);
+475          forecast_basis_ok=(anchor_ok and forecast_n=1 and forecast_iid_match and forecast_factor>0);
+476          price3_basis_ok=(anchor_ok and price3_n=1 and price3_iid_match and price3_factor>0);
+477          price0_basis_ok=(anchor_ok and price0_n=1 and price0_iid_match and price0_factor>0);
+478        run;
+
+NOTE: There were 377374 observations read from the data set WORK.SHARE_FACTOR_WIDE.
+NOTE: The data set WORK.SHARE_FACTOR_WIDE has 377374 observations and 35 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.15 seconds
+      
+
+479        proc sql;
+480          select count(*) as quarter_keys,sum(street_iid_match=1) as same_issue_actuals,
+481            sum(street_basis_ok=1) as supported_actual_bases,
+482            sum(forecast_iid_match=1) as same_issue_forecasts,
+483            sum(forecast_basis_ok=1) as supported_forecast_bases,
+484            sum(price3_iid_match=1) as same_issue_price3,
+485            sum(price3_basis_ok=1) as supported_price3_bases,
+486            sum(price0_iid_match=1) as same_issue_price0,
+487            sum(price0_basis_ok=1) as supported_price0_bases
+488          from work.share_factor_wide;
+489        quit;
+NOTE: The PROCEDURE SQL printed page 17.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.08 seconds
+      
+
+490        
+491        /* Fund currency: quarter-end EXRATD for equity and documented EXRAT12M for quarterly EPS. */
+492        proc sql;
+493          create table work.eq_fx_date as
+494          select q.gvkey, q.datadate, upcase(strip(q.curcdq)) as currency length=4,
+495            max(x.datadate) as fxdate format=date9.
+23                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+496          from work.q_unique as q left join work.fx_dly as x
+497            on x.currency=upcase(strip(q.curcdq)) and x.datadate le q.datadate
+498              and x.datadate ge q.datadate-7
+499          group by q.gvkey, q.datadate, upcase(strip(q.curcdq));
+NOTE: Table WORK.EQ_FX_DATE created, with 377374 rows and 4 columns.
+
+500          create table work.fq_currency as
+501          select q.*,b.anchor_factor,b.anchor_date,b.anchor_n,b.anchor_ok,b.ajexq_difference,
+502            coalesce(m.usd_factor_12m,case when upcase(strip(q.curcdq))='USD' then 1 else . end) as eps_usd_factor,
+503            coalesce(d.usd_factor,case when upcase(strip(q.curcdq))='USD' then 1 else . end) as equity_usd_factor
+504          from work.q_unique as q
+505          left join work.share_factor_wide as b on q.gvkey=b.gvkey and q.datadate=b.datadate
+506          left join work.fx_mth as m
+507            on intnx('month',q.datadate,0,'end')=m.datadate and upcase(strip(q.curcdq))=m.currency
+508          left join work.eq_fx_date as e on q.gvkey=e.gvkey and q.datadate=e.datadate
+509          left join work.fx_dly as d on e.fxdate=d.datadate and e.currency=d.currency;
+NOTE: Table WORK.FQ_CURRENCY created, with 377374 rows and 26 columns.
+
+510        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           36.01 seconds
+      cpu time            37.68 seconds
+      
+
+511        data work.fundq_usd;
+512          set work.fq_currency;
+513          if not missing(ceqq) and not missing(equity_usd_factor) then equity_usd=ceqq*equity_usd_factor;
+514          if not missing(epspiq) and not missing(eps_usd_factor) then ni_usd=epspiq*eps_usd_factor;
+515          if not missing(epspxq) and not missing(eps_usd_factor) then gaap_usd=epspxq*eps_usd_factor;
+516          if not missing(opepsq) and not missing(eps_usd_factor) then epsop_usd=opepsq*eps_usd_factor;
+517          if not missing(cshprq) and cshprq>0 then bvps_usd=equity_usd/cshprq;
+518        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      40357 at 517:63   
+NOTE: There were 377374 observations read from the data set WORK.FQ_CURRENCY.
+NOTE: The data set WORK.FUNDQ_USD has 377374 observations and 31 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.11 seconds
+      
+
+519        
+520        /* Source-price FX uses the actual quote date/currency; monthly EXRAT1M is fallback. */
+521        %macro add_price_usd(input=,output=,price=,date=,currency=,name=);
+522          proc sql;
+523            create table &output as
+524            select a.*, coalesce(d.usd_factor, m.usd_factor_1m,
+525              case when upcase(strip(a.&currency))='USD' then 1 else . end) as &name._fx
+526            from &input as a
+527            left join work.fx_dly as d
+528              on d.datadate=a.&date and d.currency=upcase(strip(a.&currency))
+529            left join work.fx_mth as m
+530              on m.datadate=intnx('month',a.&date,0,'end') and m.currency=upcase(strip(a.&currency));
+531          quit;
+532          data &output;
+533            set &output;
+24                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+534            if not missing(&price) and not missing(&name._fx) then &name._usd=&price*&name._fx;
+535          run;
+536        %mend;
+537        %add_price_usd(input=work.price3,output=work.price3_usd,price=price3_price,date=price3_date,
+MLOGIC(ADD_PRICE_USD):  Beginning execution.
+538          currency=price3_currency,name=price3);
+MLOGIC(ADD_PRICE_USD):  Parameter INPUT has value work.price3
+MLOGIC(ADD_PRICE_USD):  Parameter OUTPUT has value work.price3_usd
+MLOGIC(ADD_PRICE_USD):  Parameter PRICE has value price3_price
+MLOGIC(ADD_PRICE_USD):  Parameter DATE has value price3_date
+MLOGIC(ADD_PRICE_USD):  Parameter CURRENCY has value price3_currency
+MLOGIC(ADD_PRICE_USD):  Parameter NAME has value price3
+MPRINT(ADD_PRICE_USD):   proc sql;
+SYMBOLGEN:  Macro variable OUTPUT resolves to work.price3_usd
+SYMBOLGEN:  Macro variable CURRENCY resolves to price3_currency
+SYMBOLGEN:  Macro variable NAME resolves to price3
+SYMBOLGEN:  Macro variable INPUT resolves to work.price3
+SYMBOLGEN:  Macro variable DATE resolves to price3_date
+SYMBOLGEN:  Macro variable CURRENCY resolves to price3_currency
+SYMBOLGEN:  Macro variable DATE resolves to price3_date
+SYMBOLGEN:  Macro variable CURRENCY resolves to price3_currency
+MPRINT(ADD_PRICE_USD):   create table work.price3_usd as select a.*, coalesce(d.usd_factor, m.usd_factor_1m, case when 
+upcase(strip(a.price3_currency))='USD' then 1 else . end) as price3_fx from work.price3 as a left join work.fx_dly as d on 
+d.datadate=a.price3_date and d.currency=upcase(strip(a.price3_currency)) left join work.fx_mth as m on 
+m.datadate=intnx('month',a.price3_date,0,'end') and m.currency=upcase(strip(a.price3_currency));
+NOTE: Table WORK.PRICE3_USD created, with 293534 rows and 11 columns.
+
+MPRINT(ADD_PRICE_USD):   quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.36 seconds
+      cpu time            0.60 seconds
+      
+
+SYMBOLGEN:  Macro variable OUTPUT resolves to work.price3_usd
+MPRINT(ADD_PRICE_USD):   data work.price3_usd;
+SYMBOLGEN:  Macro variable OUTPUT resolves to work.price3_usd
+MPRINT(ADD_PRICE_USD):   set work.price3_usd;
+SYMBOLGEN:  Macro variable PRICE resolves to price3_price
+SYMBOLGEN:  Macro variable NAME resolves to price3
+SYMBOLGEN:  Macro variable NAME resolves to price3
+SYMBOLGEN:  Macro variable PRICE resolves to price3_price
+SYMBOLGEN:  Macro variable NAME resolves to price3
+MPRINT(ADD_PRICE_USD):   if not missing(price3_price) and not missing(price3_fx) then price3_usd=price3_price*price3_fx;
+MPRINT(ADD_PRICE_USD):   run;
+
+NOTE: There were 293534 observations read from the data set WORK.PRICE3_USD.
+NOTE: The data set WORK.PRICE3_USD has 293534 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+MLOGIC(ADD_PRICE_USD):  Ending execution.
+539        %add_price_usd(input=work.price0,output=work.price0_usd,price=price0_price,date=price0_date,
+MLOGIC(ADD_PRICE_USD):  Beginning execution.
+540          currency=price0_currency,name=price0);
+MLOGIC(ADD_PRICE_USD):  Parameter INPUT has value work.price0
+MLOGIC(ADD_PRICE_USD):  Parameter OUTPUT has value work.price0_usd
+25                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+MLOGIC(ADD_PRICE_USD):  Parameter PRICE has value price0_price
+MLOGIC(ADD_PRICE_USD):  Parameter DATE has value price0_date
+MLOGIC(ADD_PRICE_USD):  Parameter CURRENCY has value price0_currency
+MLOGIC(ADD_PRICE_USD):  Parameter NAME has value price0
+MPRINT(ADD_PRICE_USD):   proc sql;
+SYMBOLGEN:  Macro variable OUTPUT resolves to work.price0_usd
+SYMBOLGEN:  Macro variable CURRENCY resolves to price0_currency
+SYMBOLGEN:  Macro variable NAME resolves to price0
+SYMBOLGEN:  Macro variable INPUT resolves to work.price0
+SYMBOLGEN:  Macro variable DATE resolves to price0_date
+SYMBOLGEN:  Macro variable CURRENCY resolves to price0_currency
+SYMBOLGEN:  Macro variable DATE resolves to price0_date
+SYMBOLGEN:  Macro variable CURRENCY resolves to price0_currency
+MPRINT(ADD_PRICE_USD):   create table work.price0_usd as select a.*, coalesce(d.usd_factor, m.usd_factor_1m, case when 
+upcase(strip(a.price0_currency))='USD' then 1 else . end) as price0_fx from work.price0 as a left join work.fx_dly as d on 
+d.datadate=a.price0_date and d.currency=upcase(strip(a.price0_currency)) left join work.fx_mth as m on 
+m.datadate=intnx('month',a.price0_date,0,'end') and m.currency=upcase(strip(a.price0_currency));
+NOTE: Table WORK.PRICE0_USD created, with 282021 rows and 11 columns.
+
+MPRINT(ADD_PRICE_USD):   quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.35 seconds
+      cpu time            0.57 seconds
+      
+
+SYMBOLGEN:  Macro variable OUTPUT resolves to work.price0_usd
+MPRINT(ADD_PRICE_USD):   data work.price0_usd;
+SYMBOLGEN:  Macro variable OUTPUT resolves to work.price0_usd
+MPRINT(ADD_PRICE_USD):   set work.price0_usd;
+SYMBOLGEN:  Macro variable PRICE resolves to price0_price
+SYMBOLGEN:  Macro variable NAME resolves to price0
+SYMBOLGEN:  Macro variable NAME resolves to price0
+SYMBOLGEN:  Macro variable PRICE resolves to price0_price
+SYMBOLGEN:  Macro variable NAME resolves to price0
+MPRINT(ADD_PRICE_USD):   if not missing(price0_price) and not missing(price0_fx) then price0_usd=price0_price*price0_fx;
+MPRINT(ADD_PRICE_USD):   run;
+
+NOTE: There were 282021 observations read from the data set WORK.PRICE0_USD.
+NOTE: The data set WORK.PRICE0_USD has 282021 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+MLOGIC(ADD_PRICE_USD):  Ending execution.
+541        
+542        /* Unadjust ACTU/STATSUMU only by a same-IID factor ratio to quarter-end basis,
+543           then convert each value from its own IBES currency with EXRAT12M. */
+544        proc sql;
+545          create table work.ibes_basis0 as
+546          select a.gvkey,a.datadate,q.hiid,a.ticker,a.anndats,a.actdats,a.actual_iid,
+547            a.street_raw,a.street_currency,s.forecast_raw,s.forecast_currency,s.forecast_iid,s.statpers,
+548            b.anchor_factor,b.anchor_date,b.anchor_n,b.anchor_ok,b.ajexq_difference,
+549            b.street_factor,b.street_date,b.street_n,b.street_iid,
+550            b.forecast_factor,b.forecast_date,b.forecast_n,b.forecast_iid as factor_forecast_iid
+551          from work.actual as a inner join work.q_unique as q on a.gvkey=q.gvkey and a.datadate=q.datadate
+552          left join work.forecast as s on a.gvkey=s.gvkey and a.datadate=s.datadate
+553          left join work.share_factor_wide as b on a.gvkey=b.gvkey and a.datadate=b.datadate;
+26                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: Table WORK.IBES_BASIS0 created, with 170052 rows and 26 columns.
+
+554        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.37 seconds
+      cpu time            0.52 seconds
+      
+
+555        data work.ibes_basis;
+556          set work.ibes_basis0;
+557          street_iid_match=(not missing(hiid) and actual_iid=hiid and street_iid=hiid);
+558          forecast_iid_match=(not missing(hiid) and forecast_iid=hiid and factor_forecast_iid=hiid);
+559          street_basis_ok=(anchor_ok and street_n=1 and street_iid_match and street_factor>0);
+560          forecast_basis_ok=(anchor_ok and forecast_n=1 and forecast_iid_match and forecast_factor>0);
+561          if street_basis_ok then street_basis_raw=street_raw*anchor_factor/street_factor;
+562          if forecast_basis_ok then forecast_basis_raw=forecast_raw*anchor_factor/forecast_factor;
+563        run;
+
+NOTE: There were 170052 observations read from the data set WORK.IBES_BASIS0.
+NOTE: The data set WORK.IBES_BASIS has 170052 observations and 32 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+564        proc sql;
+565          select count(*) as actual_keys,sum(street_iid_match=1) as same_issue_actuals,
+566            sum(street_basis_ok=1) as rebased_actuals,
+567            sum(forecast_iid_match=1) as same_issue_forecasts,
+568            sum(forecast_basis_ok=1) as rebased_forecasts
+569          from work.ibes_basis;
+570          create table work.ibes_currency as
+571          select a.*,coalesce(fa.usd_factor_12m,case when a.street_currency='USD' then 1 else . end) as street_fx,
+572            coalesce(ff.usd_factor_12m,case when a.forecast_currency='USD' then 1 else . end) as forecast_fx
+573          from work.ibes_basis as a
+574          left join work.fx_mth as fa
+575            on intnx('month',a.datadate,0,'end')=fa.datadate and a.street_currency=fa.currency
+576          left join work.fx_mth as ff
+577            on intnx('month',a.datadate,0,'end')=ff.datadate and a.forecast_currency=ff.currency;
+NOTE: Table WORK.IBES_CURRENCY created, with 170052 rows and 34 columns.
+
+578        quit;
+NOTE: The PROCEDURE SQL printed page 18.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.33 seconds
+      cpu time            0.46 seconds
+      
+
+579        data work.ibes_usd;
+580          set work.ibes_currency;
+581          if street_basis_ok and not missing(street_basis_raw) and not missing(street_fx)
+582            then street_usd=street_basis_raw*street_fx;
+583          if forecast_basis_ok and not missing(forecast_basis_raw) and not missing(forecast_fx)
+584            then forecast_usd=forecast_basis_raw*forecast_fx;
+585        run;
+
+NOTE: There were 170052 observations read from the data set WORK.IBES_CURRENCY.
+NOTE: The data set WORK.IBES_USD has 170052 observations and 36 variables.
+27                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+586        
+587        /* Price quotes keep their selected role-date issue. Only same-IID quotes receive a
+588           quarter-end share-basis ratio; different primary issues remain audited but unresolved. */
+589        proc sql;
+590          create table work.price3_basis0 as
+591          select p.*,b.hiid,b.anchor_factor,b.anchor_date,b.anchor_n,b.anchor_ok,
+592            f.price3_factor,f.price3_date as price3_factor_date,f.price3_n,f.price3_iid as price3_factor_iid
+593          from work.price3_usd as p left join work.share_factor_wide as b
+594            on p.gvkey=b.gvkey and p.datadate=b.datadate
+595          left join work.factor_price3 as f on p.gvkey=f.gvkey and p.datadate=f.datadate;
+NOTE: Table WORK.PRICE3_BASIS0 created, with 293534 rows and 21 columns.
+
+596          create table work.price0_basis0 as
+597          select p.*,b.hiid,b.anchor_factor,b.anchor_date,b.anchor_n,b.anchor_ok,
+598            f.price0_factor,f.price0_date as price0_factor_date,f.price0_n,f.price0_iid as price0_factor_iid
+599          from work.price0_usd as p left join work.share_factor_wide as b
+600            on p.gvkey=b.gvkey and p.datadate=b.datadate
+601          left join work.factor_price0 as f on p.gvkey=f.gvkey and p.datadate=f.datadate;
+NOTE: Table WORK.PRICE0_BASIS0 created, with 282021 rows and 21 columns.
+
+602        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.81 seconds
+      cpu time            1.20 seconds
+      
+
+603        data work.price3_final;
+604          set work.price3_basis0;
+605          price3_basis_ok=(anchor_ok and price3_n=1 and price3_iid=hiid and price3_factor_iid=hiid and price3_factor>0);
+606          if price3_basis_ok then do;
+607            price3_share_ratio=anchor_factor/price3_factor;
+608            price3_usd=price3_usd*price3_share_ratio;
+609          end;
+610          else price3_usd=.;
+611        run;
+
+NOTE: There were 293534 observations read from the data set WORK.PRICE3_BASIS0.
+NOTE: The data set WORK.PRICE3_FINAL has 293534 observations and 23 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.09 seconds
+      
+
+612        data work.price0_final;
+613          set work.price0_basis0;
+614          price0_basis_ok=(anchor_ok and price0_n=1 and price0_iid=hiid and price0_factor_iid=hiid and price0_factor>0);
+615          if price0_basis_ok then do;
+616            price0_share_ratio=anchor_factor/price0_factor;
+617            price0_usd=price0_usd*price0_share_ratio;
+618          end;
+619          else price0_usd=.;
+620        run;
+
+28                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: There were 282021 observations read from the data set WORK.PRICE0_BASIS0.
+NOTE: The data set WORK.PRICE0_FINAL has 282021 observations and 23 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+621        proc sql;
+622          select count(*) as role_price3_rows,sum(price3_basis_ok=1) as supported_price3_rows,
+623            sum(not missing(price3_iid) and price3_iid ne hiid) as selected_price3_different_issue
+624            from work.price3_final;
+625          select count(*) as role_price0_rows,sum(price0_basis_ok=1) as supported_price0_rows,
+626            sum(not missing(price0_iid) and price0_iid ne hiid) as selected_price0_different_issue
+627            from work.price0_final;
+628        quit;
+NOTE: The PROCEDURE SQL printed pages 19-20.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+629        
+630        /* Apply common source groups in compatible USD EPS units at cent precision. */
+631        proc sql;
+632          create table work.combined as
+633          select f.*,i.ticker,i.street_raw,i.street_currency,i.actual_iid,i.anndats,
+634            i.street_factor,i.street_date,i.street_basis_raw,i.street_basis_ok,i.street_usd,
+635            i.forecast_raw,i.forecast_currency,i.forecast_iid,i.statpers,
+636            i.forecast_factor,i.forecast_date,i.forecast_basis_raw,i.forecast_basis_ok,i.forecast_usd,
+637            p3.price3_iid, p3.price3_date, p3.price3_currency, p3.price3_price,
+638            p3.price3_route,p3.price3_hiid_diff,p3.price3_fx,p3.price3_usd,
+639            p3.price3_factor,p3.price3_factor_date,p3.price3_share_ratio,p3.price3_basis_ok,
+640            p0.price0_iid,p0.price0_date,p0.price0_currency,p0.price0_price,
+641            p0.price0_route,p0.price0_hiid_diff,p0.price0_fx,p0.price0_usd,
+642            p0.price0_factor,p0.price0_factor_date,p0.price0_share_ratio,p0.price0_basis_ok
+643          from work.fundq_usd as f
+644          left join work.ibes_usd as i on f.gvkey=i.gvkey and f.datadate=i.datadate
+645          left join work.price3_final as p3 on f.gvkey=p3.gvkey and f.datadate=p3.datadate
+646          left join work.price0_final as p0 on f.gvkey=p0.gvkey and f.datadate=p0.datadate;
+NOTE: Table WORK.COMBINED created, with 377374 rows and 74 columns.
+
+647        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.79 seconds
+      cpu time            1.14 seconds
+      
+
+648        data work.classified;
+649          set work.combined;
+650          if not missing(street_usd) and not missing(epsop_usd) and not missing(gaap_usd) then do;
+651            street_cent=round(street_usd,.01);
+652            epsop_cent=round(epsop_usd,.01);
+653            gaap_cent=round(gaap_usd,.01);
+654            if street_cent=epsop_cent then agreement_group=0;
+655            else if epsop_cent=gaap_cent and street_cent ne gaap_cent then agreement_group=1;
+656            else if street_cent ne gaap_cent and epsop_cent ne gaap_cent then agreement_group=2;
+657            else if street_cent=gaap_cent and epsop_cent ne gaap_cent then agreement_group=3;
+658          end;
+29                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+659          other_street_usd=ni_usd-street_usd;
+660          other_epsop_usd=ni_usd-epsop_usd;
+661          uop_street=(street_usd-forecast_usd)/price0_usd;
+662          uop_epsop=(epsop_usd-forecast_usd)/price0_usd;
+663          car=.;
+664        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      220601 at 659:26   101184 at 660:25   269911 at 661:25   946 at 661:39      277329 at 662:23   884 at 662:37
+NOTE: There were 377374 observations read from the data set WORK.COMBINED.
+NOTE: The data set WORK.CLASSIFIED has 377374 observations and 83 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.26 seconds
+      
+
+665        proc freq data=work.classified;
+666          tables agreement_group / missing;
+667        run;
+
+NOTE: There were 377374 observations read from the data set WORK.CLASSIFIED.
+NOTE: The PROCEDURE FREQ printed page 21.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+668        
+669        /* Table 2 has no CRSP or t-4 screen and uses Q11 NI per share. */
+670        data outval.valuation;
+671          set work.classified;
+672          if agreement_group in (1,2,3);
+673          if nmiss(price3_usd,bvps_usd,street_usd,other_street_usd,epsop_usd,other_epsop_usd,
+674              ni_usd,equity_usd,cshprq)=0;
+675          keep gvkey datadate fyearq fqtr rdq hiid iid agreement_group
+676            price3_iid price3_date price3_currency price3_route price3_hiid_diff price3_price price3_fx price3_usd
+677            price3_factor price3_factor_date price3_share_ratio price3_basis_ok anchor_factor anchor_date anchor_ok
+677      ! ajexq_difference
+678            street_raw street_currency actual_iid anndats street_factor street_date street_basis_raw street_basis_ok street_usd
+679            forecast_raw forecast_currency forecast_iid statpers forecast_factor forecast_date forecast_basis_raw
+679      ! forecast_basis_ok
+680            epsop_usd ni_usd other_street_usd other_epsop_usd equity_usd cshprq bvps_usd
+681            epspiq epspxq opepsq curcdq eps_usd_factor equity_usd_factor;
+682        run;
+
+NOTE: There were 377374 observations read from the data set WORK.CLASSIFIED.
+NOTE: The data set OUTVAL.VALUATION has 48306 observations and 54 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+683        
+684        /* CRSP link valid at RDQ. Preserve .E/open endpoints and rank P before C. */
+685        data work.link_scope;
+686          set crspccm.ccmxpf_linktable(keep=gvkey linkprim linktype lpermno linkdt linkenddt);
+687          where upcase(strip(linktype)) in ('LC','LU') and upcase(strip(linkprim)) in ('P','C')
+30                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+688            and not missing(lpermno);
+689        run;
+
+NOTE: There were 33324 observations read from the data set CRSPCCM.CCMXPF_LINKTABLE.
+      WHERE UPCASE(STRIP(linktype)) in ('LC', 'LU') and UPCASE(STRIP(linkprim)) in ('C', 'P') and (not MISSING(lpermno));
+NOTE: The data set WORK.LINK_SCOPE has 33324 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+690        proc sql;
+691          create table work.link_candidates as
+692          select distinct q.gvkey, q.datadate, q.rdq, l.lpermno as permno, l.linkprim,
+693            case when upcase(strip(l.linkprim))='P' then 1 else 2 end as link_rank
+694          from work.q_unique as q inner join work.link_scope as l on q.gvkey=l.gvkey
+695          where (missing(l.linkdt) or l.linkdt le q.rdq)
+696            and (missing(l.linkenddt) or l.linkenddt ge q.rdq);
+NOTE: Table WORK.LINK_CANDIDATES created, with 195246 rows and 6 columns.
+
+697          create table work.link_best_rank as
+698          select gvkey, datadate, min(link_rank) as link_rank
+699          from work.link_candidates group by gvkey, datadate;
+NOTE: Table WORK.LINK_BEST_RANK created, with 195246 rows and 3 columns.
+
+700          create table work.link_best as
+701          select a.* from work.link_candidates as a inner join work.link_best_rank as b
+702            on a.gvkey=b.gvkey and a.datadate=b.datadate and a.link_rank=b.link_rank;
+NOTE: Table WORK.LINK_BEST created, with 195246 rows and 6 columns.
+
+703          create table work.link_counts as
+704          select gvkey, datadate, count(distinct permno) as n_permno, min(permno) as permno
+705          from work.link_best group by gvkey, datadate;
+NOTE: Table WORK.LINK_COUNTS created, with 195246 rows and 4 columns.
+
+706          create table work.link_unique as
+707          select distinct a.gvkey,a.datadate,a.rdq,a.permno from work.link_best as a
+708          inner join work.link_counts as b on a.gvkey=b.gvkey and a.datadate=b.datadate
+709          where b.n_permno=1;
+NOTE: Table WORK.LINK_UNIQUE created, with 195246 rows and 4 columns.
+
+710          select count(*) as event_link_rows, sum(n_permno ne 1) as ambiguous_event_links
+711            from work.link_counts;
+712        quit;
+NOTE: The PROCEDURE SQL printed page 22.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.51 seconds
+      cpu time            0.61 seconds
+      
+
+713        
+714        /* Event day zero is RDQ if CRSP trades, otherwise the first following session within 7 days. */
+715        data work.dsi_window_raw;
+716          set crspstk.dsi(keep=date vwretd where=(date ge '01JAN1988'd and date le '31DEC1999'd));
+717        run;
+
+NOTE: There were 3033 observations read from the data set CRSPSTK.DSI.
+      WHERE (date>='01JAN1988'D and date<='31DEC1999'D);
+31                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: The data set WORK.DSI_WINDOW_RAW has 3033 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+718        proc sql;
+719          create table work.dsi_day_count as select date,count(*) as n_rows,count(distinct vwretd) as n_market_values,
+720            min(vwretd) as vwretd from work.dsi_window_raw group by date;
+NOTE: Table WORK.DSI_DAY_COUNT created, with 3033 rows and 4 columns.
+
+721          create table work.dsi_window as select date,vwretd from work.dsi_day_count where n_rows=1;
+NOTE: Table WORK.DSI_WINDOW created, with 3033 rows and 2 columns.
+
+722          select sum(n_rows ne 1 or n_market_values ne 1) as ambiguous_market_days from work.dsi_day_count;
+723        quit;
+NOTE: The PROCEDURE SQL printed page 23.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+724        proc sort data=work.dsi_window out=work.dsi_sorted;
+725          by date;
+726        run;
+
+NOTE: Input data set is already sorted; it has been copied to the output data set.
+NOTE: There were 3033 observations read from the data set WORK.DSI_WINDOW.
+NOTE: The data set WORK.DSI_SORTED has 3033 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+727        data work.dsi_seq;
+728          set work.dsi_sorted;
+729          session=_n_;
+730        run;
+
+NOTE: There were 3033 observations read from the data set WORK.DSI_SORTED.
+NOTE: The data set WORK.DSI_SEQ has 3033 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+731        proc sql;
+732          create table work.event_day0 as
+733          select q.gvkey,q.datadate,q.rdq,min(d.date) as day0 format=date9.
+734          from work.q_unique as q left join work.dsi_seq as d
+735            on d.date ge q.rdq and d.date le q.rdq+7
+736          group by q.gvkey,q.datadate,q.rdq;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.EVENT_DAY0 created, with 377374 rows and 4 columns.
+
+737          create table work.event_day0_seq as
+738          select a.*, d.session as day0_session
+739          from work.event_day0 as a left join work.dsi_seq as d on a.day0=d.date;
+32                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+NOTE: Table WORK.EVENT_DAY0_SEQ created, with 377374 rows and 5 columns.
+
+740          create table work.event_window as
+741          select e.gvkey,e.datadate,e.rdq,e.day0,e.day0_session,l.permno,
+742            d.date,d.session-e.day0_session as eventday,s.ret,d.vwretd
+743          from work.event_day0_seq as e inner join work.link_unique as l
+744            on e.gvkey=l.gvkey and e.datadate=l.datadate
+745          inner join work.dsi_seq as d on d.session between e.day0_session-1 and e.day0_session+1
+746          inner join crspstk.dsf as s on s.permno=l.permno and s.date=d.date
+747          where not missing(e.day0_session);
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.EVENT_WINDOW created, with 585584 rows and 10 columns.
+
+748          create table work.event_stats as
+749          select gvkey,datadate,count(*) as n_rows,count(distinct eventday) as n_days,
+750            sum(ret-vwretd) as car
+751          from work.event_window
+752          where eventday in (-1,0,1) and not missing(ret) and not missing(vwretd)
+753          group by gvkey,datadate;
+NOTE: Table WORK.EVENT_STATS created, with 194658 rows and 5 columns.
+
+754          select count(*) as event_windows, sum(n_days ne 3) as incomplete_event_windows
+755            from work.event_stats;
+756        quit;
+NOTE: The PROCEDURE SQL printed page 24.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           36.30 seconds
+      cpu time            36.99 seconds
+      
+
+757        
+758        /* Table 3 requires event returns and beginning-quarter price, not Table 2 inputs. */
+759        proc sql;
+760          create table work.info0 as
+761          select c.gvkey,c.datadate,c.fyearq,c.fqtr,c.rdq,c.hiid,c.iid,c.agreement_group,
+762            c.ticker,c.street_raw,c.street_currency,c.actual_iid,c.anndats,c.forecast_raw,c.forecast_currency,c.forecast_iid,c.st
+762      ! atpers,
+763            c.street_usd,c.epsop_usd,c.forecast_usd,c.price0_iid,c.price0_date,c.price0_currency,
+764            c.price0_route,c.price0_hiid_diff,c.price0_price,c.price0_fx,c.price0_usd,
+765            c.price0_factor,c.price0_factor_date,c.price0_share_ratio,c.price0_basis_ok,
+766            c.anchor_factor,c.anchor_date,c.anchor_ok,c.ajexq_difference,
+767            c.street_factor,c.street_date,c.street_basis_raw,c.street_basis_ok,
+768            c.forecast_factor,c.forecast_date,c.forecast_basis_raw,c.forecast_basis_ok,
+769            e.car,e.n_days,e.n_rows
+770          from work.classified as c left join work.event_stats as e
+771            on c.gvkey=e.gvkey and c.datadate=e.datadate
+772          where c.agreement_group in (1,2,3);
+NOTE: Table WORK.INFO0 created, with 49588 rows and 47 columns.
+
+773        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.13 seconds
+      
+
+774        data outinfo.information;
+775          set work.info0;
+776          if n_days=3 and n_rows=3 and nmiss(street_usd,epsop_usd,forecast_usd,price0_usd,car)=0;
+33                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+777          uop_street=(street_usd-forecast_usd)/price0_usd;
+778          uop_epsop=(epsop_usd-forecast_usd)/price0_usd;
+779          keep gvkey datadate fyearq fqtr rdq hiid iid agreement_group n_days car
+780            ticker street_raw street_currency actual_iid anndats forecast_raw forecast_currency forecast_iid statpers
+781            street_usd epsop_usd forecast_usd uop_street uop_epsop
+782            price0_iid price0_date price0_currency price0_route price0_hiid_diff price0_price price0_fx price0_usd
+783            price0_factor price0_factor_date price0_share_ratio price0_basis_ok anchor_factor anchor_date anchor_ok
+783      ! ajexq_difference
+784            street_factor street_date street_basis_raw street_basis_ok forecast_factor forecast_date forecast_basis_raw
+784      ! forecast_basis_ok;
+785        run;
+
+NOTE: There were 49588 observations read from the data set WORK.INFO0.
+NOTE: The data set OUTINFO.INFORMATION has 33602 observations and 48 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+786        
+787        /* Final key/cardinality and actual-sample diagnostics; regression handoffs are direct. */
+788        proc sql;
+789          select count(*) as table2_n, count(distinct cats(gvkey,'_',put(datadate,yymmddn8.))) as table2_keys
+790            from outval.valuation;
+791          select count(*) as table3_n, count(distinct cats(gvkey,'_',put(datadate,yymmddn8.))) as table3_keys
+792            from outinfo.information;
+793          select mean(price3_hiid_diff) as t2_role_hiid_mismatch_rate
+794            from outval.valuation;
+795          select mean(price0_hiid_diff) as t3_role_hiid_mismatch_rate
+796            from outinfo.information;
+797        quit;
+NOTE: The PROCEDURE SQL printed pages 25-28.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+798        proc means data=outval.valuation n mean std p25 median p75;
+799          var price3_usd bvps_usd street_usd epsop_usd ni_usd other_street_usd other_epsop_usd;
+800        run;
+
+NOTE: There were 48306 observations read from the data set OUTVAL.VALUATION.
+NOTE: The PROCEDURE MEANS printed page 29.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.12 seconds
+      
+
+801        proc means data=outinfo.information n mean std p25 median p75;
+802          var car uop_street uop_epsop street_usd epsop_usd forecast_usd price0_usd;
+803        run;
+
+NOTE: There were 33602 observations read from the data set OUTINFO.INFORMATION.
+NOTE: The PROCEDURE MEANS printed page 30.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.16 seconds
+      
+34                                                         The SAS System                     Tuesday, November  3, 2026 02:56:00 PM
+
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           3:21.37
+      cpu time            3:38.25
+      

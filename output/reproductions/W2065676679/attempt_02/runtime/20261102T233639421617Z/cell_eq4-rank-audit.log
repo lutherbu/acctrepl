@@ -1,0 +1,267 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W2065676679/at
+> tempt_02/runtime/20261102T233639421617Z/cell_eq4-rank-audit.do 
+
+. version 18
+
+. set more off
+
+. use "data/history/reg.dta", clear
+
+. encode gvkey, gen(firm_id)
+
+. xtset firm_id fyear
+
+Panel variable: firm_id (unbalanced)
+ Time variable: fyear, 1974 to 1993, but with gaps
+         Delta: 1 unit
+
+. gen r0 = ret
+(100,352 missing values generated)
+
+. forvalues j = 1/6 {
+  2.     gen r`j' = L`j'.ret
+  3. }
+(108,230 missing values generated)
+(115,469 missing values generated)
+(122,009 missing values generated)
+(127,906 missing values generated)
+(133,261 missing values generated)
+(138,097 missing values generated)
+
+. est clear
+
+. local h = 1
+
+. forvalues formation = 1984/1988 {
+  2.     preserve
+  3.     keep if inrange(fyear,1981,`formation')
+  4.     keep if !missing(btm,r0,r1,r2,r3,r4,r5,r6)
+  5.     bysort firm_id: gen nfit = _N
+  6.     keep if nfit >= 4
+  7.     reghdfe btm r0-r6, absorb(firm_id fyear)
+  8.     est store q`h'
+  9.     local ++h
+ 10.     restore
+ 11. }
+(134,723 observations deleted)
+(25,522 observations deleted)
+(1,112 observations deleted)
+(MWFE estimator converged in 2 iterations)
+
+HDFE Linear regression                            Number of obs   =      4,372
+Absorbing 2 HDFE groups                           F(   7,   3269) =     401.04
+                                                  Prob > F        =     0.0000
+                                                  R-squared       =     0.8687
+                                                  Adj R-squared   =     0.8244
+                                                  Within R-sq.    =     0.4620
+                                                  Root MSE        =     0.2137
+
+------------------------------------------------------------------------------
+         btm | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          r0 |  -.4915685   .0100649   -48.84   0.000    -.5113027   -.4718343
+          r1 |   -.348826   .0102286   -34.10   0.000     -.368881   -.3287709
+          r2 |   -.218401   .0103197   -21.16   0.000    -.2386348   -.1981673
+          r3 |  -.1282881   .0114938   -11.16   0.000    -.1508239   -.1057523
+          r4 |   -.083313   .0126278    -6.60   0.000    -.1080722   -.0585537
+          r5 |  -.0304857   .0117915    -2.59   0.010    -.0536052   -.0073661
+          r6 |  -.0054957   .0096452    -0.57   0.569    -.0244069    .0134155
+       _cons |   1.240554   .0130266    95.23   0.000     1.215012    1.266095
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+     firm_id |      1093           0        1093     |
+       fyear |         4           1           3     |
+-----------------------------------------------------+
+(126,119 observations deleted)
+(32,706 observations deleted)
+(1,317 observations deleted)
+(MWFE estimator converged in 4 iterations)
+
+HDFE Linear regression                            Number of obs   =      5,587
+Absorbing 2 HDFE groups                           F(   7,   4434) =     435.92
+                                                  Prob > F        =     0.0000
+                                                  R-squared       =     0.8342
+                                                  Adj R-squared   =     0.7912
+                                                  Within R-sq.    =     0.4076
+                                                  Root MSE        =     0.2272
+
+------------------------------------------------------------------------------
+         btm | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          r0 |  -.4531849   .0091772   -49.38   0.000    -.4711767    -.435193
+          r1 |    -.33274   .0091453   -36.38   0.000    -.3506694   -.3148106
+          r2 |  -.2392673   .0086483   -27.67   0.000    -.2562223   -.2223124
+          r3 |  -.1446171    .008952   -16.15   0.000    -.1621674   -.1270667
+          r4 |  -.0907833   .0099037    -9.17   0.000    -.1101996    -.071367
+          r5 |  -.0419471   .0100732    -4.16   0.000    -.0616957   -.0221986
+          r6 |  -.0230343   .0087739    -2.63   0.009    -.0402355   -.0058332
+       _cons |   1.207976    .010623   113.71   0.000      1.18715    1.228802
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+     firm_id |      1142           0        1142     |
+       fyear |         5           1           4     |
+-----------------------------------------------------+
+(117,099 observations deleted)
+(40,284 observations deleted)
+(1,411 observations deleted)
+(MWFE estimator converged in 5 iterations)
+
+HDFE Linear regression                            Number of obs   =      6,935
+Absorbing 2 HDFE groups                           F(   7,   5688) =     472.75
+                                                  Prob > F        =     0.0000
+                                                  R-squared       =     0.8081
+                                                  Adj R-squared   =     0.7661
+                                                  Within R-sq.    =     0.3678
+                                                  Root MSE        =     0.2363
+
+------------------------------------------------------------------------------
+         btm | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          r0 |  -.4280356   .0085242   -50.21   0.000    -.4447463   -.4113249
+          r1 |  -.3067824   .0081687   -37.56   0.000    -.3227962   -.2907687
+          r2 |  -.2216185   .0077432   -28.62   0.000    -.2367981   -.2064389
+          r3 |  -.1565253   .0076408   -20.49   0.000    -.1715043   -.1415464
+          r4 |  -.0886131   .0079042   -11.21   0.000    -.1041084   -.0731178
+          r5 |  -.0325952   .0082969    -3.93   0.000    -.0488602   -.0163301
+          r6 |  -.0225617   .0079105    -2.85   0.004    -.0380693    -.007054
+       _cons |   1.150323    .008671   132.66   0.000     1.133325    1.167322
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+     firm_id |      1235           0        1235     |
+       fyear |         6           1           5     |
+-----------------------------------------------------+
+(107,873 observations deleted)
+(48,029 observations deleted)
+(1,548 observations deleted)
+(MWFE estimator converged in 5 iterations)
+
+HDFE Linear regression                            Number of obs   =      8,279
+Absorbing 2 HDFE groups                           F(   7,   6947) =     547.17
+                                                  Prob > F        =     0.0000
+                                                  R-squared       =     0.7830
+                                                  Adj R-squared   =     0.7414
+                                                  Within R-sq.    =     0.3554
+                                                  Root MSE        =     0.2475
+
+------------------------------------------------------------------------------
+         btm | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          r0 |  -.4291356   .0079886   -53.72   0.000    -.4447957   -.4134755
+          r1 |  -.3066397   .0077087   -39.78   0.000    -.3217511   -.2915283
+          r2 |  -.2236213   .0071971   -31.07   0.000    -.2377299   -.2095128
+          r3 |  -.1587479   .0071561   -22.18   0.000     -.172776   -.1447198
+          r4 |  -.1032914   .0070487   -14.65   0.000    -.1171089   -.0894738
+          r5 |  -.0493623   .0071477    -6.91   0.000     -.063374   -.0353506
+          r6 |  -.0279582   .0070502    -3.97   0.000    -.0417788   -.0141377
+       _cons |   1.131269   .0074292   152.27   0.000     1.116705    1.145832
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+     firm_id |      1319           0        1319     |
+       fyear |         7           1           6     |
+-----------------------------------------------------+
+(98,538 observations deleted)
+(55,743 observations deleted)
+(1,694 observations deleted)
+(MWFE estimator converged in 5 iterations)
+
+HDFE Linear regression                            Number of obs   =      9,754
+Absorbing 2 HDFE groups                           F(   7,   8308) =     607.54
+                                                  Prob > F        =     0.0000
+                                                  R-squared       =     0.7682
+                                                  Adj R-squared   =     0.7279
+                                                  Within R-sq.    =     0.3386
+                                                  Root MSE        =     0.2515
+
+------------------------------------------------------------------------------
+         btm | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          r0 |  -.4149763   .0074477   -55.72   0.000    -.4295757   -.4003769
+          r1 |  -.3016504      .0072   -41.90   0.000    -.3157642   -.2875366
+          r2 |  -.2210309   .0067195   -32.89   0.000    -.2342028   -.2078589
+          r3 |  -.1601757   .0066248   -24.18   0.000    -.1731619   -.1471894
+          r4 |  -.1083391   .0065481   -16.55   0.000     -.121175   -.0955032
+          r5 |   -.067405   .0064531   -10.45   0.000    -.0800546   -.0547554
+          r6 |  -.0377598   .0062911    -6.00   0.000     -.050092   -.0254276
+       _cons |   1.109929   .0066396   167.17   0.000     1.096914    1.122945
+------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-----------------------------------------------------+
+ Absorbed FE | Categories  - Redundant  = Num. Coefs |
+-------------+---------------------------------------|
+     firm_id |      1432           0        1432     |
+       fyear |         8           1           7     |
+-----------------------------------------------------+
+
+. esttab q1 q2 q3 q4 q5 using "tables/eq4_rank_audit.md", cells(b(fmt(3))) drop
+> (*) stats(N df_m df_r, fmt(0 0 0) labels("Observations" "Model df" "Residual 
+> df")) replace label mtitles("1984" "1985" "1986" "1987" "1988")
+(file tables/eq4_rank_audit.md not found)
+(output written to tables/eq4_rank_audit.md)
+
+. esttab q1 q2 q3 q4 q5 using "tables/eq4_rank_audit.rtf", cells(b(fmt(3))) dro
+> p(*) stats(N df_m df_r, fmt(0 0 0) labels("Observations" "Model df" "Residual
+>  df")) replace label mtitles("1984" "1985" "1986" "1987" "1988")
+(file tables/eq4_rank_audit.rtf not found)
+(output written to tables/eq4_rank_audit.rtf)
+
+. esttab q1 q2 q3 q4 q5 using "tables/eq4_rank_audit.csv", cells(b(fmt(3))) dro
+> p(*) stats(N df_m df_r, fmt(0 0 0) labels("Observations" "Model df" "Residual
+>  df")) replace label mtitles("1984" "1985" "1986" "1987" "1988")
+(file tables/eq4_rank_audit.csv not found)
+(output written to tables/eq4_rank_audit.csv)
+
+. esttab q1 q2 q3 q4 q5 using "tables/eq4_rank_audit.tex", cells(b(fmt(3))) dro
+> p(*) stats(N df_m df_r, fmt(0 0 0) labels("Observations" "Model df" "Residual
+>  df")) replace label mtitles("1984" "1985" "1986" "1987" "1988")
+(file tables/eq4_rank_audit.tex not found)
+(output written to tables/eq4_rank_audit.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

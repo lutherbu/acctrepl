@@ -1,0 +1,749 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W11897853/atte
+> mpt_02/runtime/20261103T044727905996Z/cell_t3a_bve.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/main/reg.dta", clear
+
+. 
+. global y "y_bve"
+
+. global x "xrd_bve_w"
+
+. global z "capx_bve_w"
+
+. global ad "xad_bve_w"
+
+. global size "size_bve_w"
+
+. global lev "lev_bve_w"
+
+. global sampleflag "fit_bve"
+
+. global impflag "imp_bve"
+
+. 
+. count if $sampleflag==1 & $impflag==0
+  17,478
+
+. local observed_outcomes = r(N)
+
+. count if $sampleflag==1 & $impflag==1
+  5,473
+
+. local imputed_outcomes = r(N)
+
+. local imputed_pct = 100*`imputed_outcomes'/(`imputed_outcomes'+`observed_outc
+> omes')
+
+. display "Outcome coverage: `observed_outcomes' observed; `imputed_outcomes' i
+> mputed (`imputed_pct' percent)"
+Outcome coverage: 17478 observed; 5473 imputed (23.84645549213542 percent)
+
+. 
+. egen long firm_id = group(gvkey)
+
+. xtset firm_id fyear
+
+Panel variable: firm_id (unbalanced)
+ Time variable: fyear, 1972 to 1992, but with gaps
+         Delta: 1 unit
+
+. label variable y_bve "SD of future earnings"
+
+. label variable xrd_bve_w "R&D"
+
+. label variable capx_bve_w "Capital expenditures"
+
+. label variable xad_bve_w "Advertising"
+
+. label variable size_bve_w "Log market value (USD billions)"
+
+. label variable lev_bve_w "Leverage"
+
+. 
+. gen double rdplus = xrd_bve_w + capx_bve_w if $sampleflag==1
+(23,308 missing values generated)
+
+. local adj_sum = 0
+
+. local rank_years = 0
+
+. forvalues yr = 1972/1992 {
+  2.     regress $y $x $z $ad $size $lev if $sampleflag==1 & fyear==`yr'
+  3.     if e(df_m)==5 & e(df_r)>0 {
+  4.         local adj_sum = `adj_sum' + e(r2_a)
+  5.         local rank_years = `rank_years' + 1
+  6.     }
+  7. }
+
+      Source |       SS           df       MS      Number of obs   =       875
+-------------+----------------------------------   F(5, 869)       =     58.13
+       Model |  3.55564546         5  .711129092   Prob > F        =    0.0000
+    Residual |   10.631756       869  .012234472   R-squared       =    0.2506
+-------------+----------------------------------   Adj R-squared   =    0.2463
+       Total |  14.1874015       874  .016232725   Root MSE        =    .11061
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .2912528   .0529981     5.50   0.000     .1872336    .3952721
+  capx_bve_w |   .1594634   .0148205    10.76   0.000     .1303753    .1885515
+   xad_bve_w |   .2102251   .0343677     6.12   0.000     .1427718    .2776785
+  size_bve_w |  -.0159821   .0021736    -7.35   0.000    -.0202481    -.011716
+   lev_bve_w |   .0109908   .0148832     0.74   0.460    -.0182203     .040202
+       _cons |   .0004208   .0088851     0.05   0.962     -.017018    .0178596
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,086
+-------------+----------------------------------   F(5, 1080)      =     39.08
+       Model |  2.04740616         5  .409481232   Prob > F        =    0.0000
+    Residual |  11.3154537     1,080  .010477272   R-squared       =    0.1532
+-------------+----------------------------------   Adj R-squared   =    0.1493
+       Total |  13.3628598     1,085     .012316   Root MSE        =    .10236
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .2659816   .0401875     6.62   0.000     .1871272    .3448359
+  capx_bve_w |    .079642   .0109287     7.29   0.000     .0581981    .1010859
+   xad_bve_w |   .0563794   .0325348     1.73   0.083    -.0074593     .120218
+  size_bve_w |  -.0133803   .0018157    -7.37   0.000    -.0169429   -.0098176
+   lev_bve_w |   .0095219   .0085769     1.11   0.267    -.0073075    .0263512
+       _cons |   .0275602   .0079111     3.48   0.001     .0120374    .0430831
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,090
+-------------+----------------------------------   F(5, 1084)      =     38.26
+       Model |  2.03132072         5  .406264143   Prob > F        =    0.0000
+    Residual |  11.5092624     1,084  .010617401   R-squared       =    0.1500
+-------------+----------------------------------   Adj R-squared   =    0.1461
+       Total |  13.5405831     1,089  .012433961   Root MSE        =    .10304
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .2285323    .041508     5.51   0.000     .1470871    .3099775
+  capx_bve_w |   .0899311   .0113926     7.89   0.000     .0675771    .1122851
+   xad_bve_w |   .0146009   .0294871     0.50   0.621    -.0432572    .0724591
+  size_bve_w |  -.0142656    .001766    -8.08   0.000    -.0177307   -.0108005
+   lev_bve_w |    .001069   .0069472     0.15   0.878    -.0125624    .0147004
+       _cons |   .0315804   .0081794     3.86   0.000     .0155313    .0476296
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,077
+-------------+----------------------------------   F(5, 1071)      =     31.16
+       Model |  1.71871099         5  .343742197   Prob > F        =    0.0000
+    Residual |  11.8142018     1,071  .011031001   R-squared       =    0.1270
+-------------+----------------------------------   Adj R-squared   =    0.1229
+       Total |  13.5329127     1,076  .012577056   Root MSE        =    .10503
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .1638006   .0462857     3.54   0.000     .0729797    .2546214
+  capx_bve_w |   .1250699   .0148762     8.41   0.000       .09588    .1542598
+   xad_bve_w |   .0309478   .0348847     0.89   0.375    -.0375022    .0993978
+  size_bve_w |  -.0150473   .0017868    -8.42   0.000    -.0185532   -.0115413
+   lev_bve_w |   -.004299   .0087334    -0.49   0.623    -.0214355    .0128374
+       _cons |   .0371656   .0085263     4.36   0.000     .0204355    .0538957
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,030
+-------------+----------------------------------   F(5, 1024)      =     39.40
+       Model |   2.2379117         5   .44758234   Prob > F        =    0.0000
+    Residual |  11.6336007     1,024  .011360938   R-squared       =    0.1613
+-------------+----------------------------------   Adj R-squared   =    0.1572
+       Total |  13.8715124     1,029  .013480576   Root MSE        =    .10659
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |    .198067   .0406659     4.87   0.000     .1182691    .2778649
+  capx_bve_w |   .1428072   .0153447     9.31   0.000     .1126965    .1729179
+   xad_bve_w |   .0386024   .0292078     1.32   0.187    -.0187116    .0959163
+  size_bve_w |  -.0142132   .0018218    -7.80   0.000     -.017788   -.0106383
+   lev_bve_w |  -.0050848   .0104014    -0.49   0.625    -.0254952    .0153257
+       _cons |   .0373778   .0080462     4.65   0.000     .0215889    .0531667
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =       972
+-------------+----------------------------------   F(5, 966)       =     31.84
+       Model |  1.52377334         5  .304754668   Prob > F        =    0.0000
+    Residual |  9.24523277       966  .009570634   R-squared       =    0.1415
+-------------+----------------------------------   Adj R-squared   =    0.1371
+       Total |  10.7690061       971  .011090635   Root MSE        =    .09783
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .2287141   .0395525     5.78   0.000     .1510954    .3063328
+  capx_bve_w |    .113765   .0139355     8.16   0.000     .0864176    .1411125
+   xad_bve_w |    .028943   .0304305     0.95   0.342    -.0307744    .0886605
+  size_bve_w |   -.011747   .0017246    -6.81   0.000    -.0151314   -.0083625
+   lev_bve_w |   .0091148   .0100782     0.90   0.366     -.010663    .0288925
+       _cons |   .0441135   .0079569     5.54   0.000     .0284987    .0597283
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =       966
+-------------+----------------------------------   F(5, 960)       =     40.34
+       Model |  2.46509666         5  .493019332   Prob > F        =    0.0000
+    Residual |  11.7315201       960  .012220333   R-squared       =    0.1736
+-------------+----------------------------------   Adj R-squared   =    0.1693
+       Total |  14.1966168       965   .01471152   Root MSE        =    .11055
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .2670435   .0367471     7.27   0.000     .1949297    .3391573
+  capx_bve_w |   .0907895   .0130268     6.97   0.000     .0652252    .1163538
+   xad_bve_w |   .0468771   .0339001     1.38   0.167    -.0196497     .113404
+  size_bve_w |  -.0157997    .001928    -8.19   0.000    -.0195834   -.0120161
+   lev_bve_w |   .0153068   .0106875     1.43   0.152    -.0056668    .0362805
+       _cons |   .0377519   .0086715     4.35   0.000     .0207346    .0547692
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,032
+-------------+----------------------------------   F(5, 1026)      =     47.54
+       Model |  3.40397062         5  .680794125   Prob > F        =    0.0000
+    Residual |  14.6939362     1,026  .014321575   R-squared       =    0.1881
+-------------+----------------------------------   Adj R-squared   =    0.1841
+       Total |  18.0979068     1,031  .017553741   Root MSE        =    .11967
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .2941189   .0333159     8.83   0.000     .2287439    .3594939
+  capx_bve_w |   .0896506   .0139552     6.42   0.000     .0622667    .1170345
+   xad_bve_w |   .1010343   .0316428     3.19   0.001     .0389423    .1631262
+  size_bve_w |  -.0168991   .0019543    -8.65   0.000    -.0207341   -.0130642
+   lev_bve_w |  -.0154067   .0098277    -1.57   0.117    -.0346913     .003878
+       _cons |   .0452915   .0088852     5.10   0.000     .0278563    .0627268
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =       968
+-------------+----------------------------------   F(5, 962)       =     79.88
+       Model |  7.18586299         5   1.4371726   Prob > F        =    0.0000
+    Residual |  17.3082755       962   .01799197   R-squared       =    0.2934
+-------------+----------------------------------   Adj R-squared   =    0.2897
+       Total |  24.4941385       967  .025330029   Root MSE        =    .13413
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .3217154    .031532    10.20   0.000     .2598359    .3835948
+  capx_bve_w |   .1552053   .0161962     9.58   0.000     .1234214    .1869892
+   xad_bve_w |   .1110057   .0309412     3.59   0.000     .0502857    .1717257
+  size_bve_w |  -.0191187    .002228    -8.58   0.000     -.023491   -.0147465
+   lev_bve_w |    -.04616   .0126757    -3.64   0.000    -.0710353   -.0212848
+       _cons |   .0474331   .0097615     4.86   0.000     .0282767    .0665895
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,007
+-------------+----------------------------------   F(5, 1001)      =     52.44
+       Model |   5.5587548         5  1.11175096   Prob > F        =    0.0000
+    Residual |  21.2209458     1,001  .021199746   R-squared       =    0.2076
+-------------+----------------------------------   Adj R-squared   =    0.2036
+       Total |  26.7797006     1,006  .026619981   Root MSE        =     .1456
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .0875976    .020939     4.18   0.000     .0465081     .128687
+  capx_bve_w |   .0984403   .0121671     8.09   0.000     .0745644    .1223162
+   xad_bve_w |    .108129    .035056     3.08   0.002     .0393374    .1769207
+  size_bve_w |  -.0174385    .002186    -7.98   0.000    -.0217282   -.0131488
+   lev_bve_w |  -.0517613   .0130632    -3.96   0.000    -.0773957   -.0261269
+       _cons |   .0798619   .0097047     8.23   0.000     .0608179    .0989059
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,018
+-------------+----------------------------------   F(5, 1012)      =     43.81
+       Model |   4.0197462         5   .80394924   Prob > F        =    0.0000
+    Residual |  18.5716296     1,012  .018351413   R-squared       =    0.1779
+-------------+----------------------------------   Adj R-squared   =    0.1739
+       Total |  22.5913758     1,017  .022213742   Root MSE        =    .13547
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .2716276   .0316652     8.58   0.000     .2094907    .3337646
+  capx_bve_w |   .0806076   .0185463     4.35   0.000      .044214    .1170012
+   xad_bve_w |   .1496699   .0321371     4.66   0.000     .0866069    .2127328
+  size_bve_w |  -.0159134   .0020631    -7.71   0.000    -.0199619    -.011865
+   lev_bve_w |  -.0361716   .0143725    -2.52   0.012    -.0643749   -.0079683
+       _cons |   .0722931   .0092477     7.82   0.000     .0541463    .0904399
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,130
+-------------+----------------------------------   F(5, 1124)      =     37.87
+       Model |   4.6589961         5  .931799219   Prob > F        =    0.0000
+    Residual |  27.6540053     1,124  .024603208   R-squared       =    0.1442
+-------------+----------------------------------   Adj R-squared   =    0.1404
+       Total |  32.3130014     1,129  .028620905   Root MSE        =    .15685
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .0625024   .0176672     3.54   0.000      .027838    .0971668
+  capx_bve_w |   .0661115    .012444     5.31   0.000     .0416955    .0905275
+   xad_bve_w |   .0174923   .0231373     0.76   0.450    -.0279048    .0628894
+  size_bve_w |  -.0159614   .0023381    -6.83   0.000    -.0205488   -.0113739
+   lev_bve_w |  -.0587915   .0192762    -3.05   0.002    -.0966129     -.02097
+       _cons |   .1361877   .0089345    15.24   0.000     .1186575     .153718
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,214
+-------------+----------------------------------   F(5, 1208)      =     41.03
+       Model |  3.53414351         5  .706828703   Prob > F        =    0.0000
+    Residual |  20.8107673     1,208  .017227456   R-squared       =    0.1452
+-------------+----------------------------------   Adj R-squared   =    0.1416
+       Total |  24.3449108     1,213  .020070001   Root MSE        =    .13125
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .1232473   .0194186     6.35   0.000     .0851493    .1613454
+  capx_bve_w |   .0370929   .0096227     3.85   0.000     .0182138    .0559719
+   xad_bve_w |   .0595366   .0175481     3.39   0.001     .0251084    .0939648
+  size_bve_w |  -.0138027   .0018599    -7.42   0.000    -.0174518   -.0101537
+   lev_bve_w |   .0237515   .0145824     1.63   0.104    -.0048581    .0523611
+       _cons |   .0983006   .0077034    12.76   0.000      .083187    .1134141
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,192
+-------------+----------------------------------   F(5, 1186)      =     42.69
+       Model |  3.81570868         5  .763141735   Prob > F        =    0.0000
+    Residual |  21.2036637     1,186    .0178783   R-squared       =    0.1525
+-------------+----------------------------------   Adj R-squared   =    0.1489
+       Total |  25.0193723     1,191   .02100703   Root MSE        =    .13371
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |    .155693   .0202277     7.70   0.000     .1160069    .1953791
+  capx_bve_w |   .0768552   .0161113     4.77   0.000     .0452454     .108465
+   xad_bve_w |   .1171531   .0228535     5.13   0.000     .0723153    .1619908
+  size_bve_w |  -.0141083   .0018871    -7.48   0.000    -.0178108   -.0104059
+   lev_bve_w |  -.0069798   .0140931    -0.50   0.621      -.03463    .0206705
+       _cons |   .0844932   .0082547    10.24   0.000     .0682978    .1006887
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,242
+-------------+----------------------------------   F(5, 1236)      =     23.52
+       Model |  2.21604306         5  .443208613   Prob > F        =    0.0000
+    Residual |  23.2948188     1,236  .018846941   R-squared       =    0.0869
+-------------+----------------------------------   Adj R-squared   =    0.0832
+       Total |  25.5108619     1,241  .020556698   Root MSE        =    .13728
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .1398494   .0191163     7.32   0.000     .1023453    .1773534
+  capx_bve_w |   .0271366    .012921     2.10   0.036     .0017871    .0524862
+   xad_bve_w |   .0227943   .0162647     1.40   0.161    -.0091151    .0547038
+  size_bve_w |  -.0105761   .0019001    -5.57   0.000    -.0143039   -.0068484
+   lev_bve_w |  -.0009564   .0145917    -0.07   0.948    -.0295837    .0276709
+       _cons |   .1144798   .0079384    14.42   0.000     .0989055    .1300541
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,277
+-------------+----------------------------------   F(5, 1271)      =     49.63
+       Model |  4.40044358         5  .880088716   Prob > F        =    0.0000
+    Residual |  22.5374597     1,271  .017732069   R-squared       =    0.1634
+-------------+----------------------------------   Adj R-squared   =    0.1601
+       Total |  26.9379033     1,276  .021111209   Root MSE        =    .13316
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .2071931   .0205664    10.07   0.000     .1668454    .2475409
+  capx_bve_w |   .0798339   .0138734     5.75   0.000     .0526165    .1070513
+   xad_bve_w |   .0561128   .0182709     3.07   0.002     .0202684    .0919572
+  size_bve_w |  -.0120273   .0017349    -6.93   0.000    -.0154309   -.0086237
+   lev_bve_w |  -.0027083   .0122581    -0.22   0.825    -.0267567      .02134
+       _cons |   .0928696    .007713    12.04   0.000      .077738    .1080012
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,227
+-------------+----------------------------------   F(5, 1221)      =     53.11
+       Model |  4.77395848         5  .954791697   Prob > F        =    0.0000
+    Residual |  21.9489428     1,221  .017976202   R-squared       =    0.1786
+-------------+----------------------------------   Adj R-squared   =    0.1753
+       Total |  26.7229013     1,226   .02179682   Root MSE        =    .13408
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |    .226048    .020095    11.25   0.000     .1866234    .2654726
+  capx_bve_w |    .109457   .0221539     4.94   0.000      .065993     .152921
+   xad_bve_w |   .0571201   .0155185     3.68   0.000     .0266742    .0875661
+  size_bve_w |  -.0111658   .0017813    -6.27   0.000    -.0146606   -.0076709
+   lev_bve_w |  -.0075426   .0117334    -0.64   0.520    -.0305625    .0154773
+       _cons |   .0835545   .0081084    10.30   0.000     .0676466    .0994624
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,152
+-------------+----------------------------------   F(5, 1146)      =     30.60
+       Model |  2.93119114         5  .586238229   Prob > F        =    0.0000
+    Residual |  21.9545559     1,146  .019157553   R-squared       =    0.1178
+-------------+----------------------------------   Adj R-squared   =    0.1139
+       Total |   24.885747     1,151  .021620979   Root MSE        =    .13841
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .1164815   .0202439     5.75   0.000     .0767621    .1562008
+  capx_bve_w |   .0783253   .0214888     3.64   0.000     .0361634    .1204871
+   xad_bve_w |   .1035032   .0242569     4.27   0.000     .0559102    .1510962
+  size_bve_w |  -.0135012   .0018048    -7.48   0.000    -.0170424   -.0099601
+   lev_bve_w |  -.0255003   .0114194    -2.23   0.026    -.0479055   -.0030951
+       _cons |   .0996276   .0082506    12.08   0.000     .0834396    .1158155
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,143
+-------------+----------------------------------   F(5, 1137)      =     78.37
+       Model |  7.82830749         5   1.5656615   Prob > F        =    0.0000
+    Residual |  22.7142789     1,137  .019977378   R-squared       =    0.2563
+-------------+----------------------------------   Adj R-squared   =    0.2530
+       Total |  30.5425864     1,142  .026744822   Root MSE        =    .14134
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .2397739   .0200614    11.95   0.000     .2004124    .2791354
+  capx_bve_w |   .1216885    .025899     4.70   0.000     .0708732    .1725038
+   xad_bve_w |   .1992955   .0248122     8.03   0.000     .1506126    .2479784
+  size_bve_w |  -.0166154   .0018172    -9.14   0.000    -.0201809   -.0130499
+   lev_bve_w |  -.0102216    .007499    -1.36   0.173     -.024935    .0044918
+       _cons |   .0571642   .0086825     6.58   0.000     .0401286    .0741998
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,137
+-------------+----------------------------------   F(5, 1131)      =     29.72
+       Model |  4.03787907         5  .807575814   Prob > F        =    0.0000
+    Residual |  30.7276072     1,131   .02716853   R-squared       =    0.1161
+-------------+----------------------------------   Adj R-squared   =    0.1122
+       Total |  34.7654862     1,136  .030603421   Root MSE        =    .16483
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .0714336   .0158967     4.49   0.000     .0402433     .102624
+  capx_bve_w |   .0907686   .0252212     3.60   0.000     .0412831    .1402541
+   xad_bve_w |   .0720539    .025884     2.78   0.005     .0212678    .1228401
+  size_bve_w |   -.014388   .0021072    -6.83   0.000    -.0185225   -.0102535
+   lev_bve_w |  -.0051434   .0100791    -0.51   0.610    -.0249192    .0146325
+       _cons |   .1164151   .0084535    13.77   0.000     .0998289    .1330014
+------------------------------------------------------------------------------
+
+      Source |       SS           df       MS      Number of obs   =     1,116
+-------------+----------------------------------   F(5, 1110)      =     59.34
+       Model |  6.51257315         5  1.30251463   Prob > F        =    0.0000
+    Residual |  24.3633622     1,110  .021948975   R-squared       =    0.2109
+-------------+----------------------------------   Adj R-squared   =    0.2074
+       Total |  30.8759354     1,115  .027691422   Root MSE        =    .14815
+
+------------------------------------------------------------------------------
+       y_bve | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .1542897    .023105     6.68   0.000     .1089552    .1996242
+  capx_bve_w |   .1163287   .0194676     5.98   0.000     .0781313    .1545261
+   xad_bve_w |   .1272709    .022359     5.69   0.000     .0834004    .1711415
+  size_bve_w |  -.0151694   .0020704    -7.33   0.000    -.0192317    -.011107
+   lev_bve_w |  -.0814356   .0175084    -4.65   0.000    -.1157889   -.0470824
+       _cons |   .1166363   .0082685    14.11   0.000     .1004126      .13286
+------------------------------------------------------------------------------
+
+. local mean_adj = .
+
+. if `rank_years'>0 local mean_adj = `adj_sum'/`rank_years'
+
+. display "Full-rank annual fits: `rank_years' of 21; mean annual adjusted R-sq
+> uared: `mean_adj'"
+Full-rank annual fits: 21 of 21; mean annual adjusted R-squared: .1674103424803
+> 522
+
+. 
+. est clear
+
+. xtfmb $y $x $z $ad $size $lev if $sampleflag==1, lag(5)
+
+Fama-MacBeth (1973) Two-Step procedure           Number of obs     =     22951
+                                                 Num. time periods =        21
+                                                 F(  5,    20)     =    149.20
+                                                 Prob > F          =    0.0000
+Newey-West corrected SE (lag length: 5)          avg. R-squared    =    0.1712
+------------------------------------------------------------------------------
+             |            Fama-MacBeth
+       y_bve | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |   .1959506   .0195053    10.05   0.000     .1552632     .236638
+  capx_bve_w |   .0966176   .0100376     9.63   0.000     .0756795    .1175557
+   xad_bve_w |   .0823213   .0117066     7.03   0.000     .0579018    .1067409
+  size_bve_w |  -.0146248   .0006548   -22.33   0.000    -.0159907   -.0132588
+   lev_bve_w |  -.0137337   .0067091    -2.05   0.054    -.0277287    .0002612
+       _cons |   .0695514   .0146591     4.74   0.000      .038973    .1001298
+------------------------------------------------------------------------------
+
+
+. est store m_base
+
+. local annual_fits = e(N_g)
+
+. xtfmb $y $x rdplus $ad $size $lev if $sampleflag==1, lag(5)
+
+Fama-MacBeth (1973) Two-Step procedure           Number of obs     =     22951
+                                                 Num. time periods =        21
+                                                 F(  5,    20)     =    140.43
+                                                 Prob > F          =    0.0000
+Newey-West corrected SE (lag length: 5)          avg. R-squared    =    0.1712
+------------------------------------------------------------------------------
+             |            Fama-MacBeth
+       y_bve | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   xrd_bve_w |    .099333    .013149     7.55   0.000     .0719047    .1267613
+      rdplus |   .0966176   .0100376     9.63   0.000     .0756795    .1175557
+   xad_bve_w |   .0823213   .0117066     7.03   0.000     .0579018    .1067409
+  size_bve_w |  -.0146248   .0006548   -22.33   0.000    -.0159907   -.0132588
+   lev_bve_w |  -.0137337   .0067091    -2.05   0.054    -.0277287    .0002612
+       _cons |   .0695514   .0146591     4.74   0.000      .038973    .1001298
+------------------------------------------------------------------------------
+
+
+. local gap_beta = _b[$x]
+
+. local gap_se = _se[$x]
+
+. local gap_t = `gap_beta'/`gap_se'
+
+. local gap_df = e(df_r)
+
+. local gap_p = 2*ttail(`gap_df',abs(`gap_t'))
+
+. est restore m_base
+(results m_base are active now)
+
+. estadd scalar r2_a = `mean_adj'
+
+added scalar:
+               e(r2_a) =  .16741034
+
+. estadd scalar annual_fits = `annual_fits'
+
+added scalar:
+        e(annual_fits) =  21
+
+. estadd scalar full_rank_years = `rank_years'
+
+added scalar:
+    e(full_rank_years) =  21
+
+. estadd scalar observed_outcomes = `observed_outcomes'
+
+added scalar:
+  e(observed_outcomes) =  17478
+
+. estadd scalar imputed_outcomes = `imputed_outcomes'
+
+added scalar:
+   e(imputed_outcomes) =  5473
+
+. estadd scalar imputed_pct = `imputed_pct'
+
+added scalar:
+        e(imputed_pct) =  23.846455
+
+. estadd scalar rd_capx_gap = `gap_beta'
+
+added scalar:
+        e(rd_capx_gap) =  .09933301
+
+. estadd scalar rd_capx_gap_se = `gap_se'
+
+added scalar:
+     e(rd_capx_gap_se) =  .01314896
+
+. estadd scalar rd_capx_gap_t = `gap_t'
+
+added scalar:
+      e(rd_capx_gap_t) =  7.5544358
+
+. estadd scalar rd_capx_gap_p = `gap_p'
+
+added scalar:
+      e(rd_capx_gap_p) =  2.793e-07
+
+. 
+. esttab m_base using "tables/table3_panel_a.md", cells(b(star fmt(3)) p(par)) 
+> starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label stats(N r2 r2_a annua
+> l_fits full_rank_years observed_outcomes imputed_outcomes imputed_pct rd_capx
+> _gap rd_capx_gap_se rd_capx_gap_t rd_capx_gap_p, fmt(0 3 3 0 0 0 0 1 3 3 2 3)
+>  labels("Observations" "Average R-squared" "Mean annual adjusted R-squared" "
+> Annual fits" "Full-rank years" "Observed outcomes" "Imputed outcomes" "Impute
+> d percent" "R&D minus CapEx" "Difference NW SE" "Difference NW t" "Difference
+>  two-sided p")) addnotes("Separate annual OLS cross-sections, averaged over f
+> iscal years 1972–1992; coefficient-series inference uses Newey–West lag 5." "
+> R&D minus CapEx is estimated as the R&D coefficient in the equivalent R&D and
+>  R&D+CapEx parameterization; its reported p-value is two-sided.")
+(file tables/table3_panel_a.md not found)
+(output written to tables/table3_panel_a.md)
+
+. esttab m_base using "tables/table3_panel_a.rtf", cells(b(star fmt(3)) p(par))
+>  starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label stats(N r2 r2_a annu
+> al_fits full_rank_years observed_outcomes imputed_outcomes imputed_pct rd_cap
+> x_gap rd_capx_gap_se rd_capx_gap_t rd_capx_gap_p, fmt(0 3 3 0 0 0 0 1 3 3 2 3
+> ) labels("Observations" "Average R-squared" "Mean annual adjusted R-squared" 
+> "Annual fits" "Full-rank years" "Observed outcomes" "Imputed outcomes" "Imput
+> ed percent" "R&D minus CapEx" "Difference NW SE" "Difference NW t" "Differenc
+> e two-sided p")) addnotes("Separate annual OLS cross-sections, averaged over 
+> fiscal years 1972–1992; coefficient-series inference uses Newey–West lag 5." 
+> "R&D minus CapEx is estimated as the R&D coefficient in the equivalent R&D an
+> d R&D+CapEx parameterization; its reported p-value is two-sided.")
+(file tables/table3_panel_a.rtf not found)
+(output written to tables/table3_panel_a.rtf)
+
+. esttab m_base using "tables/table3_panel_a.csv", cells(b(star fmt(3)) p(par))
+>  starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label stats(N r2 r2_a annu
+> al_fits full_rank_years observed_outcomes imputed_outcomes imputed_pct rd_cap
+> x_gap rd_capx_gap_se rd_capx_gap_t rd_capx_gap_p, fmt(0 3 3 0 0 0 0 1 3 3 2 3
+> ) labels("Observations" "Average R-squared" "Mean annual adjusted R-squared" 
+> "Annual fits" "Full-rank years" "Observed outcomes" "Imputed outcomes" "Imput
+> ed percent" "R&D minus CapEx" "Difference NW SE" "Difference NW t" "Differenc
+> e two-sided p")) addnotes("Separate annual OLS cross-sections, averaged over 
+> fiscal years 1972–1992; coefficient-series inference uses Newey–West lag 5." 
+> "R&D minus CapEx is estimated as the R&D coefficient in the equivalent R&D an
+> d R&D+CapEx parameterization; its reported p-value is two-sided.")
+(file tables/table3_panel_a.csv not found)
+(output written to tables/table3_panel_a.csv)
+
+. esttab m_base using "tables/table3_panel_a.tex", cells(b(star fmt(3)) p(par))
+>  starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label stats(N r2 r2_a annu
+> al_fits full_rank_years observed_outcomes imputed_outcomes imputed_pct rd_cap
+> x_gap rd_capx_gap_se rd_capx_gap_t rd_capx_gap_p, fmt(0 3 3 0 0 0 0 1 3 3 2 3
+> ) labels("Observations" "Average R-squared" "Mean annual adjusted R-squared" 
+> "Annual fits" "Full-rank years" "Observed outcomes" "Imputed outcomes" "Imput
+> ed percent" "R&D minus CapEx" "Difference NW SE" "Difference NW t" "Differenc
+> e two-sided p")) addnotes("Separate annual OLS cross-sections, averaged over 
+> fiscal years 1972–1992; coefficient-series inference uses Newey–West lag 5." 
+> "R&D minus CapEx is estimated as the R&D coefficient in the equivalent R&D an
+> d R&D+CapEx parameterization; its reported p-value is two-sided.")
+(file tables/table3_panel_a.tex not found)
+(output written to tables/table3_panel_a.tex)
+
+. 
+. est clear
+
+. asreg $y $x $z $ad $size $lev if $sampleflag==1, by(fyear)
+
+. egen byte coefyear = tag(fyear) if $sampleflag==1
+
+. label variable _b_xrd_bve_w "R&D"
+
+. label variable _b_capx_bve_w "Capital expenditures"
+
+. label variable _b_xad_bve_w "Advertising"
+
+. label variable _b_size_bve_w "Log market value (USD billions)"
+
+. label variable _b_lev_bve_w "Leverage"
+
+. label variable _b_cons "Constant"
+
+. label variable _adjR2 "Adjusted R-squared"
+
+. estpost tabstat _b_xrd_bve_w _b_capx_bve_w _b_xad_bve_w _b_size_bve_w _b_lev_
+> bve_w _b_cons _adjR2 if coefyear==1, statistics(N mean sd min p25 p50 p75 max
+> ) columns(statistics)
+
+Summary statistics: count mean sd min p25 p50 p75 max
+     for variables: _b_xrd_bve_w _b_capx_bve_w _b_xad_bve_w _b_size_bve_w _b_le
+> v_bve_w _b_cons _adjR2
+
+             |  e(count)    e(mean)      e(sd)     e(min)     e(p25) 
+-------------+-------------------------------------------------------
+_b_xrd_bve_w |        21   .1959506      .0773   .0625024   .1398494 
+_b_capx_bv~w |        21   .0966176   .0337777   .0271366    .079642 
+_b_xad_bve_w |        21   .0823213   .0564391   .0146009   .0386024 
+_b_size_bv~w |        21  -.0146248   .0021434  -.0191187  -.0159614 
+_b_lev_bve_w |        21  -.0137337   .0269412  -.0814356  -.0255003 
+     _b_cons |        21   .0695514    .036495   .0004208   .0377519 
+      _adjR2 |        21   .1674103   .0501907   .0831727   .1403763 
+
+             |    e(p50)     e(p75)     e(max) 
+-------------+---------------------------------
+_b_xrd_bve_w |  .2071931   .2659816   .3217154 
+_b_capx_bv~w |  .0907686   .1163287   .1594634 
+_b_xad_bve_w |  .0595366   .1110057   .2102251 
+_b_size_bv~w |  -.014388  -.0135012  -.0105761 
+_b_lev_bve_w | -.0051434    .001069   .0237515 
+     _b_cons |  .0722931   .0983006   .1361877 
+      _adjR2 |  .1572364   .1841297    .289698 
+
+. esttab using "tables/table3_panel_a_annual_coef_stats.md", replace cells("cou
+> nt(fmt(%9.0f)) mean(fmt(%9.3f)) sd(fmt(%9.3f)) min(fmt(%9.3f)) p25(fmt(%9.3f)
+> ) p50(fmt(%9.3f)) p75(fmt(%9.3f)) max(fmt(%9.3f))") label
+(file tables/table3_panel_a_annual_coef_stats.md not found)
+(output written to tables/table3_panel_a_annual_coef_stats.md)
+
+. esttab using "tables/table3_panel_a_annual_coef_stats.rtf", replace cells("co
+> unt(fmt(%9.0f)) mean(fmt(%9.3f)) sd(fmt(%9.3f)) min(fmt(%9.3f)) p25(fmt(%9.3f
+> )) p50(fmt(%9.3f)) p75(fmt(%9.3f)) max(fmt(%9.3f))") label
+(file tables/table3_panel_a_annual_coef_stats.rtf not found)
+(output written to tables/table3_panel_a_annual_coef_stats.rtf)
+
+. esttab using "tables/table3_panel_a_annual_coef_stats.csv", replace cells("co
+> unt(fmt(%9.0f)) mean(fmt(%9.3f)) sd(fmt(%9.3f)) min(fmt(%9.3f)) p25(fmt(%9.3f
+> )) p50(fmt(%9.3f)) p75(fmt(%9.3f)) max(fmt(%9.3f))") label
+(file tables/table3_panel_a_annual_coef_stats.csv not found)
+(output written to tables/table3_panel_a_annual_coef_stats.csv)
+
+. esttab using "tables/table3_panel_a_annual_coef_stats.tex", replace cells("co
+> unt(fmt(%9.0f)) mean(fmt(%9.3f)) sd(fmt(%9.3f)) min(fmt(%9.3f)) p25(fmt(%9.3f
+> )) p50(fmt(%9.3f)) p75(fmt(%9.3f)) max(fmt(%9.3f))") label
+(file tables/table3_panel_a_annual_coef_stats.tex not found)
+(output written to tables/table3_panel_a_annual_coef_stats.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

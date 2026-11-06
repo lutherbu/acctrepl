@@ -1,0 +1,134 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W2015391739/at
+> tempt_02/runtime/20261103T061021336319Z/cell_table2_partition_descriptives.do
+>  
+
+. version 18
+
+. set more off
+
+. use "data/basu_replication_1963_1990/reg.dta", clear
+(Basu 1963-1990 actual and simulated returns)
+
+. label variable x "X: scaled earnings"
+
+. label variable r_actual "R: actual return"
+
+. label variable r_sim "R: simulated return"
+
+. est clear
+
+. estpost tabstat x r_actual r_sim if r_actual < 0, stat(N mean sd) c(s)
+
+Summary statistics: count mean sd
+     for variables: x r_actual r_sim
+
+             |  e(count)    e(mean)      e(sd) 
+-------------+---------------------------------
+           x |     39201   .0007425    .211005 
+    r_actual |     39201  -.2660137   .1963645 
+       r_sim |     39201   .0046937   .4499395 
+
+. est store actual_bad
+
+. estpost tabstat x r_actual r_sim if !missing(r_sim) & r_sim < 0, stat(N mean 
+> sd) c(s)
+
+Summary statistics: count mean sd
+     for variables: x r_actual r_sim
+
+             |  e(count)    e(mean)      e(sd) 
+-------------+---------------------------------
+           x |     39140   .0089461    .221875 
+    r_actual |     39140   .0042661   .4429722 
+       r_sim |     39140  -.2631689    .212916 
+
+. est store simulated_bad
+
+. estpost tabstat x r_actual r_sim if !missing(r_actual) & r_actual >= 0, stat(
+> N mean sd) c(s)
+
+Summary statistics: count mean sd
+     for variables: x r_actual r_sim
+
+             |  e(count)    e(mean)      e(sd) 
+-------------+---------------------------------
+           x |     50787   .1032767   .1604555 
+    r_actual |     50787    .420422   .4279311 
+       r_sim |     50787   .2114709   .4964839 
+
+. est store actual_good
+
+. estpost tabstat x r_actual r_sim if !missing(r_sim) & r_sim >= 0, stat(N mean
+>  sd) c(s)
+
+Summary statistics: count mean sd
+     for variables: x r_actual r_sim
+
+             |  e(count)    e(mean)      e(sd) 
+-------------+---------------------------------
+           x |     50848    .096839   .1528427 
+    r_actual |     50848    .211552   .4979185 
+       r_sim |     50848   .4174087   .4295555 
+
+. est store simulated_good
+
+. esttab actual_bad simulated_bad actual_good simulated_good using "tables/tabl
+> e2_partition_descriptives.md", cells("count(fmt(%9.0f)) mean(fmt(%9.3f)) sd(f
+> mt(%9.3f))") replace label mtitle("Actual bad" "Simulated bad" "Actual good" 
+> "Simulated good")
+(file tables/table2_partition_descriptives.md not found)
+(output written to tables/table2_partition_descriptives.md)
+
+. esttab actual_bad simulated_bad actual_good simulated_good using "tables/tabl
+> e2_partition_descriptives.rtf", cells("count(fmt(%9.0f)) mean(fmt(%9.3f)) sd(
+> fmt(%9.3f))") replace label mtitle("Actual bad" "Simulated bad" "Actual good"
+>  "Simulated good")
+(file tables/table2_partition_descriptives.rtf not found)
+(output written to tables/table2_partition_descriptives.rtf)
+
+. esttab actual_bad simulated_bad actual_good simulated_good using "tables/tabl
+> e2_partition_descriptives.csv", cells("count(fmt(%9.0f)) mean(fmt(%9.3f)) sd(
+> fmt(%9.3f))") replace label mtitle("Actual bad" "Simulated bad" "Actual good"
+>  "Simulated good")
+(file tables/table2_partition_descriptives.csv not found)
+(output written to tables/table2_partition_descriptives.csv)
+
+. esttab actual_bad simulated_bad actual_good simulated_good using "tables/tabl
+> e2_partition_descriptives.tex", cells("count(fmt(%9.0f)) mean(fmt(%9.3f)) sd(
+> fmt(%9.3f))") replace label mtitle("Actual bad" "Simulated bad" "Actual good"
+>  "Simulated good")
+(file tables/table2_partition_descriptives.tex not found)
+(output written to tables/table2_partition_descriptives.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

@@ -1,0 +1,32 @@
+
+|                      |          (1)    |
+|                      | Future change in RNOA, winsorized    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| Current RNOA, winsorized |       -0.230*** |
+|                      |      (0.000)    |
+| Current change in RNOA, winsorized |       -0.119*** |
+|                      |      (0.000)    |
+| Growth in NOA, winsorized |        0.005    |
+|                      |      (0.645)    |
+| Current change in ATO, winsorized |        0.035*** |
+|                      |      (0.002)    |
+| Current change in PM, winsorized |       -0.036    |
+|                      |      (0.282)    |
+| Introduction (A&R Growth) |        0.026    |
+|                      |      (0.151)    |
+| Growth (A&R Growth/Mature) |        0.012    |
+|                      |      (0.547)    |
+| Shake-Out (A&R Mature/Stagnant) |        0.015    |
+|                      |      (0.433)    |
+| Decline (A&R Stagnant) |        0.023    |
+|                      |      (0.253)    |
+| Mature reference (controls = 0) |       -0.040**  |
+|                      |      (0.019)    |
+| Observations         |        17713    |
+| *R*<sup>2</sup>      |        0.097    |
+| Adjusted *R*<sup>2</sup> |        0.096    |
+
+Rows align the A&R portfolios to the five cash-flow labels in Table 5 footnote 18. Stage values are contrasts with mature firms; lincom total effects are in the log.<br>
+OLS; two-way firm and fiscal-year clustered standard errors; two-sided tests.
+

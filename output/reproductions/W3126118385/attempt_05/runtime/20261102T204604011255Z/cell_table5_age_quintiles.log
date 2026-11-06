@@ -1,0 +1,180 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3126118385/at
+> tempt_05/runtime/20261102T204604011255Z/cell_table5_age_quintiles.do 
+
+. version 18
+
+. set more off
+
+. 
+. use "data/reg.dta", clear
+
+. est clear
+
+. encode gvkey, gen(firm_id)
+
+. 
+. reghdfe drnoa_w rnoa_w drnoa_t_w grnoa_w dato_w dpm_w ib3.age_stage if eligib
+> le_age==1, vce(cluster firm_id fyear)
+(MWFE estimator converged in 1 iterations)
+
+HDFE Linear regression                            Number of obs   =     26,438
+Absorbing 1 HDFE group                            F(   9,     16) =      65.65
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.1179
+                                                  Adj R-squared   =     0.1176
+Number of clusters (firm_id) =      5,633         Within R-sq.    =     0.1179
+Number of clusters (fyear)   =         17         Root MSE        =     0.6828
+
+                         (Std. err. adjusted for 17 clusters in firm_id fyear)
+------------------------------------------------------------------------------
+             |               Robust
+     drnoa_w | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      rnoa_w |  -.2852391   .0188452   -15.14   0.000     -.325189   -.2452891
+   drnoa_t_w |    -.08042   .0146974    -5.47   0.000    -.1115772   -.0492628
+     grnoa_w |    .001231   .0069514     0.18   0.862    -.0135053    .0159672
+      dato_w |   .0242384   .0055629     4.36   0.000     .0124456    .0360312
+       dpm_w |  -.0349098   .0127619    -2.74   0.015    -.0619638   -.0078557
+             |
+   age_stage |
+          1  |  -.0490787   .0181421    -2.71   0.016    -.0875383   -.0106191
+          2  |  -.0344087   .0112426    -3.06   0.007     -.058242   -.0105755
+          4  |   .0371491   .0117012     3.17   0.006     .0123436    .0619546
+          5  |   .0587825   .0111485     5.27   0.000     .0351486    .0824163
+             |
+       _cons |  -.0464348    .011555    -4.02   0.001    -.0709302   -.0219393
+------------------------------------------------------------------------------
+
+. est store model
+
+. 
+. display "AGE total stage effects (intercept plus contrast; controls at zero)"
+AGE total stage effects (intercept plus contrast; controls at zero)
+
+. lincom _b[_cons]
+
+ ( 1)  _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0464348    .011555    -4.02   0.001    -.0709302   -.0219393
+------------------------------------------------------------------------------
+
+. lincom _b[_cons] + _b[1.age_stage]
+
+ ( 1)  1.age_stage + _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0955135     .01796    -5.32   0.000     -.133587   -.0574399
+------------------------------------------------------------------------------
+
+. lincom _b[_cons] + _b[2.age_stage]
+
+ ( 1)  2.age_stage + _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0808435   .0142656    -5.67   0.000    -.1110852   -.0506018
+------------------------------------------------------------------------------
+
+. lincom _b[_cons] + _b[4.age_stage]
+
+ ( 1)  4.age_stage + _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0092856   .0098596    -0.94   0.360    -.0301871    .0116158
+------------------------------------------------------------------------------
+
+. lincom _b[_cons] + _b[5.age_stage]
+
+ ( 1)  5.age_stage + _cons = 0
+
+------------------------------------------------------------------------------
+     drnoa_w | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0123477   .0064394     1.92   0.073    -.0013032    .0259986
+------------------------------------------------------------------------------
+
+. 
+. esttab model using "tables/table5_model1_age_quintiles.md", cells(b(star fmt(
+> 3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(3.ag
+> e_stage) coeflabels(_cons "Middle-age reference (controls = 0)" 1.age_stage "
+> Introduction (young)" 2.age_stage "Growth (mid-young)" 4.age_stage "Shake-Out
+>  (mid-old)" 5.age_stage "Decline (old)") addnotes("Rows align age quintiles t
+> o the five cash-flow labels in Table 5 footnote 18. Stage values are contrast
+> s with the middle-age quintile; lincom total effects are in the log." "OLS; t
+> wo-way firm and fiscal-year clustered standard errors; two-sided tests.")
+(file tables/table5_model1_age_quintiles.md not found)
+(output written to tables/table5_model1_age_quintiles.md)
+
+. esttab model using "tables/table5_model1_age_quintiles.rtf", cells(b(star fmt
+> (3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(3.a
+> ge_stage) coeflabels(_cons "Middle-age reference (controls = 0)" 1.age_stage 
+> "Introduction (young)" 2.age_stage "Growth (mid-young)" 4.age_stage "Shake-Ou
+> t (mid-old)" 5.age_stage "Decline (old)") addnotes("Rows align age quintiles 
+> to the five cash-flow labels in Table 5 footnote 18. Stage values are contras
+> ts with the middle-age quintile; lincom total effects are in the log." "OLS; 
+> two-way firm and fiscal-year clustered standard errors; two-sided tests.")
+(file tables/table5_model1_age_quintiles.rtf not found)
+(output written to tables/table5_model1_age_quintiles.rtf)
+
+. esttab model using "tables/table5_model1_age_quintiles.csv", cells(b(star fmt
+> (3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(3.a
+> ge_stage) coeflabels(_cons "Middle-age reference (controls = 0)" 1.age_stage 
+> "Introduction (young)" 2.age_stage "Growth (mid-young)" 4.age_stage "Shake-Ou
+> t (mid-old)" 5.age_stage "Decline (old)") addnotes("Rows align age quintiles 
+> to the five cash-flow labels in Table 5 footnote 18. Stage values are contras
+> ts with the middle-age quintile; lincom total effects are in the log." "OLS; 
+> two-way firm and fiscal-year clustered standard errors; two-sided tests.")
+(file tables/table5_model1_age_quintiles.csv not found)
+(output written to tables/table5_model1_age_quintiles.csv)
+
+. esttab model using "tables/table5_model1_age_quintiles.tex", cells(b(star fmt
+> (3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(3.a
+> ge_stage) coeflabels(_cons "Middle-age reference (controls = 0)" 1.age_stage 
+> "Introduction (young)" 2.age_stage "Growth (mid-young)" 4.age_stage "Shake-Ou
+> t (mid-old)" 5.age_stage "Decline (old)") addnotes("Rows align age quintiles 
+> to the five cash-flow labels in Table 5 footnote 18. Stage values are contras
+> ts with the middle-age quintile; lincom total effects are in the log." "OLS; 
+> two-way firm and fiscal-year clustered standard errors; two-sided tests.")
+(file tables/table5_model1_age_quintiles.tex not found)
+(output written to tables/table5_model1_age_quintiles.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

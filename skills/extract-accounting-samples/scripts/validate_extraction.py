@@ -3,6 +3,15 @@
 import argparse
 import json
 from pathlib import Path
+
+# Resolve frozen artifact locations without rewriting research records.
+_layout_root = Path(__file__).resolve().parents[3]
+_layout = None
+if (_layout_root / "project_layout.py").is_file():
+    import sys as _layout_sys
+    _layout_sys.path.insert(0, str(_layout_root))
+    import project_layout as _layout
+    Path = _layout.path_class(_layout_root)
 import re
 import sys
 import unicodedata

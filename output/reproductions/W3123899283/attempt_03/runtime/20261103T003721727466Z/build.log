@@ -1,0 +1,1371 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 08:37:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 08:37:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend nodate nonumber nocenter;
+2          
+3          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname fx "/storage/sas/base/comp/d_global/currency" access=readonly;
+NOTE: Libref FX was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_global/currency
+5          libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3123899283/attempt_03/data
+6          
+7          /* Provider source: COMP.FUNDA. Use only catalog-listed fields and preserve GVKEY. */
+8          proc freq data=comp.funda;
+9              where fyear between 1983 and 2004 and fyr=12;
+10             tables indfmt datafmt consol popsrc curcd curncd / missing;
+11             title "COMP.FUNDA code and currency distribution, fiscal year-end month 12";
+12         run;
+
+NOTE: There were 236060 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1983 and fyear<=2004) and (fyr=12);
+NOTE: The PROCEDURE FREQ printed pages 1-2.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.48 seconds
+      cpu time            0.48 seconds
+      
+
+13         
+14         data raw;
+15             set comp.funda(keep=gvkey datadate fyear fyr indfmt datafmt consol popsrc at ib ibc oancf curcd curncd currtr);
+16             where fyear between 1983 and 2004
+17               and fyr=12
+18               and upcase(indfmt)='INDL'
+19               and upcase(datafmt)='STD'
+The SAS System
+
+20               and upcase(consol)='C'
+21               and upcase(popsrc)='D';
+22         run;
+
+NOTE: There were 143463 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1983 and fyear<=2004) and (fyr=12) and (UPCASE(indfmt)='INDL') and (UPCASE(datafmt)='STD') and 
+      (UPCASE(consol)='C') and (UPCASE(popsrc)='D');
+NOTE: The data set WORK.RAW has 143463 observations and 15 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.55 seconds
+      cpu time            0.56 seconds
+      
+
+23         
+24         proc sort data=raw out=annual;
+25             by gvkey fyear;
+26         run;
+
+NOTE: There were 143463 observations read from the data set WORK.RAW.
+NOTE: The data set WORK.ANNUAL has 143463 observations and 15 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+27         
+28         /* Fail on duplicate firm-year keys rather than selecting an arbitrary report. */
+29         data duplicate_keys;
+30             set annual;
+31             by gvkey fyear;
+32             if first.fyear and last.fyear then delete;
+33         run;
+
+NOTE: There were 143463 observations read from the data set WORK.ANNUAL.
+NOTE: The data set WORK.DUPLICATE_KEYS has 0 observations and 15 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+34         proc sql noprint;
+35             select count(*) into :duplicate_rows trimmed from duplicate_keys;
+36         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+37         %put NOTE: Duplicate GVKEY-FYEAR rows after Compustat format filters = &duplicate_rows.;
+NOTE: Duplicate GVKEY-FYEAR rows after Compustat format filters = 0
+38         %if %sysevalf(&duplicate_rows > 0) %then %do;
+39             %put ERROR: COMP.FUNDA is not unique on the selected annual firm-year key.;
+40             %abort cancel;
+41         %end;
+42         
+43         /* Balance-sheet amounts use the daily balance-sheet FX quote at their own
+44            DATADATE. Xpressfeed uses GBP as the primary currency: source currency
+45            amounts are divided by GBP-to-source and multiplied by GBP-to-USD. */
+The SAS System
+
+46         data fx_raw;
+47             set fx.g_exrt_dly(keep=datadate fromcurd tocurd exratd exrattpd);
+48             where datadate >= '01JAN1983'd and datadate <= '31DEC2004'd
+49               and upcase(strip(fromcurd))='GBP';
+50             length fx_curcd $3;
+51             fx_curcd=upcase(strip(tocurd));
+52             if missing(fx_curcd) then delete;
+53         run;
+
+NOTE: There were 908994 observations read from the data set FX.G_EXRT_DLY.
+      WHERE (datadate>='01JAN1983'D and datadate<='31DEC2004'D) and (UPCASE(STRIP(fromcurd))='GBP');
+NOTE: The data set WORK.FX_RAW has 908994 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.34 seconds
+      cpu time            0.35 seconds
+      
+
+54         
+55         proc sql;
+56             create table fx_agg as
+57             select datadate, fx_curcd,
+58                    count(*) as quote_count,
+59                    sum(case when not missing(exratd) and exratd>0 then 1 else 0 end) as positive_count,
+60                    max(exratd) as rate_max,
+61                    max(exrattpd) as type_max
+62             from fx_raw
+63             group by datadate,fx_curcd;
+NOTE: Table WORK.FX_AGG created, with 908994 rows and 6 columns.
+
+64         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.23 seconds
+      cpu time            0.39 seconds
+      
+
+65         
+66         data fx_one;
+67             set fx_agg;
+68             length fx_type $2;
+69             fx_rate=.;
+70             fx_type=' ';
+71             if quote_count=1 and positive_count=1 then do;
+72                 fx_rate=rate_max;
+73                 fx_type=type_max;
+74             end;
+75             label fx_rate='Positive unique GBP-to-currency daily quote'
+76                   fx_type='Unaltered EXRATTPD provenance descriptor';
+77             keep datadate fx_curcd quote_count positive_count fx_rate fx_type;
+78         run;
+
+NOTE: There were 908994 observations read from the data set WORK.FX_AGG.
+NOTE: The data set WORK.FX_ONE has 908994 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+79         
+The SAS System
+
+80         proc sql;
+81             select count(*) as date_currency_groups,
+82                    sum(quote_count=1 and positive_count=1) as positive_unique_quotes,
+83                    sum(quote_count ne 1) as ambiguous_duplicate_groups,
+84                    sum(quote_count=1 and positive_count ne 1) as unique_nonpositive_or_missing
+85             from fx_one;
+86             title 'Daily GBP quote uniqueness and positivity audit';
+87         quit;
+NOTE: The PROCEDURE SQL printed page 3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+88         
+89         /* Mixed or blank EXRATTPD is provenance, not a currency incompatibility.
+90            The 31-Dec-1999 fixture has a blank CAD descriptor and AR USD descriptor. */
+91         proc sql;
+92             create table fx_fixture0 as
+93             select '31DEC1999'd as datadate format=date9.,
+94                    max(case when fx_curcd='CAD' then fx_rate else . end) as gbp_cad,
+95                    max(case when fx_curcd='CAD' then quote_count else . end) as cad_quote_n,
+96                    max(case when fx_curcd='CAD' then positive_count else . end) as cad_positive_n,
+97                    max(case when fx_curcd='CAD' then fx_type else ' ' end) as cad_type,
+98                    max(case when fx_curcd='USD' then fx_rate else . end) as gbp_usd,
+99                    max(case when fx_curcd='USD' then quote_count else . end) as usd_quote_n,
+100                   max(case when fx_curcd='USD' then positive_count else . end) as usd_positive_n,
+101                   max(case when fx_curcd='USD' then fx_type else ' ' end) as usd_type
+102            from fx_one
+103            where datadate='31DEC1999'd;
+NOTE: Table WORK.FX_FIXTURE0 created, with 1 rows and 9 columns.
+
+104        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+105        
+106        data fx_fixture;
+107            set fx_fixture0;
+108            fixture_assets_cad=100;
+109            if cad_quote_n=1 and cad_positive_n=1 and usd_quote_n=1 and usd_positive_n=1
+110               and gbp_cad>0 and gbp_usd>0 then do;
+111                fixture_gbp=fixture_assets_cad/gbp_cad;
+112                fixture_assets_usd=fixture_gbp*gbp_usd;
+113                fixture_direct=fixture_assets_cad*(gbp_usd/gbp_cad);
+114                wrong_direction=fixture_assets_cad*gbp_cad/gbp_usd;
+115            end;
+116            fixture_ok=(cad_quote_n=1 and cad_positive_n=1 and usd_quote_n=1 and usd_positive_n=1
+117                        and gbp_cad>0 and gbp_usd>0 and cad_type ne usd_type
+118                        and abs(fixture_assets_usd-fixture_direct)<1e-12
+119                        and abs(fixture_assets_usd-wrong_direction)>1e-6);
+120        run;
+
+NOTE: There were 1 observations read from the data set WORK.FX_FIXTURE0.
+NOTE: The data set WORK.FX_FIXTURE has 1 observations and 15 variables.
+NOTE: DATA statement used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+121        proc print data=fx_fixture noobs;
+122            var datadate fixture_assets_cad gbp_cad cad_type gbp_usd usd_type
+123                fixture_assets_usd wrong_direction fixture_ok;
+124            title 'Bounded FX arithmetic fixture with unequal rates and mixed provenance';
+125        run;
+
+NOTE: There were 1 observations read from the data set WORK.FX_FIXTURE.
+NOTE: The PROCEDURE PRINT printed page 4.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+126        proc sql noprint;
+127            select sum(fixture_ok) into :fx_fixture_pass trimmed from fx_fixture;
+128        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+129        %if %sysevalf(&fx_fixture_pass ne 1) %then %do;
+130            %put ERROR: The dated unequal-rate FX fixture failed.;
+131            %abort cancel;
+132        %end;
+133        
+134        /* Join own-date source and target legs. A2's CURRTR conversion is retained
+135           only as a comparison diagnostic; it does not determine the size screen. */
+136        proc sql;
+137            create table annual_fx0 as
+138            select a.*,
+139                   s.quote_count as src_quote_n, s.positive_count as src_positive_n,
+140                   s.fx_rate as gbp_to_src, s.fx_type as src_fx_type,
+141                   u.quote_count as usd_quote_n, u.positive_count as usd_positive_n,
+142                   u.fx_rate as gbp_to_usd, u.fx_type as usd_fx_type
+143            from annual as a
+144            left join fx_one as s
+145              on a.datadate=s.datadate and upcase(strip(a.curcd))=s.fx_curcd
+146            left join fx_one as u
+147              on a.datadate=u.datadate and u.fx_curcd='USD'
+148            order by a.gvkey,a.fyear;
+NOTE: Table WORK.ANNUAL_FX0 created, with 143463 rows and 23 columns.
+
+149        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.21 seconds
+      cpu time            0.40 seconds
+      
+
+150        
+151        proc sql;
+152            select curcd, count(*) as annual_rows,
+153                   sum(upcase(strip(curcd))='USD') as usd_identity_rows,
+154                   sum(upcase(strip(curcd)) not in ('USD','GBP')
+The SAS System
+
+155                       and src_quote_n=1 and src_positive_n=1 and gbp_to_src>0) as source_leg_positive_unique,
+156                   sum(upcase(strip(curcd)) ne 'USD'
+157                       and usd_quote_n=1 and usd_positive_n=1 and gbp_to_usd>0) as usd_target_positive_unique,
+158                   sum(upcase(strip(curcd)) not in ('USD','GBP')
+159                       and src_quote_n=1 and src_positive_n=1 and gbp_to_src>0
+160                       and usd_quote_n=1 and usd_positive_n=1 and gbp_to_usd>0) as crossrate_positive_unique
+161            from annual_fx0
+162            where fyear between 1984 and 2004
+163            group by curcd;
+164            title 'Own-DATADATE positive unique source and USD target legs by CURCD';
+165        quit;
+NOTE: The PROCEDURE SQL printed page 5.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.08 seconds
+      
+
+166        
+167        data annual_fx;
+168            set annual_fx0;
+169            length fx_route $24;
+170            at_usd=.;
+171            at_usd_a2=.;
+172            if missing(strip(curcd)) then do;
+173                fx_route='Unknown currency';
+174                src_quote_n=.; src_positive_n=.; gbp_to_src=.; src_fx_type=' ';
+175                usd_quote_n=.; usd_positive_n=.; gbp_to_usd=.; usd_fx_type=' ';
+176            end;
+177            else if missing(at) then do;
+178                fx_route='No total assets';
+179                src_quote_n=.; src_positive_n=.; gbp_to_src=.; src_fx_type=' ';
+180                usd_quote_n=.; usd_positive_n=.; gbp_to_usd=.; usd_fx_type=' ';
+181            end;
+182            else if at<=0 then do;
+183                fx_route='Nonpositive assets';
+184                src_quote_n=.; src_positive_n=.; gbp_to_src=.; src_fx_type=' ';
+185                usd_quote_n=.; usd_positive_n=.; gbp_to_usd=.; usd_fx_type=' ';
+186            end;
+187            else if upcase(strip(curcd))='USD' then do;
+188                at_usd=at;
+189                fx_route='USD identity';
+190                src_quote_n=.;
+191                src_positive_n=.;
+192                gbp_to_src=.;
+193                src_fx_type=' ';
+194                usd_quote_n=.;
+195                usd_positive_n=.;
+196                gbp_to_usd=.;
+197                usd_fx_type=' ';
+198            end;
+199            else if upcase(strip(curcd))='GBP' and at>0
+200                and usd_quote_n=1 and usd_positive_n=1 and gbp_to_usd>0 then do;
+201                at_usd=at*gbp_to_usd;
+202                fx_route='GBP target leg';
+203                src_quote_n=.;
+204                src_positive_n=.;
+205                gbp_to_src=1;
+206                src_fx_type=' ';
+The SAS System
+
+207            end;
+208            else if not missing(strip(curcd)) and upcase(strip(curcd)) not in ('USD','GBP') and at>0
+209                and src_quote_n=1 and src_positive_n=1 and gbp_to_src>0
+210                and usd_quote_n=1 and usd_positive_n=1 and gbp_to_usd>0 then do;
+211                at_usd=(at/gbp_to_src)*gbp_to_usd;
+212                fx_route='Cross-rate via GBP';
+213            end;
+214            else fx_route='FX quote unavailable';
+215        
+216            if upcase(strip(curcd))='USD' then at_usd_a2=at;
+217            else if not missing(currtr) then at_usd_a2=at*currtr;
+218            label at_usd='Total assets converted to USD by dated Xpressfeed FX'
+219                  at_usd_a2='A2 CURRTR threshold value for comparison only'
+220                  gbp_to_src='Daily GBP-to-source quote at own DATADATE'
+221                  gbp_to_usd='Daily GBP-to-USD target quote at own DATADATE'
+222                  src_fx_type='Source-leg EXRATTPD provenance'
+223                  usd_fx_type='USD-leg EXRATTPD provenance';
+224        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      1707 at 217:50   
+NOTE: There were 143463 observations read from the data set WORK.ANNUAL_FX0.
+NOTE: The data set WORK.ANNUAL_FX has 143463 observations and 26 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+225        
+226        /* Average assets and scaled flows need known compatible currencies on their
+227           own current and exact prior-year rows. */
+228        proc sql;
+229            create table yearly as
+230            select a.gvkey, a.fyear, a.datadate, a.fyr, a.indfmt, a.datafmt, a.consol,
+231                   a.popsrc, a.at, a.ib, a.ibc, a.oancf, a.curcd, a.curncd, a.currtr,
+232                   a.at_usd, a.at_usd_a2, a.fx_route, a.gbp_to_src, a.gbp_to_usd,
+233                   a.src_fx_type, a.usd_fx_type, a.src_quote_n, a.src_positive_n,
+234                   a.usd_quote_n, a.usd_positive_n,
+235                   b.at as at_lag1, b.curcd as curcd_lag1, b.curncd as curncd_lag1,
+236                   case when a.at>0 and b.at>0
+237                             and not missing(strip(a.curcd)) and not missing(strip(b.curcd))
+238                             and upcase(strip(a.curcd))=upcase(strip(b.curcd))
+239                        then (a.at+b.at)/2 else . end as avg_at,
+240                   case when a.at>0 and b.at>0
+241                             and not missing(strip(a.curcd)) and not missing(strip(b.curcd))
+242                             and upcase(strip(a.curcd))=upcase(strip(b.curcd))
+243                        then a.ibc/((a.at+b.at)/2) else . end as earn,
+244                   case when a.at>0 and b.at>0
+245                             and not missing(strip(a.curcd)) and not missing(strip(b.curcd))
+246                             and upcase(strip(a.curcd))=upcase(strip(b.curcd))
+247                        then a.oancf/((a.at+b.at)/2) else . end as cfo,
+248                   case when missing(b.gvkey) then 'No prior row'
+249                        when missing(strip(a.curcd)) or missing(strip(b.curcd)) then 'Unknown currency'
+250                        when upcase(strip(a.curcd))=upcase(strip(b.curcd)) then 'Compatible'
+251                        else 'Currency change' end as ratio_currency_status length=16,
+252                   (not missing(strip(a.curcd)) and not missing(strip(b.curcd))
+253                        and upcase(strip(a.curcd)) ne upcase(strip(b.curcd))) as currency_mismatch
+The SAS System
+
+254            from annual_fx as a
+255            left join annual_fx as b
+256              on a.gvkey=b.gvkey and a.fyear=b.fyear+1
+257            order by a.gvkey,a.fyear;
+NOTE: Table WORK.YEARLY created, with 143463 rows and 34 columns.
+
+258        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.18 seconds
+      cpu time            0.23 seconds
+      
+
+259        
+260        proc freq data=yearly;
+261            where fyear between 1984 and 2004;
+262            tables curcd curcd_lag1 ratio_currency_status currency_mismatch
+263                   fx_route src_fx_type usd_fx_type / missing;
+264            title 'Selected Compustat currencies, ratio eligibility, FX routes, and quote provenance';
+265        run;
+
+NOTE: There were 139261 observations read from the data set WORK.YEARLY.
+      WHERE (fyear>=1984 and fyear<=2004);
+NOTE: The PROCEDURE FREQ printed pages 6-7.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+266        proc means data=yearly n mean min max maxdec=4;
+267            class curcd;
+268            var currtr at_usd at_usd_a2 gbp_to_src gbp_to_usd;
+269            title 'Current and A2 comparison USD assets and dated FX legs by reporting currency';
+270        run;
+
+NOTE: There were 143463 observations read from the data set WORK.YEARLY.
+NOTE: The PROCEDURE MEANS printed page 8.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+271        proc sql;
+272            select curcd, count(*) as annual_rows,
+273                   sum(at_usd_a2>=100) as a2_assets_ge_100,
+274                   sum(at_usd>=100) as dated_fx_assets_ge_100,
+275                   sum(at_usd_a2>=100 and (missing(at_usd) or at_usd<100)) as a2_only_ge_100,
+276                   sum(at_usd>=100 and (missing(at_usd_a2) or at_usd_a2<100)) as dated_fx_only_ge_100
+277            from yearly
+278            where fyear between 1984 and 2004
+279            group by curcd;
+280            title 'A2 versus dated-FX $100 million threshold movements by current CURCD';
+281        quit;
+NOTE: The PROCEDURE SQL printed page 9.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.06 seconds
+      
+
+The SAS System
+
+282        proc sql;
+283            select curcd, count(*) as annual_rows,
+284                   sum(not missing(earn) and not missing(cfo)) as ratio_complete_rows,
+285                   sum(not missing(earn) and not missing(cfo) and at_usd_a2>=100) as a2_ratio_complete_ge_100,
+286                   sum(not missing(earn) and not missing(cfo) and at_usd>=100) as dated_fx_ratio_complete_ge_100,
+287                   sum(not missing(earn) and not missing(cfo) and at_usd_a2>=100
+288                       and (missing(at_usd) or at_usd<100)) as a2_only_ratio_complete_ge_100,
+289                   sum(not missing(earn) and not missing(cfo) and at_usd>=100
+290                       and (missing(at_usd_a2) or at_usd_a2<100)) as fx_only_comp_ge_100
+291            from yearly
+292            where fyear between 1984 and 2004
+293            group by curcd;
+294            title 'Threshold movements among rows with valid same-currency ratios';
+295        quit;
+NOTE: The PROCEDURE SQL printed page 10.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.07 seconds
+      
+
+296        proc sql;
+297            select fyear, curcd, count(*) as annual_rows,
+298                   sum(at_usd_a2>=100 and at_usd>=100) as both_ge_100,
+299                   sum(at_usd_a2>=100 and (missing(at_usd) or at_usd<100)) as a2_only_ge_100,
+300                   sum(at_usd>=100 and (missing(at_usd_a2) or at_usd_a2<100)) as dated_fx_only_ge_100,
+301                   sum(missing(at_usd)) as dated_fx_unavailable
+302            from yearly
+303            where fyear between 1988 and 2004 and upcase(strip(curcd))='CAD'
+304            group by fyear,curcd
+305            order by fyear,curcd;
+306            title 'CAD threshold movements by fiscal year';
+307        quit;
+NOTE: The PROCEDURE SQL printed page 11.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+308        
+309        /* Table 1 stage checks on the 1984-2004 annual population. */
+310        proc sql;
+311            select count(*) as rows_after_compustat_filters,
+312                   sum(not missing(at) and not missing(ib) and not missing(oancf)) as complete_ib_and_cfo_items,
+313                   sum(not missing(at) and not missing(ibc) and not missing(oancf)) as complete_ibc_and_cfo_items,
+314                   sum(not missing(earn) and not missing(cfo)) as complete_scaled_items,
+315                   sum(not missing(earn) and not missing(cfo) and at_usd>=100) as complete_scaled_and_usd_size
+316            from yearly
+317            where fyear between 1984 and 2004;
+318            title "Sample attrition checkpoints compared with Table 1";
+319        quit;
+NOTE: The PROCEDURE SQL printed page 12.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+320        
+321        /* Exact annual fiscal-year joins keep gaps as missing. The four prior scaled
+The SAS System
+
+322           earnings and CFO values are construction history, not row-position lags. */
+323        proc sql;
+324            create table candidate0 as
+325            select c.gvkey, c.fyear, c.datadate, c.fyr, c.at, c.at_usd,
+326                   c.curcd, c.curcd_lag1, c.curncd, c.ratio_currency_status,
+327                   c.fx_route, c.gbp_to_src, c.gbp_to_usd,
+328                   c.src_quote_n, c.src_positive_n, c.usd_quote_n, c.usd_positive_n,
+329                   c.src_fx_type, c.usd_fx_type,
+330                   c.avg_at, c.ibc, c.oancf, c.earn, c.cfo,
+331                   c.earn-c.cfo as accrual,
+332                   abs(c.earn-c.cfo) as abs_accrual,
+333                   l1.earn as earn_l1, l2.earn as earn_l2, l3.earn as earn_l3, l4.earn as earn_l4,
+334                   l1.cfo as cfo_l1, l2.cfo as cfo_l2, l3.cfo as cfo_l3, l4.cfo as cfo_l4
+335            from yearly as c
+336            left join yearly as l1 on c.gvkey=l1.gvkey and c.fyear=l1.fyear+1
+337            left join yearly as l2 on c.gvkey=l2.gvkey and c.fyear=l2.fyear+2
+338            left join yearly as l3 on c.gvkey=l3.gvkey and c.fyear=l3.fyear+3
+339            left join yearly as l4 on c.gvkey=l4.gvkey and c.fyear=l4.fyear+4
+340            where c.fyear between 1988 and 2004
+341              and c.fyr=12
+342              and c.at_usd>=100
+343              and not missing(c.earn) and not missing(c.cfo)
+344              and not missing(l1.earn) and not missing(l1.cfo)
+345              and not missing(l2.earn) and not missing(l2.cfo)
+346              and not missing(l3.earn) and not missing(l3.cfo)
+347              and not missing(l4.earn) and not missing(l4.cfo)
+348            order by c.gvkey,c.fyear;
+NOTE: Table WORK.CANDIDATE0 created, with 27334 rows and 34 columns.
+
+349        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.18 seconds
+      cpu time            0.25 seconds
+      
+
+350        
+351        data candidates;
+352            set candidate0;
+353            vol_earn=std(of earn earn_l1 earn_l2 earn_l3 earn_l4);
+354            vol_cfo=std(of cfo cfo_l1 cfo_l2 cfo_l3 cfo_l4);
+355            label earn="Earnings_t" cfo="CFO_t" accrual="Accruals_t"
+356                  abs_accrual="Absolute accruals_t" vol_earn="Vol(Earnings)"
+357                  vol_cfo="Vol(CFO)" avg_at="Average total assets_t";
+358        run;
+
+NOTE: There were 27334 observations read from the data set WORK.CANDIDATE0.
+NOTE: The data set WORK.CANDIDATES has 27334 observations and 36 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+359        
+360        proc sql noprint;
+361            select count(*) into :eligible_n trimmed from candidates;
+362        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+The SAS System
+
+      cpu time            0.00 seconds
+      
+
+363        %put NOTE: Eligible firm-years with the complete current and prior-four-year construction = &eligible_n.;
+NOTE: Eligible firm-years with the complete current and prior-four-year construction = 27334
+364        proc sql;
+365            select fyear, count(*) as pretrim_candidates
+366            from candidates
+367            group by fyear
+368            order by fyear;
+369            title 'Pretrim candidate counts by analysis year';
+370        quit;
+NOTE: The PROCEDURE SQL printed page 13.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+
+371        
+372        /* Pooled, two-sided trimming at the paper's 1st and 99th percentile bounds. */
+373        proc univariate data=candidates noprint;
+374            var earn accrual cfo;
+375            output out=cutoffs pctlpts=1 99
+376                pctlpre=earn_ accrual_ cfo_
+377                pctlname=p1 p99;
+378        run;
+
+NOTE: The data set WORK.CUTOFFS has 1 observations and 6 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+379        
+380        data trimmed;
+381            if _n_=1 then set cutoffs;
+382            set candidates;
+383            if earn<earn_p1 or earn>earn_p99
+384               or accrual<accrual_p1 or accrual>accrual_p99
+385               or cfo<cfo_p1 or cfo>cfo_p99 then delete;
+386            label earn="Earnings_t" cfo="CFO_t" accrual="Accruals_t"
+387                  abs_accrual="Absolute accruals_t" vol_earn="Vol(Earnings)"
+388                  vol_cfo="Vol(CFO)";
+389        run;
+
+NOTE: There were 1 observations read from the data set WORK.CUTOFFS.
+NOTE: There were 27334 observations read from the data set WORK.CANDIDATES.
+NOTE: The data set WORK.TRIMMED has 26236 observations and 42 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+390        
+391        proc sql noprint;
+392            select count(*) into :final_n trimmed from trimmed;
+393        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+394        %put NOTE: Final full sample after pooled 1st/99th percentile trimming = &final_n.;
+NOTE: Final full sample after pooled 1st/99th percentile trimming = 26236
+395        proc sql;
+396            select fyear, count(*) as trimmed_rows
+397            from trimmed
+398            group by fyear
+399            order by fyear;
+400            title 'Final trimmed counts by analysis year';
+401        quit;
+NOTE: The PROCEDURE SQL printed page 14.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+402        
+403        proc means data=trimmed n mean std min max maxdec=3;
+404            var earn accrual abs_accrual cfo vol_earn vol_cfo;
+405            title "Table 1 comparison: full final sample descriptive statistics";
+406        run;
+
+NOTE: There were 26236 observations read from the data set WORK.TRIMMED.
+NOTE: The PROCEDURE MEANS printed page 15.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+
+407        
+408        /* The paper randomizes firms, then reports the resulting row counts. Sample
+409           half of distinct GVKEYs and retain every eligible year for those firms. */
+410        proc sort data=trimmed out=trimmed_sorted;
+411            by gvkey fyear;
+412        run;
+
+NOTE: There were 26236 observations read from the data set WORK.TRIMMED.
+NOTE: The data set WORK.TRIMMED_SORTED has 26236 observations and 42 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+413        proc sql noprint;
+414            create table firm_ids as select distinct gvkey from trimmed_sorted order by gvkey;
+NOTE: Table WORK.FIRM_IDS created, with 4453 rows and 1 columns.
+
+415            select count(*) into :firm_count trimmed from firm_ids;
+416        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+417        %let sampled_firm_count=%sysfunc(floor(%sysevalf(&firm_count/2)));
+The SAS System
+
+418        %put NOTE: Firm-level random split frame has &firm_count firms, first split samples &sampled_firm_count firms.;
+NOTE: Firm-level random split frame has 4453 firms, first split samples 2226 firms.
+419        proc surveyselect data=firm_ids out=selected_firms method=srs
+420            sampsize=&sampled_firm_count seed=20261102;
+421        run;
+
+NOTE: The data set WORK.SELECTED_FIRMS has 2226 observations and 1 variables.
+NOTE: The PROCEDURE SURVEYSELECT printed page 16.
+NOTE: PROCEDURE SURVEYSELECT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+422        proc sql;
+423            create table exploratory as
+424            select t.* from trimmed_sorted as t
+425            inner join selected_firms as s on t.gvkey=s.gvkey
+426            order by t.gvkey,t.fyear;
+NOTE: Table WORK.EXPLORATORY created, with 13175 rows and 42 columns.
+
+427        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+428        proc sort data=exploratory;
+429            by gvkey fyear;
+430        run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+431        proc sql noprint;
+432            select count(*) into :exploratory_n trimmed from exploratory;
+433        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+434        %put NOTE: Firm-level exploratory split contains &exploratory_n firm-years (paper benchmark: 11061).;
+NOTE: Firm-level exploratory split contains 13175 firm-years (paper benchmark: 11061).
+435        proc sql;
+436            select fyear, count(*) as exploratory_rows
+437            from exploratory
+438            group by fyear
+439            order by fyear;
+440            title 'Exploratory firm-year counts by analysis year';
+441        quit;
+NOTE: The PROCEDURE SQL printed page 17.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+The SAS System
+
+
+442        proc rank data=exploratory out=ranked groups=5;
+443            var vol_earn;
+444            ranks vol_q0;
+445        run;
+
+NOTE: The data set WORK.RANKED has 13175 observations and 43 variables.
+NOTE: PROCEDURE RANK used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+446        data ranked;
+447            set ranked;
+448            vol_q=vol_q0+1;
+449            label vol_q="Earnings-volatility quintile (1=low, 5=high)";
+450        run;
+
+NOTE: There were 13175 observations read from the data set WORK.RANKED.
+NOTE: The data set WORK.RANKED has 13175 observations and 44 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+451        
+452        proc freq data=ranked;
+453            tables vol_q / missing;
+454            title "Pooled volatility quintiles in the exploratory subsample";
+455        run;
+
+NOTE: There were 13175 observations read from the data set WORK.RANKED.
+NOTE: The PROCEDURE FREQ printed page 18.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+456        proc means data=ranked n mean std min max maxdec=3;
+457            var earn accrual abs_accrual cfo vol_earn vol_cfo;
+458            title "Exploratory sample descriptive statistics";
+459        run;
+
+NOTE: There were 13175 observations read from the data set WORK.RANKED.
+NOTE: The PROCEDURE MEANS printed page 19.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+460        
+461        /* Each outcome is attached by GVKEY and FYEAR+h. Future rows need earnings
+462           and average assets, not the current-year CFO/history sample screens. */
+463        proc sql;
+464            create table reg0 as
+465            select c.gvkey, c.fyear, c.datadate, c.at_usd,
+466                   c.curcd, c.curcd_lag1, c.curncd, c.ratio_currency_status,
+467                   c.fx_route, c.gbp_to_src, c.gbp_to_usd,
+The SAS System
+
+468                   c.src_quote_n, c.src_positive_n, c.usd_quote_n, c.usd_positive_n,
+469                   c.src_fx_type, c.usd_fx_type,
+470                   c.earn as earn_t, c.cfo as cfo_t, c.accrual as accrual_t,
+471                   c.abs_accrual as abs_accrual_t, c.vol_earn, c.vol_cfo, c.vol_q,
+472                   f1.earn as future_earn1, f1.curcd as future_curcd1,
+473                   f1.ratio_currency_status as future_ratio_status1,
+474                   f2.earn as future_earn2,
+475                   f3.earn as future_earn3, f4.earn as future_earn4,
+476                   f5.earn as future_earn5
+477            from ranked as c
+478            left join yearly as f1 on c.gvkey=f1.gvkey and c.fyear=f1.fyear-1
+479            left join yearly as f2 on c.gvkey=f2.gvkey and c.fyear=f2.fyear-2
+480            left join yearly as f3 on c.gvkey=f3.gvkey and c.fyear=f3.fyear-3
+481            left join yearly as f4 on c.gvkey=f4.gvkey and c.fyear=f4.fyear-4
+482            left join yearly as f5 on c.gvkey=f5.gvkey and c.fyear=f5.fyear-5
+483            order by c.gvkey,c.fyear;
+NOTE: Table WORK.REG0 created, with 13175 rows and 31 columns.
+
+484        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.15 seconds
+      cpu time            0.23 seconds
+      
+
+485        
+486        proc sql;
+487            select count(*) as exploratory_rows,
+488                   sum(not missing(future_earn1) and future_ratio_status1 ne 'Compatible') as invalid_h1_lead_ratio,
+489                   sum(not missing(future_earn1) and curcd ne future_curcd1) as valid_h1_currency_changes
+490            from reg0;
+491            title 'Lead ratio validity and currency changes across separate dimensionless ratios';
+492        quit;
+NOTE: The PROCEDURE SQL printed page 20.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+493        
+494        data out.volatility_panel;
+495            set reg0;
+496            drop future_curcd1 future_ratio_status1;
+497            if n(of future_earn1-future_earn5)=5 then sum_earn5=sum(of future_earn1-future_earn5);
+498            else sum_earn5=.;
+499            label earn_t="Earnings_t" cfo_t="CFO_t" accrual_t="Accruals_t"
+500                  abs_accrual_t="Absolute accruals_t" vol_earn="Vol(Earnings)"
+501                  vol_cfo="Vol(CFO)" sum_earn5="Sum Earnings_{t+1:t+5}"
+502                  future_earn1="Earnings_{t+1}" future_earn2="Earnings_{t+2}"
+503                  future_earn3="Earnings_{t+3}" future_earn4="Earnings_{t+4}"
+504                  future_earn5="Earnings_{t+5}";
+505        run;
+
+NOTE: There were 13175 observations read from the data set WORK.REG0.
+NOTE: The data set OUT.VOLATILITY_PANEL has 13175 observations and 30 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+The SAS System
+
+
+506        
+507        proc sql;
+508            select count(*) as exploratory_rows,
+509                   sum(not missing(future_earn1)) as h1_complete,
+510                   sum(not missing(future_earn2)) as h2_complete,
+511                   sum(not missing(future_earn3)) as h3_complete,
+512                   sum(not missing(future_earn4)) as h4_complete,
+513                   sum(not missing(future_earn5)) as h5_complete,
+514                   sum(not missing(sum_earn5)) as five_year_sum_complete
+515            from out.volatility_panel;
+516            title "Horizon-specific outcome availability in the exploratory sample";
+517        quit;
+NOTE: The PROCEDURE SQL printed page 21.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+518        proc sql;
+519            select fyear, count(*) as exploratory_rows,
+520                   sum(not missing(future_earn1)) as h1_complete,
+521                   sum(not missing(future_earn2)) as h2_complete,
+522                   sum(not missing(future_earn3)) as h3_complete,
+523                   sum(not missing(future_earn4)) as h4_complete,
+524                   sum(not missing(future_earn5)) as h5_complete,
+525                   sum(not missing(sum_earn5)) as five_year_sum_complete
+526            from out.volatility_panel
+527            group by fyear
+528            order by fyear;
+529            title 'Horizon-specific complete cases by analysis year';
+530        quit;
+NOTE: The PROCEDURE SQL printed page 22.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+531        
+532        /* Supporting pseudo-quintile simulations randomize firm-year rows, matching
+533           the paper's pseudo-quintile unit. The observed exploratory sample size is
+534           reported above and is not forced to the paper's reported 11,061.
+535           In one-regressor OLS with an intercept, R2 is corr(x,y)^2 and
+536           adjusted-R2 = 1-(1-R2)(N-1)/(N-2). */
+537        data sim_long;
+538            if _n_=1 then call streaminit(20261102);
+539            set out.volatility_panel(keep=earn_t future_earn1 sum_earn5);
+540            do repetition=1 to 1000;
+541                pseudo_rand=rand("uniform");
+542                output;
+543            end;
+544            keep repetition pseudo_rand earn_t future_earn1 sum_earn5;
+545        run;
+
+NOTE: There were 13175 observations read from the data set OUT.VOLATILITY_PANEL.
+NOTE: The data set WORK.SIM_LONG has 13175000 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.51 seconds
+The SAS System
+
+      cpu time            0.51 seconds
+      
+
+546        proc sort data=sim_long out=sim_long_sorted;
+547            by repetition;
+548        run;
+
+NOTE: There were 13175000 observations read from the data set WORK.SIM_LONG.
+NOTE: The data set WORK.SIM_LONG_SORTED has 13175000 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.86 seconds
+      cpu time            2.94 seconds
+      
+
+549        proc rank data=sim_long_sorted out=sim_ranked groups=5;
+550            by repetition;
+551            var pseudo_rand;
+552            ranks pseudo_q;
+553        run;
+
+NOTE: There were 13175000 observations read from the data set WORK.SIM_LONG_SORTED.
+NOTE: The data set WORK.SIM_RANKED has 13175000 observations and 6 variables.
+NOTE: PROCEDURE RANK used (Total process time):
+      real time           2.17 seconds
+      cpu time            2.18 seconds
+      
+
+554        data sim_extremes;
+555            set sim_ranked(keep=repetition pseudo_q earn_t future_earn1 sum_earn5);
+556            where pseudo_q in (0,4);
+557        run;
+
+NOTE: There were 5270000 observations read from the data set WORK.SIM_RANKED.
+      WHERE pseudo_q in (0, 4);
+NOTE: The data set WORK.SIM_EXTREMES has 5270000 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.52 seconds
+      cpu time            0.53 seconds
+      
+
+558        proc sort data=sim_extremes;
+559            by repetition pseudo_q;
+560        run;
+
+NOTE: There were 5270000 observations read from the data set WORK.SIM_EXTREMES.
+NOTE: The data set WORK.SIM_EXTREMES has 5270000 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.44 seconds
+      cpu time            1.23 seconds
+      
+
+561        
+562        proc corr data=sim_extremes noprint outp=sim_corr_h1;
+563            by repetition pseudo_q;
+564            var earn_t future_earn1;
+565        run;
+
+NOTE: The data set WORK.SIM_CORR_H1 has 10000 observations and 6 variables.
+The SAS System
+
+NOTE: PROCEDURE CORR used (Total process time):
+      real time           0.19 seconds
+      cpu time            0.20 seconds
+      
+
+566        proc sql;
+567            create table sim_h1_stats as
+568            select repetition, pseudo_q,
+569                   max(case when upcase(_type_)='CORR' and upcase(_name_)='EARN_T'
+570                            then future_earn1 else . end) as corr,
+571                   max(case when upcase(_type_)='N' then future_earn1 else . end) as n
+572            from sim_corr_h1
+573            where upcase(_type_) in ('CORR','N')
+574            group by repetition,pseudo_q;
+NOTE: Table WORK.SIM_H1_STATS created, with 2000 rows and 4 columns.
+
+575        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+576        data sim_h1_stats;
+577            set sim_h1_stats;
+578            if n>2 then adjr2=1-(1-corr*corr)*(n-1)/(n-2);
+579        run;
+
+NOTE: There were 2000 observations read from the data set WORK.SIM_H1_STATS.
+NOTE: The data set WORK.SIM_H1_STATS has 2000 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+580        proc sql;
+581            create table sim_h1_diff as
+582            select q1.repetition, q1.adjr2-q5.adjr2 as diff
+583            from sim_h1_stats as q1 inner join sim_h1_stats as q5
+584              on q1.repetition=q5.repetition
+585            where q1.pseudo_q=0 and q5.pseudo_q=4;
+NOTE: Table WORK.SIM_H1_DIFF created, with 1000 rows and 2 columns.
+
+586        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+587        
+588        proc sort data=out.volatility_panel(where=(vol_q in (1,5))) out=obs_t2;
+589            by vol_q;
+590        run;
+
+NOTE: There were 5270 observations read from the data set OUT.VOLATILITY_PANEL.
+      WHERE vol_q in (1, 5);
+NOTE: The data set WORK.OBS_T2 has 5270 observations and 30 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+The SAS System
+
+      cpu time            0.00 seconds
+      
+
+591        proc corr data=obs_t2 noprint outp=obs_corr_t2;
+592            by vol_q;
+593            var earn_t future_earn1;
+594        run;
+
+NOTE: The data set WORK.OBS_CORR_T2 has 10 observations and 5 variables.
+NOTE: PROCEDURE CORR used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+595        proc print data=obs_corr_t2 noobs;
+596            var vol_q _type_ _name_ earn_t future_earn1;
+597            title "Supporting OLS correlation matrix rows for Table 2 R-squared check";
+598        run;
+
+NOTE: There were 10 observations read from the data set WORK.OBS_CORR_T2.
+NOTE: The PROCEDURE PRINT printed page 23.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+599        proc sql;
+600            create table obs_h1_stats as
+601            select vol_q,
+602                   max(case when upcase(_type_)='CORR' and upcase(_name_)='EARN_T'
+603                            then future_earn1 else . end) as corr,
+604                   max(case when upcase(_type_)='N' then future_earn1 else . end) as n
+605            from obs_corr_t2
+606            where upcase(_type_) in ('CORR','N')
+607            group by vol_q;
+NOTE: Table WORK.OBS_H1_STATS created, with 2 rows and 3 columns.
+
+608            select max(case when vol_q=1 then 1-(1-corr*corr)*(n-1)/(n-2) else . end),
+609                   max(case when vol_q=5 then 1-(1-corr*corr)*(n-1)/(n-2) else . end)
+610              into :t2_adj_q1 trimmed, :t2_adj_q5 trimmed
+611            from obs_h1_stats;
+612        quit;
+NOTE: The PROCEDURE SQL printed page 24.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+613        %let t2_adj_diff=%sysevalf(&t2_adj_q1-&t2_adj_q5);
+614        proc sql noprint;
+615            select sum(diff >= &t2_adj_diff), sum(abs(diff) >= abs(&t2_adj_diff)), count(*)
+616              into :t2_tail1 trimmed, :t2_tail2 trimmed, :t2_reps trimmed
+617            from sim_h1_diff
+618            where not missing(diff);
+619        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+The SAS System
+
+      
+
+620        %let t2_p1=.;
+621        %let t2_p2=.;
+622        %if %sysevalf(&t2_reps > 0) %then %do;
+623            %let t2_p1=%sysevalf(&t2_tail1/&t2_reps);
+624            %let t2_p2=%sysevalf(&t2_tail2/&t2_reps);
+625        %end;
+626        %put NOTE: Table 2 observed adjusted-R2 Q1=&t2_adj_q1 Q5=&t2_adj_q5 difference=&t2_adj_diff.;
+NOTE: Table 2 observed adjusted-R2 Q1=0.681243 Q5=0.168962 difference=0.512281
+627        %put NOTE: Table 2 adjusted-R2 pseudo-quintile bootstrap valid repetitions=&t2_reps one-sided tail=&t2_tail1 two-sided
+627      ! tail=&t2_tail2 one-sided empirical p=&t2_p1 two-sided empirical p=&t2_p2.;
+NOTE: Table 2 adjusted-R2 pseudo-quintile bootstrap valid repetitions=1000 one-sided tail=0 two-sided tail=0 one-sided empirical 
+p=0 two-sided empirical p=0
+628        
+629        proc corr data=sim_extremes noprint outp=sim_corr_t4;
+630            by repetition pseudo_q;
+631            var earn_t sum_earn5;
+632        run;
+
+NOTE: The data set WORK.SIM_CORR_T4 has 10000 observations and 6 variables.
+NOTE: PROCEDURE CORR used (Total process time):
+      real time           0.20 seconds
+      cpu time            0.21 seconds
+      
+
+633        proc sql;
+634            create table sim_t4_stats as
+635            select repetition, pseudo_q,
+636                   max(case when upcase(_type_)='CORR' and upcase(_name_)='EARN_T'
+637                            then sum_earn5 else . end) as corr,
+638                   max(case when upcase(_type_)='N' then sum_earn5 else . end) as n
+639            from sim_corr_t4
+640            where upcase(_type_) in ('CORR','N')
+641            group by repetition,pseudo_q;
+NOTE: Table WORK.SIM_T4_STATS created, with 2000 rows and 4 columns.
+
+642        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+643        data sim_t4_stats;
+644            set sim_t4_stats;
+645            if n>2 then adjr2=1-(1-corr*corr)*(n-1)/(n-2);
+646        run;
+
+NOTE: There were 2000 observations read from the data set WORK.SIM_T4_STATS.
+NOTE: The data set WORK.SIM_T4_STATS has 2000 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+647        proc sql;
+648            create table sim_t4_diff as
+649            select q1.repetition, q1.adjr2-q5.adjr2 as diff
+The SAS System
+
+650            from sim_t4_stats as q1 inner join sim_t4_stats as q5
+651              on q1.repetition=q5.repetition
+652            where q1.pseudo_q=0 and q5.pseudo_q=4;
+NOTE: Table WORK.SIM_T4_DIFF created, with 1000 rows and 2 columns.
+
+653        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+654        
+655        proc sort data=out.volatility_panel(where=(vol_q in (1,5))) out=obs_t4;
+656            by vol_q;
+657        run;
+
+NOTE: There were 5270 observations read from the data set OUT.VOLATILITY_PANEL.
+      WHERE vol_q in (1, 5);
+NOTE: The data set WORK.OBS_T4 has 5270 observations and 30 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+658        proc corr data=obs_t4 noprint outp=obs_corr_t4;
+659            by vol_q;
+660            var earn_t sum_earn5;
+661        run;
+
+NOTE: The data set WORK.OBS_CORR_T4 has 10 observations and 5 variables.
+NOTE: PROCEDURE CORR used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+662        proc print data=obs_corr_t4 noobs;
+663            var vol_q _type_ _name_ earn_t sum_earn5;
+664            title "Supporting OLS correlation matrix rows for Table 4 R-squared check";
+665        run;
+
+NOTE: There were 10 observations read from the data set WORK.OBS_CORR_T4.
+NOTE: The PROCEDURE PRINT printed page 25.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+666        proc sql;
+667            create table obs_t4_stats as
+668            select vol_q,
+669                   max(case when upcase(_type_)='CORR' and upcase(_name_)='EARN_T'
+670                            then sum_earn5 else . end) as corr,
+671                   max(case when upcase(_type_)='N' then sum_earn5 else . end) as n
+672            from obs_corr_t4
+673            where upcase(_type_) in ('CORR','N')
+674            group by vol_q;
+NOTE: Table WORK.OBS_T4_STATS created, with 2 rows and 3 columns.
+
+The SAS System
+
+675            select max(case when vol_q=1 then 1-(1-corr*corr)*(n-1)/(n-2) else . end),
+676                   max(case when vol_q=5 then 1-(1-corr*corr)*(n-1)/(n-2) else . end)
+677              into :t4_adj_q1 trimmed, :t4_adj_q5 trimmed
+678            from obs_t4_stats;
+679        quit;
+NOTE: The PROCEDURE SQL printed page 26.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+680        %let t4_adj_diff=%sysevalf(&t4_adj_q1-&t4_adj_q5);
+681        proc sql noprint;
+682            select sum(diff >= &t4_adj_diff), sum(abs(diff) >= abs(&t4_adj_diff)), count(*)
+683              into :t4_tail1 trimmed, :t4_tail2 trimmed, :t4_reps trimmed
+684            from sim_t4_diff
+685            where not missing(diff);
+686        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+687        %let t4_p1=.;
+688        %let t4_p2=.;
+689        %if %sysevalf(&t4_reps > 0) %then %do;
+690            %let t4_p1=%sysevalf(&t4_tail1/&t4_reps);
+691            %let t4_p2=%sysevalf(&t4_tail2/&t4_reps);
+692        %end;
+693        %put NOTE: Table 4 observed adjusted-R2 Q1=&t4_adj_q1 Q5=&t4_adj_q5 difference=&t4_adj_diff.;
+NOTE: Table 4 observed adjusted-R2 Q1=0.663677 Q5=0.13245 difference=0.531227
+694        %put NOTE: Table 4 adjusted-R2 pseudo-quintile bootstrap valid repetitions=&t4_reps one-sided tail=&t4_tail1 two-sided
+694      ! tail=&t4_tail2 one-sided empirical p=&t4_p1 two-sided empirical p=&t4_p2.;
+NOTE: Table 4 adjusted-R2 pseudo-quintile bootstrap valid repetitions=1000 one-sided tail=0 two-sided tail=0 one-sided empirical 
+p=0 two-sided empirical p=0
+695        
+696        title;
+697        libname comp clear;
+NOTE: Libref COMP has been deassigned.
+698        libname fx clear;
+NOTE: Libref FX has been deassigned.
+699        libname out clear;
+NOTE: Libref OUT has been deassigned.
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           8.03 seconds
+      cpu time            11.48 seconds
+      

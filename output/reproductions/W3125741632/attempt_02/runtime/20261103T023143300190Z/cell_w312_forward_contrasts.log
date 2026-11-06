@@ -1,0 +1,291 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3125741632/at
+> tempt_02/runtime/20261103T023143300190Z/cell_w312_forward_contrasts.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/basu_mtb/reg.dta", clear
+
+. label variable mtbrank "MTB quintile rank (1–5)"
+
+. generate double mdr_f1 = mtbrank*d_f1
+
+. generate double mr_f1 = mtbrank*r_f1
+
+. generate double rdr_f1 = r_f1*d_f1
+
+. generate double mrdr_f1 = mtbrank*r_f1*d_f1
+
+. generate double mdr_f2 = mtbrank*d_f2
+
+. generate double mr_f2 = mtbrank*r_f2
+
+. generate double rdr_f2 = r_f2*d_f2
+
+. generate double mrdr_f2 = mtbrank*r_f2*d_f2
+
+. generate double mdr_f3 = mtbrank*d_f3
+
+. generate double mr_f3 = mtbrank*r_f3
+
+. generate double rdr_f3 = r_f3*d_f3
+
+. generate double mrdr_f3 = mtbrank*r_f3*d_f3
+
+. asreg y_f1 mtbrank d_f1 mdr_f1 r_f1 mr_f1 rdr_f1 mrdr_f1, by(fyear)
+
+. rename _b_mr_f1 b1_k1
+
+. rename _b_mrdr_f1 g1_k1
+
+. drop _b_* _Nobs _R2 _adjR2
+
+. asreg y_f2 mtbrank d_f2 mdr_f2 r_f2 mr_f2 rdr_f2 mrdr_f2, by(fyear)
+
+. rename _b_mr_f2 b1_k2
+
+. rename _b_mrdr_f2 g1_k2
+
+. drop _b_* _Nobs _R2 _adjR2
+
+. asreg y_f3 mtbrank d_f3 mdr_f3 r_f3 mr_f3 rdr_f3 mrdr_f3, by(fyear)
+
+. rename _b_mr_f3 b1_k3
+
+. rename _b_mrdr_f3 g1_k3
+
+. drop _b_* _Nobs _R2 _adjR2
+
+. bysort fyear: keep if _n==1
+(49,326 observations deleted)
+
+. count
+  28
+
+. summarize b1_k1 b1_k2 b1_k3 g1_k1 g1_k2 g1_k3
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+       b1_k1 |         28   -.0142428    .0152433  -.0660328   .0112829
+       b1_k2 |         28   -.0214917    .0147363  -.0540986   .0058046
+       b1_k3 |         28   -.0274665    .0142197  -.0636354  -.0026832
+       g1_k1 |         28   -.0627823    .0573969  -.1967156   .1036254
+       g1_k2 |         28   -.1018838    .0962921  -.4177349    .102946
+-------------+---------------------------------------------------------
+       g1_k3 |         28    -.113264    .0914275  -.2666518   .0828359
+
+. display as text "Compare annual asreg mean coefficients above to the matching
+>  xtfmb tables in cell_w312_forward.log."
+Compare annual asreg mean coefficients above to the matching xtfmb tables in ce
+> ll_w312_forward.log.
+
+. generate double diff_b1_k2k1 = b1_k2-b1_k1
+
+. generate double diff_g1_k2k1 = g1_k2-g1_k1
+
+. generate double diff_bad_k2k1 = (b1_k2+g1_k2)-(b1_k1+g1_k1)
+
+. generate double diff_b1_k3k2 = b1_k3-b1_k2
+
+. generate double diff_g1_k3k2 = g1_k3-g1_k2
+
+. generate double diff_bad_k3k2 = (b1_k3+g1_k3)-(b1_k2+g1_k2)
+
+. label variable diff_b1_k2k1 "Mean annual b1 change, k=2−1"
+
+. label variable diff_g1_k2k1 "Mean annual g1 change, k=2−1"
+
+. label variable diff_bad_k2k1 "Mean annual (b1+g1) change, k=2−1"
+
+. label variable diff_b1_k3k2 "Mean annual b1 change, k=3−2"
+
+. label variable diff_g1_k3k2 "Mean annual g1 change, k=3−2"
+
+. label variable diff_bad_k3k2 "Mean annual (b1+g1) change, k=3−2"
+
+. est clear
+
+. regress diff_b1_k2k1
+
+      Source |       SS           df       MS      Number of obs   =        28
+-------------+----------------------------------   F(0, 27)        =      0.00
+       Model |           0         0           .   Prob > F        =         .
+    Residual |  .004329685        27  .000160359   R-squared       =    0.0000
+-------------+----------------------------------   Adj R-squared   =    0.0000
+       Total |  .004329685        27  .000160359   Root MSE        =    .01266
+
+------------------------------------------------------------------------------
+diff_b1_k2k1 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       _cons |  -.0072489   .0023931    -3.03   0.005    -.0121592   -.0023386
+------------------------------------------------------------------------------
+
+. est store c1
+
+. regress diff_g1_k2k1
+
+      Source |       SS           df       MS      Number of obs   =        28
+-------------+----------------------------------   F(0, 27)        =      0.00
+       Model |           0         0           .   Prob > F        =         .
+    Residual |  .367321596        27  .013604504   R-squared       =    0.0000
+-------------+----------------------------------   Adj R-squared   =    0.0000
+       Total |  .367321596        27  .013604504   Root MSE        =    .11664
+
+------------------------------------------------------------------------------
+diff_g1_k2k1 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       _cons |  -.0391016   .0220426    -1.77   0.087    -.0843292    .0061261
+------------------------------------------------------------------------------
+
+. est store c2
+
+. regress diff_bad_k2k1
+
+      Source |       SS           df       MS      Number of obs   =        28
+-------------+----------------------------------   F(0, 27)        =      0.00
+       Model |           0         0           .   Prob > F        =         .
+    Residual |  .381051675        27  .014113025   R-squared       =    0.0000
+-------------+----------------------------------   Adj R-squared   =    0.0000
+       Total |  .381051675        27  .014113025   Root MSE        =     .1188
+
+------------------------------------------------------------------------------
+diff_bad_k~1 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       _cons |  -.0463504   .0224508    -2.06   0.049    -.0924156   -.0002853
+------------------------------------------------------------------------------
+
+. est store c3
+
+. regress diff_b1_k3k2
+
+      Source |       SS           df       MS      Number of obs   =        28
+-------------+----------------------------------   F(0, 27)        =      0.00
+       Model |           0         0           .   Prob > F        =         .
+    Residual |  .003547454        27  .000131387   R-squared       =    0.0000
+-------------+----------------------------------   Adj R-squared   =    0.0000
+       Total |  .003547454        27  .000131387   Root MSE        =    .01146
+
+------------------------------------------------------------------------------
+diff_b1_k3k2 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       _cons |  -.0059748   .0021662    -2.76   0.010    -.0104195   -.0015302
+------------------------------------------------------------------------------
+
+. est store c4
+
+. regress diff_g1_k3k2
+
+      Source |       SS           df       MS      Number of obs   =        28
+-------------+----------------------------------   F(0, 27)        =      0.00
+       Model |           0         0           .   Prob > F        =         .
+    Residual |  .388936602        27  .014405059   R-squared       =    0.0000
+-------------+----------------------------------   Adj R-squared   =    0.0000
+       Total |  .388936602        27  .014405059   Root MSE        =    .12002
+
+------------------------------------------------------------------------------
+diff_g1_k3k2 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       _cons |  -.0113801   .0226819    -0.50   0.620    -.0579194    .0351592
+------------------------------------------------------------------------------
+
+. est store c5
+
+. regress diff_bad_k3k2
+
+      Source |       SS           df       MS      Number of obs   =        28
+-------------+----------------------------------   F(0, 27)        =      0.00
+       Model |           0         0           .   Prob > F        =         .
+    Residual |  .407785453        27  .015103165   R-squared       =    0.0000
+-------------+----------------------------------   Adj R-squared   =    0.0000
+       Total |  .407785453        27  .015103165   Root MSE        =    .12289
+
+------------------------------------------------------------------------------
+diff_bad_k~2 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       _cons |   -.017355    .023225    -0.75   0.461    -.0650087    .0302987
+------------------------------------------------------------------------------
+
+. est store c6
+
+. esttab c1 c2 c3 c4 c5 c6 using "tables/table4a_forward_contrasts.md", cells(b
+> (star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label
+>  coeflabels(_cons "Mean annual coefficient change") mtitle("b1 k2−1" "g1 k2−1
+> " "b1+g1 k2−1" "b1 k3−2" "g1 k3−2" "b1+g1 k3−2") addnotes("Paired annual Fama
+> –MacBeth coefficient differences; 28 common formation years. asreg annual mea
+> n coefficients are shown in the Stata log and checked against the baseline xt
+> fmb estimates.")
+(file tables/table4a_forward_contrasts.md not found)
+(output written to tables/table4a_forward_contrasts.md)
+
+. esttab c1 c2 c3 c4 c5 c6 using "tables/table4a_forward_contrasts.rtf", cells(
+> b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace labe
+> l coeflabels(_cons "Mean annual coefficient change") mtitle("b1 k2−1" "g1 k2−
+> 1" "b1+g1 k2−1" "b1 k3−2" "g1 k3−2" "b1+g1 k3−2") addnotes("Paired annual Fam
+> a–MacBeth coefficient differences; 28 common formation years. asreg annual me
+> an coefficients are shown in the Stata log and checked against the baseline x
+> tfmb estimates.")
+(file tables/table4a_forward_contrasts.rtf not found)
+(output written to tables/table4a_forward_contrasts.rtf)
+
+. esttab c1 c2 c3 c4 c5 c6 using "tables/table4a_forward_contrasts.csv", cells(
+> b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace labe
+> l coeflabels(_cons "Mean annual coefficient change") mtitle("b1 k2−1" "g1 k2−
+> 1" "b1+g1 k2−1" "b1 k3−2" "g1 k3−2" "b1+g1 k3−2") addnotes("Paired annual Fam
+> a–MacBeth coefficient differences; 28 common formation years. asreg annual me
+> an coefficients are shown in the Stata log and checked against the baseline x
+> tfmb estimates.")
+(file tables/table4a_forward_contrasts.csv not found)
+(output written to tables/table4a_forward_contrasts.csv)
+
+. esttab c1 c2 c3 c4 c5 c6 using "tables/table4a_forward_contrasts.tex", cells(
+> b(star fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace labe
+> l coeflabels(_cons "Mean annual coefficient change") mtitle("b1 k2−1" "g1 k2−
+> 1" "b1+g1 k2−1" "b1 k3−2" "g1 k3−2" "b1+g1 k3−2") addnotes("Paired annual Fam
+> a–MacBeth coefficient differences; 28 common formation years. asreg annual me
+> an coefficients are shown in the Stata log and checked against the baseline x
+> tfmb estimates.")
+(file tables/table4a_forward_contrasts.tex not found)
+(output written to tables/table4a_forward_contrasts.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

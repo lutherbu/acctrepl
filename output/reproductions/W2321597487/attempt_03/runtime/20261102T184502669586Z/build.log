@@ -1,0 +1,998 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 02:45:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 02:45:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+1          options errorabend nocenter nonumber;
+2          
+3          /* Source libraries are read-only. All output is relative to this attempt. */
+4          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+5          libname crsp "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+6          libname ccm "/storage/sas/base/crsp/a_ccm" access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+7          libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W2321597487/attempt_03/data
+8          
+9          /* Exact annual item mappings checked against the 2004 provider guide:
+10            A123=IBC, A308=OANCF, A6=AT, A12=SALE, A7=PPEGT. */
+11         proc sql;
+12           create table work.funda_candidates as
+13           select gvkey, datadate, fyear, indfmt, consol, popsrc, datafmt, scf,
+14                  aqc, at, ibc, oancf, sale, ppegt, sich, curcd
+15           from comp.funda
+16           /* Fiscal-year support includes FY2004 period ends in calendar 2005. */
+17           where datadate between '01jan1985'd and '31dec2005'd
+18             and fyear between 1985 and 2004
+19             and indfmt='INDL' and consol='C' and popsrc='D' and datafmt='STD';
+NOTE: Table WORK.FUNDA_CANDIDATES created, with 218676 rows and 16 columns.
+
+20         
+21           create table work.funda_duplicate_years as
+22           select gvkey, fyear, count(*) as records, count(distinct datadate) as period_ends
+23           from work.funda_candidates
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+24           group by gvkey, fyear
+25           having count(*) > 1;
+NOTE: Table WORK.FUNDA_DUPLICATE_YEARS created, with 0 rows and 4 columns.
+
+26         
+27           create table work.funda_exact_duplicates as
+28           select gvkey, fyear, datadate, count(*) as records
+29           from work.funda_candidates
+30           group by gvkey, fyear, datadate
+31           having count(*) > 1;
+NOTE: Table WORK.FUNDA_EXACT_DUPLICATES created, with 0 rows and 4 columns.
+
+32         
+33           select count(*) into :n_funda_exact trimmed
+34           from work.funda_exact_duplicates;
+35           select count(*) as annual_rows,
+36                  (select count(*) from work.funda_duplicate_years) as duplicate_gvkey_fyears
+37           from work.funda_candidates;
+38         quit;
+NOTE: The PROCEDURE SQL printed pages 1-2.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.67 seconds
+      cpu time            0.73 seconds
+      
+
+39         
+40         data _null_;
+41           if &n_funda_exact > 0 then do;
+42             put 'ERROR: exact duplicate Compustat GVKEY/FYEAR/DATADATE keys remain after annual descriptor filters.';
+43             abort cancel;
+44           end;
+45         run;
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+46         
+47         /* Keep the latest period end for a GVKEY/fiscal-year with distinct dates. */
+48         proc sort data=work.funda_candidates out=work.funda_candidates_s;
+49           by gvkey fyear datadate;
+50         run;
+
+NOTE: There were 218676 observations read from the data set WORK.FUNDA_CANDIDATES.
+NOTE: The data set WORK.FUNDA_CANDIDATES_S has 218676 observations and 16 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+51         data work.funda_annual;
+52           set work.funda_candidates_s;
+53           by gvkey fyear datadate;
+54           if last.fyear;
+55         run;
+
+NOTE: There were 218676 observations read from the data set WORK.FUNDA_CANDIDATES_S.
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+NOTE: The data set WORK.FUNDA_ANNUAL has 218676 observations and 16 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+56         
+57         proc sql;
+58           create table work.funda_postcheck as
+59           select gvkey, fyear, count(*) as records
+60           from work.funda_annual
+61           group by gvkey, fyear
+62           having count(*) > 1;
+NOTE: Table WORK.FUNDA_POSTCHECK created, with 0 rows and 3 columns.
+
+63           select count(*) as annual_rows_after_selection,
+64                  (select count(*) from work.funda_postcheck) as duplicate_keys_after_selection
+65           from work.funda_annual;
+66         
+67           /* Exact fiscal-year joins preserve gaps rather than shifting later records. */
+68           create table work.annual_panel as
+69           select a.gvkey, a.datadate, a.fyear, a.sich, a.aqc, a.at, a.ibc,
+70                  a.oancf, a.sale, a.ppegt, a.curcd,
+71                  p.datadate as prev_date, p.at as at_prev, p.curcd as curcd_prev,
+72                  p.oancf as oancf_prev, p.sale as sale_prev,
+73                  n.oancf as oancf_next, n.curcd as curcd_next
+74           from work.funda_annual as a
+75           left join work.funda_annual as p
+76             on a.gvkey=p.gvkey and p.fyear=a.fyear-1
+77           left join work.funda_annual as n
+78             on a.gvkey=n.gvkey and n.fyear=a.fyear+1;
+NOTE: Table WORK.ANNUAL_PANEL created, with 218676 rows and 18 columns.
+
+79           select count(*) as annual_panel_rows from work.annual_panel;
+80         quit;
+NOTE: The PROCEDURE SQL printed pages 3-4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.29 seconds
+      cpu time            0.43 seconds
+      
+
+81         
+82         data work.annual_measures;
+83           set work.annual_panel;
+84           length sic3 8;
+85           curcd=upcase(strip(curcd));
+86           curcd_prev=upcase(strip(curcd_prev));
+87           curcd_next=upcase(strip(curcd_next));
+88           currency_t_known=(not missing(curcd) and lengthn(strip(curcd))=3
+89                             and verify(strip(curcd),'ABCDEFGHIJKLMNOPQRSTUVWXYZ')=0);
+90           currency_prev_known=(not missing(curcd_prev) and lengthn(strip(curcd_prev))=3
+91                                and verify(strip(curcd_prev),'ABCDEFGHIJKLMNOPQRSTUVWXYZ')=0);
+92           currency_next_known=(not missing(curcd_next) and lengthn(strip(curcd_next))=3
+93                                and verify(strip(curcd_next),'ABCDEFGHIJKLMNOPQRSTUVWXYZ')=0);
+94           currency_tp_known=(currency_t_known=1 and currency_prev_known=1);
+95           currency_tn_known=(currency_t_known=1 and currency_next_known=1);
+96           currency_tp_match=(currency_tp_known=1 and curcd=curcd_prev);
+97           currency_tn_match=(currency_tn_known=1 and curcd=curcd_next);
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+98           if not missing(sich) then sic3=floor(sich/10);
+99           /* A ratio using AT_t and AT_(t-1) is defined only when their reported
+100             currencies are both known and match. Never add unlike or unknown units. */
+101          if currency_tp_match=1 and not missing(at) and not missing(at_prev) then avgat=(at+at_prev)/2;
+102          if avgat>0 then do;
+103            if not missing(ibc) and not missing(oancf) then acc=(ibc-oancf)/avgat;
+104            if not missing(oancf) then cf=oancf/avgat;
+105            if currency_tp_match=1 and not missing(oancf) and not missing(oancf_prev) then delta_cf=(oancf-oancf_prev)/avgat;
+106            if currency_tp_match=1 and not missing(sale) and not missing(sale_prev) then drev=(sale-sale_prev)/avgat;
+107            if not missing(ppegt) then gppe=ppegt/avgat;
+108            /* Table 2 and Table 9 scale all cash-flow variables for observation t
+109               by average assets in t, including the DD lead and lag predictors. */
+110            if currency_tp_match=1 and not missing(oancf_prev) then cf_lag=oancf_prev/avgat;
+111            if currency_tn_match=1 and not missing(oancf_next) then cf_lead=oancf_next/avgat;
+112          end;
+113        run;
+
+NOTE: There were 218676 observations read from the data set WORK.ANNUAL_PANEL.
+NOTE: The data set WORK.ANNUAL_MEASURES has 218676 observations and 34 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.10 seconds
+      
+
+114        
+115        /* Currency audit covers the full supporting population, before screen,
+116           industry median, trimming, and fit eligibility. */
+117        proc sql;
+118          select count(*) as supporting_annual_rows,
+119                 sum(currency_t_known=0) as current_currency_unknown,
+120                 sum(currency_prev_known=0) as prior_currency_unknown,
+121                 sum(currency_next_known=0) as following_currency_unknown,
+122                 sum(currency_tp_known=0) as current_prior_pair_unknown,
+123                 sum(currency_tp_known=1 and currency_tp_match=0) as current_prior_changes,
+124                 sum(currency_tn_known=0) as current_following_pair_unknown,
+125                 sum(currency_tn_known=1 and currency_tn_match=0) as current_following_changes,
+126                 sum(currency_tp_match=1) as current_prior_matches,
+127                 sum(currency_tn_match=1) as current_following_matches
+128          from work.annual_measures;
+129        quit;
+NOTE: The PROCEDURE SQL printed page 5.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+130        
+131        /* Current-year baseline screens; previous and following values were built first. */
+132        data work.base_accounting;
+133          set work.annual_measures;
+134          if fyear>=1987 and fyear<=2003;
+135          /* A missing SIC cannot establish nonfinancial status. */
+136          if missing(sich) then delete;
+137          if sich>=6000 and sich<=6999 then delete;
+138          if missing(aqc) or aqc=0;
+139        run;
+
+NOTE: There were 218676 observations read from the data set WORK.ANNUAL_MEASURES.
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+NOTE: The data set WORK.BASE_ACCOUNTING has 99526 observations and 34 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+140        
+141        proc sql;
+142          select count(*) as screen_rows,
+143                 sum(missing(sich)) as missing_historical_sic,
+144                 sum(missing(aqc)) as missing_acquisition_amount,
+145                 sum(currency_t_known=0) as screen_t_unk,
+146                 sum(currency_tp_known=0) as screen_tp_unk,
+147                 sum(currency_tp_known=1 and currency_tp_match=0) as screen_tp_chg,
+148                 sum(currency_tn_known=0) as screen_tn_unk,
+149                 sum(currency_tn_known=1 and currency_tn_match=0) as screen_tn_chg
+150          from work.base_accounting;
+151        quit;
+NOTE: The PROCEDURE SQL printed page 6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+152        
+153        /* Industry-adjusted CF is measured relative to the same SIC3-year median. */
+154        proc summary data=work.base_accounting nway;
+155          where not missing(sic3) and not missing(cf);
+156          class fyear sic3;
+157          var cf;
+158          output out=work.median_cf(drop=_type_ _freq_) median=median_cf;
+159        run;
+
+NOTE: There were 81876 observations read from the data set WORK.BASE_ACCOUNTING.
+      WHERE (not MISSING(sic3)) and (not MISSING(cf));
+NOTE: The data set WORK.MEDIAN_CF has 4092 observations and 3 variables.
+NOTE: PROCEDURE SUMMARY used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.05 seconds
+      
+
+160        proc sql;
+161          create table work.base_with_median as
+162          select a.*, m.median_cf,
+163                 (a.cf-m.median_cf) as indadj_cf
+164          from work.base_accounting as a
+165          left join work.median_cf as m
+166            on a.fyear=m.fyear and a.sic3=m.sic3;
+NOTE: Table WORK.BASE_WITH_MEDIAN created, with 99526 rows and 36 columns.
+
+167        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.12 seconds
+      
+
+168        
+169        /* Within-fiscal-year rank groups implement approximately one-percent tails. */
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+170        proc sort data=work.base_with_median out=work.base_with_median_s;
+171          by fyear;
+172        run;
+
+NOTE: Input data set is already sorted; it has been copied to the output data set.
+NOTE: There were 99526 observations read from the data set WORK.BASE_WITH_MEDIAN.
+NOTE: The data set WORK.BASE_WITH_MEDIAN_S has 99526 observations and 36 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+173        proc rank data=work.base_with_median_s out=work.ranked groups=100 ties=mean;
+174          by fyear;
+175          var acc cf cf_lag cf_lead delta_cf drev gppe indadj_cf;
+176          ranks r_acc r_cf r_cf_lag r_cf_lead r_delta_cf r_drev r_gppe r_indadj_cf;
+177        run;
+
+NOTE: There were 99526 observations read from the data set WORK.BASE_WITH_MEDIAN_S.
+NOTE: The data set WORK.RANKED has 99526 observations and 44 variables.
+NOTE: PROCEDURE RANK used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.07 seconds
+      
+
+178        
+179        data work.trimmed;
+180          set work.ranked;
+181          trim_acc=(not missing(acc) and r_acc>0 and r_acc<99);
+182          trim_cf=(not missing(cf) and r_cf>0 and r_cf<99);
+183          trim_cf_lag=(not missing(cf_lag) and r_cf_lag>0 and r_cf_lag<99);
+184          trim_cf_lead=(not missing(cf_lead) and r_cf_lead>0 and r_cf_lead<99);
+185          trim_delta_cf=(not missing(delta_cf) and r_delta_cf>0 and r_delta_cf<99);
+186          trim_drev=(not missing(drev) and r_drev>0 and r_drev<99);
+187          trim_gppe=(not missing(gppe) and r_gppe>0 and r_gppe<99);
+188          trim_indadj_cf=(not missing(indadj_cf) and r_indadj_cf>0 and r_indadj_cf<99);
+189          if not missing(cf) then dcf=(cf<0); else dcf=.;
+190          if not missing(delta_cf) then ddelta_cf=(delta_cf<0); else ddelta_cf=.;
+191          if not missing(indadj_cf) then dind=(indadj_cf<0); else dind=.;
+192        run;
+
+NOTE: There were 99526 observations read from the data set WORK.RANKED.
+NOTE: The data set WORK.TRIMMED has 99526 observations and 55 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+193        
+194        /* Fiscal-year return intervals and historical CCM links for the market proxy. */
+195        data work.return_intervals;
+196          set work.annual_measures;
+197          if fyear>=1987 and fyear<=2003 and not missing(prev_date) and datadate>prev_date;
+198          start_date=prev_date;
+199          end_date=datadate;
+200          keep gvkey fyear start_date end_date;
+201        run;
+
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+NOTE: There were 218676 observations read from the data set WORK.ANNUAL_MEASURES.
+NOTE: The data set WORK.RETURN_INTERVALS has 175902 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+202        
+203        proc sql;
+204          create table work.dsi_duplicate_dates as
+205          select date, count(*) as records
+206          from crsp.dsi
+207          where date between '01jan1986'd and '31dec2004'd
+208          group by date
+209          having count(*) > 1;
+NOTE: Table WORK.DSI_DUPLICATE_DATES created, with 0 rows and 2 columns.
+
+210          select count(*) as duplicate_dsi_dates from work.dsi_duplicate_dates;
+211        
+212          create table work.valid_links as
+213          select i.gvkey, i.fyear, i.start_date, i.end_date,
+214                 l.lpermno as permno, l.linkdt, l.linkenddt,
+215                 l.linkprim, l.linktype
+216          from work.return_intervals as i
+217          inner join ccm.ccmxpf_linktable as l
+218            on i.gvkey=l.gvkey
+219          where l.linkprim in ('P','C') and l.linktype in ('LC','LU')
+220            and l.linkdt<=i.end_date
+221            and (missing(l.linkenddt) or l.linkenddt>i.start_date)
+222            and not missing(l.lpermno);
+NOTE: Table WORK.VALID_LINKS created, with 126009 rows and 9 columns.
+
+223        
+224          create table work.permnos as
+225          select distinct permno from work.valid_links;
+NOTE: Table WORK.PERMNOS created, with 16997 rows and 1 columns.
+
+226          select count(*) as interval_link_rows,
+227                 (select count(*) from work.permnos) as candidate_permnos
+228          from work.valid_links;
+229        
+230          /* PERMNO is indexed in DSF; keep only the selected securities and dates. */
+231          create table work.dsf_selected as
+232          select d.permno, d.date, d.ret
+233          from work.permnos as p
+234          inner join crsp.dsf as d on p.permno=d.permno
+235          where d.date between '01jan1986'd and '31dec2004'd;
+NOTE: Table WORK.DSF_SELECTED created, with 35157834 rows and 3 columns.
+
+236        
+237          create table work.stock_days as
+238          select l.gvkey, l.fyear, d.date,
+239                 count(distinct l.permno) as n_links,
+240                 count(d.ret) as n_returns,
+241                 max(d.ret) as ret
+242          from work.valid_links as l
+243          inner join work.dsf_selected as d
+244            on l.permno=d.permno
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+245          where d.date>l.start_date and d.date<=l.end_date
+246            and d.date>=l.linkdt
+247            and (missing(l.linkenddt) or d.date<=l.linkenddt)
+248          group by l.gvkey, l.fyear, d.date;
+NOTE: Table WORK.STOCK_DAYS created, with 30053032 rows and 6 columns.
+
+249        
+250          create table work.market_days as
+251          select i.gvkey, i.fyear, d.date, d.ewretd
+252          from work.return_intervals as i
+253          inner join crsp.dsi as d
+254            on d.date>i.start_date and d.date<=i.end_date
+255          where d.date between '01jan1986'd and '31dec2004'd;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.MARKET_DAYS created, with 44401526 rows and 4 columns.
+
+256          select count(*) as stock_fiscal_days from work.stock_days;
+257          select count(*) as market_fiscal_days from work.market_days;
+258        quit;
+NOTE: The PROCEDURE SQL printed pages 7-10.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           47.75 seconds
+      cpu time            54.05 seconds
+      
+
+259        
+260        proc sort data=work.stock_days out=work.stock_days_s;
+261          by gvkey fyear date;
+262        run;
+
+NOTE: Input data set is already sorted; it has been copied to the output data set.
+NOTE: There were 30053032 observations read from the data set WORK.STOCK_DAYS.
+NOTE: The data set WORK.STOCK_DAYS_S has 30053032 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           1.25 seconds
+      cpu time            1.25 seconds
+      
+
+263        data work.stock_annual;
+264          set work.stock_days_s;
+265          by gvkey fyear date;
+266          retain stock_product stock_days stock_bad;
+267          if first.fyear then do;
+268            stock_product=1;
+269            stock_days=0;
+270            stock_bad=0;
+271          end;
+272          if n_links=1 and n_returns=1 and not missing(ret) then do;
+273            stock_product=stock_product*(1+ret);
+274            stock_days+1;
+275          end;
+276          else stock_bad=1;
+277          if last.fyear then do;
+278            stock_return=.;
+279            if stock_bad=0 then stock_return=stock_product-1;
+280            output;
+281          end;
+282          keep gvkey fyear stock_product stock_days stock_bad stock_return;
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+283        run;
+
+NOTE: There were 30053032 observations read from the data set WORK.STOCK_DAYS_S.
+NOTE: The data set WORK.STOCK_ANNUAL has 125216 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.70 seconds
+      cpu time            1.71 seconds
+      
+
+284        
+285        proc sort data=work.market_days out=work.market_days_s;
+286          by gvkey fyear date;
+287        run;
+
+NOTE: There were 44401526 observations read from the data set WORK.MARKET_DAYS.
+NOTE: The data set WORK.MARKET_DAYS_S has 44401526 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           4.54 seconds
+      cpu time            13.24 seconds
+      
+
+288        data work.market_annual;
+289          set work.market_days_s;
+290          by gvkey fyear date;
+291          retain market_product market_days market_bad;
+292          if first.fyear then do;
+293            market_product=1;
+294            market_days=0;
+295            market_bad=0;
+296          end;
+297          market_days+1;
+298          if not missing(ewretd) then do;
+299            market_product=market_product*(1+ewretd);
+300          end;
+301          else market_bad=1;
+302          if last.fyear then do;
+303            mktret=.;
+304            if market_bad=0 then mktret=market_product-1;
+305            output;
+306          end;
+307          keep gvkey fyear market_product market_days market_bad mktret;
+308        run;
+
+NOTE: There were 44401526 observations read from the data set WORK.MARKET_DAYS_S.
+NOTE: The data set WORK.MARKET_ANNUAL has 175902 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           2.57 seconds
+      cpu time            2.57 seconds
+      
+
+309        
+310        proc sql;
+311          create table work.annual_abnret as
+312          select i.gvkey, i.fyear,
+313                 s.stock_days, s.stock_bad, m.market_days, m.market_bad,
+314                 case when s.stock_bad=0 and m.market_bad=0
+315                            and s.stock_days=m.market_days
+316                            and not missing(s.stock_return) and not missing(m.mktret)
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+317                      then s.stock_return-m.mktret else . end as abnret
+318          from work.return_intervals as i
+319          left join work.stock_annual as s
+320            on i.gvkey=s.gvkey and i.fyear=s.fyear
+321          left join work.market_annual as m
+322            on i.gvkey=m.gvkey and i.fyear=m.fyear;
+NOTE: Table WORK.ANNUAL_ABNRET created, with 175902 rows and 7 columns.
+
+323        
+324          select count(*) as return_intervals,
+325                 sum(not missing(abnret)) as complete_abnormal_returns,
+326                 sum(missing(abnret)) as missing_abnormal_returns
+327          from work.annual_abnret;
+328        
+329          create table work.trimmed_with_return as
+330          select t.*, r.abnret
+331          from work.trimmed as t
+332          left join work.annual_abnret as r
+333            on t.gvkey=r.gvkey and t.fyear=r.fyear;
+NOTE: Table WORK.TRIMMED_WITH_RETURN created, with 99526 rows and 56 columns.
+
+334        quit;
+NOTE: The PROCEDURE SQL printed page 11.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.22 seconds
+      cpu time            0.31 seconds
+      
+
+335        
+336        /* Fit-specific samples. The loss dummy remains required when its continuous
+337           proxy main effect is omitted from a printed regression column. */
+338        data work.fit_samples;
+339          set work.trimmed_with_return;
+340          if not missing(abnret) then dabnret=(abnret<0); else dabnret=.;
+341          sample_a_cf=(trim_acc=1 and trim_cf=1);
+342          sample_a_dd=(trim_acc=1 and trim_cf=1 and trim_cf_lag=1 and trim_cf_lead=1);
+343          sample_a_jones=(trim_acc=1 and trim_cf=1 and trim_drev=1 and trim_gppe=1);
+344          sample_b_cf=(trim_acc=1 and trim_cf=1 and trim_delta_cf=1);
+345          sample_b_dd=(trim_acc=1 and trim_cf=1 and trim_cf_lag=1 and trim_cf_lead=1 and trim_delta_cf=1);
+346          sample_b_jones=(trim_acc=1 and trim_drev=1 and trim_gppe=1 and trim_delta_cf=1);
+347          sample_c_cf=(trim_acc=1 and trim_cf=1 and trim_indadj_cf=1);
+348          sample_c_dd=(trim_acc=1 and trim_cf=1 and trim_cf_lag=1 and trim_cf_lead=1 and trim_indadj_cf=1);
+349          sample_c_jones=(trim_acc=1 and trim_drev=1 and trim_gppe=1 and trim_indadj_cf=1);
+350          sample_m_cf=(trim_acc=1 and trim_cf=1 and not missing(abnret));
+351          sample_m_dd=(trim_acc=1 and trim_cf=1 and trim_cf_lag=1 and trim_cf_lead=1 and not missing(abnret));
+352          sample_m_jones=(trim_acc=1 and trim_drev=1 and trim_gppe=1 and not missing(abnret));
+353          sample_t5a_cf=(trim_acc=1 and trim_cf=1 and not missing(abnret));
+354          sample_t5a_dd=(trim_acc=1 and trim_cf=1 and trim_cf_lag=1 and trim_cf_lead=1 and not missing(abnret));
+355          sample_t5a_jones=(trim_acc=1 and trim_cf=1 and trim_drev=1 and trim_gppe=1 and not missing(abnret));
+356          sample_t5b_cf=(trim_acc=1 and trim_cf=1 and trim_delta_cf=1 and not missing(abnret));
+357          sample_t5b_dd=(trim_acc=1 and trim_cf=1 and trim_cf_lag=1 and trim_cf_lead=1 and trim_delta_cf=1 and not
+357      ! missing(abnret));
+358          sample_t5b_jones=(trim_acc=1 and trim_drev=1 and trim_gppe=1 and trim_delta_cf=1 and not missing(abnret));
+359          sample_t5c_cf=(trim_acc=1 and trim_cf=1 and trim_indadj_cf=1 and not missing(abnret));
+360          sample_t5c_dd=(trim_acc=1 and trim_cf=1 and trim_cf_lag=1 and trim_cf_lead=1 and trim_indadj_cf=1 and not
+360      ! missing(abnret));
+361          sample_t5c_jones=(trim_acc=1 and trim_drev=1 and trim_gppe=1 and trim_indadj_cf=1 and not missing(abnret));
+362          sample_t5d_cf=(trim_acc=1 and trim_cf=1 and trim_delta_cf=1 and trim_indadj_cf=1 and not missing(abnret));
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+363          sample_t5d_dd=(trim_acc=1 and trim_cf=1 and trim_cf_lag=1 and trim_cf_lead=1 and trim_delta_cf=1 and trim_indadj_cf=1
+363      ! and not missing(abnret));
+364          sample_t5d_jones=(trim_acc=1 and trim_drev=1 and trim_gppe=1 and trim_delta_cf=1 and trim_indadj_cf=1 and not
+364      ! missing(abnret));
+365          if not missing(dcf) and not missing(cf) then dcf_cf=dcf*cf; else dcf_cf=.;
+366          if not missing(ddelta_cf) and not missing(delta_cf) then ddelta_cf_x_delta_cf=ddelta_cf*delta_cf; else
+366      ! ddelta_cf_x_delta_cf=.;
+367          if not missing(dind) and not missing(indadj_cf) then dind_indadj_cf=dind*indadj_cf; else dind_indadj_cf=.;
+368          if not missing(dabnret) and not missing(abnret) then dabnret_abnret=dabnret*abnret; else dabnret_abnret=.;
+369        run;
+
+NOTE: There were 99526 observations read from the data set WORK.TRIMMED_WITH_RETURN.
+NOTE: The data set WORK.FIT_SAMPLES has 99526 observations and 85 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.08 seconds
+      
+
+370        
+371        /* Document how the AQC-missing convention affects the Table 3A CF sample. */
+372        proc sql;
+373          select sum(sample_a_cf) as table3a_cf_n,
+374                 sum(case when sample_a_cf=1 and missing(aqc) then 1 else 0 end)
+375                   as table3a_cf_aqc_missing,
+376                 sum(case when sample_a_cf=1 and aqc=0 then 1 else 0 end)
+377                   as table3a_cf_aqc_zero
+378          from work.fit_samples;
+379        quit;
+NOTE: The PROCEDURE SQL printed page 12.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+380        
+381        /* Industry eligibility uses the fit-specific complete-case population and
+382           requires five losses for each dummy included in that fit. */
+383        proc sql;
+384          create table work.industry_counts as
+385          select sic3,
+386            sum(sample_a_cf) as n_a_cf,
+387            sum(case when sample_a_cf=1 and dcf=1 then 1 else 0 end) as l_a_cf,
+388            sum(sample_a_dd) as n_a_dd,
+389            sum(case when sample_a_dd=1 and dcf=1 then 1 else 0 end) as l_a_dd,
+390            sum(sample_a_jones) as n_a_jones,
+391            sum(case when sample_a_jones=1 and dcf=1 then 1 else 0 end) as l_a_jones,
+392            sum(sample_b_cf) as n_b_cf,
+393            sum(case when sample_b_cf=1 and ddelta_cf=1 then 1 else 0 end) as l_b_cf,
+394            sum(sample_b_dd) as n_b_dd,
+395            sum(case when sample_b_dd=1 and ddelta_cf=1 then 1 else 0 end) as l_b_dd,
+396            sum(sample_b_jones) as n_b_jones,
+397            sum(case when sample_b_jones=1 and ddelta_cf=1 then 1 else 0 end) as l_b_jones,
+398            sum(sample_c_cf) as n_c_cf,
+399            sum(case when sample_c_cf=1 and dind=1 then 1 else 0 end) as l_c_cf,
+400            sum(sample_c_dd) as n_c_dd,
+401            sum(case when sample_c_dd=1 and dind=1 then 1 else 0 end) as l_c_dd,
+402            sum(sample_c_jones) as n_c_jones,
+403            sum(case when sample_c_jones=1 and dind=1 then 1 else 0 end) as l_c_jones,
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+404            sum(sample_m_cf) as n_m_cf,
+405            sum(case when sample_m_cf=1 and dabnret=1 then 1 else 0 end) as l_m_cf,
+406            sum(sample_m_dd) as n_m_dd,
+407            sum(case when sample_m_dd=1 and dabnret=1 then 1 else 0 end) as l_m_dd,
+408            sum(sample_m_jones) as n_m_jones,
+409            sum(case when sample_m_jones=1 and dabnret=1 then 1 else 0 end) as l_m_jones,
+410            sum(sample_t5a_cf) as n_t5a_cf,
+411            sum(case when sample_t5a_cf=1 and dcf=1 then 1 else 0 end) as cf_t5a_cf,
+412            sum(case when sample_t5a_cf=1 and dabnret=1 then 1 else 0 end) as ret_t5a_cf,
+413            sum(sample_t5a_dd) as n_t5a_dd,
+414            sum(case when sample_t5a_dd=1 and dcf=1 then 1 else 0 end) as cf_t5a_dd,
+415            sum(case when sample_t5a_dd=1 and dabnret=1 then 1 else 0 end) as ret_t5a_dd,
+416            sum(sample_t5a_jones) as n_t5a_jones,
+417            sum(case when sample_t5a_jones=1 and dcf=1 then 1 else 0 end) as cf_t5a_jones,
+418            sum(case when sample_t5a_jones=1 and dabnret=1 then 1 else 0 end) as ret_t5a_jones,
+419            sum(sample_t5b_cf) as n_t5b_cf,
+420            sum(case when sample_t5b_cf=1 and ddelta_cf=1 then 1 else 0 end) as cfchg_t5b_cf,
+421            sum(case when sample_t5b_cf=1 and dabnret=1 then 1 else 0 end) as ret_t5b_cf,
+422            sum(sample_t5b_dd) as n_t5b_dd,
+423            sum(case when sample_t5b_dd=1 and ddelta_cf=1 then 1 else 0 end) as cfchg_t5b_dd,
+424            sum(case when sample_t5b_dd=1 and dabnret=1 then 1 else 0 end) as ret_t5b_dd,
+425            sum(sample_t5b_jones) as n_t5b_jones,
+426            sum(case when sample_t5b_jones=1 and ddelta_cf=1 then 1 else 0 end) as cfchg_t5b_jones,
+427            sum(case when sample_t5b_jones=1 and dabnret=1 then 1 else 0 end) as ret_t5b_jones,
+428            sum(sample_t5c_cf) as n_t5c_cf,
+429            sum(case when sample_t5c_cf=1 and dind=1 then 1 else 0 end) as ind_t5c_cf,
+430            sum(case when sample_t5c_cf=1 and dabnret=1 then 1 else 0 end) as ret_t5c_cf,
+431            sum(sample_t5c_dd) as n_t5c_dd,
+432            sum(case when sample_t5c_dd=1 and dind=1 then 1 else 0 end) as ind_t5c_dd,
+433            sum(case when sample_t5c_dd=1 and dabnret=1 then 1 else 0 end) as ret_t5c_dd,
+434            sum(sample_t5c_jones) as n_t5c_jones,
+435            sum(case when sample_t5c_jones=1 and dind=1 then 1 else 0 end) as ind_t5c_jones,
+436            sum(case when sample_t5c_jones=1 and dabnret=1 then 1 else 0 end) as ret_t5c_jones,
+437            sum(sample_t5d_cf) as n_t5d_cf,
+438            sum(case when sample_t5d_cf=1 and dcf=1 then 1 else 0 end) as cf_t5d_cf,
+439            sum(case when sample_t5d_cf=1 and ddelta_cf=1 then 1 else 0 end) as cfchg_t5d_cf,
+440            sum(case when sample_t5d_cf=1 and dind=1 then 1 else 0 end) as ind_t5d_cf,
+441            sum(case when sample_t5d_cf=1 and dabnret=1 then 1 else 0 end) as ret_t5d_cf,
+442            sum(sample_t5d_dd) as n_t5d_dd,
+443            sum(case when sample_t5d_dd=1 and dcf=1 then 1 else 0 end) as cf_t5d_dd,
+444            sum(case when sample_t5d_dd=1 and ddelta_cf=1 then 1 else 0 end) as cfchg_t5d_dd,
+445            sum(case when sample_t5d_dd=1 and dind=1 then 1 else 0 end) as ind_t5d_dd,
+446            sum(case when sample_t5d_dd=1 and dabnret=1 then 1 else 0 end) as ret_t5d_dd,
+447            sum(sample_t5d_jones) as n_t5d_jones,
+448            sum(case when sample_t5d_jones=1 and dcf=1 then 1 else 0 end) as cf_t5d_jones,
+449            sum(case when sample_t5d_jones=1 and ddelta_cf=1 then 1 else 0 end) as cfchg_t5d_jones,
+450            sum(case when sample_t5d_jones=1 and dind=1 then 1 else 0 end) as ind_t5d_jones,
+451            sum(case when sample_t5d_jones=1 and dabnret=1 then 1 else 0 end) as ret_t5d_jones
+452          from work.fit_samples
+453          where not missing(sic3)
+454          group by sic3;
+NOTE: Table WORK.INDUSTRY_COUNTS created, with 252 rows and 67 columns.
+
+455        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.15 seconds
+      
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+
+456        
+457        data work.industry_flags;
+458          set work.industry_counts;
+459          industry_a_cf=(n_a_cf>=30 and l_a_cf>=5);
+460          industry_a_dd=(n_a_dd>=30 and l_a_dd>=5);
+461          industry_a_jones=(n_a_jones>=30 and l_a_jones>=5);
+462          industry_b_cf=(n_b_cf>=30 and l_b_cf>=5);
+463          industry_b_dd=(n_b_dd>=30 and l_b_dd>=5);
+464          industry_b_jones=(n_b_jones>=30 and l_b_jones>=5);
+465          industry_c_cf=(n_c_cf>=30 and l_c_cf>=5);
+466          industry_c_dd=(n_c_dd>=30 and l_c_dd>=5);
+467          industry_c_jones=(n_c_jones>=30 and l_c_jones>=5);
+468          industry_m_cf=(n_m_cf>=30 and l_m_cf>=5);
+469          industry_m_dd=(n_m_dd>=30 and l_m_dd>=5);
+470          industry_m_jones=(n_m_jones>=30 and l_m_jones>=5);
+471          industry_t5a_cf=(n_t5a_cf>=30 and cf_t5a_cf>=5 and ret_t5a_cf>=5);
+472          industry_t5a_dd=(n_t5a_dd>=30 and cf_t5a_dd>=5 and ret_t5a_dd>=5);
+473          industry_t5a_jones=(n_t5a_jones>=30 and cf_t5a_jones>=5 and ret_t5a_jones>=5);
+474          industry_t5b_cf=(n_t5b_cf>=30 and cfchg_t5b_cf>=5 and ret_t5b_cf>=5);
+475          industry_t5b_dd=(n_t5b_dd>=30 and cfchg_t5b_dd>=5 and ret_t5b_dd>=5);
+476          industry_t5b_jones=(n_t5b_jones>=30 and cfchg_t5b_jones>=5 and ret_t5b_jones>=5);
+477          industry_t5c_cf=(n_t5c_cf>=30 and ind_t5c_cf>=5 and ret_t5c_cf>=5);
+478          industry_t5c_dd=(n_t5c_dd>=30 and ind_t5c_dd>=5 and ret_t5c_dd>=5);
+479          industry_t5c_jones=(n_t5c_jones>=30 and ind_t5c_jones>=5 and ret_t5c_jones>=5);
+480          industry_t5d_cf=(n_t5d_cf>=30 and cf_t5d_cf>=5 and cfchg_t5d_cf>=5 and ind_t5d_cf>=5 and ret_t5d_cf>=5);
+481          industry_t5d_dd=(n_t5d_dd>=30 and cf_t5d_dd>=5 and cfchg_t5d_dd>=5 and ind_t5d_dd>=5 and ret_t5d_dd>=5);
+482          industry_t5d_jones=(n_t5d_jones>=30 and cf_t5d_jones>=5 and cfchg_t5d_jones>=5 and ind_t5d_jones>=5 and
+482      ! ret_t5d_jones>=5);
+483        run;
+
+NOTE: There were 252 observations read from the data set WORK.INDUSTRY_COUNTS.
+NOTE: The data set WORK.INDUSTRY_FLAGS has 252 observations and 91 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+484        
+485        proc sort data=work.fit_samples; by sic3; run;
+
+NOTE: There were 99526 observations read from the data set WORK.FIT_SAMPLES.
+NOTE: The data set WORK.FIT_SAMPLES has 99526 observations and 85 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.10 seconds
+      
+
+486        proc sort data=work.industry_flags; by sic3; run;
+
+NOTE: There were 252 observations read from the data set WORK.INDUSTRY_FLAGS.
+NOTE: The data set WORK.INDUSTRY_FLAGS has 252 observations and 91 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+487        data out.main;
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+488          merge work.fit_samples(in=in_sample)
+489                work.industry_flags(keep=sic3 industry_a_cf industry_a_dd industry_a_jones
+490                  industry_b_cf industry_b_dd industry_b_jones
+491                  industry_c_cf industry_c_dd industry_c_jones
+492                  industry_m_cf industry_m_dd industry_m_jones
+493                  industry_t5a_cf industry_t5a_dd industry_t5a_jones
+494                  industry_t5b_cf industry_t5b_dd industry_t5b_jones
+495                  industry_t5c_cf industry_t5c_dd industry_t5c_jones
+496                  industry_t5d_cf industry_t5d_dd industry_t5d_jones);
+497          by sic3;
+498          if in_sample;
+499          array indflags {*} industry_a_cf industry_a_dd industry_a_jones
+500                  industry_b_cf industry_b_dd industry_b_jones
+501                  industry_c_cf industry_c_dd industry_c_jones
+502                  industry_m_cf industry_m_dd industry_m_jones
+503                  industry_t5a_cf industry_t5a_dd industry_t5a_jones
+504                  industry_t5b_cf industry_t5b_dd industry_t5b_jones
+505                  industry_t5c_cf industry_t5c_dd industry_t5c_jones
+506                  industry_t5d_cf industry_t5d_dd industry_t5d_jones;
+507          do _i=1 to dim(indflags); if missing(indflags[_i]) then indflags[_i]=0; end;
+508          keep gvkey datadate fyear sic3 curcd curcd_prev curcd_next
+509               currency_t_known currency_prev_known currency_next_known
+510               currency_tp_known currency_tn_known currency_tp_match currency_tn_match
+511               acc cf cf_lag cf_lead delta_cf drev gppe
+512               indadj_cf dcf ddelta_cf dind abnret dabnret dcf_cf
+513               ddelta_cf_x_delta_cf dind_indadj_cf dabnret_abnret
+514               sample_a_cf sample_a_dd sample_a_jones
+515               sample_b_cf sample_b_dd sample_b_jones
+516               sample_c_cf sample_c_dd sample_c_jones
+517               sample_m_cf sample_m_dd sample_m_jones
+518               sample_t5a_cf sample_t5a_dd sample_t5a_jones
+519               sample_t5b_cf sample_t5b_dd sample_t5b_jones
+520               sample_t5c_cf sample_t5c_dd sample_t5c_jones
+521               sample_t5d_cf sample_t5d_dd sample_t5d_jones
+522               industry_a_cf industry_a_dd industry_a_jones
+523               industry_b_cf industry_b_dd industry_b_jones
+524               industry_c_cf industry_c_dd industry_c_jones
+525               industry_m_cf industry_m_dd industry_m_jones
+526               industry_t5a_cf industry_t5a_dd industry_t5a_jones
+527               industry_t5b_cf industry_t5b_dd industry_t5b_jones
+528               industry_t5c_cf industry_t5c_dd industry_t5c_jones
+529               industry_t5d_cf industry_t5d_dd industry_t5d_jones;
+530          label acc='Accruals / average assets'
+531                cf='Operating cash flow / average assets'
+532                cf_lag='Prior-year CFO / current-year average assets'
+533                cf_lead='Following-year CFO / current-year average assets'
+534                delta_cf='Change in CFO / current-year average assets'
+535                drev='Change in net sales / average assets'
+536                gppe='Gross PPE / average assets'
+537                indadj_cf='CF less SIC3-year median CF'
+538                abnret='Fiscal-year stock return less CRSP equal-weighted return'
+539                dcf='Indicator: CF < 0'
+540                ddelta_cf='Indicator: change in CF < 0'
+541                dind='Indicator: industry-adjusted CF < 0'
+542                dabnret='Indicator: abnormal return < 0'
+543                dcf_cf='CF loss indicator x CF'
+544                ddelta_cf_x_delta_cf='Change-CF loss indicator x change in CF'
+545                dind_indadj_cf='Industry loss indicator x industry-adjusted CF'
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+546                dabnret_abnret='Abnormal-return loss indicator x abnormal return';
+547        run;
+
+NOTE: There were 99526 observations read from the data set WORK.FIT_SAMPLES.
+NOTE: There were 252 observations read from the data set WORK.INDUSTRY_FLAGS.
+NOTE: The data set OUT.MAIN has 99526 observations and 79 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+548        
+549        /* Fit-specific firm-year N and qualifying-industry counts are ordinary summaries. */
+550        proc sql;
+551          select count(*) as retained_main_firm_years,
+552            sum(sample_a_cf) as N_a_cf, sum(sample_a_dd) as N_a_dd, sum(sample_a_jones) as N_a_jones,
+553            sum(sample_b_cf) as N_b_cf, sum(sample_b_dd) as N_b_dd, sum(sample_b_jones) as N_b_jones,
+554            sum(sample_c_cf) as N_c_cf, sum(sample_c_dd) as N_c_dd, sum(sample_c_jones) as N_c_jones,
+555            sum(sample_m_cf) as N_m_cf, sum(sample_m_dd) as N_m_dd, sum(sample_m_jones) as N_m_jones,
+556            sum(sample_t5a_cf) as N_t5a_cf, sum(sample_t5a_dd) as N_t5a_dd, sum(sample_t5a_jones) as N_t5a_jones,
+557            sum(sample_t5b_cf) as N_t5b_cf, sum(sample_t5b_dd) as N_t5b_dd, sum(sample_t5b_jones) as N_t5b_jones,
+558            sum(sample_t5c_cf) as N_t5c_cf, sum(sample_t5c_dd) as N_t5c_dd, sum(sample_t5c_jones) as N_t5c_jones,
+559            sum(sample_t5d_cf) as N_t5d_cf, sum(sample_t5d_dd) as N_t5d_dd, sum(sample_t5d_jones) as N_t5d_jones
+560          from out.main;
+561          select sum(industry_a_cf) as industries_a_cf, sum(industry_a_dd) as industries_a_dd,
+562            sum(industry_a_jones) as industries_a_jones,
+563            sum(industry_b_cf) as industries_b_cf, sum(industry_b_dd) as industries_b_dd,
+564            sum(industry_b_jones) as industries_b_jones,
+565            sum(industry_c_cf) as industries_c_cf, sum(industry_c_dd) as industries_c_dd,
+566            sum(industry_c_jones) as industries_c_jones,
+567            sum(industry_m_cf) as industries_m_cf, sum(industry_m_dd) as industries_m_dd,
+568            sum(industry_m_jones) as industries_m_jones,
+569            sum(industry_t5a_cf) as industries_t5a_cf, sum(industry_t5a_dd) as industries_t5a_dd,
+570            sum(industry_t5a_jones) as industries_t5a_jones,
+571            sum(industry_t5b_cf) as industries_t5b_cf, sum(industry_t5b_dd) as industries_t5b_dd,
+572            sum(industry_t5b_jones) as industries_t5b_jones,
+573            sum(industry_t5c_cf) as industries_t5c_cf, sum(industry_t5c_dd) as industries_t5c_dd,
+574            sum(industry_t5c_jones) as industries_t5c_jones,
+575            sum(industry_t5d_cf) as industries_t5d_cf, sum(industry_t5d_dd) as industries_t5d_dd,
+576            sum(industry_t5d_jones) as industries_t5d_jones
+577          from work.industry_flags;
+578        quit;
+NOTE: The PROCEDURE SQL printed pages 13-14.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.02 seconds
+      
+
+579        
+580        proc contents data=out.main; run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+NOTE: The PROCEDURE CONTENTS printed pages 15-17.
+
+581        
+The SAS System                                                                                Tuesday, November  3, 2026 02:45:00 AM
+
+582        /* Ordinary summaries of the actual analysis samples for unit and scale review. */
+583        title 'Table 3 Panel A CF sample: scaled accounting variables';
+584        proc means data=out.main n nmiss mean std p25 median p75;
+585          where sample_a_cf=1;
+586          var acc cf;
+587        run;
+
+NOTE: There were 78963 observations read from the data set OUT.MAIN.
+      WHERE sample_a_cf=1;
+NOTE: The PROCEDURE MEANS printed page 18.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.17 seconds
+      
+
+588        title 'Table 4 CF sample: scaled accounting variables and abnormal return';
+589        proc means data=out.main n nmiss mean std p25 median p75;
+590          where sample_m_cf=1;
+591          var acc cf abnret;
+592        run;
+
+NOTE: There were 52735 observations read from the data set OUT.MAIN.
+      WHERE sample_m_cf=1;
+NOTE: The PROCEDURE MEANS printed page 19.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.19 seconds
+      
+
+593        title;
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           1:00.22
+      cpu time            1:15.75
+      

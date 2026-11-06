@@ -1,0 +1,2438 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+1          options errorabend;
+2          
+3          libname comp '/storage/sas/base/comp/d_na' access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname secmth '/storage/sas/base/comp/d_na/security' access=readonly;
+NOTE: Libref SECMTH was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+5          libname crsp '/storage/sas/base/crsp/a_stock' access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+6          libname ccm '/storage/sas/base/crsp/a_ccm' access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+7          libname ibes '/storage/sas/base/ibes' access=readonly;
+NOTE: Libref IBES was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/ibes
+8          libname wrdsapps '/storage/sas/base/wrdsapps/linking/iclink' access=readonly;
+NOTE: Libref WRDSAPPS was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/wrdsapps/linking/iclink
+9          libname out 'data';
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3124908438/attempt_02/data
+10         
+11         /* The market calendar provides the trading-day sequence for event windows. */
+12         data mkt0;
+13             set crsp.dsi(keep=date vwretd);
+14             where date between '01JAN1980'd and '31DEC2008'd;
+15             if vwretd in (-66,-77,-88,-99) then vwretd=.;
+16         run;
+3                                                          The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+
+NOTE: There were 7319 observations read from the data set CRSP.DSI.
+      WHERE (date>='01JAN1980'D and date<='31DEC2008'D);
+NOTE: The data set WORK.MKT0 has 7319 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+17         proc sort data=mkt0; by date; run;
+
+NOTE: There were 7319 observations read from the data set WORK.MKT0.
+NOTE: The data set WORK.MKT0 has 7319 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+18         data market;
+19             set mkt0;
+20             if not missing(date);
+21             mseq+1;
+22             format date date9.;
+23         run;
+
+NOTE: There were 7319 observations read from the data set WORK.MKT0.
+NOTE: The data set WORK.MARKET has 7319 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+24         
+25         /* Use final, domestic, consolidated industrial annual rows, FYEAR 1982-2003.
+26            Item 6 AT cancels from the source NOA identity and is not required here. */
+27         data fundraw;
+28             set comp.funda(keep=gvkey iid datadate fyear fyr indfmt consol popsrc datafmt upd
+29                 sich curcd curncd dltt dlc ceq pstk mib che ivao oiadp sale epspx ajex prcc_f
+30                 where=(fyear between 1982 and 2003 and indfmt='INDL' and consol='C'
+31                 and popsrc='D' and datafmt='STD' and upd=3));
+32         run;
+
+NOTE: There were 217525 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1982 and fyear<=2003) and (indfmt='INDL') and (consol='C') and (popsrc='D') and (datafmt='STD') and (upd=3);
+NOTE: The data set WORK.FUNDRAW has 217525 observations and 25 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.52 seconds
+      cpu time            0.52 seconds
+      
+
+33         proc sql;
+34             create table fcnt as
+35             select gvkey,fyear,count(*) as nrow
+36             from fundraw group by gvkey,fyear;
+NOTE: Table WORK.FCNT created, with 217523 rows and 3 columns.
+
+37             create table fdup as select * from fcnt where nrow ne 1;
+NOTE: Table WORK.FDUP created, with 2 rows and 3 columns.
+4                                                          The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+
+38             select count(*) into :n_fraw trimmed from fundraw;
+39             select count(*) into :n_fdup trimmed from fdup;
+40             select sum(lengthn(strip(gvkey))>6),sum(missing(gvkey))
+41               into :n_gvlong trimmed,:n_gvmiss trimmed from fundraw;
+42             select put(min(datadate),date9.),put(max(datadate),date9.),
+43                    min(fyear),max(fyear),min(year(datadate)),max(year(datadate))
+44               into :fmin trimmed,:fmax trimmed,:fymin trimmed,:fymax trimmed,
+45                    :calmin trimmed,:calmax trimmed
+46               from fundraw;
+47         quit;
+NOTE: The PROCEDURE SQL printed pages 1-4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.13 seconds
+      
+
+48         %put NOTE: COMP rows=&n_fraw duplicate GVKEY-FYEAR keys=&n_fdup FYEAR=&fymin to &fymax actual DATADATE=&fmin to &fmax
+48       ! calendar-year endpoints=&calmin to &calmax.;
+NOTE: COMP rows=217525 duplicate GVKEY-FYEAR keys=2 FYEAR=1982 to 2003 actual DATADATE=30JUN1982 to 31MAY2004 calendar-year 
+endpoints=1982 to 2004
+49         %put NOTE: selected COMP GVKEY source width=7 characters, observed key values longer than 6=&n_gvlong missing
+49       ! keys=&n_gvmiss.;
+NOTE: selected COMP GVKEY source width=7 characters, observed key values longer than 6=0 missing keys=0
+50         proc freq data=fundraw;
+51             tables curcd*curncd / missing;
+52         run;
+
+NOTE: There were 217525 observations read from the data set WORK.FUNDRAW.
+NOTE: The PROCEDURE FREQ printed pages 5-6.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+53         proc sql;
+54             select sum(not missing(curcd) and not missing(curncd) and curcd ne curncd),
+55                    sum(missing(curncd))
+56               into :n_native_diff trimmed,:n_native_miss trimmed from fundraw;
+57         quit;
+NOTE: The PROCEDURE SQL printed page 7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+58         %put NOTE: selected COMP reporting/native currency descriptor differences=&n_native_diff missing native
+58       ! codes=&n_native_miss.;
+NOTE: selected COMP reporting/native currency descriptor differences=3117 missing native codes=0
+59         proc sql;
+60             create table fundone as
+61             select a.* from fundraw as a inner join fcnt as b
+62               on a.gvkey=b.gvkey and a.fyear=b.fyear
+63             where b.nrow=1;
+NOTE: Table WORK.FUNDONE created, with 217521 rows and 25 columns.
+
+64         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+5                                                          The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+      real time           0.20 seconds
+      cpu time            0.21 seconds
+      
+
+65         data fundbase;
+66             set fundone;
+67             gvkey=strip(gvkey);
+68             iid=upcase(strip(iid));
+69             if nmiss(dltt,dlc,ceq,pstk,mib,che,ivao)=0 then
+70                 noa=dltt+dlc+ceq+pstk+mib-che-ivao;
+71             else noa=.;
+72             label noa='Net operating assets';
+73         run;
+
+NOTE: There were 217521 observations read from the data set WORK.FUNDONE.
+NOTE: The data set WORK.FUNDBASE has 217521 observations and 26 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+74         
+75         /* Verify the fiscal-year-end PRCC_F security price and its own currency on the
+76            same Compustat issue. Monthly matches use the same fiscal month and require
+77            the security close to equal PRCC_F; unresolved rows use only a close within
+78            seven calendar days, with the same GVKEY/IID and a unique daily currency. */
+79         data pricekey;
+80             set fundbase(keep=gvkey iid fyear datadate prcc_f);
+81             where fyear between 1983 and 2001 and not missing(prcc_f)
+82                and not missing(iid);
+83         run;
+
+NOTE: There were 148126 observations read from the data set WORK.FUNDBASE.
+      WHERE (fyear>=1983 and fyear<=2001) and (not MISSING(prcc_f)) and (not MISSING(iid));
+NOTE: The data set WORK.PRICEKEY has 148126 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+84         data secmonth;
+85             set secmth.sec_mthprc(keep=gvkey iid datadate prccm curcdm);
+86             where datadate between '01JAN1983'd and '31DEC2002'd;
+87             gvkey=strip(gvkey); iid=upcase(strip(iid)); curcdm=upcase(strip(curcdm));
+88         run;
+
+NOTE: There were 2462655 observations read from the data set SECMTH.SEC_MTHPRC.
+      WHERE (datadate>='01JAN1983'D and datadate<='31DEC2002'D);
+NOTE: The data set WORK.SECMONTH has 2462655 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.42 seconds
+      cpu time            0.41 seconds
+      
+
+89         proc sql;
+90             create table pricem0 as
+91             select a.gvkey,a.iid,a.fyear,a.datadate,a.prcc_f,
+92                    count(b.datadate) as mth_rows,
+6                                                          The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+93                    count(distinct upcase(strip(b.curcdm))) as mth_ccy_n,
+94                    min(upcase(strip(b.curcdm))) as mth_cur length=3,
+95                    max(b.datadate) as mth_date format=date9.,
+96                    min(abs(b.prccm-a.prcc_f)) as mth_gap
+97             from pricekey as a left join secmonth as b
+98               on a.gvkey=b.gvkey and a.iid=b.iid
+99              and b.datadate between intnx('month',a.datadate,0,'b')
+100                                and intnx('month',a.datadate,0,'e')
+101             and b.datadate<=a.datadate
+102            group by a.gvkey,a.iid,a.fyear,a.datadate,a.prcc_f;
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+NOTE: Table WORK.PRICEM0 created, with 148126 rows and 10 columns.
+
+103            create table pricem as
+104            select *,case when mth_rows=1 and mth_ccy_n=1
+105                               and mth_gap<=max(1e-8,abs(prcc_f)*1e-6)
+106                          then 1 else 0 end as mth_ok
+107            from pricem0;
+NOTE: Table WORK.PRICEM created, with 148126 rows and 11 columns.
+
+108        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           5.63 seconds
+      cpu time            5.99 seconds
+      
+
+109        proc sql;
+110            select count(*) into :n_pricekey trimmed from pricekey;
+111            select sum(mth_ok=1),sum(mth_rows=0),sum(mth_rows>0 and mth_ok ne 1)
+112              into :n_pricem trimmed,:n_pricenom trimmed,:n_pricemiss trimmed
+113            from pricem;
+114        quit;
+NOTE: The PROCEDURE SQL printed pages 8-9.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+115        %put NOTE: prior-year PRCC_F security price keys=&n_pricekey monthly price/currency matches=&n_pricem no monthly price
+115      ! row=&n_pricenom monthly price/currency unresolved=&n_pricemiss.;
+NOTE: prior-year PRCC_F security price keys=148126 monthly price/currency matches=132415 no monthly price row=13306 monthly 
+price/currency unresolved=2405
+116        
+117        /* CCM links are matched at the fiscal-year report date. Exact duplicate
+118           rows for the same PERMNO are collapsed before applying a priority rule;
+119           multiple highest-priority PERMNOs remain ambiguous and are not selected. */
+120        proc sql;
+121            create table lraw as
+122            select f.gvkey,f.fyear,l.lpermno as permno,
+123                   case when l.linkprim='P' then 4 else 0 end+
+124                   case when l.linktype='LC' then 2 else 1 end as score
+125            from fundbase as f inner join ccm.ccmxpf_lnkhist as l
+126              on f.gvkey=l.gvkey
+127            where l.linktype in ('LC','LU') and l.linkprim in ('P','C')
+128              and not missing(l.lpermno) and l.linkdt<=f.datadate
+129              and (missing(l.linkenddt) or l.linkenddt>=f.datadate);
+NOTE: Table WORK.LRAW created, with 140511 rows and 4 columns.
+
+7                                                          The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+130            create table lperm as
+131            select gvkey,fyear,permno,max(score) as score
+132            from lraw group by gvkey,fyear,permno;
+NOTE: Table WORK.LPERM created, with 140511 rows and 4 columns.
+
+133            create table lbest as
+134            select gvkey,fyear,max(score) as score
+135            from lperm group by gvkey,fyear;
+NOTE: Table WORK.LBEST created, with 140511 rows and 3 columns.
+
+136            create table lcnt as
+137            select a.gvkey,a.fyear,count(*) as nbest
+138            from lperm as a inner join lbest as b
+139              on a.gvkey=b.gvkey and a.fyear=b.fyear and a.score=b.score
+140            group by a.gvkey,a.fyear;
+NOTE: Table WORK.LCNT created, with 140511 rows and 3 columns.
+
+141            create table linkone as
+142            select a.gvkey,a.fyear,a.permno
+143            from lperm as a inner join lbest as b
+144              on a.gvkey=b.gvkey and a.fyear=b.fyear and a.score=b.score
+145            inner join lcnt as c on a.gvkey=c.gvkey and a.fyear=c.fyear
+146            where c.nbest=1;
+NOTE: Table WORK.LINKONE created, with 140511 rows and 3 columns.
+
+147            select count(*) into :n_link trimmed from linkone;
+148            select count(*) into :n_lamb trimmed from lcnt where nbest>1;
+149        quit;
+NOTE: The PROCEDURE SQL printed pages 10-11.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.28 seconds
+      cpu time            0.32 seconds
+      
+
+150        %put NOTE: unique effective CCM matches=&n_link firm-years with tied top links=&n_lamb.;
+NOTE: unique effective CCM matches=140511 firm-years with tied top links=0
+151        
+152        proc sql;
+153            create table price_link as
+154            select a.*,l.permno
+155            from pricem as a left join linkone as l
+156              on a.gvkey=l.gvkey and a.fyear=l.fyear;
+NOTE: Table WORK.PRICE_LINK created, with 148126 rows and 12 columns.
+
+157        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.09 seconds
+      
+
+158        data price_unres;
+159            set price_link;
+160            if mth_ok ne 1 and not missing(permno);
+161            gv_bucket=substr(gvkey,1,1);
+162        run;
+
+NOTE: There were 148126 observations read from the data set WORK.PRICE_LINK.
+NOTE: The data set WORK.PRICE_UNRES has 7385 observations and 13 variables.
+8                                                          The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+163        proc sql noprint;
+164            select count(distinct gvkey) into :n_price_gv trimmed from price_unres;
+165            %let price_gv0=;
+166            %let price_gv1=;
+167            %let price_gv2=;
+168            %let price_gv3=;
+169            %let price_gv4=;
+170            %let price_gv5=;
+171            %let price_gv6=;
+172            %let price_gv7=;
+173            %let price_gv8=;
+174            %let price_gv9=;
+175            %macro price_lists;
+176              %do j=0 %to 9;
+177                select distinct quote(strip(gvkey)) into :price_gv&j separated by ','
+178                from price_unres where gv_bucket="&j";
+179              %end;
+180            %mend;
+181            %price_lists;
+NOTE: No rows were selected.
+NOTE: No rows were selected.
+NOTE: No rows were selected.
+NOTE: No rows were selected.
+NOTE: No rows were selected.
+NOTE: No rows were selected.
+NOTE: No rows were selected.
+182        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+183        %put NOTE: indexed daily security-price fallback limited to &n_price_gv unresolved GVKEYs and seven prior calendar days.;
+NOTE: indexed daily security-price fallback limited to 1182 unresolved GVKEYs and seven prior calendar days.
+184        options msglevel=i;
+185        %macro read_price_index;
+186          %do j=0 %to 9;
+187            %let keylist=&&price_gv&j;
+188            %if %length(%superq(keylist)) > 0 %then %do;
+189              data pricepart;
+190                set secmth.sec_dprc(keep=gvkey iid datadate curcdd prccd
+191                    where=(gvkey in (&keylist)
+192                      and datadate between '01JAN1983'd and '31DEC2002'd)
+193                    idxname=gvkey);
+194                gvkey=strip(gvkey); iid=upcase(strip(iid)); curcdd=upcase(strip(curcdd));
+195              run;
+196              %if &j=0 %then %do;
+197                data price_day;
+198                  set pricepart;
+199                run;
+200              %end;
+201              %else %do;
+202                proc append base=price_day data=pricepart force; run;
+9                                                          The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+203              %end;
+204            %end;
+205          %end;
+206        %mend;
+207        data price_day;
+208            length gvkey $7 iid $4 curcdd $4 datadate prccd 8;
+209            stop;
+210        run;
+
+NOTE: Variable gvkey is uninitialized.
+NOTE: Variable iid is uninitialized.
+NOTE: Variable curcdd is uninitialized.
+NOTE: Variable datadate is uninitialized.
+NOTE: Variable prccd is uninitialized.
+NOTE: The data set WORK.PRICE_DAY has 0 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+211        %read_price_index;
+INFO: Index gvkey selected for WHERE clause optimization.
+
+NOTE: There were 4078387 observations read from the data set SECMTH.SEC_DPRC.
+      WHERE gvkey in ('001045', '001076', '001081', '001097', '001164', '001181', '001186', '001238', '001263', '001271', '001286', 
+      '001311', '001324', '001333', '001338', '001370', '001374', '001414', '001472', '001473', '001624', '001627', '001679', 
+      '001703', '001819', '001837', '001861', '001982', '002006', '002013', '002055', '002058', '002085', '002124', '002128', 
+      '002137', '002149', '002161', '002163', '002164', '002176', '002183', '002230', '002270', '002295', '002316', '002336', 
+      '002337', '002357', '002369', '002408', '002484', '002489', '002490', '002519', '002578', '002581', '002620', '002644', 
+      '002662', '002677', '002694', '002696', '002697', '002698', '002706', '002710', '002756', '002759', '002777', '002783', 
+      '002811', '002812', '002820', '002849', '002896', '002902', '002940', '002942', '002962', '002975', '003003', '003078', 
+      '003105', '003130', '003212', '003220', '003226', '003230', '003235', '003297', '003358', '003375', '003383', '003414', 
+      '003461', '003480', '003540', '003581', '003607', '003618', '003625', '003693', '003708', '003711', '003713', '003734', 
+      '003782', '003814', '003820', '003851', '003856', '003907', '003918', '003937', '003946', '004016', '004022', '004034', 
+      '004049', '004094', '004121', '004133', '004162', '004194', '004205', '004296', '004302', '004316', '004329', '004352', 
+      '004367', '004410', '004412', '004471', '004477', '004497', '004506', '004523', '004555', '004568', '004600', '004666', 
+      '004748', '004777', '004826', '004828', '004838', '004850', '004892', '004920', '004936', '004987', '005020', '005073', 
+      '005076', '005121', '005130', '005153', '005156', '005284', '005307', '005377', '005379', '005381', '005422', '005448', 
+      '005508', '005558', '005568', '005583', '005600', '005621', '005626', '005643', '005670', '005681', '005718', '005726', 
+      '005735', '005740', '005763', '005802', '005807', '005826', '005849', '005852', '005903', '005965', '005968', '005976', 
+      '006029', '006062', '006074', '006135', '006180', '006197', '006218', '006233', '006239', '006242', '006269', '006285', 
+      '006307', '006310', '006313', '006315', '006346', '006347', '006379', '006396', '006424', '006497', '006557', '006598', 
+      '006693', '006710', '006711', '006714', '006716', '006737', '006788', '006841', '006896', '006919', '006930', '006936', 
+      '006946', '006974', '007066', '007079', '007086', '007102', '007117', '007133', '007140', '007167', '007179', '007186', 
+      '007199', '007208', '007267', '007276', '007291', '007304', '007316', '007336', '007398', '007422', '007447', '007466', 
+      '007469', '007528', '007596', '007672', '007761', '007798', '007841', '007860', '007882', '007909', '007919', '007935', 
+      '007954', '007980', '007984', '008001', '008003', '008009', '008018', '008033', '008087', '008092', '008095', '008105', 
+      '008184', '008185', '008210', '008214', '008222', '008233', '008240', '008244', '008265', '008266', '008296', '008333', 
+      '008357', '008368', '008387', '008390', '008404', '008434', '008438', '008439', '008440', '008490', '008514', '008515', 
+      '008523', '008558', '008577', '008582', '008605', '008626', '008638', '008644', '008669', '008708', '008736', '008754', 
+      '008787', '008794', '008805', '008818', '008826', '008867', '008870', '008919', '008940', '008974', '008975', '009020', 
+      '009061', '009073', '009102', '009118', '009147', '009208', '009215', '009240', '009256', '009264', '009413', '009441', 
+      '009448', '009530', '009551', '009558', '009598', '009603', '009613', '009636', '009771', '009774', '009785', '009797', 
+      '009835', '009919', '009930', '009942', '009969', '010062', '010095', '010108', '010110', '010112', '010121', '010166', 
+      '010174', '010199', '010213', '010221', '010273', '010310', '010386', '010427', '010458', '010480', '010484', '010490', 
+      '010507', '010522', '010534', '010550', '010565', '010567', '010573', '010585', '010599', '010639', '010658', '010671', 
+      '010698', '010726', '010740', '010781', '010795', '010804', '010846', '010857', '010877', '010880', '010884', '010946', 
+      '010981', '010984', '010994', '011068', '011070', '011151', '011153', '011162', '011212', '011217', '011227', '011278', 
+10                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+      '011313', '011389', '011394', '011424', '011452', '011462', '011535', '011538', '011555', '011644', '011699', '011707', 
+      '011708', '011753', '011759', '011761', '011781', '011805', '011807', '011808', '011815', '011845', '011877', '011899', 
+      '011900', '011901', '011914', '011925', '011944', '011966', '011980', '011982', '011986', '012052', '012067', '012108', 
+      '012109', '012111', '012118', '012126', '012131', '012134', '012144', '012145', '012218', '012236', '012240', '012246', 
+      '012259', '012270', '012293', '012321', '012323', '012338', '012354', '012355', '012359', '012366', '012367', '012368', 
+      '012369', '012387', '012410', '012434', '012441', '012485', '012491', '012492', '012506', '012507', '012513', '012515', 
+      '012551', '012575', '012576', '012580', '012595', '012599', '012603', '012610', '012616', '012649', '012679', '012680', 
+      '012699', '012705', '012709', '012724', '012746', '012751', '012752', '012761', '012794', '012821', '012822', '012824', 
+      '012845', '012846', '012852', '012858', '012859', '012860', '012879', '012886', '012913', '012941', '012959', '013003', 
+      '013008', '013027', '013031', '013036', '013092', '013110', '013123', '013132', '013135', '013139', '013141', '013155', 
+      '013190', '013199', '013240', '013268', '013281', '013316', '013369', '013378', '013382', '013388', '013395', '013400', 
+      '013402', '013427', '013431', '013437', '013442', '013453', '013465', '013466', '013482', '013484', '013505', '013506', 
+      '013512', '013516', '013517', '013520', '013521', '013522', '013556', '013615', '013634', '013657', '013699', '013711', 
+      '013712', '013714', '013775', '013827', '013841', '013842', '013849', '013897', '013908', '013912', '013927', '013936', 
+      '013940', '013947', '013959', '013962', '013984', '013990', '013992', '014007', '014009', '014010', '014011', '014022', 
+      '014037', '014041', '014048', '014054', '014056', '014071', '014076', '014077', '014080', '014086', '014100', '014102', 
+      '014146', '014148', '014186', '014190', '014209', '014211', '014213', '014216', '014240', '014248', '014249', '014252', 
+      '014265', '014269', '014270', '014275', '014290', '014292', '014307', '014310', '014316', '014344', '014351', '014353', 
+      '014357', '014380', '014391', '014395', '014406', '014447', '014459', '014467', '014483', '014489', '014491', '014503', 
+      '014506', '014525', '014527', '014529', '014543', '014549', '014555', '014567', '014574', '014576', '014581', '014590', 
+      '014600', '014603', '014607', '014611', '014617', '014628', '014649', '014652', '014793', '014805', '014855', '014877', 
+      '014913', '014926', '014942', '014984', '014991', '014999', '015023', '015035', '015037', '015055', '015070', '015086', 
+      '015092', '015113', '015139', '015140', '015150', '015153', '015168', '015172', '015173', '015177', '015242', '015252', 
+      '015294', '015298', '015321', '015338', '015346', '015349', '015362', '015431', '015444', '015451', '015453', '015466', 
+      '015467', '015471', '015490', '015505', '015524', '015533', '015580', '015581', '015633', '015664', '015706', '015724', 
+      '015752', '015798', '015803', '016160', '016161', '016163', '016423', '016466', '016468', '016471', '016476', '016477', 
+      '016483', '016582', '016681', '016714', '016794', '016878', '017079', '017080', '017120', '017130', '017197', '017239', 
+      '017254', '017286', '017643', '017828', '018338', '018614', '018729', '018957', '019072', '019437', '019439', '019692', 
+      '019824', '019995', '020045', '020069', '020138', '020154', '020198', '020214', '020243', '020245', '020259', '020302', 
+      '020309', '020338', '020339', '020351', '020417', '020423', '020492', '020494', '020520', '020570', '020588', '020635', 
+      '020653', '020666', '020695', '020696', '020721', '020747', '020783', '020787', '020797', '020800', '020847', '020892', 
+      '020899', '020906', '021066', '021149', '021158', '021170', '021213', '021493', '021686', '021719', '021864', '021879', 
+      '021957', '021959', '022049', '022251', '022260', '022398', '022447', '022808', '022957', '023052', '023067', '023068', 
+      '023170', '023223', '023504', '023590', '023700', '023764', '023769', '023811', '023848', '023929', '023988', '024022', 
+      '024085', '024096', '024187', '024190', '024283', '024287', '024293', '024326', '024368', '024370', '024384', '024390', 
+      '024395', '024412', '024415', '024428', '024479', '024536', '024544', '024625', '024704', '024712', '024727', '024840', 
+      '024844', '024909', '024931', '024943', '025053', '025092', '025146', '025157', '025167', '025188', '025274', '025291', 
+      '025296', '025324', '025334', '025361', '025389', '025495', '025501', '025536', '025554', '025570', '025578', '025581', 
+      '025617', '025621', '025660', '025672', '025750', '025767', '025785', '025790', '025874', '025894', '025903', '025921', 
+      '025937', '025946', '025964', '025985', '026019', '026042', '026049', '026074', '026087', '026096', '026101', '026159', 
+      '026171', '026189', '026244', '026264', '026325', '026355', '026487', '026759', '026768', '026800', '026821', '026830', 
+      '026893', '026967', '026969', '027025', '027301', '027522', '027540', '027598', '027614', '027786', '027794', '027889', 
+      '027896', '027908', '027923', '027957', '027971', '027991', '028018', '028089', '028150', '028165', '028248', '028272', 
+      '028286', '028299', '028320', '028355', '028378', '028432', '028456', '028485', '028543', '028563', '028564', '028602', 
+      '028603', '028708', '028711', '028724', '028787', '028877', '028930', '028936', '028937', '028983', '029082', '029202', 
+      '029248', '029290', '029320', '029360', '029397', '029552', '029562', '029627', '029711', '029731', '029767', '029873', 
+      '029909', '029953', '029955', '030095', '030098', '030100', '030110', '030165', '030169', '030198', '030200', '030228', 
+      '030304', '030312', '030331', '030343', '030365', '030436', '030438', '030448', '030559', '030760', '030779', '030863', 
+      '030865', '030893', '030923', '030950', '030980', '031037', '031043', '031105', '031448', '031629', '031720', '060802', 
+      '060835', '060898', '060916', '060923', '061064', '061081', '061084', '061094', '061153', '061155', '061163', '061409', 
+      '061572', '061721', '061743', '061746', '061750', '061813', '061872', '061877', '061922', '062073', '062324', '062362', 
+      '062396', '062403', '062491', '062640', '062689', '062836', '062865', '062870', '062965', '063000', '063005', '063023', 
+      '063085', '063493', '063562', '063590', '063605', '063637', '063669', '063741', '063755', '063769', '063800', '063874', 
+      '063907', '063942', '063951', '063952', '063987', '064055', '064072', '064079', '064132', '064150', '064152', '064423', 
+      '064577', '064597', '064634', '064733', '065074', '065226', '065261', '065275', '065350', '065448', '065459', '065489', 
+      '065501', '065533', '065562', '065581', '065587', '065669', '065679', '065697', '065706', '065780', '065825', '065921', 
+      '065962', '065986', '066053', '066060', '066529', '066544', '066675', '066680') and (datadate>='01JAN1983'D and 
+      datadate<='31DEC2002'D);
+11                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+NOTE: The data set WORK.PRICEPART has 4078387 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.90 seconds
+      cpu time            1.89 seconds
+      
+
+
+NOTE: There were 4078387 observations read from the data set WORK.PRICEPART.
+NOTE: The data set WORK.PRICE_DAY has 4078387 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.22 seconds
+      cpu time            0.23 seconds
+      
+
+INFO: Index gvkey selected for WHERE clause optimization.
+
+NOTE: There were 101469 observations read from the data set SECMTH.SEC_DPRC.
+      WHERE gvkey in ('100114', '100243', '100477', '100644', '100862', '100956', '101256', '101264', '101718', '105576', '105667', 
+      '106305', '106501', '106519', '108246', '108482', '108645', '108718', '110326', '110804', '111486', '111489', '111491', 
+      '111631', '111719', '111873', '111974', '112030', '112095', '112116', '112759', '113491', '114303', '114484', '116592', 
+      '118122', '118284', '119394', '119474', '120301', '120458', '120824', '121844', '121934', '122096', '122116', '123415', 
+      '123500', '124042', '124050', '124441', '124994', '125575', '126122', '126136', '126296', '126600', '126716', '129078', 
+      '129518', '130138', '132538', '132698', '133049', '133289', '133346', '133767', '133870', '133945', '135484', '135990', 
+      '136648', '137435', '137611', '138601', '138607', '139401', '139662', '140033', '140447', '140756', '141462', '141845', 
+      '142460', '144496', '144990', '145308') and (datadate>='01JAN1983'D and datadate<='31DEC2002'D);
+NOTE: The data set WORK.PRICEPART has 101469 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.12 seconds
+      
+
+
+NOTE: Appending WORK.PRICEPART to WORK.PRICE_DAY.
+ 
+INFO: Engine's fast-append process in use.
+INFO: 05:22:32 Reading DATA file, updating BASE file
+INFO: Starting data set size is 2002 pages
+INFO: Engine's block-read method is in use.
+INFO: Engine's block-write  method is in use.
+INFO: Ending data set size is 2051 pages, 49 added.
+INFO: 00:00:00 Elapsed time
+INFO: 05:22:32 Finished updating BASE file
+ 
+NOTE: There were 101469 observations read from the data set WORK.PRICEPART.
+NOTE: 101469 observations added.
+NOTE: The data set WORK.PRICE_DAY has 4179856 observations and 5 variables.
+NOTE: PROCEDURE APPEND used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+INFO: Index gvkey selected for WHERE clause optimization.
+
+NOTE: There were 9332 observations read from the data set SECMTH.SEC_DPRC.
+      WHERE gvkey in ('201794', '208625', '218399', '222286', '222519', '224604', '230796', '233397') and (datadate>='01JAN1983'D 
+      and datadate<='31DEC2002'D);
+NOTE: The data set WORK.PRICEPART has 9332 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+12                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+
+NOTE: Appending WORK.PRICEPART to WORK.PRICE_DAY.
+ 
+INFO: Engine's fast-append process in use.
+INFO: 05:22:32 Reading DATA file, updating BASE file
+INFO: Starting data set size is 2051 pages
+INFO: Engine's block-read method is in use.
+INFO: Engine's block-write  method is in use.
+INFO: Ending data set size is 2056 pages, 5 added.
+INFO: 00:00:00 Elapsed time
+INFO: 05:22:32 Finished updating BASE file
+ 
+NOTE: There were 9332 observations read from the data set WORK.PRICEPART.
+NOTE: 9332 observations added.
+NOTE: The data set WORK.PRICE_DAY has 4189188 observations and 5 variables.
+NOTE: PROCEDURE APPEND used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+212        options msglevel=n;
+213        proc sql;
+214            create table pricedate0 as
+215            select a.gvkey,a.iid,a.fyear,a.datadate,a.prcc_f,
+216                   max(b.datadate) as price_date format=date9.
+217            from price_unres as a left join price_day as b
+218              on a.gvkey=b.gvkey and a.iid=b.iid
+219             and b.datadate between a.datadate-7 and a.datadate
+220            group by a.gvkey,a.iid,a.fyear,a.datadate,a.prcc_f;
+NOTE: Table WORK.PRICEDATE0 created, with 7385 rows and 6 columns.
+
+221            create table priceday as
+222            select a.gvkey,a.iid,a.fyear,a.datadate,a.prcc_f,p.price_date,
+223                   count(b.datadate) as day_rows,
+224                   count(distinct upcase(strip(b.curcdd))) as day_ccy_n,
+225                   min(upcase(strip(b.curcdd))) as day_cur length=3,
+226                   min(abs(b.prccd-a.prcc_f)) as day_gap,
+227                   a.datadate-p.price_date as price_age
+228            from price_unres as a left join pricedate0 as p
+229              on a.gvkey=p.gvkey and a.iid=p.iid and a.fyear=p.fyear
+230               and a.datadate=p.datadate
+231            left join price_day as b
+232              on a.gvkey=b.gvkey and a.iid=b.iid and p.price_date=b.datadate
+233            group by a.gvkey,a.iid,a.fyear,a.datadate,a.prcc_f,p.price_date;
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+NOTE: Table WORK.PRICEDAY created, with 7385 rows and 11 columns.
+
+234            create table price_final as
+235            select a.gvkey,a.iid,a.fyear,a.datadate,a.prcc_f,
+236               case when a.mth_ok=1 then a.mth_cur
+237                    when b.day_rows=1 and b.day_ccy_n=1 and b.price_age between 0 and 7
+238                     and b.day_gap<=max(1e-8,abs(a.prcc_f)*1e-6) then b.day_cur
+239                    else '' end as price_cur length=3,
+240               case when a.mth_ok=1 then 1
+13                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+241                    when b.day_rows=1 and b.day_ccy_n=1 and b.price_age between 0 and 7
+242                     and b.day_gap<=max(1e-8,abs(a.prcc_f)*1e-6) then 1
+243                    else 0 end as price_ok,
+244               case when a.mth_ok=1 then a.mth_date else b.price_date end as price_date format=date9.,
+245               case when a.mth_ok=1 then 'MONTH'
+246                    when b.day_rows=1 and b.day_ccy_n=1 and b.price_age between 0 and 7
+247                     and b.day_gap<=max(1e-8,abs(a.prcc_f)*1e-6) then 'DAY_7'
+248                    when missing(b.day_rows) or b.day_rows=0 then 'NO_DAILY_7'
+249                    when b.day_ccy_n ne 1 then 'AMBIG_DAILY'
+250                    when b.day_gap>max(1e-8,abs(a.prcc_f)*1e-6) then 'PRICE_MISMATCH'
+251                    else 'UNRESOLVED' end as price_status length=16,
+252               case when a.mth_ok=1 then . else b.price_age end as price_age,
+253               a.mth_rows,a.mth_ccy_n,a.mth_gap,b.day_rows,b.day_ccy_n,b.day_gap
+254            from pricem as a left join priceday as b
+255              on a.gvkey=b.gvkey and a.iid=b.iid and a.fyear=b.fyear
+256               and a.datadate=b.datadate;
+NOTE: Table WORK.PRICE_FINAL created, with 148126 rows and 16 columns.
+
+257            create table fundprice as
+258            select a.*,p.price_cur,p.price_ok,p.price_date,p.price_status,p.price_age
+259            from fundbase as a left join price_final as p
+260              on a.gvkey=p.gvkey and a.iid=p.iid and a.fyear=p.fyear
+261               and a.datadate=p.datadate;
+NOTE: Table WORK.FUNDPRICE created, with 217521 rows and 31 columns.
+
+262            select count(*) into :n_price_verified trimmed from price_final where price_ok=1;
+263            select count(*) into :n_price_unverified trimmed from price_final where price_ok ne 1;
+264        quit;
+NOTE: The PROCEDURE SQL printed pages 12-13.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.31 seconds
+      cpu time            2.38 seconds
+      
+
+265        %put NOTE: fiscal-year-end security prices verified=&n_price_verified unverified=&n_price_unverified, with monthly
+265      ! price/currency or same-issue daily price/currency within seven days.;
+NOTE: fiscal-year-end security prices verified=132478 unverified=15648, with monthly price/currency or same-issue daily 
+price/currency within seven days.
+266        proc freq data=price_final;
+267            tables price_status*price_cur / missing;
+268        run;
+
+NOTE: There were 148126 observations read from the data set WORK.PRICE_FINAL.
+NOTE: The PROCEDURE FREQ printed page 14.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+269        
+270        /* Exact FYEAR joins preserve gaps and retain the two-year lag and one-year
+271           lead needed for changes and future DuPont levels. */
+272        proc sql;
+273            create table panel0 as
+274            select a.gvkey,a.fyear,a.datadate,a.sich,a.curcd,a.curncd,a.noa,a.sale,a.oiadp,
+275                   a.iid as iid0,a.epspx,a.ajex,a.prcc_f,
+276                   p.iid as iidm1,p.prcc_f as prccm1,p.price_cur as prccm1_cur,
+277                   p.price_ok as prccm1_verified,p.price_date as prccm1_date,
+14                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+278                   p.price_status as prccm1_price_status,p.price_age as prccm1_price_age,
+279                   p.datadate as datam1,p.noa as noam1,p.sale as salem1,
+280                   p.oiadp as opm1,p.epspx as epsm1,p.ajex as ajexm1,
+281                   p.curcd as curm1,p.curncd as curnm1,
+282                   q.datadate as datam2,q.noa as noam2,q.curcd as curm2,q.curncd as curnm2,
+283                   n.datadate as datap1,n.noa as noap1,n.sale as salep1,
+284                   n.oiadp as opp1,n.curcd as curp1,n.curncd as curnp1,
+285                   l.permno,lp.permno as permm1
+286            from fundprice as a
+287            left join fundprice as p on a.gvkey=p.gvkey and p.fyear=a.fyear-1
+288            left join fundprice as q on a.gvkey=q.gvkey and q.fyear=a.fyear-2
+289            left join fundprice as n on a.gvkey=n.gvkey and n.fyear=a.fyear+1
+290            left join linkone as l on a.gvkey=l.gvkey and a.fyear=l.fyear
+291            left join linkone as lp on a.gvkey=lp.gvkey and lp.fyear=a.fyear-1
+292            where a.fyear between 1984 and 2002;
+NOTE: Table WORK.PANEL0 created, with 192113 rows and 40 columns.
+
+293            select count(*) into :n_panel trimmed from panel0;
+294            select sum(missing(datam2)),sum(missing(datam1)),sum(missing(datap1)),
+295                   put(min(datadate),date9.),put(max(datadate),date9.),
+296                   put(min(datap1),date9.),put(max(datap1),date9.),
+297                   min(fyear),max(fyear)
+298              into :n_m2 trimmed,:n_m1 trimmed,:n_p1 trimmed,
+299                   :pmin trimmed,:pmax trimmed,:leadmin trimmed,:leadmax trimmed,
+300                   :pyearmin trimmed,:pyearmax trimmed from panel0;
+301        quit;
+NOTE: The PROCEDURE SQL printed pages 15-16.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.70 seconds
+      cpu time            1.02 seconds
+      
+
+302        %put NOTE: target panel=&n_panel absent FYEAR-2 rows=&n_m2 FYEAR-1=&n_m1 FYEAR+1=&n_p1.;
+NOTE: target panel=192113 absent FYEAR-2 rows=30444 FYEAR-1=15246 FYEAR+1=12737
+303        %put NOTE: target actual DATADATE=&pmin to &pmax, final lead DATADATE=&leadmin to &leadmax for FYEAR=&pyearmin to
+303      ! &pyearmax.;
+NOTE: target actual DATADATE=30JUN1984 to 31MAY2003, final lead DATADATE=30JUN1985 to 31MAY2004 for FYEAR=1984 to 2002
+304        proc sql;
+305            create table permset as select distinct permno from panel0 where not missing(permno);
+NOTE: Table WORK.PERMSET created, with 17218 rows and 1 columns.
+
+306        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+307        
+308        /* Preserve product-specific I/B/E/S currency fields and inspect their raw
+309           values before requiring exact currency matches. USFIRM is a source flag,
+310           not a domicile or currency code. */
+311        data actraw;
+312            set ibes.actu_epsus(keep=ticker pends measure pdicity anndats actdats value
+313                curr_act usfirm
+314                where=(measure='EPS' and pdicity='ANN' and usfirm=1
+315                and pends between '01JAN1982'd and '31DEC2005'd));
+316        run;
+
+15                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+NOTE: There were 154097 observations read from the data set IBES.ACTU_EPSUS.
+      WHERE (measure='EPS') and (pdicity='ANN') and (usfirm=1) and (pends>='01JAN1982'D and pends<='31DEC2005'D);
+NOTE: The data set WORK.ACTRAW has 154097 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+317        proc freq data=actraw;
+318            tables curr_act*usfirm / missing;
+319        run;
+
+NOTE: There were 154097 observations read from the data set WORK.ACTRAW.
+NOTE: The PROCEDURE FREQ printed pages 17-18.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+320        proc sql;
+321            create table ticset as
+322            select distinct h.ticker
+323            from wrdsapps.ibcrsphist as h inner join permset as p on h.permno=p.permno
+324            where h.sdate<='31DEC2005'd and (missing(h.edate) or h.edate>='01JAN1980'd);
+NOTE: Table WORK.TICSET created, with 13446 rows and 1 columns.
+
+325            select count(*) into :n_tics trimmed from ticset;
+326            create table sumraw as
+327            select s.ticker,s.statpers,s.measure,s.fiscalp,s.fpi,s.curcode,
+328                   s.medest,s.fpedats,s.usfirm
+329            from ibes.statsumu_epsus as s
+330            where s.ticker in (select t.ticker from ticset as t)
+331              and s.measure='EPS' and s.fiscalp='ANN' and s.fpi in ('1','2')
+332              and s.usfirm=1 and s.statpers between '01JAN1980'd and '31DEC2005'd
+333              and s.fpedats between '01JAN1982'd and '31DEC2005'd;
+NOTE: Table WORK.SUMRAW created, with 2061047 rows and 9 columns.
+
+334            select count(*) into :n_sraw trimmed from sumraw;
+335        quit;
+NOTE: The PROCEDURE SQL printed pages 19-20.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.93 seconds
+      cpu time            0.93 seconds
+      
+
+336        %put NOTE: sample-linked I/B/E/S tickers=&n_tics summary rows=&n_sraw.;
+NOTE: sample-linked I/B/E/S tickers=13446 summary rows=2061047
+337        proc freq data=sumraw;
+338            tables curcode*fpi / missing;
+339        run;
+
+NOTE: There were 2061047 observations read from the data set WORK.SUMRAW.
+NOTE: The PROCEDURE FREQ printed page 21.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.09 seconds
+      
+
+16                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+340        proc datasets lib=work nolist;
+341            delete ticset;
+342        quit;
+
+NOTE: Deleting WORK.TICSET (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+343        
+344        /* Actual event rows: link the smaller actual table to active PERMNOs first,
+345           then match exact period end and the same CCM PERMNO. */
+346        proc sql;
+347            create table actlinked as
+348            select distinct a.ticker,a.pends,a.anndats,a.actdats,a.value,a.curr_act,h.permno
+349            from actraw as a inner join wrdsapps.ibcrsphist as h on a.ticker=h.ticker
+350              and h.sdate<=a.anndats and (missing(h.edate) or h.edate>=a.anndats)
+351            where not missing(a.anndats) and not missing(a.actdats)
+352              and not missing(a.value);
+NOTE: Table WORK.ACTLINKED created, with 110482 rows and 7 columns.
+
+353            create table actmap as
+354            select distinct p.gvkey,p.fyear,p.curcd,p.permno,a.ticker,a.pends,
+355                   a.anndats,a.actdats,a.value,a.curr_act
+356            from panel0 as p inner join actlinked as a
+357              on p.datadate=a.pends and p.permno=a.permno;
+NOTE: Table WORK.ACTMAP created, with 5925640 rows and 10 columns.
+
+358        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.82 seconds
+      cpu time            3.20 seconds
+      
+
+359        data actmatch;
+360            set actmap;
+361            if not missing(curr_act) and not missing(curcd) and
+362               upcase(strip(curr_act))=upcase(strip(curcd));
+363        run;
+
+NOTE: There were 5925640 observations read from the data set WORK.ACTMAP.
+NOTE: The data set WORK.ACTMATCH has 4734728 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.68 seconds
+      cpu time            0.68 seconds
+      
+
+364        proc sql;
+365            create table annpick as
+366            select gvkey,fyear,min(anndats) as ann_date
+367            from actmatch group by gvkey,fyear;
+NOTE: Table WORK.ANNPICK created, with 132878 rows and 3 columns.
+
+368            create table actpick as
+369            select a.gvkey,a.fyear,a.ann_date,min(m.actdats) as actdate
+370            from annpick as a inner join actmatch as m
+371              on a.gvkey=m.gvkey and a.fyear=m.fyear and a.ann_date=m.anndats
+17                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+372            where m.actdats>=a.ann_date
+373            group by a.gvkey,a.fyear,a.ann_date;
+NOTE: Table WORK.ACTPICK created, with 132878 rows and 4 columns.
+
+374            create table actsel0 as
+375            select m.* from actmatch as m inner join actpick as p
+376              on m.gvkey=p.gvkey and m.fyear=p.fyear and m.anndats=p.ann_date
+377              and m.actdats=p.actdate;
+NOTE: Table WORK.ACTSEL0 created, with 146671 rows and 10 columns.
+
+378            create table actcnt as
+379            select gvkey,fyear,count(*) as nact
+380            from actsel0 group by gvkey,fyear;
+NOTE: Table WORK.ACTCNT created, with 132878 rows and 3 columns.
+
+381            create table actsel as
+382            select a.*,a.anndats as ann_date from actsel0 as a inner join actcnt as c
+383              on a.gvkey=c.gvkey and a.fyear=c.fyear
+384            where c.nact=1;
+NOTE: Table WORK.ACTSEL created, with 122805 rows and 11 columns.
+
+385            select count(*) into :n_act trimmed from actsel;
+386            select count(*) into :n_actamb trimmed from actcnt where nact>1;
+387        quit;
+NOTE: The PROCEDURE SQL printed pages 22-23.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.76 seconds
+      cpu time            2.50 seconds
+      
+
+388        %put NOTE: unique currency-matched I/B/E/S actual-event rows=&n_act ambiguous selected actuals=&n_actamb.;
+NOTE: unique currency-matched I/B/E/S actual-event rows=122805 ambiguous selected actuals=10073
+389        proc datasets lib=work nolist;
+390            delete actraw actlinked actmap actmatch annpick actpick actsel0 actcnt;
+391        quit;
+
+NOTE: Deleting WORK.ACTRAW (memtype=DATA).
+NOTE: Deleting WORK.ACTLINKED (memtype=DATA).
+NOTE: Deleting WORK.ACTMAP (memtype=DATA).
+NOTE: Deleting WORK.ACTMATCH (memtype=DATA).
+NOTE: Deleting WORK.ANNPICK (memtype=DATA).
+NOTE: Deleting WORK.ACTPICK (memtype=DATA).
+NOTE: Deleting WORK.ACTSEL0 (memtype=DATA).
+NOTE: Deleting WORK.ACTCNT (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.14 seconds
+      
+
+392        
+393        /* Forecast period ends, rather than a fixed FPI rank around a report, identify
+394           the fiscal year. FPI is retained for diagnostics because its rank rolls after
+395           the current year is reported. */
+396        proc sql;
+397            create table sumlink as
+398            select s.ticker,s.statpers,s.measure,s.fiscalp,s.fpi,s.curcode,
+399                   s.medest,s.fpedats,s.usfirm,h.permno
+400            from sumraw as s inner join wrdsapps.ibcrsphist as h on s.ticker=h.ticker
+18                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+401              and h.sdate<=s.statpers and (missing(h.edate) or h.edate>=s.statpers);
+NOTE: Table WORK.SUMLINK created, with 2032564 rows and 10 columns.
+
+402            create table smap0 as
+403            select distinct p.gvkey,p.fyear,p.permno,p.curcd,a.ann_date,
+404                   case when s.fpedats=p.datadate then 'T' else 'N' end as target length=1,
+405                   s.ticker,s.statpers,s.fpedats,s.fpi,s.curcode,s.medest
+406            from panel0 as p inner join actsel as a
+407              on p.gvkey=a.gvkey and p.fyear=a.fyear
+408            inner join sumlink as s on s.permno=p.permno
+409              and (s.fpedats=p.datadate or (not missing(p.datap1) and s.fpedats=p.datap1))
+410            where not missing(s.statpers) and not missing(s.medest)
+411              and not missing(s.curcode) and not missing(p.curcd)
+412              and upcase(strip(s.curcode))=upcase(strip(p.curcd));
+NOTE: Table WORK.SMAP0 created, with 16150222 rows and 12 columns.
+
+413            create table smapcnt as
+414            select gvkey,fyear,target,statpers,count(*) as nsum
+415            from smap0 group by gvkey,fyear,target,statpers;
+NOTE: Table WORK.SMAPCNT created, with 4716192 rows and 5 columns.
+
+416            create table smap as
+417            select a.* from smap0 as a inner join smapcnt as b
+418              on a.gvkey=b.gvkey and a.fyear=b.fyear and a.target=b.target
+419              and a.statpers=b.statpers
+420            where b.nsum=1;
+NOTE: Table WORK.SMAP created, with 3249818 rows and 12 columns.
+
+421            /* Table 8 describes consensus in the month immediately before and after
+422               ANNDATS. STATPERS is monthly, so for year t+1 only retain the nearest
+423               strictly pre/post summary within one calendar-month boundary. Current
+424               year consensus for SUR remains the most recent pre-announcement record. */
+425            create table spre as
+426            select s.gvkey,s.fyear,s.target,max(s.statpers) as statpers
+427            from smap as s inner join actsel as a
+428              on s.gvkey=a.gvkey and s.fyear=a.fyear
+429            where s.statpers<a.ann_date
+430              and (s.target='T' or intck('month',s.statpers,a.ann_date)<=1)
+431            group by s.gvkey,s.fyear,s.target;
+NOTE: Table WORK.SPRE created, with 173514 rows and 4 columns.
+
+432            create table spost as
+433            select s.gvkey,s.fyear,min(s.statpers) as statpers
+434            from smap as s inner join actsel as a
+435              on s.gvkey=a.gvkey and s.fyear=a.fyear
+436            where s.target='N' and s.statpers>a.ann_date
+437              and intck('month',a.ann_date,s.statpers)<=1
+438            group by s.gvkey,s.fyear;
+NOTE: Table WORK.SPOST created, with 67874 rows and 3 columns.
+
+439            create table spreval as
+440            select p.gvkey,p.fyear,p.target,p.statpers,s.medest,s.curcode,s.fpi
+441            from spre as p inner join smap as s
+442              on p.gvkey=s.gvkey and p.fyear=s.fyear and p.target=s.target
+443              and p.statpers=s.statpers;
+NOTE: Table WORK.SPREVAL created, with 173514 rows and 7 columns.
+
+444            create table spostval as
+19                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+445            select p.gvkey,p.fyear,p.statpers,s.medest,s.curcode,s.fpi
+446            from spost as p inner join smap as s
+447              on p.gvkey=s.gvkey and p.fyear=s.fyear and s.target='N'
+448              and p.statpers=s.statpers;
+NOTE: Table WORK.SPOSTVAL created, with 67874 rows and 6 columns.
+
+449            create table forewide as
+450            select p.gvkey,p.fyear,
+451              max(case when x.target='T' then x.medest end) as med_t,
+452              max(case when x.target='T' then x.statpers end) as stat_t,
+453              max(case when x.target='T' then x.curcode end) as cur_t length=3,
+454              max(case when x.target='N' then x.medest end) as med_npre,
+455              max(case when x.target='N' then x.statpers end) as stat_npre,
+456              max(case when x.target='N' then x.curcode end) as cur_npre length=3,
+457              max(y.medest) as med_npost,max(y.statpers) as stat_npost,
+458              max(y.curcode) as cur_npost length=3
+459            from panel0 as p left join spreval as x
+460              on p.gvkey=x.gvkey and p.fyear=x.fyear
+461            left join spostval as y on p.gvkey=y.gvkey and p.fyear=y.fyear
+462            group by p.gvkey,p.fyear;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.FOREWIDE created, with 192113 rows and 11 columns.
+
+463            select count(*) into :n_samb trimmed from smapcnt where nsum>1;
+464        quit;
+NOTE: The PROCEDURE SQL printed page 24.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           27.29 seconds
+      cpu time            35.13 seconds
+      
+
+465        %put NOTE: I/B/E/S selected period-date duplicates excluded=&n_samb.;
+NOTE: I/B/E/S selected period-date duplicates excluded=1466374
+466        proc datasets lib=work nolist;
+467            delete sumraw sumlink smap0 smapcnt smap spre spost spreval spostval;
+468        quit;
+
+NOTE: Deleting WORK.SUMRAW (memtype=DATA).
+NOTE: Deleting WORK.SUMLINK (memtype=DATA).
+NOTE: Deleting WORK.SMAP0 (memtype=DATA).
+NOTE: Deleting WORK.SMAPCNT (memtype=DATA).
+NOTE: Deleting WORK.SMAP (memtype=DATA).
+NOTE: Deleting WORK.SPRE (memtype=DATA).
+NOTE: Deleting WORK.SPOST (memtype=DATA).
+NOTE: Deleting WORK.SPREVAL (memtype=DATA).
+NOTE: Deleting WORK.SPOSTVAL (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+20                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+      real time           0.31 seconds
+      cpu time            0.31 seconds
+      
+
+469        
+470        /* Build the sampled PERMNO population and retain raw daily factor rows for
+471           returns, event dating, and relative I/B/E/S adjustment factors. */
+472        proc sql;
+473            create table dsfsub as
+474            select d.permno,d.date,d.ret,d.cfacshr,d.hexcd
+475            from crsp.dsf as d inner join permset as p on d.permno=p.permno
+476            where d.date between '01JAN1980'd and '31DEC2008'd;
+NOTE: Table WORK.DSFSUB created, with 45064898 rows and 5 columns.
+
+477            create table delraw as
+478            select d.permno,d.dlstdt,d.dlret,d.dlstcd,d.hexcd
+479            from crsp.dsedelist as d inner join permset as p on d.permno=p.permno
+480            where d.dlstdt between '01JAN1980'd and '31DEC2008'd;
+NOTE: Table WORK.DELRAW created, with 13309 rows and 5 columns.
+
+481            create table delcnt as
+482            select permno,dlstdt,count(*) as ndel
+483            from delraw group by permno,dlstdt;
+NOTE: Table WORK.DELCNT created, with 13309 rows and 3 columns.
+
+484            create table deluniq as
+485            select a.* from delraw as a inner join delcnt as b
+486              on a.permno=b.permno and a.dlstdt=b.dlstdt where b.ndel=1;
+NOTE: Table WORK.DELUNIQ created, with 13309 rows and 5 columns.
+
+487            select count(*) into :n_dsf trimmed from dsfsub;
+488            select count(*) into :n_delamb trimmed from delcnt where ndel>1;
+489            select put(min(date),date9.),put(max(date),date9.),
+490                   min(year(date)),max(year(date))
+491              into :dmin trimmed,:dmax trimmed,:dcalmin trimmed,:dcalmax trimmed
+492              from dsfsub;
+493        quit;
+NOTE: The PROCEDURE SQL printed pages 25-27.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           15.06 seconds
+      cpu time            15.04 seconds
+      
+
+494        %put NOTE: sampled CRSP DSF rows=&n_dsf delisting-date duplicates=&n_delamb actual date range=&dmin to &dmax calendar
+494      ! years=&dcalmin to &dcalmax.;
+NOTE: sampled CRSP DSF rows=45064898 delisting-date duplicates=0 actual date range=02JAN1980 to 31DEC2008 calendar years=1980 to 
+2008
+495        
+496        /* CRSP special missing codes are unavailable, not returns. When CRSP omits a
+497           delisting return for the paper's specified poor-performance codes, use its
+498           NYSE/AMEX and Nasdaq imputation; other missing delisting returns stay missing. */
+499        proc sql;
+500            create table ret0 as
+501            select d.permno,d.date,d.ret,d.cfacshr,
+502                   l.dlret,l.dlstcd,l.dlstdt,d.hexcd as hexcd,
+503                   case when not missing(l.dlstdt) then 1 else 0 end as isdel
+504            from dsfsub as d left join deluniq as l
+505              on d.permno=l.permno and d.date=l.dlstdt
+21                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+506            union corr
+507            select l.permno,l.dlstdt as date,.
+508                   as ret, . as cfacshr,l.dlret,l.dlstcd,l.dlstdt,l.hexcd as hexcd,1 as isdel
+509            from deluniq as l left join dsfsub as d
+510              on l.permno=d.permno and l.dlstdt=d.date
+511            where missing(d.permno);
+NOTE: Table WORK.RET0 created, with 45064898 rows and 9 columns.
+
+512        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           30.63 seconds
+      cpu time            53.58 seconds
+      
+
+513        data retbase;
+514            set ret0;
+515            badret=(ret in (-66,-77,-88,-99));
+516            baddel=(dlret in (-66,-77,-88,-99));
+517            if badret then ret=.;
+518            if baddel then dlret=.;
+519            if missing(dlret) and (dlstcd=500 or (dlstcd>=520 and dlstcd<=584)) then do;
+520                if hexcd in (1,2) then dlret=-0.35;
+521                else if hexcd=3 then dlret=-0.55;
+522            end;
+523            if not missing(ret) and not missing(dlret) then
+524                retadj=(1+ret)*(1+dlret)-1;
+525            else if missing(ret) and not missing(dlret) then retadj=dlret;
+526            else if not missing(ret) then retadj=ret;
+527            else retadj=.;
+528            format date dlstdt date9.;
+529        run;
+
+NOTE: There were 45064898 observations read from the data set WORK.RET0.
+NOTE: The data set WORK.RETBASE has 45064898 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           4.76 seconds
+      cpu time            4.76 seconds
+      
+
+530        proc sql;
+531            create table retday as
+532            select r.*,m.vwretd
+533            from retbase as r left join market as m on r.date=m.date;
+NOTE: Table WORK.RETDAY created, with 45064898 rows and 13 columns.
+
+534            select put(min(date),date9.),put(max(date),date9.),
+535                   sum(badret),sum(baddel),sum(missing(cfacshr))
+536              into :rmin trimmed,:rmax trimmed,:nbadret trimmed,:nbaddel trimmed,
+537                   :nfacmiss trimmed from retbase;
+538        quit;
+NOTE: The PROCEDURE SQL printed page 28.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           19.44 seconds
+      cpu time            30.72 seconds
+      
+
+539        %put NOTE: CRSP return-date support=&rmin to &rmax special DSF returns=&nbadret special DLRET values=&nbaddel missing
+539      ! share factors=&nfacmiss.;
+22                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+NOTE: CRSP return-date support=02JAN1980 to 31DEC2008 special DSF returns=0 special DLRET values=0 missing share factors=0
+540        proc sort data=retday; by permno date; run;
+
+NOTE: There were 45064898 observations read from the data set WORK.RETDAY.
+NOTE: The data set WORK.RETDAY has 45064898 observations and 13 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           9.71 seconds
+      cpu time            22.38 seconds
+      
+
+541        
+542        /* Annual R_t and the common future-CRSP eligibility window. A delisted
+543           security's proceeds are reinvested in the value-weighted market return after
+544           the delisting date, as described in the paper's future-return footnote. */
+545        data win0;
+546            set panel0(keep=gvkey fyear permno datadate);
+547            length wid 8;
+548            wid=1; wstart=intnx('month',datadate,-11,'b'); wend=datadate; output;
+549            /* Four complete calendar months elapse after FY end before the
+550               one-year future return window begins. For 31DEC, start is 01MAY. */
+551            wid=2; wstart=intnx('month',datadate,5,'b');
+552            wend=intnx('month',wstart,11,'e'); output;
+553            format wstart wend date9.;
+554            keep gvkey fyear permno wid wstart wend;
+555        run;
+
+NOTE: There were 192113 observations read from the data set WORK.PANEL0.
+NOTE: The data set WORK.WIN0 has 384226 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.10 seconds
+      
+
+556        proc sql;
+557            create table windays as
+558            select w.gvkey,w.fyear,w.permno,w.wid,m.date,m.vwretd,
+559                   r.retadj,r.isdel
+560            from win0 as w inner join market as m
+561              on m.date between w.wstart and w.wend
+562            left join retday as r on w.permno=r.permno and m.date=r.date;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.WINDAYS created, with 96952607 rows and 8 columns.
+
+563        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1:03.49
+      cpu time            1:28.39
+      
+
+564        proc sort data=windays; by gvkey fyear wid date; run;
+
+NOTE: There were 96952607 observations read from the data set WORK.WINDAYS.
+NOTE: The data set WORK.WINDAYS has 96952607 observations and 8 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           16.96 seconds
+      cpu time            38.76 seconds
+      
+
+23                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+565        data winout;
+566            set windays;
+567            by gvkey fyear wid date;
+568            retain pstock pmkt ndays nmiss delhit;
+569            if first.wid then do;
+570                pstock=1; pmkt=1; ndays=0; nmiss=0; delhit=0;
+571            end;
+572            if delhit then rx=vwretd; else rx=retadj;
+573            ndays+1;
+574            if missing(rx) or rx < -1 then nmiss+1;
+575            else pstock=pstock*(1+rx);
+576            if missing(vwretd) or vwretd < -1 then nmiss+1;
+577            else pmkt=pmkt*(1+vwretd);
+578            if isdel=1 then delhit=1;
+579            if last.wid then do;
+580                if ndays>0 and nmiss=0 then bhm=pstock-pmkt;
+581                else bhm=.;
+582                output;
+583            end;
+584            keep gvkey fyear wid bhm ndays nmiss;
+585        run;
+
+NOTE: There were 96952607 observations read from the data set WORK.WINDAYS.
+NOTE: The data set WORK.WINOUT has 384226 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           6.73 seconds
+      cpu time            6.73 seconds
+      
+
+586        proc sql;
+587            create table winwide as
+588            select gvkey,fyear,
+589                   max(case when wid=1 then bhm end) as rt,
+590                   max(case when wid=2 then bhm end) as rfut,
+591                   max(case when wid=1 then ndays end) as nday_t,
+592                   max(case when wid=2 then ndays end) as nday_f
+593            from winout group by gvkey,fyear;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.WINWIDE created, with 192113 rows and 6 columns.
+
+594        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.17 seconds
+      
+
+595        
+596        /* Two trading sessions before through two after the first market session on
+597           or after ANNDATS; incomplete five-day windows remain missing. */
+598        proc sql;
+599            create table evcenter as
+24                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+600            select a.gvkey,a.fyear,a.permno,a.ann_date,min(m.date) as cdate
+601            from actsel as a inner join market as m on m.date>=a.ann_date
+602            group by a.gvkey,a.fyear,a.permno,a.ann_date;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.EVCENTER created, with 122805 rows and 5 columns.
+
+603            create table evseq as
+604            select e.*,m.mseq as cseq
+605            from evcenter as e inner join market as m on e.cdate=m.date;
+NOTE: Table WORK.EVSEQ created, with 122805 rows and 6 columns.
+
+606            create table evdays as
+607            select e.gvkey,e.fyear,e.permno,e.ann_date,m.date,m.vwretd,
+608                   r.retadj,r.isdel
+609            from evseq as e inner join market as m
+610              on m.mseq between e.cseq-2 and e.cseq+2
+611            left join retday as r on e.permno=r.permno and m.date=r.date;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.EVDAYS created, with 614025 rows and 8 columns.
+
+612        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1:33.69
+      cpu time            3:05.43
+      
+
+613        proc sort data=evdays; by gvkey fyear date; run;
+
+NOTE: There were 614025 observations read from the data set WORK.EVDAYS.
+NOTE: The data set WORK.EVDAYS has 614025 observations and 8 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.22 seconds
+      
+
+614        data urout;
+615            set evdays;
+616            by gvkey fyear date;
+617            retain pstock pmkt ndays nmiss delhit;
+618            if first.fyear then do;
+619                pstock=1; pmkt=1; ndays=0; nmiss=0; delhit=0;
+620            end;
+621            if delhit then rx=vwretd; else rx=retadj;
+622            ndays+1;
+623            if missing(rx) or rx < -1 then nmiss+1;
+624            else pstock=pstock*(1+rx);
+625            if missing(vwretd) or vwretd < -1 then nmiss+1;
+626            else pmkt=pmkt*(1+vwretd);
+627            if isdel=1 then delhit=1;
+628            if last.fyear then do;
+629                if ndays=5 and nmiss=0 then ur=pstock-pmkt;
+630                else ur=.;
+631                output;
+632            end;
+633            keep gvkey fyear ur ndays nmiss;
+634        run;
+
+NOTE: There were 614025 observations read from the data set WORK.EVDAYS.
+25                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+NOTE: The data set WORK.UROUT has 122805 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+635        
+636        /* Annual accounting ratios, earnings, and changes. The denominator for EARN,
+637           ΔEARN, SUR, and ANREV is explicitly PRCC_F(t-1), with the Compustat prior
+638           issue/date and price-currency match retained on the panel. */
+639        proc sql;
+640            create table stage0 as
+641            select p.*,a.ann_date,a.value as actual_eps,a.curr_act,
+642                   f.med_t,f.stat_t,f.cur_t,f.med_npre,f.stat_npre,f.cur_npre,
+643                   f.med_npost,f.stat_npost,f.cur_npost,
+644                   w.rt,w.rfut,w.nday_t,w.nday_f,u.ur
+645            from panel0 as p left join actsel as a
+646              on p.gvkey=a.gvkey and p.fyear=a.fyear
+647            left join forewide as f on p.gvkey=f.gvkey and p.fyear=f.fyear
+648            left join winwide as w on p.gvkey=w.gvkey and p.fyear=w.fyear
+649            left join urout as u on p.gvkey=u.gvkey and p.fyear=u.fyear;
+NOTE: Table WORK.STAGE0 created, with 192113 rows and 57 columns.
+
+650        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.34 seconds
+      cpu time            0.41 seconds
+      
+
+651        data stage1;
+652            set stage0;
+653            if nmiss(noa,noam1)=0 then avgt=(noa+noam1)/2;
+654            if not missing(avgt) and avgt ne 0 and not missing(oiadp) then rnoa=oiadp/avgt;
+655            if not missing(sale) and sale ne 0 and not missing(oiadp) then pm=oiadp/sale;
+656            if not missing(avgt) and avgt ne 0 and not missing(sale) then ato=sale/avgt;
+657            if nmiss(noam1,noam2)=0 then avgm1=(noam1+noam2)/2;
+658            if not missing(avgm1) and avgm1 ne 0 and not missing(opm1) then rnoam1=opm1/avgm1;
+659            if not missing(salem1) and salem1 ne 0 and not missing(opm1) then pmm1=opm1/salem1;
+660            if not missing(avgm1) and avgm1 ne 0 and not missing(salem1) then atom1=salem1/avgm1;
+661            if not missing(rnoa) and not missing(rnoam1) then drnoa=rnoa-rnoam1;
+662            if not missing(pm) and not missing(pmm1) then dpm=pm-pmm1;
+663            if not missing(ato) and not missing(atom1) then dato=ato-atom1;
+664            if nmiss(noa,noap1)=0 then avgp1=(noa+noap1)/2;
+665            if not missing(avgp1) and avgp1 ne 0 and not missing(opp1) then rnoap1=opp1/avgp1;
+666            if not missing(salep1) and salep1 ne 0 and not missing(opp1) then pmp1=opp1/salep1;
+667            if not missing(avgp1) and avgp1 ne 0 and not missing(salep1) then atop1=salep1/avgp1;
+668            if not missing(ajex) and ajex>0 and not missing(ajexm1) and ajexm1>0
+669               and not missing(epspx) and not missing(epsm1)
+670               and not missing(prccm1) and prccm1>0 then do;
+671                eps_basis=(epspx/ajex)*ajexm1;
+672                 earn=eps_basis/prccm1;
+673                 dearn=(eps_basis-epsm1)/prccm1;
+674            end;
+675            currency_ok=(not missing(curcd) and curcd=curm1 and curcd=curm2 and curcd=curp1 and
+676                not missing(prccm1_verified) and prccm1_verified=1 and
+677                not missing(prccm1_cur) and prccm1_cur=curm1);
+678            share_issue_ok=(not missing(permno) and not missing(permm1) and
+679                permno=permm1 and not missing(iid0) and iid0=iidm1);
+26                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+680            label rnoa='Return on net operating assets'
+681                  drnoa='Change in RNOA' pm='Profit margin' ato='Asset turnover'
+682                  dpm='Change in profit margin' dato='Change in asset turnover'
+683                  rnoap1='Future RNOA' pmp1='Future profit margin'
+684                  atop1='Future asset turnover' earn='Earnings scaled by prior price'
+685                  dearn='Change in earnings scaled by prior price';
+686        run;
+
+NOTE: There were 192113 observations read from the data set WORK.STAGE0.
+NOTE: The data set WORK.STAGE1 has 192113 observations and 77 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.10 seconds
+      
+
+687        
+688        /* Relative CRSP CFACSHR values place each unadjusted I/B/E/S value on the
+689           prior-price date's share basis. The conversion is anchor CFACSHR divided by
+690           source-date CFACSHR; each factor is from the same PERMNO/issue and uses the
+691           latest CRSP observation on or before its source date. */
+692        data facneed;
+693            set stage1;
+694            length tag $8;
+695            if not missing(datam1) then do; tag='PRICE'; needdate=datam1; output; end;
+696            if not missing(ann_date) then do; tag='ACT'; needdate=ann_date; output; end;
+697            if not missing(stat_t) then do; tag='F_T'; needdate=stat_t; output; end;
+698            if not missing(stat_npre) then do; tag='F_NPRE'; needdate=stat_npre; output; end;
+699            if not missing(stat_npost) then do; tag='F_NPOST'; needdate=stat_npost; output; end;
+700            format needdate date9.;
+701            keep gvkey fyear permno tag needdate;
+702        run;
+
+NOTE: There were 192113 observations read from the data set WORK.STAGE1.
+NOTE: The data set WORK.FACNEED has 541060 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+703        data facstack;
+704            length gvkey $7 tag $8 type 8;
+705            set dsfsub(in=isd keep=permno date cfacshr)
+706                facneed(in=ist rename=(needdate=date));
+707            if isd then do; type=1; call missing(gvkey,fyear,tag); end;
+708            else type=2;
+709        run;
+
+NOTE: There were 45064898 observations read from the data set WORK.DSFSUB.
+NOTE: There were 541060 observations read from the data set WORK.FACNEED.
+NOTE: The data set WORK.FACSTACK has 45605958 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           3.40 seconds
+      cpu time            3.34 seconds
+      
+
+710        proc sort data=facstack; by permno date type; run;
+
+NOTE: There were 45605958 observations read from the data set WORK.FACSTACK.
+27                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+NOTE: The data set WORK.FACSTACK has 45605958 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           6.08 seconds
+      cpu time            14.13 seconds
+      
+
+711        data facout;
+712            set facstack;
+713            by permno;
+714            retain lastfac;
+715            if first.permno then lastfac=.;
+716            if type=1 then do;
+717                if not missing(cfacshr) then lastfac=cfacshr;
+718            end;
+719            else do;
+720                cfac=lastfac;
+721                output;
+722            end;
+723            keep gvkey fyear tag cfac;
+724        run;
+
+NOTE: There were 45605958 observations read from the data set WORK.FACSTACK.
+NOTE: The data set WORK.FACOUT has 541060 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.70 seconds
+      cpu time            1.46 seconds
+      
+
+725        proc sql;
+726            create table facwide as
+727            select gvkey,fyear,
+728              max(case when tag='PRICE' then cfac end) as fac_price,
+729              max(case when tag='ACT' then cfac end) as fac_act,
+730              max(case when tag='F_T' then cfac end) as fac_t,
+731              max(case when tag='F_NPRE' then cfac end) as fac_npre,
+732              max(case when tag='F_NPOST' then cfac end) as fac_npost
+733            from facout group by gvkey,fyear;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.FACWIDE created, with 185398 rows and 7 columns.
+
+734        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.15 seconds
+      cpu time            0.26 seconds
+      
+
+735        proc sort data=stage1; by gvkey fyear; run;
+
+NOTE: There were 192113 observations read from the data set WORK.STAGE1.
+28                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+NOTE: The data set WORK.STAGE1 has 192113 observations and 77 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.29 seconds
+      cpu time            0.17 seconds
+      
+
+736        proc sort data=facwide; by gvkey fyear; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+737        data stage2raw;
+738            merge stage1(in=a) facwide;
+739            by gvkey fyear;
+740            if a;
+741            if not missing(actual_eps) and not missing(med_t) and
+742               not missing(fac_act) and fac_act ne 0 and not missing(fac_t) and fac_t ne 0
+743               and not missing(fac_price) and not missing(prccm1) and prccm1>0 then
+744                sur=((actual_eps*fac_price/fac_act)-(med_t*fac_price/fac_t))/prccm1;
+745            if not missing(med_npre) and not missing(med_npost) and
+746               not missing(fac_npre) and fac_npre ne 0 and not missing(fac_npost) and fac_npost ne 0
+747               and not missing(fac_price) and not missing(prccm1) and prccm1>0 then
+748                anrev=((med_npost*fac_price/fac_npost)-(med_npre*fac_price/fac_npre))/prccm1;
+749            label sur='Unexpected annual EPS scaled by prior price'
+750                  anrev='Change in next-year EPS forecast scaled by prior price';
+751        run;
+
+NOTE: There were 192113 observations read from the data set WORK.STAGE1.
+NOTE: There were 185398 observations read from the data set WORK.FACWIDE.
+NOTE: The data set WORK.STAGE2RAW has 192113 observations and 84 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.13 seconds
+      
+
+752        /* The paper says to exclude SIC 6000-6999 but does not identify the SIC
+753           source. Preserve Compustat historical SIC when valid; only if it is absent,
+754           use the unique CRSP security-name classification effective on DATADATE for
+755           the same primary PERMNO. CRSP documents SICCD zero as missing and valid SIC
+756           codes as 100-9999. */
+757        data sic_target;
+758            set stage2raw(keep=gvkey fyear datadate permno);
+759            where fyear between 1984 and 2002;
+760        run;
+
+NOTE: There were 192113 observations read from the data set WORK.STAGE2RAW.
+      WHERE (fyear>=1984 and fyear<=2002);
+NOTE: The data set WORK.SIC_TARGET has 192113 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+761        proc sql noprint;
+762            select put(min(datadate),best.),put(max(datadate),best.)
+29                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+763              into :sicmind trimmed,:sicmaxd trimmed from sic_target;
+764        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+765        %put NOTE: dated CRSP SIC mapping target DATADATE=&sicmind to &sicmaxd, unique PERMNO/name-period only.;
+NOTE: dated CRSP SIC mapping target DATADATE=8947 to 15856, unique PERMNO/name-period only.
+766        data sicnames0;
+767            set crsp.dsenames(keep=permno namedt nameendt siccd
+768                              where=(namedt<=&sicmaxd and nameendt>=&sicmind));
+769        run;
+
+NOTE: There were 48927 observations read from the data set CRSP.DSENAMES.
+      WHERE (namedt<=15856) and (nameendt>=8947);
+NOTE: The data set WORK.SICNAMES0 has 48927 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+770        proc sql;
+771            create table sic_key as
+772            select a.gvkey,a.fyear,a.datadate,a.permno,count(n.permno) as sic_name_rows,
+773               count(distinct n.siccd) as sic_name_codes,min(n.siccd) as crsp_sic
+774            from sic_target as a left join sicnames0 as n
+775              on a.permno=n.permno and a.datadate between n.namedt and n.nameendt
+776            group by a.gvkey,a.fyear,a.datadate,a.permno;
+NOTE: Table WORK.SIC_KEY created, with 192113 rows and 7 columns.
+
+777        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.24 seconds
+      
+
+778        proc sort data=stage2raw; by gvkey fyear datadate permno; run;
+
+NOTE: There were 192113 observations read from the data set WORK.STAGE2RAW.
+NOTE: The data set WORK.STAGE2RAW has 192113 observations and 84 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.50 seconds
+      cpu time            0.18 seconds
+      
+
+779        proc sort data=sic_key; by gvkey fyear datadate permno; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+780        data stage2;
+781            merge stage2raw(in=a) sic_key;
+782            by gvkey fyear datadate permno;
+783            if a;
+30                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+784            length sic_source $4;
+785            comp_sic_valid=(not missing(sich) and sich>=100 and sich<=9999);
+786            crsp_sic_valid=(sic_name_rows=1 and sic_name_codes=1 and not missing(crsp_sic)
+787                            and crsp_sic>=100 and crsp_sic<=9999);
+788            sic_both_valid=(comp_sic_valid and crsp_sic_valid);
+789            sic_exact_agree=(sic_both_valid and sich=crsp_sic);
+790            sic_exact_disagree=(sic_both_valid and sich ne crsp_sic);
+791            sic_comp_fin=(sich>=6000 and sich<=6999);
+792            sic_crsp_fin=(crsp_sic>=6000 and crsp_sic<=6999);
+793            sic_finclass_agree=(sic_both_valid and sic_comp_fin=sic_crsp_fin);
+794            sic_finclass_disagree=(sic_both_valid and sic_comp_fin ne sic_crsp_fin);
+795            if comp_sic_valid then do;
+796                sic_screen=sich;
+797                sic_source='COMP';
+798            end;
+799            else if crsp_sic_valid then do;
+800                sic_screen=crsp_sic;
+801                sic_source='CRSP';
+802            end;
+803            else do;
+804                sic_screen=.;
+805                sic_source='NONE';
+806            end;
+807        run;
+
+NOTE: There were 192113 observations read from the data set WORK.STAGE2RAW.
+NOTE: There were 192113 observations read from the data set WORK.SIC_KEY.
+NOTE: The data set WORK.STAGE2 has 192113 observations and 98 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.14 seconds
+      
+
+808        
+809        /* Preserve attrition and distinguish missing supporting periods from missing
+810           source values. The published aggregate N is a comparison only. */
+811        proc sql;
+812            select count(*) into :n_stage trimmed from stage2;
+813            select sum(missing(permno)),sum(missing(ann_date)),sum(missing(med_t)),
+814                    sum(missing(med_npre)),sum(missing(med_npost)),sum(missing(rt)),
+815                     sum(missing(ur)),sum(missing(rfut)),sum(currency_ok=0),sum(share_issue_ok=0),
+816                     sum(missing(permm1)),
+817                     sum(not missing(permno) and not missing(permm1) and permno ne permm1),
+818                     sum(missing(iidm1)),
+819                     sum(not missing(iid0) and not missing(iidm1) and iid0 ne iidm1),
+820                     sum(missing(prccm1_verified) or prccm1_verified ne 1),
+821                     sum(not missing(prccm1_cur) and not missing(curm1) and prccm1_cur ne curm1),
+822                     sum(not missing(curcd) and not missing(curncd) and curcd ne curncd),
+823                   sum(noa<0),sum(oiadp<0),sum(sich>=6000 and sich<=6999),
+824                   sum(missing(sich)),sum(sic_source='CRSP'),sum(sic_source='NONE'),
+825                   sum(sic_name_rows=1),sum(sic_name_rows>1),sum(sic_both_valid),
+826                   sum(sic_exact_agree),sum(sic_exact_disagree),
+827                   sum(sic_finclass_agree),sum(sic_finclass_disagree)
+828              into :n_nolink trimmed,:n_noann trimmed,:n_not trimmed,
+829                    :n_nnp trimmed,:n_npost trimmed,:n_nrt trimmed,:n_nur trimmed,
+830                     :n_nrf trimmed,:n_cur trimmed,:n_issue trimmed,:n_prevlinkmiss trimmed,
+831                     :n_permdiff trimmed,:n_iidmiss trimmed,:n_iiddiff trimmed,:n_priceunv trimmed,
+832                     :n_priceccymis trimmed,:n_native_diff trimmed,:n_negnoa trimmed,:n_negop trimmed,
+31                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+833                   :n_fin trimmed,:n_sichmiss trimmed,:n_sicfill trimmed,:n_sicunverified trimmed,
+834                   :n_sicunique trimmed,:n_sicmulti trimmed,:n_sicboth trimmed,
+835                   :n_sicagree trimmed,:n_sicdisagree trimmed,
+836                   :n_sicclassagree trimmed,:n_sicclassdisagree trimmed from stage2;
+837        quit;
+NOTE: The PROCEDURE SQL printed pages 29-30.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.11 seconds
+      
+
+838        %put NOTE: stage2 rows=&n_stage no CCM link=&n_nolink no actual event=&n_noann no current forecast=&n_not no
+838      ! future-period pre/post forecasts=&n_nnp/&n_npost missing R/UR/future CRSP=&n_nrt/&n_nur/&n_nrf currency mismatch=&n_cur
+838      ! share-issue screen failures=&n_issue prior-link missing=&n_prevlinkmiss PERMNO changes=&n_permdiff prior-IID
+838      ! missing=&n_iidmiss IID changes=&n_iiddiff unverified prior price=&n_priceunv prior price/reporting-currency
+838      ! mismatch=&n_priceccymis reporting/native currency descriptor differs=&n_native_diff negative current NOA/operating
+838      ! income=&n_negnoa/&n_negop missing SICH=&n_sichmiss CRSP SIC fallback=&n_sicfill SIC unavailable=&n_sicunverified unique
+838      ! names=&n_sicunique multiple names=&n_sicmulti overlap=&n_sicboth exact agreement/disagreement=&n_sicagree/&n_sicdisagree
+838      ! financial-class agreement/disagreement=&n_sicclassagree/&n_sicclassdisagree.;
+NOTE: stage2 rows=192113 no CCM link=67370 no actual event=69308 no current forecast=86756 no future-period pre/post 
+forecasts=123956/124239 missing R/UR/future CRSP=82253/109146/73074 currency mismatch=82664 share-issue screen failures=80089 
+prior-link missing=76735 PERMNO changes=239 prior-IID missing=15246 IID changes=0 unverified prior price=69529 prior 
+price/reporting-currency mismatch=42 reporting/native currency descriptor differs=2580 negative current NOA/operating 
+income=55816/69944 missing SICH=48172 CRSP SIC fallback=23568 SIC unavailable=24604 unique names=124560 multiple names=0 
+overlap=100519 exact agreement/disagreement=24125/76394 financial-class agreement/disagreement=96839/3680
+839        /* Diagnose the sparse first cohorts before deciding which annual cross-sections
+840           the installed Newey-West Fama-MacBeth command can estimate. */
+841        proc sql;
+842            create table year_support as
+843            select fyear, count(*) as n_stage2,
+844              sum(not missing(ann_date)) as n_announcement,
+845              sum(not missing(actual_eps)) as n_actual,
+846              sum(not missing(curr_act)) as n_actual_currency,
+847              sum(not missing(actual_eps) and not missing(curcd) and
+848                  upcase(strip(curr_act))=upcase(strip(curcd))) as n_actual_currency_match,
+849              sum(not missing(med_t)) as n_current_median,
+850              sum(not missing(cur_t)) as n_current_currency,
+851              sum(not missing(med_t) and not missing(curcd) and
+852                  upcase(strip(cur_t))=upcase(strip(curcd))) as n_current_currency_match,
+853              sum(not missing(med_npre)) as n_next_pre_median,
+854              sum(not missing(cur_npre)) as n_next_pre_currency,
+855              sum(not missing(med_npost)) as n_next_post_median,
+856              sum(not missing(cur_npost)) as n_next_post_currency,
+857              sum(not missing(permno)) as n_ccm_link,
+858              sum(not missing(permm1)) as n_prior_ccm_link,
+859              sum(not missing(prccm1_verified) and prccm1_verified=1) as n_prior_price_verified,
+860              sum(currency_ok=1) as n_currency_ok,
+861              sum(share_issue_ok=1) as n_share_issue_ok,
+862              sum(not missing(rt)) as n_rt,
+863              sum(not missing(ur)) as n_ur,
+864              sum(not missing(rfut)) as n_rfut,
+865              sum(not missing(earn)) as n_earn,
+866              sum(not missing(sur)) as n_sur,
+867              sum(not missing(anrev)) as n_anrev,
+868              sum(nmiss(rnoa,drnoa,pm,ato,dpm,dato,rnoap1,pmp1,atop1)=0) as n_du_pont_complete,
+869              sum(missing(sich)) as n_sich_missing,
+870              sum(sic_source='CRSP') as n_crsp_sic_filled,
+871              sum(sic_source='NONE') as n_sic_unavailable,
+32                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+872              sum(sic_both_valid) as n_sic_overlap,
+873              sum(sic_exact_agree) as n_sic_exact_agree,
+874              sum(sic_exact_disagree) as n_sic_exact_disagree,
+875              sum(sic_finclass_agree) as n_sic_class_agree,
+876              sum(sic_finclass_disagree) as n_sic_class_disagree
+877            from stage2 where fyear between 1984 and 2002
+878            group by fyear order by fyear;
+NOTE: Table WORK.YEAR_SUPPORT created, with 19 rows and 33 columns.
+
+879        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.21 seconds
+      
+
+880        data _null_;
+881            set year_support;
+882            putlog 'SOURCE FYEAR=' fyear 4. ' stage2=' n_stage2 8.
+883               ' announcement=' n_announcement 8. ' actual=' n_actual 8.
+884               ' actual_currency=' n_actual_currency 8. ' actual_currency_match=' n_actual_currency_match 8.;
+885            putlog 'FORECAST FYEAR=' fyear 4. ' current_mean=' n_current_median 8.
+886               ' current_currency=' n_current_currency 8. ' current_currency_match=' n_current_currency_match 8.
+887               ' next_pre_mean=' n_next_pre_median 8. ' next_pre_currency=' n_next_pre_currency 8.
+888               ' next_post_mean=' n_next_post_median 8. ' next_post_currency=' n_next_post_currency 8.;
+889            putlog 'LINK FYEAR=' fyear 4. ' current_CCM=' n_ccm_link 8. ' prior_CCM=' n_prior_ccm_link 8.
+890               ' verified_prior_price=' n_prior_price_verified 8. ' currency_ok=' n_currency_ok 8.
+891               ' share_issue_ok=' n_share_issue_ok 8. ' DuPont_complete=' n_du_pont_complete 8.;
+892            putlog 'SIC FYEAR=' fyear 4. ' SICH_missing=' n_sich_missing 8.
+893               ' CRSP_filled=' n_crsp_sic_filled 8. ' SIC_unavailable=' n_sic_unavailable 8.
+894               ' overlap=' n_sic_overlap 8. ' exact_agree=' n_sic_exact_agree 8.
+895               ' exact_disagree=' n_sic_exact_disagree 8.;
+896            putlog 'SIC_CLASS FYEAR=' fyear 4. ' agree=' n_sic_class_agree 8.
+897               ' disagree=' n_sic_class_disagree 8.;
+898            putlog 'OUTCOME FYEAR=' fyear 4. ' rt=' n_rt 8. ' ur=' n_ur 8. ' rfut=' n_rfut 8.
+899               ' earn=' n_earn 8. ' sur=' n_sur 8. ' anrev=' n_anrev 8.;
+900        run;
+
+SOURCE FYEAR=1984 stage2=    7898 announcement=    1532 actual=    1532 actual_currency=    1532 actual_currency_match=    1532
+FORECAST FYEAR=1984 current_mean=    1498 current_currency=    1498 current_currency_match=    1498 next_pre_mean=    1438
+ next_pre_currency=    1438 next_post_mean=    1455 next_post_currency=    1455
+LINK FYEAR=1984 current_CCM=    5276 prior_CCM=    4809 verified_prior_price=    5058 currency_ok=    4535 share_issue_ok=    4714
+ DuPont_complete=    4334
+SIC FYEAR=1984 SICH_missing=    7772 CRSP_filled=    4955 SIC_unavailable=    2817 overlap=      91 exact_agree=      17
+ exact_disagree=      74
+SIC_CLASS FYEAR=1984 agree=      84 disagree=       7
+OUTCOME FYEAR=1984 rt=    4431 ur=    1530 rfut=    4807 earn=    5474 sur=    1458 anrev=    1398
+SOURCE FYEAR=1985 stage2=    8241 announcement=    1750 actual=    1750 actual_currency=    1750 actual_currency_match=    1750
+FORECAST FYEAR=1985 current_mean=    1677 current_currency=    1677 current_currency_match=    1677 next_pre_mean=    1587
+ next_pre_currency=    1587 next_post_mean=    1608 next_post_currency=    1608
+LINK FYEAR=1985 current_CCM=    5321 prior_CCM=    4921 verified_prior_price=    5123 currency_ok=    4597 share_issue_ok=    4793
+ DuPont_complete=    4400
+SIC FYEAR=1985 SICH_missing=    8105 CRSP_filled=    5137 SIC_unavailable=    2968 overlap=      96 exact_agree=      20
+ exact_disagree=      76
+SIC_CLASS FYEAR=1985 agree=      89 disagree=       7
+OUTCOME FYEAR=1985 rt=    4525 ur=    1750 rfut=    4970 earn=    5532 sur=    1652 anrev=    1551
+SOURCE FYEAR=1986 stage2=    8512 announcement=    3696 actual=    3696 actual_currency=    3696 actual_currency_match=    3696
+FORECAST FYEAR=1986 current_mean=    3535 current_currency=    3535 current_currency_match=    3535 next_pre_mean=    1826
+ next_pre_currency=    1826 next_post_mean=    2075 next_post_currency=    2075
+33                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+LINK FYEAR=1986 current_CCM=    5608 prior_CCM=    4957 verified_prior_price=    5101 currency_ok=    4595 share_issue_ok=    4813
+ DuPont_complete=    4372
+SIC FYEAR=1986 SICH_missing=    8358 CRSP_filled=    5454 SIC_unavailable=    2904 overlap=     103 exact_agree=      21
+ exact_disagree=      82
+SIC_CLASS FYEAR=1986 agree=      97 disagree=       6
+OUTCOME FYEAR=1986 rt=    4644 ur=    2124 rfut=    5324 earn=    5564 sur=    1871 anrev=    1714
+SOURCE FYEAR=1987 stage2=    8586 announcement=    4088 actual=    4088 actual_currency=    4088 actual_currency_match=    4088
+FORECAST FYEAR=1987 current_mean=    3768 current_currency=    3768 current_currency_match=    3768 next_pre_mean=    3123
+ next_pre_currency=    3123 next_post_mean=    2247 next_post_currency=    2247
+LINK FYEAR=1987 current_CCM=    5883 prior_CCM=    5268 verified_prior_price=    5337 currency_ok=    4784 share_issue_ok=    5133
+ DuPont_complete=    4557
+SIC FYEAR=1987 SICH_missing=     795 CRSP_filled=     203 SIC_unavailable=     592 overlap=    5626 exact_agree=    1162
+ exact_disagree=    4464
+SIC_CLASS FYEAR=1987 agree=    5387 disagree=     239
+OUTCOME FYEAR=1987 rt=    4997 ur=    2507 rfut=    5581 earn=    5826 sur=    2193 anrev=    1879
+SOURCE FYEAR=1988 stage2=    8622 announcement=    4848 actual=    4848 actual_currency=    4848 actual_currency_match=    4848
+FORECAST FYEAR=1988 current_mean=    4450 current_currency=    4450 current_currency_match=    4450 next_pre_mean=    2415
+ next_pre_currency=    2415 next_post_mean=    2451 next_post_currency=    2451
+LINK FYEAR=1988 current_CCM=    5782 prior_CCM=    5481 verified_prior_price=    5447 currency_ok=    4895 share_issue_ok=    5307
+ DuPont_complete=    4684
+SIC FYEAR=1988 SICH_missing=     976 CRSP_filled=     257 SIC_unavailable=     719 overlap=    5485 exact_agree=    1152
+ exact_disagree=    4333
+SIC_CLASS FYEAR=1988 agree=    5252 disagree=     233
+OUTCOME FYEAR=1988 rt=    5201 ur=    2903 rfut=    5465 earn=    6009 sur=    2540 anrev=    2178
+SOURCE FYEAR=1989 stage2=    8604 announcement=    5722 actual=    5722 actual_currency=    5722 actual_currency_match=    5722
+FORECAST FYEAR=1989 current_mean=    5218 current_currency=    5218 current_currency_match=    5218 next_pre_mean=    2791
+ next_pre_currency=    2791 next_post_mean=    2818 next_post_currency=    2818
+LINK FYEAR=1989 current_CCM=    5666 prior_CCM=    5384 verified_prior_price=    5313 currency_ok=    4873 share_issue_ok=    5220
+ DuPont_complete=    4741
+SIC FYEAR=1989 SICH_missing=    1108 CRSP_filled=     284 SIC_unavailable=     824 overlap=    5351 exact_agree=    1141
+ exact_disagree=    4210
+SIC_CLASS FYEAR=1989 agree=    5126 disagree=     225
+OUTCOME FYEAR=1989 rt=    5110 ur=    3427 rfut=    5423 earn=    5789 sur=    2889 anrev=    2526
+SOURCE FYEAR=1990 stage2=    8781 announcement=    5937 actual=    5937 actual_currency=    5937 actual_currency_match=    5937
+FORECAST FYEAR=1990 current_mean=    5339 current_currency=    5339 current_currency_match=    5339 next_pre_mean=    2772
+ next_pre_currency=    2772 next_post_mean=    2780 next_post_currency=    2780
+LINK FYEAR=1990 current_CCM=    5621 prior_CCM=    5384 verified_prior_price=    5303 currency_ok=    4898 share_issue_ok=    5236
+ DuPont_complete=    4807
+SIC FYEAR=1990 SICH_missing=    1242 CRSP_filled=     282 SIC_unavailable=     960 overlap=    5315 exact_agree=    1135
+ exact_disagree=    4180
+SIC_CLASS FYEAR=1990 agree=    5084 disagree=     231
+OUTCOME FYEAR=1990 rt=    5074 ur=    3655 rfut=    5354 earn=    5761 sur=    3094 anrev=    2582
+SOURCE FYEAR=1991 stage2=    9121 announcement=    6438 actual=    6438 actual_currency=    6438 actual_currency_match=    6438
+FORECAST FYEAR=1991 current_mean=    5820 current_currency=    5820 current_currency_match=    5820 next_pre_mean=    3251
+ next_pre_currency=    3251 next_post_mean=    3269 next_post_currency=    3269
+LINK FYEAR=1991 current_CCM=    5756 prior_CCM=    5361 verified_prior_price=    5301 currency_ok=    5011 share_issue_ok=    5236
+ DuPont_complete=    4838
+SIC FYEAR=1991 SICH_missing=    1426 CRSP_filled=     290 SIC_unavailable=    1136 overlap=    5439 exact_agree=    1134
+ exact_disagree=    4305
+SIC_CLASS FYEAR=1991 agree=    5189 disagree=     250
+OUTCOME FYEAR=1991 rt=    5103 ur=    3901 rfut=    5464 earn=    5765 sur=    3141 anrev=    2646
+SOURCE FYEAR=1992 stage2=    9632 announcement=    7224 actual=    7224 actual_currency=    7224 actual_currency_match=    7224
+FORECAST FYEAR=1992 current_mean=    6541 current_currency=    6541 current_currency_match=    6541 next_pre_mean=    3299
+ next_pre_currency=    3299 next_post_mean=    3532 next_post_currency=    3532
+LINK FYEAR=1992 current_CCM=    5948 prior_CCM=    5547 verified_prior_price=    5459 currency_ok=    5141 share_issue_ok=    5311
+ DuPont_complete=    4933
+SIC FYEAR=1992 SICH_missing=    1513 CRSP_filled=     285 SIC_unavailable=    1228 overlap=    5644 exact_agree=    1194
+ exact_disagree=    4450
+34                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+SIC_CLASS FYEAR=1992 agree=    5392 disagree=     252
+OUTCOME FYEAR=1992 rt=    5165 ur=    4268 rfut=    5657 earn=    5908 sur=    3314 anrev=    2874
+SOURCE FYEAR=1993 stage2=   10720 announcement=    5601 actual=    5601 actual_currency=    5601 actual_currency_match=    5601
+FORECAST FYEAR=1993 current_mean=    4878 current_currency=    4878 current_currency_match=    4878 next_pre_mean=    3935
+ next_pre_currency=    3935 next_post_mean=    3737 next_post_currency=    3737
+LINK FYEAR=1993 current_CCM=    6989 prior_CCM=    5732 verified_prior_price=    5646 currency_ok=    5278 share_issue_ok=    5610
+ DuPont_complete=    5085
+SIC FYEAR=1993 SICH_missing=    2015 CRSP_filled=     727 SIC_unavailable=    1288 overlap=    6251 exact_agree=    1318
+ exact_disagree=    4933
+SIC_CLASS FYEAR=1993 agree=    5982 disagree=     269
+OUTCOME FYEAR=1993 rt=    5811 ur=    4859 rfut=    6752 earn=    6145 sur=    3645 anrev=    3123
+SOURCE FYEAR=1994 stage2=   11204 announcement=    8244 actual=    8244 actual_currency=    8244 actual_currency_match=    8244
+FORECAST FYEAR=1994 current_mean=    7207 current_currency=    7207 current_currency_match=    7207 next_pre_mean=    3974
+ next_pre_currency=    3974 next_post_mean=    4044 next_post_currency=    4044
+LINK FYEAR=1994 current_CCM=    7417 prior_CCM=    6631 verified_prior_price=    6584 currency_ok=    5613 share_issue_ok=    6508
+ DuPont_complete=    5253
+SIC FYEAR=1994 SICH_missing=    1984 CRSP_filled=     773 SIC_unavailable=    1211 overlap=    6635 exact_agree=    1382
+ exact_disagree=    5253
+SIC_CLASS FYEAR=1994 agree=    6350 disagree=     285
+OUTCOME FYEAR=1994 rt=    6371 ur=    5348 rfut=    7154 earn=    7207 sur=    4270 anrev=    3543
+SOURCE FYEAR=1995 stage2=   11835 announcement=    6703 actual=    6703 actual_currency=    6703 actual_currency_match=    6703
+FORECAST FYEAR=1995 current_mean=    5763 current_currency=    5763 current_currency_match=    5763 next_pre_mean=    4707
+ next_pre_currency=    4707 next_post_mean=    4777 next_post_currency=    4777
+LINK FYEAR=1995 current_CCM=    7602 prior_CCM=    6935 verified_prior_price=    6927 currency_ok=    6305 share_issue_ok=    6804
+ DuPont_complete=    6095
+SIC FYEAR=1995 SICH_missing=    1635 CRSP_filled=     704 SIC_unavailable=     931 overlap=    6888 exact_agree=    1438
+ exact_disagree=    5450
+SIC_CLASS FYEAR=1995 agree=    6598 disagree=     290
+OUTCOME FYEAR=1995 rt=    6638 ur=    5704 rfut=    7412 earn=    7609 sur=    4570 anrev=    3820
+SOURCE FYEAR=1996 stage2=   11992 announcement=    9741 actual=    9741 actual_currency=    9741 actual_currency_match=    9741
+FORECAST FYEAR=1996 current_mean=    6451 current_currency=    6451 current_currency_match=    6451 next_pre_mean=    5520
+ next_pre_currency=    5520 next_post_mean=    5596 next_post_currency=    5596
+LINK FYEAR=1996 current_CCM=    8125 prior_CCM=    7156 verified_prior_price=    7705 currency_ok=    6876 share_issue_ok=    7037
+ DuPont_complete=    6357
+SIC FYEAR=1996 SICH_missing=    1577 CRSP_filled=     650 SIC_unavailable=     927 overlap=    7464 exact_agree=    1499
+ exact_disagree=    5965
+SIC_CLASS FYEAR=1996 agree=    7177 disagree=     287
+OUTCOME FYEAR=1996 rt=    6946 ur=    6340 rfut=    7910 earn=    8363 sur=    4928 anrev=    4012
+SOURCE FYEAR=1997 stage2=   11788 announcement=    9646 actual=    9646 actual_currency=    9646 actual_currency_match=    9646
+FORECAST FYEAR=1997 current_mean=    8636 current_currency=    8636 current_currency_match=    8636 next_pre_mean=    5589
+ next_pre_currency=    5589 next_post_mean=    5239 next_post_currency=    5239
+LINK FYEAR=1997 current_CCM=    8164 prior_CCM=    7514 verified_prior_price=    8159 currency_ok=    7208 share_issue_ok=    7345
+ DuPont_complete=    6939
+SIC FYEAR=1997 SICH_missing=    1684 CRSP_filled=     602 SIC_unavailable=    1082 overlap=    7549 exact_agree=    1575
+ exact_disagree=    5974
+SIC_CLASS FYEAR=1997 agree=    7286 disagree=     263
+OUTCOME FYEAR=1997 rt=    7273 ur=    6447 rfut=    7863 earn=    8821 sur=    5264 anrev=    4290
+SOURCE FYEAR=1998 stage2=   11900 announcement=    9820 actual=    9820 actual_currency=    9820 actual_currency_match=    9820
+FORECAST FYEAR=1998 current_mean=    6716 current_currency=    6716 current_currency_match=    6716 next_pre_mean=    5340
+ next_pre_currency=    5340 next_post_mean=    5171 next_post_currency=    5171
+LINK FYEAR=1998 current_CCM=    7787 prior_CCM=    7444 verified_prior_price=    8094 currency_ok=    7137 share_issue_ok=    7131
+ DuPont_complete=    6855
+SIC FYEAR=1998 SICH_missing=    1535 CRSP_filled=     645 SIC_unavailable=     890 overlap=    7134 exact_agree=    1721
+ exact_disagree=    5413
+SIC_CLASS FYEAR=1998 agree=    6911 disagree=     223
+OUTCOME FYEAR=1998 rt=    7105 ur=    6168 rfut=    7455 earn=    8764 sur=    5164 anrev=    4117
+SOURCE FYEAR=1999 stage2=   11863 announcement=    9802 actual=    9802 actual_currency=    9802 actual_currency_match=    9802
+FORECAST FYEAR=1999 current_mean=    9170 current_currency=    9170 current_currency_match=    9170 next_pre_mean=    4584
+35                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+ next_pre_currency=    4584 next_post_mean=    4569 next_post_currency=    4569
+LINK FYEAR=1999 current_CCM=    7566 prior_CCM=    7077 verified_prior_price=    8069 currency_ok=    6850 share_issue_ok=    6778
+ DuPont_complete=    6489
+SIC FYEAR=1999 SICH_missing=    1437 CRSP_filled=     606 SIC_unavailable=     831 overlap=    6951 exact_agree=    1812
+ exact_disagree=    5139
+SIC_CLASS FYEAR=1999 agree=    6765 disagree=     186
+OUTCOME FYEAR=1999 rt=    6764 ur=    6064 rfut=    7290 earn=    8756 sur=    4893 anrev=    3861
+SOURCE FYEAR=2000 stage2=   11427 announcement=    7189 actual=    7189 actual_currency=    7189 actual_currency_match=    7189
+FORECAST FYEAR=2000 current_mean=    6487 current_currency=    6487 current_currency_match=    6487 next_pre_mean=    4421
+ next_pre_currency=    4421 next_post_mean=    4667 next_post_currency=    4667
+LINK FYEAR=2000 current_CCM=    7343 prior_CCM=    6845 verified_prior_price=    8193 currency_ok=    6890 share_issue_ok=    6642
+ DuPont_complete=    6710
+SIC FYEAR=2000 SICH_missing=    1597 CRSP_filled=     556 SIC_unavailable=    1041 overlap=    6779 exact_agree=    2070
+ exact_disagree=    4709
+SIC_CLASS FYEAR=2000 agree=    6602 disagree=     177
+OUTCOME FYEAR=2000 rt=    6540 ur=    5646 rfut=    6972 earn=    8983 sur=    4594 anrev=    3610
+SOURCE FYEAR=2001 stage2=   10906 announcement=    8911 actual=    8911 actual_currency=    8911 actual_currency_match=    8911
+FORECAST FYEAR=2001 current_mean=    7417 current_currency=    7417 current_currency_match=    7417 next_pre_mean=    3863
+ next_pre_currency=    3863 next_post_mean=    3885 next_post_currency=    3885
+LINK FYEAR=2001 current_CCM=    6674 prior_CCM=    6689 verified_prior_price=    8042 currency_ok=    7069 share_issue_ok=    6408
+ DuPont_complete=    6724
+SIC FYEAR=2001 SICH_missing=    1691 CRSP_filled=     587 SIC_unavailable=    1104 overlap=    6078 exact_agree=    2198
+ exact_disagree=    3880
+SIC_CLASS FYEAR=2001 agree=    5948 disagree=     130
+OUTCOME FYEAR=2001 rt=    6271 ur=    5203 rfut=    6387 earn=    8902 sur=    4295 anrev=    3477
+SOURCE FYEAR=2002 stage2=   10481 announcement=    5913 actual=    5913 actual_currency=    5913 actual_currency_match=    5913
+FORECAST FYEAR=2002 current_mean=    4786 current_currency=    4786 current_currency_match=    4786 next_pre_mean=    3722
+ next_pre_currency=    3722 next_post_mean=    3954 next_post_currency=    3954
+LINK FYEAR=2002 current_CCM=    6215 prior_CCM=    6243 verified_prior_price=    7723 currency_ok=    6894 share_issue_ok=    5998
+ DuPont_complete=    6567
+SIC FYEAR=2002 SICH_missing=    1722 CRSP_filled=     571 SIC_unavailable=    1151 overlap=    5640 exact_agree=    2136
+ exact_disagree=    3504
+SIC_CLASS FYEAR=2002 agree=    5520 disagree=     120
+OUTCOME FYEAR=2002 rt=    5891 ur=    5123 rfut=    5799 earn=    8608 sur=    4102 anrev=    3440
+NOTE: There were 19 observations read from the data set WORK.YEAR_SUPPORT.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+901        proc sql;
+902            create table year_screen as
+903            select fyear,
+904              sum(not missing(sic_screen) and not (sic_screen>=6000 and sic_screen<=6999)) as n_nonfinancial_sic,
+905              sum(not missing(sich) and not (sich>=6000 and sich<=6999)) as n_comp_nonfinancial_sic,
+906              sum(sic_source='CRSP' and not (sic_screen>=6000 and sic_screen<=6999)) as n_crsp_nonfinancial_fill,
+907              sum(not missing(sic_screen) and not (sic_screen>=6000 and sic_screen<=6999) and
+908                  not missing(noa) and noa>=0) as n_after_noa,
+909              sum(not missing(sic_screen) and not (sic_screen>=6000 and sic_screen<=6999) and
+910                  not missing(noa) and noa>=0 and not missing(oiadp) and oiadp>=0) as n_after_opincome,
+911              sum(not missing(sic_screen) and not (sic_screen>=6000 and sic_screen<=6999) and
+912                  not missing(noa) and noa>=0 and not missing(oiadp) and oiadp>=0 and
+913                  currency_ok=1) as n_after_currency,
+914              sum(not missing(sic_screen) and not (sic_screen>=6000 and sic_screen<=6999) and
+915                  not missing(noa) and noa>=0 and not missing(oiadp) and oiadp>=0 and
+916                  currency_ok=1 and share_issue_ok=1) as n_after_issue,
+917              sum(nmiss(rnoa,drnoa,pm,ato,dpm,dato,rnoap1,pmp1,atop1)=0) as n_dupont_complete,
+918              sum(nmiss(rt,ur,rfut)=0) as n_return_complete,
+36                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+919              sum(nmiss(earn,dearn)=0) as n_compustat_eps_complete,
+920              sum(nmiss(sur,anrev)=0) as n_ibes_complete,
+921              sum(not missing(sic_screen) and not (sic_screen>=6000 and sic_screen<=6999) and
+922                  not missing(noa) and noa>=0 and not missing(oiadp) and oiadp>=0 and
+923                  currency_ok=1 and share_issue_ok=1 and
+924                  nmiss(rt,ur,rfut,earn,dearn,rnoa,drnoa,pm,ato,dpm,dato,
+925                     rnoap1,pmp1,atop1,sur,anrev)=0) as n_common
+926            from stage2 where fyear between 1984 and 2002
+927            group by fyear order by fyear;
+NOTE: Table WORK.YEAR_SCREEN created, with 19 rows and 13 columns.
+
+928        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.16 seconds
+      
+
+929        data _null_;
+930            set year_screen;
+931            putlog 'SCREEN FYEAR=' fyear 4. ' nonfinancial_SIC=' n_nonfinancial_sic 8.
+932               ' Compustat_nonfinancial=' n_comp_nonfinancial_sic 8.
+933               ' CRSP_nonfinancial_fill=' n_crsp_nonfinancial_fill 8.
+934               ' after_NOA=' n_after_noa 8. ' after_OI=' n_after_opincome 8.
+935               ' after_currency=' n_after_currency 8. ' after_IID_PERMNO=' n_after_issue 8.
+936               ' common=' n_common 8.;
+937            putlog 'GROUP_COMPLETE FYEAR=' fyear 4. ' DuPont=' n_dupont_complete 8.
+938               ' return=' n_return_complete 8. ' Compustat_EPS=' n_compustat_eps_complete 8.
+939               ' IBES_SUR_ANREV=' n_ibes_complete 8.;
+940        run;
+
+SCREEN FYEAR=1984 nonfinancial_SIC=    4399 Compustat_nonfinancial=       7 CRSP_nonfinancial_fill=    4392 after_NOA=    3684
+ after_OI=    2638 after_currency=    2105 after_IID_PERMNO=    2097 common=     676
+GROUP_COMPLETE FYEAR=1984 DuPont=    4334 return=    1428 Compustat_EPS=    5474 IBES_SUR_ANREV=    1396
+SCREEN FYEAR=1985 nonfinancial_SIC=    4548 Compustat_nonfinancial=       7 CRSP_nonfinancial_fill=    4541 after_NOA=    3827
+ after_OI=    2579 after_currency=    2037 after_IID_PERMNO=    2028 common=     734
+GROUP_COMPLETE FYEAR=1985 DuPont=    4400 return=    1682 Compustat_EPS=    5532 IBES_SUR_ANREV=    1549
+SCREEN FYEAR=1986 nonfinancial_SIC=    4832 Compustat_nonfinancial=      11 CRSP_nonfinancial_fill=    4821 after_NOA=    4044
+ after_OI=    2648 after_currency=    1984 after_IID_PERMNO=    1975 common=     816
+GROUP_COMPLETE FYEAR=1986 DuPont=    4372 return=    1981 Compustat_EPS=    5564 IBES_SUR_ANREV=    1714
+SCREEN FYEAR=1987 nonfinancial_SIC=    6901 Compustat_nonfinancial=    6885 CRSP_nonfinancial_fill=      16 after_NOA=    5687
+ after_OI=    3756 after_currency=    2345 after_IID_PERMNO=    2116 common=     905
+GROUP_COMPLETE FYEAR=1987 DuPont=    4557 return=    2319 Compustat_EPS=    5826 IBES_SUR_ANREV=    1877
+SCREEN FYEAR=1988 nonfinancial_SIC=    6757 Compustat_nonfinancial=    6741 CRSP_nonfinancial_fill=      16 after_NOA=    5516
+ after_OI=    3691 after_currency=    2403 after_IID_PERMNO=    2224 common=    1031
+GROUP_COMPLETE FYEAR=1988 DuPont=    4684 return=    2756 Compustat_EPS=    6009 IBES_SUR_ANREV=    2176
+SCREEN FYEAR=1989 nonfinancial_SIC=    6637 Compustat_nonfinancial=    6625 CRSP_nonfinancial_fill=      12 after_NOA=    5403
+ after_OI=    3660 after_currency=    2383 after_IID_PERMNO=    2189 common=    1168
+GROUP_COMPLETE FYEAR=1989 DuPont=    4741 return=    3262 Compustat_EPS=    5789 IBES_SUR_ANREV=    2525
+SCREEN FYEAR=1990 nonfinancial_SIC=    6665 Compustat_nonfinancial=    6656 CRSP_nonfinancial_fill=       9 after_NOA=    5374
+ after_OI=    3688 after_currency=    2403 after_IID_PERMNO=    2224 common=    1184
+GROUP_COMPLETE FYEAR=1990 DuPont=    4807 return=    3426 Compustat_EPS=    5761 IBES_SUR_ANREV=    2581
+SCREEN FYEAR=1991 nonfinancial_SIC=    6775 Compustat_nonfinancial=    6764 CRSP_nonfinancial_fill=      11 after_NOA=    5478
+ after_OI=    3748 after_currency=    2421 after_IID_PERMNO=    2267 common=    1245
+GROUP_COMPLETE FYEAR=1991 DuPont=    4838 return=    3567 Compustat_EPS=    5765 IBES_SUR_ANREV=    2644
+SCREEN FYEAR=1992 nonfinancial_SIC=    7130 Compustat_nonfinancial=    7120 CRSP_nonfinancial_fill=      10 after_NOA=    5822
+ after_OI=    4164 after_currency=    2552 after_IID_PERMNO=    2368 common=    1345
+GROUP_COMPLETE FYEAR=1992 DuPont=    4933 return=    3770 Compustat_EPS=    5908 IBES_SUR_ANREV=    2866
+SCREEN FYEAR=1993 nonfinancial_SIC=    7553 Compustat_nonfinancial=    7541 CRSP_nonfinancial_fill=      12 after_NOA=    6238
+37                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+ after_OI=    4471 after_currency=    2680 after_IID_PERMNO=    2494 common=    1492
+GROUP_COMPLETE FYEAR=1993 DuPont=    5085 return=    4313 Compustat_EPS=    6145 IBES_SUR_ANREV=    3116
+SCREEN FYEAR=1994 nonfinancial_SIC=    8052 Compustat_nonfinancial=    8038 CRSP_nonfinancial_fill=      14 after_NOA=    6695
+ after_OI=    4823 after_currency=    2910 after_IID_PERMNO=    2723 common=    1659
+GROUP_COMPLETE FYEAR=1994 DuPont=    5253 return=    4781 Compustat_EPS=    7207 IBES_SUR_ANREV=    3537
+SCREEN FYEAR=1995 nonfinancial_SIC=    8924 Compustat_nonfinancial=    8908 CRSP_nonfinancial_fill=      16 after_NOA=    7398
+ after_OI=    5207 after_currency=    3034 after_IID_PERMNO=    2825 common=    1759
+GROUP_COMPLETE FYEAR=1995 DuPont=    6095 return=    5154 Compustat_EPS=    7609 IBES_SUR_ANREV=    3811
+SCREEN FYEAR=1996 nonfinancial_SIC=    9119 Compustat_nonfinancial=    9092 CRSP_nonfinancial_fill=      27 after_NOA=    7604
+ after_OI=    5257 after_currency=    3307 after_IID_PERMNO=    2930 common=    1840
+GROUP_COMPLETE FYEAR=1996 DuPont=    6357 return=    5531 Compustat_EPS=    8363 IBES_SUR_ANREV=    4007
+SCREEN FYEAR=1997 nonfinancial_SIC=    8867 Compustat_nonfinancial=    8837 CRSP_nonfinancial_fill=      30 after_NOA=    7307
+ after_OI=    4936 after_currency=    3326 after_IID_PERMNO=    2974 common=    1957
+GROUP_COMPLETE FYEAR=1997 DuPont=    6939 return=    5792 Compustat_EPS=    8821 IBES_SUR_ANREV=    4283
+SCREEN FYEAR=1998 nonfinancial_SIC=    9130 Compustat_nonfinancial=    9071 CRSP_nonfinancial_fill=      59 after_NOA=    7429
+ after_OI=    4623 after_currency=    3099 after_IID_PERMNO=    2776 common=    1838
+GROUP_COMPLETE FYEAR=1998 DuPont=    6855 return=    5659 Compustat_EPS=    8764 IBES_SUR_ANREV=    4116
+SCREEN FYEAR=1999 nonfinancial_SIC=    9083 Compustat_nonfinancial=    9052 CRSP_nonfinancial_fill=      31 after_NOA=    7401
+ after_OI=    4434 after_currency=    2923 after_IID_PERMNO=    2622 common=    1717
+GROUP_COMPLETE FYEAR=1999 DuPont=    6489 return=    5417 Compustat_EPS=    8756 IBES_SUR_ANREV=    3858
+SCREEN FYEAR=2000 nonfinancial_SIC=    8527 Compustat_nonfinancial=    8506 CRSP_nonfinancial_fill=      21 after_NOA=    6899
+ after_OI=    3965 after_currency=    2690 after_IID_PERMNO=    2405 common=    1497
+GROUP_COMPLETE FYEAR=2000 DuPont=    6710 return=    5067 Compustat_EPS=    8983 IBES_SUR_ANREV=    3608
+SCREEN FYEAR=2001 nonfinancial_SIC=    8040 Compustat_nonfinancial=    8012 CRSP_nonfinancial_fill=      28 after_NOA=    6323
+ after_OI=    3514 after_currency=    2438 after_IID_PERMNO=    2201 common=    1235
+GROUP_COMPLETE FYEAR=2001 DuPont=    6724 return=    4943 Compustat_EPS=    8902 IBES_SUR_ANREV=    3474
+SCREEN FYEAR=2002 nonfinancial_SIC=    7621 Compustat_nonfinancial=    7595 CRSP_nonfinancial_fill=      26 after_NOA=    5811
+ after_OI=    3540 after_currency=    2487 after_IID_PERMNO=    2227 common=    1371
+GROUP_COMPLETE FYEAR=2002 DuPont=    6567 return=    4790 Compustat_EPS=    8608 IBES_SUR_ANREV=    3440
+NOTE: There were 19 observations read from the data set WORK.YEAR_SCREEN.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+941        data sample0;
+942            set stage2;
+943            if fyear<1984 or fyear>2002 then delete;
+944            if missing(sic_screen) then delete;
+945            if sic_screen>=6000 and sic_screen<=6999 then delete;
+946            if missing(noa) or noa<0 then delete;
+947            if missing(oiadp) or oiadp<0 then delete;
+948            if currency_ok ne 1 then delete;
+949            if share_issue_ok ne 1 then delete;
+950            if nmiss(rt,ur,rfut,earn,dearn,rnoa,drnoa,pm,ato,dpm,dato,
+951               rnoap1,pmp1,atop1,sur,anrev)=0;
+952            pre_age_days=ann_date-stat_npre;
+953            post_age_days=stat_npost-ann_date;
+954            pre_age_months=intck('month',stat_npre,ann_date);
+955            post_age_months=intck('month',ann_date,stat_npost);
+956        run;
+
+NOTE: There were 192113 observations read from the data set WORK.STAGE2.
+NOTE: The data set WORK.SAMPLE0 has 25469 observations and 102 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.03 seconds
+      
+38                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+
+957        proc sql;
+958            select count(*) into :n_common trimmed from sample0;
+959            select put(min(datap1),date9.),put(max(datap1),date9.),
+960                   put(min(intnx('month',datadate,5,'b')),date9.),
+961                   put(max(intnx('month',datadate,16,'e')),date9.),
+962                   min(fyear),max(fyear)
+963              into :sleadmin trimmed,:sleadmax trimmed,:wstartmin trimmed,:wendmax trimmed,
+964                   :sminyr trimmed,:smaxyr trimmed from sample0;
+965        quit;
+NOTE: The PROCEDURE SQL printed pages 31-32.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+966        %put NOTE: common complete-case rows=&n_common, actual t+1 DATADATE=&sleadmin to &sleadmax, future CRSP window
+966      ! support=&wstartmin to &wendmax, fiscal-year labels=&sminyr to &smaxyr.;
+NOTE: common complete-case rows=25469, actual t+1 DATADATE=30JUN1985 to 31MAY2004, future CRSP window support=01NOV1984 to 
+30SEP2004, fiscal-year labels=1984 to 2002
+967        proc freq data=sample0;
+968            tables fyear / missing;
+969        run;
+
+NOTE: There were 25469 observations read from the data set WORK.SAMPLE0.
+NOTE: The PROCEDURE FREQ printed page 33.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+970        /* This confirms that each selected year-(t+1) forecast is in an adjacent
+971           monthly period and reports its actual age in days by fiscal year. */
+972        proc means data=sample0 n min p50 p90 max;
+973            class fyear;
+974            var pre_age_days post_age_days pre_age_months post_age_months;
+975        run;
+
+NOTE: There were 25469 observations read from the data set WORK.SAMPLE0.
+NOTE: The PROCEDURE MEANS printed pages 34-35.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+976        
+977        /* Annual 1st/99th cutoffs are best effort because the paper does not state the
+978           percentile grouping. Returns are not classified as financial variables. */
+979        proc sort data=sample0; by fyear; run;
+
+NOTE: There were 25469 observations read from the data set WORK.SAMPLE0.
+NOTE: The data set WORK.SAMPLE0 has 25469 observations and 102 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+980        proc univariate data=sample0 noprint;
+39                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+981            by fyear;
+982            var earn dearn rnoa drnoa pm ato dpm dato rnoap1 pmp1 atop1 sur anrev;
+983            output out=cuts pctlpts=1 99
+984              pctlpre=earn_ dearn_ rnoa_ drnoa_ pm_ ato_ dpm_ dato_ rnoap1_ pmp1_ atop1_ sur_ anrev_
+985              pctlname=p1 p99;
+986        run;
+
+NOTE: The data set WORK.CUTS has 19 observations and 27 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+987        proc sort data=cuts; by fyear; run;
+
+NOTE: There were 19 observations read from the data set WORK.CUTS.
+NOTE: The data set WORK.CUTS has 19 observations and 27 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+988        data samplew;
+989            merge sample0(in=a) cuts;
+990            by fyear;
+991            if a;
+992            array x[13] earn dearn rnoa drnoa pm ato dpm dato rnoap1 pmp1 atop1 sur anrev;
+993            array lo[13] earn_p1 dearn_p1 rnoa_p1 drnoa_p1 pm_p1 ato_p1 dpm_p1 dato_p1
+994               rnoap1_p1 pmp1_p1 atop1_p1 sur_p1 anrev_p1;
+995            array hi[13] earn_p99 dearn_p99 rnoa_p99 drnoa_p99 pm_p99 ato_p99 dpm_p99 dato_p99
+996               rnoap1_p99 pmp1_p99 atop1_p99 sur_p99 anrev_p99;
+997            do i=1 to dim(x);
+998                if not missing(x[i]) and not missing(lo[i]) and x[i]<lo[i] then x[i]=lo[i];
+999                if not missing(x[i]) and not missing(hi[i]) and x[i]>hi[i] then x[i]=hi[i];
+1000           end;
+1001           drop i earn_p1 earn_p99 dearn_p1 dearn_p99 rnoa_p1 rnoa_p99 drnoa_p1 drnoa_p99
+1002             pm_p1 pm_p99 ato_p1 ato_p99 dpm_p1 dpm_p99 dato_p1 dato_p99
+1003             rnoap1_p1 rnoap1_p99 pmp1_p1 pmp1_p99 atop1_p1 atop1_p99
+1004             sur_p1 sur_p99 anrev_p1 anrev_p99;
+1005       run;
+
+NOTE: There were 25469 observations read from the data set WORK.SAMPLE0.
+NOTE: There were 19 observations read from the data set WORK.CUTS.
+NOTE: The data set WORK.SAMPLEW has 25469 observations and 102 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+1006       proc means data=samplew n mean std min p1 p50 p99 max;
+1007           var rt ur rfut earn dearn rnoa drnoa pm ato dpm dato rnoap1 pmp1 atop1 sur anrev;
+1008       run;
+
+NOTE: There were 25469 observations read from the data set WORK.SAMPLEW.
+NOTE: The PROCEDURE MEANS printed page 36.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.32 seconds
+40                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+      
+
+1009       proc means data=samplew n mean std min p1 p50 p99 max;
+1010           class fyear;
+1011           var rt ur rfut earn dearn rnoa drnoa pm ato dpm dato rnoap1 pmp1 atop1 sur anrev;
+1012       run;
+
+NOTE: There were 25469 observations read from the data set WORK.SAMPLEW.
+NOTE: The PROCEDURE MEANS printed pages 37-56.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.15 seconds
+      
+
+1013       
+1014       /* One common analysis file, one row per Compustat GVKEY/FYEAR. */
+1015       data out.reg(label='DuPont annual common sample');
+1016           set samplew;
+1017           keep gvkey fyear rt ur rfut earn dearn rnoa drnoa pm ato dpm dato
+1018                rnoap1 pmp1 atop1 sur anrev curcd curncd curr_act cur_t cur_npre cur_npost
+1019                sich crsp_sic sic_screen sic_source
+1020                datadate datam1 datam2 datap1 ann_date permno permm1 iid0 iidm1
+1021                curm1 curm2 curp1 curnm1 curnm2 curnp1
+1022                prcc_f prccm1 prccm1_cur prccm1_verified prccm1_date
+1023                prccm1_price_status prccm1_price_age nday_t nday_f
+1024                pre_age_days post_age_days pre_age_months post_age_months;
+1025           label rt='Annual market-adjusted buy-and-hold return'
+1026                 ur='Announcement-window market-adjusted return'
+1027                 rfut='Future-return CRSP eligibility measure'
+1028                 sur='Unexpected annual EPS'
+1029                 anrev='Next-year analyst forecast revision'
+1030                 fyear='Compustat fiscal year'
+1031                 curcd='Compustat reporting currency'
+1032                 curncd='Compustat native currency'
+1033                 sich='Compustat historical SIC'
+1034                 crsp_sic='CRSP SICCD effective on DATADATE'
+1035                 sic_screen='SIC used for financial-industry screen'
+1036                 sic_source='Source of SIC used for financial-industry screen'
+1037                 curr_act='I/B/E/S actual currency field'
+1038                 prccm1_cur='Verified prior security-price currency'
+1039                 prccm1_verified='Prior price and currency verified'
+1040                 prccm1_date='Date of matched prior security price'
+1041                 cur_t='I/B/E/S current-year summary currency'
+1042                 cur_npre='I/B/E/S next-year pre-announcement currency'
+1043                 cur_npost='I/B/E/S next-year post-announcement currency';
+1044       run;
+
+NOTE: There were 25469 observations read from the data set WORK.SAMPLEW.
+NOTE: The data set OUT.REG has 25469 observations and 56 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+1045       proc sort data=out.reg; by gvkey fyear; run;
+
+NOTE: There were 25469 observations read from the data set OUT.REG.
+NOTE: The data set OUT.REG has 25469 observations and 56 variables.
+41                                                         The SAS System                     Tuesday, November  3, 2026 05:22:00 AM
+
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+1046       proc freq data=out.reg;
+1047           tables fyear / missing;
+1048       run;
+
+NOTE: There were 25469 observations read from the data set OUT.REG.
+NOTE: The PROCEDURE FREQ printed page 57.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1049       proc sql;
+1050           select count(*) into :n_out trimmed from out.reg;
+1051           select put(min(datadate),date9.),put(max(datadate),date9.),
+1052                  put(min(datap1),date9.),put(max(datap1),date9.)
+1053             into :omin trimmed,:omax trimmed,:ominp1 trimmed,:omaxp1 trimmed
+1054             from out.reg;
+1055       quit;
+NOTE: The PROCEDURE SQL printed pages 58-59.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1056       %put NOTE: final rows=&n_out final target DATADATE=&omin to &omax final lead DATADATE=&ominp1 to &omaxp1.;
+NOTE: final rows=25469 final target DATADATE=30JUN1984 to 31MAY2003 final lead DATADATE=30JUN1985 to 31MAY2004
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           5:19.88
+      cpu time            8:44.82
+      

@@ -1,0 +1,1757 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend;
+2          
+3          libname comp  "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname comprate "/storage/sas/base/comp/d_na/rating" access=readonly;
+NOTE: Libref COMPRATE was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/rating
+5          libname gcomp "/storage/sas/base/comp/d_global/currency" access=readonly;
+NOTE: Libref GCOMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_global/currency
+6          libname crsp  "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+7          libname ccm   "/storage/sas/base/crsp/a_ccm" access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+8          libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W1997012386/attempt_03/data
+9          
+10         %let d86 = '01JAN1986'd;
+11         %let d87 = '01JAN1987'd;
+12         %let d93 = '01JAN1993'd;
+13         %let d98 = '31DEC1998'd;
+14         /* d98 remains the stated calendar market-model and rating cutoff.  FY1998
+15            Compustat rows can end in calendar 1999, so source-history inputs extend
+16            through the observed maximum FY1998 DATADATE of 31MAY1999. */
+17         %let dend = '31MAY1999'd;
+18         
+19         /* Annual Industrial Compustat, canonical current-format extraction keys. */
+3                                                          The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+20         data work.funda_raw;
+21             set comp.funda(keep=gvkey datadate fyear indfmt consol popsrc datafmt curcd
+22                                 at ceq ib dvc dltt sale xrd xad dp xdp oancf
+23                            where=(fyear >= 1986 and fyear <= 1998 and
+24                                   indfmt='INDL' and consol='C' and popsrc='D' and datafmt='STD'));
+25         run;
+
+NOTE: There were 140648 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1986 and fyear<=1998) and (indfmt='INDL') and (consol='C') and (popsrc='D') and (datafmt='STD');
+NOTE: The data set WORK.FUNDA_RAW has 140648 observations and 19 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.52 seconds
+      cpu time            0.52 seconds
+      
+
+26         
+27         proc sql;
+28             create table work.funda_key_counts as
+29             select gvkey, fyear, count(*) as n_rows
+30             from work.funda_raw
+31             group by gvkey, fyear;
+NOTE: Table WORK.FUNDA_KEY_COUNTS created, with 140648 rows and 3 columns.
+
+32         
+33             create table work.funda_unique as
+34             select f.*
+35             from work.funda_raw as f
+36             inner join work.funda_key_counts as k
+37                 on f.gvkey=k.gvkey and f.fyear=k.fyear
+38             where k.n_rows=1;
+NOTE: Table WORK.FUNDA_UNIQUE created, with 140648 rows and 19 columns.
+
+39         
+40             select count(*) as selected_funda_rows,
+41                    count(distinct gvkey) as selected_gvkeys,
+42                    sum(case when n_rows>1 then 1 else 0 end) as duplicate_gvkey_fyear_keys,
+43                    sum(case when n_rows>1 then n_rows else 0 end) as rows_in_duplicate_keys
+44             from work.funda_key_counts;
+45         quit;
+NOTE: The PROCEDURE SQL printed page 1.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.17 seconds
+      
+
+46         
+47         title "Compustat reporting currency by fiscal-year row, after source filters";
+48         proc freq data=work.funda_unique;
+49             tables curcd / missing;
+50         run;
+
+NOTE: There were 140648 observations read from the data set WORK.FUNDA_UNIQUE.
+NOTE: The PROCEDURE FREQ printed page 2.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+4                                                          The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+51         title;
+52         
+53         /* Currency cross-rates: only unique GBP-to-reporting and GBP-to-USD rates. */
+54         data work.fx_dly_raw;
+55             set gcomp.g_exrt_dly(keep=datadate tocurd fromcurd exratd exrattpd
+56                                  where=(datadate >= &d86 and datadate <= &dend and fromcurd='GBP'));
+57             curr=upcase(strip(tocurd));
+58             rate=exratd;
+59             keep datadate curr rate exrattpd;
+60         run;
+
+NOTE: There were 518659 observations read from the data set GCOMP.G_EXRT_DLY.
+      WHERE (datadate>='01JAN1986'D and datadate<='31MAY1999'D) and (fromcurd='GBP');
+NOTE: The data set WORK.FX_DLY_RAW has 518659 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.13 seconds
+      
+
+61         
+62         proc sql;
+63             create table work.fx_dly_summary as
+64             select datadate, curr, count(*) as n_rates, max(rate) as rate
+65             from work.fx_dly_raw
+66             group by datadate, curr;
+NOTE: Table WORK.FX_DLY_SUMMARY created, with 518659 rows and 4 columns.
+
+67         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.18 seconds
+      
+
+68         
+69         data work.fx_mth_raw;
+70             set gcomp.g_exrt_mth(keep=datadate tocurm fromcurm exrat12m
+71                                  where=(datadate >= &d86 and datadate <= &dend and fromcurm='GBP'));
+72             curr=upcase(strip(tocurm));
+73             rate=exrat12m;
+74             keep datadate curr rate;
+75         run;
+
+NOTE: There were 17931 observations read from the data set GCOMP.G_EXRT_MTH.
+      WHERE (datadate>='01JAN1986'D and datadate<='31MAY1999'D) and (fromcurm='GBP');
+NOTE: The data set WORK.FX_MTH_RAW has 17931 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+
+76         
+77         proc sql;
+78             create table work.fx_mth_summary as
+79             select datadate, curr, count(*) as n_rates, max(rate) as rate
+80             from work.fx_mth_raw
+81             group by datadate, curr;
+NOTE: Table WORK.FX_MTH_SUMMARY created, with 17931 rows and 4 columns.
+
+5                                                          The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+82         
+83             create table work.funda_rates as
+84             select a.*,
+85                    dcur.n_rates as nd_report,
+86                    dcur.rate as d_report,
+87                    dusd.n_rates as nd_usd,
+88                    dusd.rate as d_usd,
+89                    mcur.n_rates as nm_report,
+90                    mcur.rate as m_report,
+91                    musd.n_rates as nm_usd,
+92                    musd.rate as m_usd
+93             from work.funda_unique as a
+94             left join work.fx_dly_summary as dcur
+95                 on a.datadate=dcur.datadate and upcase(strip(a.curcd))=dcur.curr
+96             left join work.fx_dly_summary as dusd
+97                 on a.datadate=dusd.datadate and dusd.curr='USD'
+98             left join work.fx_mth_summary as mcur
+99                 on a.datadate=mcur.datadate and upcase(strip(a.curcd))=mcur.curr
+100            left join work.fx_mth_summary as musd
+101                on a.datadate=musd.datadate and musd.curr='USD';
+NOTE: Table WORK.FUNDA_RATES created, with 140648 rows and 27 columns.
+
+102        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.19 seconds
+      cpu time            0.25 seconds
+      
+
+103        
+104        data work.annual_usd;
+105            set work.funda_rates;
+106            length reporting_currency $3;
+107            reporting_currency=upcase(strip(curcd));
+108            bs_usd_factor=.;
+109            flow_usd_factor=.;
+110        
+111            if reporting_currency='USD' then do;
+112                bs_usd_factor=1;
+113                flow_usd_factor=1;
+114            end;
+115            else do;
+116                if reporting_currency='GBP' then do;
+117                    d_report=1;
+118                    m_report=1;
+119                    nd_report=1;
+120                    nm_report=1;
+121                end;
+122                if nd_report=1 and nd_usd=1 and d_report ne 0 and not missing(d_report) and not missing(d_usd) then
+123                    bs_usd_factor=d_usd/d_report;
+124                if nm_report=1 and nm_usd=1 and m_report ne 0 and not missing(m_report) and not missing(m_usd) then
+125                    flow_usd_factor=m_usd/m_report;
+126            end;
+127        
+128            if not missing(at) and not missing(bs_usd_factor) then at_usd=at*bs_usd_factor;
+129            if not missing(ceq) and not missing(bs_usd_factor) then ceq_usd=ceq*bs_usd_factor;
+130            if not missing(dltt) and not missing(bs_usd_factor) then dltt_usd=dltt*bs_usd_factor;
+131        
+132            if not missing(ib) and not missing(flow_usd_factor) then ib_usd=ib*flow_usd_factor;
+6                                                          The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+133            if not missing(dvc) and not missing(flow_usd_factor) then dvc_usd=dvc*flow_usd_factor;
+134            if not missing(sale) and not missing(flow_usd_factor) then sale_usd=sale*flow_usd_factor;
+135            if not missing(xrd) and not missing(flow_usd_factor) then xrd_usd=xrd*flow_usd_factor;
+136            if not missing(xad) and not missing(flow_usd_factor) then xad_usd=xad*flow_usd_factor;
+137            if not missing(dp) and not missing(flow_usd_factor) then dp_usd=dp*flow_usd_factor;
+138            if not missing(xdp) and not missing(flow_usd_factor) then xdp_usd=xdp*flow_usd_factor;
+139            if not missing(oancf) and not missing(flow_usd_factor) then oancf_usd=oancf*flow_usd_factor;
+140        run;
+
+NOTE: There were 140648 observations read from the data set WORK.FUNDA_RATES.
+NOTE: The data set WORK.ANNUAL_USD has 140648 observations and 41 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.06 seconds
+      
+
+141        
+142        title "Currency conversion availability for the selected Compustat rows";
+143        proc means data=work.annual_usd n nmiss;
+144            var at_usd ceq_usd dltt_usd ib_usd dvc_usd sale_usd xrd_usd xad_usd dp_usd xdp_usd oancf_usd;
+145        run;
+
+NOTE: There were 140648 observations read from the data set WORK.ANNUAL_USD.
+NOTE: The PROCEDURE MEANS printed page 3.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+146        title;
+147        
+148        title "Actual required fiscal reporting dates and exact-date FX coverage";
+149        proc sql;
+150            select fyear, reporting_currency, count(*) as report_rows,
+151                   min(datadate) as first_datadate format=yymmdd10.,
+152                   max(datadate) as last_datadate format=yymmdd10.,
+153                   sum(datadate>&d98) as rows_after_1998_calendar_end,
+154                   sum(not missing(ceq)) as ceq_source_rows,
+155                   sum(not missing(ceq_usd)) as ceq_usd_rows,
+156                   sum(not missing(ceq) and missing(ceq_usd)) as ceq_unconverted_rows,
+157                   sum(not missing(at) and not missing(at_usd)) as at_usd_rows,
+158                   sum(not missing(at) and missing(at_usd)) as at_unconverted_rows,
+159                   sum(not missing(sale) and not missing(sale_usd)) as sale_usd_rows,
+160                   sum(not missing(sale) and missing(sale_usd)) as sale_unconverted_rows,
+161                   sum(not missing(ceq) and not missing(bs_usd_factor)) as ceq_with_balance_rate,
+162                   sum(not missing(sale) and not missing(flow_usd_factor)) as sale_with_flow_rate
+163            from work.annual_usd
+164            where fyear>=1992 and fyear<=1998
+165            group by fyear, reporting_currency
+166            order by fyear, reporting_currency;
+167        quit;
+NOTE: The PROCEDURE SQL printed page 4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.06 seconds
+      
+
+168        title;
+7                                                          The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+169        
+170        title "Annual fiscal-date bounds for the return anchor and selected 1998 endpoint";
+171        proc sql;
+172            select fyear, count(*) as firm_year_rows,
+173                   min(datadate) as first_datadate format=yymmdd10.,
+174                   max(datadate) as last_datadate format=yymmdd10.
+175            from work.annual_usd
+176            where fyear in (1986,1987,1998)
+177            group by fyear
+178            order by fyear;
+179        quit;
+NOTE: The PROCEDURE SQL printed page 5.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+180        title;
+181        
+182        title "USD conversion coverage among annual CAD reports";
+183        proc sql;
+184            select count(*) as cad_annual_rows,
+185                   sum(not missing(at)) as cad_balance_inputs,
+186                   sum(not missing(at_usd)) as cad_balance_usd,
+187                   sum(not missing(at) and missing(bs_usd_factor)) as cad_balance_missing_rate,
+188                   sum(not missing(sale)) as cad_flow_inputs,
+189                   sum(not missing(sale_usd)) as cad_flow_usd,
+190                   sum(not missing(sale) and missing(flow_usd_factor)) as cad_flow_missing_rate
+191            from work.annual_usd
+192            where reporting_currency='CAD';
+193        quit;
+NOTE: The PROCEDURE SQL printed page 6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+194        title;
+195        
+196        /* CRSP source rows: monthly stock, historical security names, and CCM links. */
+197        data work.msf_raw;
+198            set crsp.msf(keep=permno permco date ret prc shrout
+199                         where=(date >= &d86 and date <= &dend));
+200        run;
+
+NOTE: There were 1258096 observations read from the data set CRSP.MSF.
+      WHERE (date>='01JAN1986'D and date<='31MAY1999'D);
+NOTE: The data set WORK.MSF_RAW has 1258096 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.20 seconds
+      cpu time            0.20 seconds
+      
+
+201        
+202        proc sql;
+203            create table work.msf_key_counts as
+204            select permno, date, count(*) as n_rows
+205            from work.msf_raw
+8                                                          The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+206            group by permno, date;
+NOTE: Table WORK.MSF_KEY_COUNTS created, with 1258096 rows and 3 columns.
+
+207        
+208            create table work.msf_unique as
+209            select m.*
+210            from work.msf_raw as m
+211            inner join work.msf_key_counts as k
+212                on m.permno=k.permno and m.date=k.date
+213            where k.n_rows=1;
+NOTE: Table WORK.MSF_UNIQUE created, with 1258096 rows and 6 columns.
+
+214        
+215            select count(*) as crsp_monthly_keys,
+216                   sum(case when n_rows>1 then 1 else 0 end) as duplicate_permno_month_keys,
+217                   sum(case when n_rows>1 then n_rows else 0 end) as rows_in_duplicate_permno_months
+218            from work.msf_key_counts;
+219        quit;
+NOTE: The PROCEDURE SQL printed page 7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.01 seconds
+      cpu time            1.18 seconds
+      
+
+220        
+221        data work.names_common;
+222            set crsp.dsenames(keep=permno namedt nameendt shrcd
+223                              where=(nameendt >= &d86 and namedt <= &dend));
+224            if floor(shrcd/10)=1;
+225        run;
+
+NOTE: There were 35113 observations read from the data set CRSP.DSENAMES.
+      WHERE (nameendt>='01JAN1986'D) and (namedt<='31MAY1999'D);
+NOTE: The data set WORK.NAMES_COMMON has 33206 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+226        
+227        data work.links_lc_lu_raw;
+228            set ccm.ccmxpf_linktable(keep=gvkey linkprim linktype usedflag lpermno linkdt linkenddt
+229                                     where=(usedflag=1 and linktype in ('LC','LU') and
+230                                            linkprim in ('P','C') and lpermno>0 and
+231                                            (linkenddt >= &d86 or missing(linkenddt)) and
+232                                            (linkdt <= &dend or missing(linkdt))));
+233            permno=lpermno;
+234            keep gvkey permno linkdt linkenddt linkprim linktype usedflag;
+235        run;
+
+NOTE: There were 16872 observations read from the data set CCM.CCMXPF_LINKTABLE.
+      WHERE (usedflag=1) and linktype in ('LC', 'LU') and linkprim in ('C', 'P') and (lpermno>0) and ((linkenddt>='01JAN1986'D) or 
+      MISSING(linkenddt)) and ((linkdt<='31MAY1999'D) or MISSING(linkdt));
+NOTE: The data set WORK.LINKS_LC_LU_RAW has 16872 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+9                                                          The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+
+236        
+237        /* Separate audit of every used common-class link, including secondary markers
+238           and LS security-only links; the main primary-link selection stays unchanged. */
+239        data work.links_company_audit;
+240            set ccm.ccmxpf_linktable(keep=gvkey linkprim linktype usedflag lpermno linkdt linkenddt
+241                                     where=(usedflag=1 and linktype in ('LC','LU','LS') and
+242                                            lpermno>0 and
+243                                            (linkenddt >= &d86 or missing(linkenddt)) and
+244                                            (linkdt <= &dend or missing(linkdt))));
+245            permno=lpermno;
+246            keep gvkey permno linkdt linkenddt linkprim linktype usedflag;
+247        run;
+
+NOTE: There were 17161 observations read from the data set CCM.CCMXPF_LINKTABLE.
+      WHERE (usedflag=1) and linktype in ('LC', 'LS', 'LU') and (lpermno>0) and ((linkenddt>='01JAN1986'D) or MISSING(linkenddt)) 
+      and ((linkdt<='31MAY1999'D) or MISSING(linkdt));
+NOTE: The data set WORK.LINKS_COMPANY_AUDIT has 17161 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+248        
+249        title "Source-supported primary LC and unresearched LU links overlapping the construction window";
+250        proc freq data=work.links_lc_lu_raw;
+251            tables linktype*linkprim / missing;
+252        run;
+
+NOTE: There were 16872 observations read from the data set WORK.LINKS_LC_LU_RAW.
+NOTE: The PROCEDURE FREQ printed page 8.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+253        title;
+254        
+255        proc sql;
+256            create table work.link_key_counts as
+257            select gvkey, permno, linkdt, linkenddt, count(*) as n_rows
+258            from work.links_lc_lu_raw
+259            group by gvkey, permno, linkdt, linkenddt;
+NOTE: Table WORK.LINK_KEY_COUNTS created, with 16872 rows and 5 columns.
+
+260        
+261            create table work.links_lc_lu_unique as
+262            select distinct gvkey, permno, linkdt, linkenddt, linkprim, linktype
+263            from work.links_lc_lu_raw;
+NOTE: Table WORK.LINKS_LC_LU_UNIQUE created, with 16872 rows and 6 columns.
+
+264        
+265            create table work.links_unique as
+266            select distinct gvkey, permno, linkdt, linkenddt
+267            from work.links_lc_lu_raw
+268            where linktype='LC';
+NOTE: Table WORK.LINKS_UNIQUE created, with 5051 rows and 4 columns.
+
+10                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+269        
+270            create table work.link_type_counts as
+271            select linktype, count(*) as source_link_rows,
+272                   count(distinct gvkey) as source_gvkeys,
+273                   count(distinct permno) as source_permnos
+274            from work.links_lc_lu_raw
+275            group by linktype;
+NOTE: Table WORK.LINK_TYPE_COUNTS created, with 2 rows and 4 columns.
+
+276        
+277            select count(*) as eligible_link_rows,
+278                   sum(case when n_rows>1 then 1 else 0 end) as duplicate_link_keys,
+279                   sum(case when n_rows>1 then n_rows else 0 end) as rows_in_duplicate_link_keys
+280            from work.link_key_counts;
+281        
+282            select * from work.link_type_counts;
+283        quit;
+NOTE: The PROCEDURE SQL printed pages 9-10.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+284        
+285        title "Added raw source support beyond the calendar 1998 analysis cutoff";
+286        proc sql;
+287            select count(*) as msf_rows_through_dend,
+288                   sum(date>&d98) as msf_rows_after_d98,
+289                   min(date) as msf_first_date format=yymmdd10.,
+290                   max(date) as msf_last_date format=yymmdd10.
+291            from work.msf_raw;
+292        
+293            select count(*) as daily_fx_rows_through_dend,
+294                   sum(datadate>&d98) as daily_fx_rows_after_d98,
+295                   max(datadate) as daily_fx_last_date format=yymmdd10.
+296            from work.fx_dly_raw;
+297        
+298            select count(*) as monthly_fx_rows_through_dend,
+299                   sum(datadate>&d98) as monthly_fx_rows_after_d98,
+300                   max(datadate) as monthly_fx_last_date format=yymmdd10.
+301            from work.fx_mth_raw;
+302        
+303            select sum(nameendt>&d98 or namedt>&d98) as common_name_rows_touching_1999
+304            from work.names_common;
+305        
+306            select sum(linkenddt>&d98 or linkdt>&d98) as primary_link_rows_touching_1999
+307            from work.links_lc_lu_raw;
+308        quit;
+NOTE: The PROCEDURE SQL printed pages 11-15.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.11 seconds
+      
+
+309        title;
+310        
+311        /* Join by valid history. Ambiguous GVKEY-months are retained as missing downstream. */
+312        proc sql;
+11                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+313            create table work.month_candidates as
+314            select distinct l.gvkey, m.permno, m.permco, m.date, m.ret, m.prc, m.shrout
+315            from work.links_unique as l
+316            inner join work.msf_unique as m
+317                on l.permno=m.permno
+318               and (missing(l.linkdt) or l.linkdt<=m.date)
+319               and (missing(l.linkenddt) or l.linkenddt>=m.date)
+320            inner join work.names_common as n
+321                on m.permno=n.permno
+322               and (missing(n.namedt) or n.namedt<=m.date)
+323               and (missing(n.nameendt) or n.nameendt>=m.date);
+NOTE: Table WORK.MONTH_CANDIDATES created, with 339244 rows and 7 columns.
+
+324        
+325            create table work.month_link_counts as
+326            select gvkey, date, count(distinct permno) as n_permno
+327            from work.month_candidates
+328            group by gvkey, date;
+NOTE: Table WORK.MONTH_LINK_COUNTS created, with 339244 rows and 3 columns.
+
+329        
+330            create table work.firm_month_lc as
+331            select distinct c.gvkey, c.permno, c.permco, c.date, c.ret, c.prc, c.shrout
+332            from work.month_candidates as c
+333            inner join work.month_link_counts as n
+334                on c.gvkey=n.gvkey and c.date=n.date
+335            where n.n_permno=1;
+NOTE: Table WORK.FIRM_MONTH_LC created, with 339244 rows and 7 columns.
+
+336        
+337            create table work.month_candidates_lc_lu as
+338            select distinct l.gvkey, m.permno, m.permco, m.date, m.ret, m.prc, m.shrout
+339            from work.links_lc_lu_unique as l
+340            inner join work.msf_unique as m
+341                on l.permno=m.permno
+342               and (missing(l.linkdt) or l.linkdt<=m.date)
+343               and (missing(l.linkenddt) or l.linkenddt>=m.date)
+344            inner join work.names_common as n
+345                on m.permno=n.permno
+346               and (missing(n.namedt) or n.namedt<=m.date)
+347               and (missing(n.nameendt) or n.nameendt>=m.date);
+NOTE: Table WORK.MONTH_CANDIDATES_LC_LU created, with 1108664 rows and 7 columns.
+
+348        
+349            create table work.month_link_counts_lc_lu as
+350            select gvkey, date, count(distinct permno) as n_permno
+351            from work.month_candidates_lc_lu
+352            group by gvkey, date;
+NOTE: Table WORK.MONTH_LINK_COUNTS_LC_LU created, with 1108664 rows and 3 columns.
+
+353        
+354            create table work.firm_month_lc_lu as
+355            select distinct c.gvkey, c.permno, c.permco, c.date, c.ret, c.prc, c.shrout
+356            from work.month_candidates_lc_lu as c
+357            inner join work.month_link_counts_lc_lu as n
+358                on c.gvkey=n.gvkey and c.date=n.date
+359            where n.n_permno=1;
+NOTE: Table WORK.FIRM_MONTH_LC_LU created, with 1108664 rows and 7 columns.
+12                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+
+360        
+361            select count(*) as candidate_gvkey_months,
+362                   sum(case when n_permno>1 then 1 else 0 end) as ambiguous_gvkey_months
+363            from work.month_link_counts;
+364        
+365            select count(*) as lc_only_unique_gvkey_months,
+366                   count(distinct gvkey) as lc_only_firms
+367            from work.firm_month_lc;
+368        
+369            select count(*) as lc_or_lu_unique_gvkey_months,
+370                   count(distinct gvkey) as lc_or_lu_firms
+371            from work.firm_month_lc_lu;
+372        
+373            select count(*) as lc_or_lu_ambiguous_months
+374            from work.month_link_counts_lc_lu
+375            where n_permno>1;
+376        quit;
+NOTE: The PROCEDURE SQL printed pages 16-19.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.79 seconds
+      cpu time            3.51 seconds
+      
+
+377        
+378        /* Both source-documented primary LC and unresearched LU links enter the main build. */
+379        data work.firm_month;
+380            set work.firm_month_lc_lu;
+381        run;
+
+NOTE: There were 1108664 observations read from the data set WORK.FIRM_MONTH_LC_LU.
+NOTE: The data set WORK.FIRM_MONTH has 1108664 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+382        
+383        /* Market model used for the stated minimum-24-month additional sample screen. */
+384        data work.msi_raw;
+385            set crsp.msi(keep=date vwretd where=(date >= &d93 and date <= &d98));
+386        run;
+
+NOTE: There were 72 observations read from the data set CRSP.MSI.
+      WHERE (date>='01JAN1993'D and date<='31DEC1998'D);
+NOTE: The data set WORK.MSI_RAW has 72 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+387        
+388        proc sql;
+389            create table work.msi_key_counts as
+390            select date, count(*) as n_rows
+391            from work.msi_raw
+392            group by date;
+NOTE: Table WORK.MSI_KEY_COUNTS created, with 72 rows and 2 columns.
+13                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+
+393        
+394            create table work.msi_unique as
+395            select m.*
+396            from work.msi_raw as m
+397            inner join work.msi_key_counts as k
+398                on m.date=k.date
+399            where k.n_rows=1;
+NOTE: Table WORK.MSI_UNIQUE created, with 72 rows and 2 columns.
+
+400        
+401            create table work.market_pairs as
+402            select f.gvkey, f.date, f.ret, i.vwretd
+403            from work.firm_month as f
+404            inner join work.msi_unique as i
+405                on f.date=i.date
+406            where f.date >= &d93 and f.date <= &d98
+407              and not missing(f.ret) and not missing(i.vwretd);
+NOTE: Table WORK.MARKET_PAIRS created, with 547177 rows and 4 columns.
+
+408        
+409            create table work.market_n as
+410            select gvkey, count(*) as n_pairs
+411            from work.market_pairs
+412            group by gvkey;
+NOTE: Table WORK.MARKET_N created, with 11455 rows and 2 columns.
+
+413        
+414            create table work.market_pairs24 as
+415            select p.*
+416            from work.market_pairs as p
+417            inner join work.market_n as n on p.gvkey=n.gvkey
+418            where n.n_pairs>=24;
+NOTE: Table WORK.MARKET_PAIRS24 created, with 514639 rows and 4 columns.
+
+419        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.32 seconds
+      
+
+420        
+421        proc sort data=work.market_pairs24;
+422            by gvkey date;
+423        run;
+
+NOTE: There were 514639 observations read from the data set WORK.MARKET_PAIRS24.
+NOTE: The data set WORK.MARKET_PAIRS24 has 514639 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.11 seconds
+      
+
+424        
+425        proc reg data=work.market_pairs24 outest=work.market_est noprint;
+426            by gvkey;
+427            model ret=vwretd;
+428            output out=work.market_residuals r=mm_resid;
+14                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+429        run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.45 seconds
+      cpu time            0.45 seconds
+      
+NOTE: The data set WORK.MARKET_EST has 9033 observations and 8 variables.
+NOTE: The data set WORK.MARKET_RESIDUALS has 514639 observations and 5 variables.
+
+430        quit;
+431        
+432        data work.market_beta;
+433            set work.market_est;
+434            if _TYPE_='PARMS';
+435            beta=vwretd;
+436            keep gvkey beta;
+437        run;
+
+NOTE: There were 9033 observations read from the data set WORK.MARKET_EST.
+NOTE: The data set WORK.MARKET_BETA has 9033 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+438        
+439        data work.market_residuals;
+440            set work.market_residuals;
+441            mm_resid2=mm_resid*mm_resid;
+442        run;
+
+NOTE: There were 514639 observations read from the data set WORK.MARKET_RESIDUALS.
+NOTE: The data set WORK.MARKET_RESIDUALS has 514639 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+443        
+444        proc means data=work.market_residuals nway noprint;
+445            class gvkey;
+446            var mm_resid2;
+447            output out=work.market_mse(drop=_TYPE_ _FREQ_) n=n_resid mean=mse;
+448        run;
+
+NOTE: There were 514639 observations read from the data set WORK.MARKET_RESIDUALS.
+NOTE: The data set WORK.MARKET_MSE has 9033 observations and 3 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.06 seconds
+      
+
+449        
+450        proc sql;
+451            create table work.market_model as
+452            select n.gvkey, n.n_pairs, b.beta, e.mse
+453            from work.market_n as n
+15                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+454            left join work.market_beta as b on n.gvkey=b.gvkey
+455            left join work.market_mse as e on n.gvkey=e.gvkey;
+NOTE: Table WORK.MARKET_MODEL created, with 11455 rows and 4 columns.
+
+456        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+457        
+458        /* Fiscal-year total return: compound 12 CRSP total-return observations in each actual fiscal interval. */
+459        proc sql;
+460            create table work.fy_bounds as
+461            select c.gvkey, c.fyear, c.datadate, p.datadate as prevdate
+462            from work.annual_usd as c
+463            left join work.annual_usd as p
+464                on c.gvkey=p.gvkey and p.fyear=c.fyear-1
+465            where c.fyear>=1987 and c.fyear<=1998;
+NOTE: Table WORK.FY_BOUNDS created, with 131631 rows and 4 columns.
+
+466        
+467            create table work.fy_month_returns as
+468            select b.gvkey, b.fyear, b.prevdate, b.datadate, m.date, m.ret
+469            from work.fy_bounds as b
+470            inner join work.firm_month as m
+471                on b.gvkey=m.gvkey and m.date>b.prevdate and m.date<=b.datadate
+472            where not missing(b.prevdate);
+NOTE: Table WORK.FY_MONTH_RETURNS created, with 945050 rows and 6 columns.
+
+473        
+474            create table work.fy_return_sums as
+475            select gvkey, fyear,
+476                   count(date) as n_months,
+477                   sum(case when not missing(ret) and ret>-1 then 1
+478                            when ret=-1 then 1 else 0 end) as n_valid_returns,
+479                   sum(case when not missing(ret) and ret>-1 then log(1+ret) else 0 end) as log_sum,
+480                   sum(case when ret=-1 then 1 else 0 end) as n_total_losses
+481            from work.fy_month_returns
+482            group by gvkey, fyear;
+NOTE: Table WORK.FY_RETURN_SUMS created, with 82792 rows and 6 columns.
+
+483        
+484            /* Exact source-horizon counterfactual: retain only months available under
+485               the predecessor's Dec-1998 raw CRSP cutoff. */
+486            create table work.fy_return_sums_old as
+487            select gvkey, fyear, count(date) as n_months_old,
+488                   sum(case when not missing(ret) and ret>-1 then 1
+489                            when ret=-1 then 1 else 0 end) as n_valid_returns_old
+490            from work.fy_month_returns
+491            where date<=&d98
+492            group by gvkey, fyear;
+NOTE: Table WORK.FY_RETURN_SUMS_OLD created, with 82785 rows and 4 columns.
+
+493        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.77 seconds
+      cpu time            1.08 seconds
+16                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+      
+
+494        
+495        data work.fy_returns;
+496            set work.fy_return_sums;
+497            if n_months=12 and n_valid_returns=12 then do;
+498                if n_total_losses>0 then ret_fy=-1;
+499                else ret_fy=exp(log_sum)-1;
+500            end;
+501        run;
+
+NOTE: There were 82792 observations read from the data set WORK.FY_RETURN_SUMS.
+NOTE: The data set WORK.FY_RETURNS has 82792 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+502        
+503        /* BTM uses common equity (USD) over CRSP common-stock market equity (USD). */
+504        proc sql;
+505            create table work.btm_dates as
+506            select a.gvkey, a.fyear, a.datadate,
+507                   max(m.date) as market_date format=yymmddn8.
+508            from work.annual_usd as a
+509            inner join work.firm_month as m
+510                on a.gvkey=m.gvkey
+511               and m.date<=a.datadate
+512               and m.date>=intnx('month',a.datadate,-1,'end')
+513            where a.fyear>=1993 and a.fyear<=1998
+514              and not missing(a.ceq_usd)
+515              and not missing(m.prc) and abs(m.prc)>0
+516              and not missing(m.shrout) and m.shrout>0
+517            group by a.gvkey, a.fyear, a.datadate;
+NOTE: Table WORK.BTM_DATES created, with 43308 rows and 4 columns.
+
+518        
+519            create table work.btm_annual as
+520            select a.gvkey, a.fyear, a.datadate, a.ceq_usd,
+521                   m.permno, m.permco, d.market_date, a.datadate-d.market_date as price_age_days,
+522                   m.prc, m.shrout,
+523                   abs(m.prc)*m.shrout/1000 as market_equity_usd,
+524                   a.ceq_usd/(abs(m.prc)*m.shrout/1000) as btm
+525            from work.btm_dates as d
+526            inner join work.annual_usd as a
+527                on d.gvkey=a.gvkey and d.fyear=a.fyear and d.datadate=a.datadate
+528            inner join work.firm_month as m
+529                on d.gvkey=m.gvkey and d.market_date=m.date
+530            where not missing(m.prc) and abs(m.prc)>0
+531              and not missing(m.shrout) and m.shrout>0;
+NOTE: Table WORK.BTM_ANNUAL created, with 43308 rows and 12 columns.
+
+532        
+533            create table work.fe_panel_raw as
+534            select b.gvkey, b.fyear, b.btm,
+535                   r0.ret_fy as ret0,
+536                   r1.ret_fy as ret1,
+537                   r2.ret_fy as ret2,
+17                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+538                   r3.ret_fy as ret3,
+539                   r4.ret_fy as ret4,
+540                   r5.ret_fy as ret5,
+541                   r6.ret_fy as ret6
+542            from work.btm_annual as b
+543            left join work.fy_returns as r0 on b.gvkey=r0.gvkey and b.fyear=r0.fyear
+544            left join work.fy_returns as r1 on b.gvkey=r1.gvkey and b.fyear-1=r1.fyear
+545            left join work.fy_returns as r2 on b.gvkey=r2.gvkey and b.fyear-2=r2.fyear
+546            left join work.fy_returns as r3 on b.gvkey=r3.gvkey and b.fyear-3=r3.fyear
+547            left join work.fy_returns as r4 on b.gvkey=r4.gvkey and b.fyear-4=r4.fyear
+548            left join work.fy_returns as r5 on b.gvkey=r5.gvkey and b.fyear-5=r5.fyear
+549            left join work.fy_returns as r6 on b.gvkey=r6.gvkey and b.fyear-6=r6.fyear
+550            where b.fyear>=1993 and b.fyear<=1998;
+NOTE: Table WORK.FE_PANEL_RAW created, with 43308 rows and 10 columns.
+
+551        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.19 seconds
+      cpu time            1.28 seconds
+      
+
+552        
+553        title "Actual fiscal-date BTM and CRSP price-date coverage";
+554        proc sql;
+555            select a.fyear, count(*) as funda_firm_year_rows,
+556                   sum(not missing(a.ceq_usd)) as ceq_usd_rows,
+557                   sum(not missing(b.market_date)) as matched_btm_rows,
+558                   sum(a.datadate>&d98) as fiscal_dates_after_calendar_1998,
+559                   sum(b.market_date>&d98) as btm_prices_post98,
+560                   sum(a.datadate>&d98 and a.reporting_currency ne 'USD' and
+561                       not missing(a.ceq)) as late_nonusd_book_equity_rows,
+562                   min(a.datadate) as first_fiscal_date format=yymmdd10.,
+563                   max(a.datadate) as last_fiscal_date format=yymmdd10.,
+564                   min(b.market_date) as first_price_date format=yymmdd10.,
+565                   max(b.market_date) as last_price_date format=yymmdd10.,
+566                   max(b.price_age_days) as max_price_age_days
+567            from work.annual_usd as a
+568            left join work.btm_annual as b
+569              on a.gvkey=b.gvkey and a.fyear=b.fyear and a.datadate=b.datadate
+570            where a.fyear>=1993 and a.fyear<=1998
+571            group by a.fyear
+572            order by a.fyear;
+573        quit;
+NOTE: The PROCEDURE SQL printed page 20.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.08 seconds
+      
+
+574        title;
+575        
+576        title "Fiscal-year CRSP return-month coverage for RET_t through RET_t-6";
+577        proc sql;
+578            select b.fyear, count(*) as annual_intervals,
+579                   sum(not missing(s.n_months)) as intervals_with_month_rows,
+580                   sum(s.n_months=12) as intervals_with_12_months,
+581                   sum(s.n_months=12 and s.n_valid_returns=12) as complete_12_return_intervals,
+582                   sum(o.n_months_old=12 and o.n_valid_returns_old=12) as complete_d98,
+18                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+583                   sum(s.n_months=12 and s.n_valid_returns=12 and
+584                       coalesce(o.n_months_old,0)<12) as full12_d98cut,
+585                   sum(s.n_months>coalesce(o.n_months_old,0)) as intervals_with_late_months_added,
+586                   min(b.prevdate) as earliest_previous_fiscal_date format=yymmdd10.,
+587                   max(b.datadate) as latest_fiscal_date format=yymmdd10.
+588            from work.fy_bounds as b
+589            left join work.fy_return_sums as s
+590              on b.gvkey=s.gvkey and b.fyear=s.fyear
+591            left join work.fy_return_sums_old as o
+592              on b.gvkey=o.gvkey and b.fyear=o.fyear
+593            group by b.fyear
+594            order by b.fyear;
+595        quit;
+NOTE: The PROCEDURE SQL printed page 21.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.11 seconds
+      
+
+596        title;
+597        
+598        data work.fe_panel_complete;
+599            set work.fe_panel_raw;
+600            if nmiss(btm,ret0,ret1,ret2,ret3,ret4,ret5,ret6)=0;
+601        run;
+
+NOTE: There were 43308 observations read from the data set WORK.FE_PANEL_RAW.
+NOTE: The data set WORK.FE_PANEL_COMPLETE has 18302 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+602        
+603        proc sql;
+604            create table work.fe_firm_counts as
+605            select gvkey, count(*) as n_rows, min(fyear) as first_year, max(fyear) as last_year
+606            from work.fe_panel_complete
+607            group by gvkey;
+NOTE: Table WORK.FE_FIRM_COUNTS created, with 4274 rows and 4 columns.
+
+608        
+609            create table work.fe_panel_balanced as
+610            select p.*
+611            from work.fe_panel_complete as p
+612            inner join work.fe_firm_counts as c on p.gvkey=c.gvkey
+613            where c.n_rows=6 and c.first_year=1993 and c.last_year=1998;
+NOTE: Table WORK.FE_PANEL_BALANCED created, with 11592 rows and 10 columns.
+
+614        
+615            select count(*) as balanced_btm_return_rows,
+616                   count(distinct gvkey) as balanced_btm_return_firms
+617            from work.fe_panel_balanced;
+618        quit;
+NOTE: The PROCEDURE SQL printed page 22.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+19                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+      
+
+619        
+620        /* S&P SPLTICRM is the local long-term issuer field; use only its pre-1998-09 senior-debt period. */
+621        data work.rating_raw;
+622            set comprate.adsprate(keep=gvkey datadate splticrm
+623                                  where=(datadate >= &d93 and datadate <= '31AUG1998'd));
+624            if not missing(splticrm);
+625        run;
+
+NOTE: There were 469168 observations read from the data set COMPRATE.ADSPRATE.
+      WHERE (datadate>='01JAN1993'D and datadate<='31AUG1998'D);
+NOTE: The data set WORK.RATING_RAW has 114906 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+626        
+627        proc sql;
+628            create table work.rating_flags as
+629            select gvkey, count(*) as n_rating_records,
+630                   min(datadate) as first_rating_date format=yymmddn8.,
+631                   max(datadate) as last_rating_date format=yymmddn8.
+632            from work.rating_raw
+633            group by gvkey;
+NOTE: Table WORK.RATING_FLAGS created, with 2660 rows and 4 columns.
+
+634        
+635            create table work.support_panel_primary as
+636            select p.*
+637            from work.fe_panel_balanced as p
+638            inner join work.rating_flags as r on p.gvkey=r.gvkey;
+NOTE: Table WORK.SUPPORT_PANEL_PRIMARY created, with 4356 rows and 10 columns.
+
+639        
+640            /* Bounded company audit: compare each primary PERMNO with every active
+641               ordinary-common PERMNO in its PERMCO/month, then inspect all used
+642               CCM links for those common classes, including secondary markers. */
+643            create table work.support_primary_months as
+644            select distinct s.gvkey, m.date, m.permco,
+645                   m.permno as primary_permno, m.prc as primary_prc,
+646                   m.shrout as primary_shrout
+647            from (select distinct gvkey from work.support_panel_primary) as s
+648            inner join work.firm_month as m
+649              on s.gvkey=m.gvkey and m.date>=&d93 and m.date<=&dend;
+NOTE: Table WORK.SUPPORT_PRIMARY_MONTHS created, with 55862 rows and 6 columns.
+
+650        
+651            create table work.support_common_class_rows as
+652            select distinct p.gvkey, p.date, p.permco,
+653                   p.primary_permno, p.primary_prc, p.primary_shrout,
+654                   m.permno, m.prc, m.shrout
+655            from work.support_primary_months as p
+656            inner join work.msf_unique as m
+657              on p.permco=m.permco and p.date=m.date
+658            inner join work.names_common as n
+659              on m.permno=n.permno
+20                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+660             and (missing(n.namedt) or n.namedt<=m.date)
+661             and (missing(n.nameendt) or n.nameendt>=m.date)
+662            where not missing(p.permco) and p.permco>0;
+NOTE: Table WORK.SUPPORT_COMMON_CLASS_ROWS created, with 57391 rows and 9 columns.
+
+663        
+664            create table work.support_common_link_rows as
+665            select distinct p.permco, p.date, m.permno,
+666                   l.gvkey as mapped_gvkey
+667            from (select distinct permco, date from work.support_primary_months
+668                  where not missing(permco) and permco>0) as p
+669            inner join work.msf_unique as m
+670              on p.permco=m.permco and p.date=m.date
+671            inner join work.names_common as n
+672              on m.permno=n.permno
+673             and (missing(n.namedt) or n.namedt<=m.date)
+674             and (missing(n.nameendt) or n.nameendt>=m.date)
+675            left join work.links_company_audit as l
+676              on m.permno=l.permno
+677             and (missing(l.linkdt) or l.linkdt<=m.date)
+678             and (missing(l.linkenddt) or l.linkenddt>=m.date);
+NOTE: Table WORK.SUPPORT_COMMON_LINK_ROWS created, with 57196 rows and 4 columns.
+
+679        
+680            create table work.support_permco_map as
+681            select permco, date,
+682                   count(distinct mapped_gvkey) as n_mapped_gvkeys,
+683                   min(mapped_gvkey) as only_mapped_gvkey,
+684                   count(distinct case when missing(mapped_gvkey)
+685                                       then permno else . end) as n_unmapped_common_permnos
+686            from work.support_common_link_rows
+687            group by permco, date;
+NOTE: Table WORK.SUPPORT_PERMCO_MAP created, with 55785 rows and 5 columns.
+
+688        
+689            title "Unique PERMCO-month link map audit across ordinary-common issues";
+690            select count(*) as audited_permco_months,
+691                   sum(n_mapped_gvkeys>1) as permco_months_multi_gvkey,
+692                   sum(n_unmapped_common_permnos>0) as permco_months_unmapped_common
+693            from work.support_permco_map;
+694            title;
+695        
+696            create table work.support_class_counts as
+697            select c.*, p.n_mapped_gvkeys, p.only_mapped_gvkey,
+698                   p.n_unmapped_common_permnos
+699            from (
+700                select gvkey, date, permco,
+701                   count(distinct permno) as n_ordinary_common_permnos,
+702                   count(distinct case when not missing(prc) and abs(prc)>0 and
+703                                              not missing(shrout) and shrout>0
+704                                        then permno else . end) as n_priced_common_permnos,
+705                   sum(case when not missing(prc) and abs(prc)>0 and
+706                                 not missing(shrout) and shrout>0
+707                            then abs(prc)*shrout/1000 else . end) as partial_common_me,
+708                   min(case when permno=primary_permno and not missing(primary_prc) and
+709                                 abs(primary_prc)>0 and not missing(primary_shrout) and
+710                                 primary_shrout>0
+711                            then abs(primary_prc)*primary_shrout/1000 else . end) as primary_me
+21                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+712                from work.support_common_class_rows
+713                group by gvkey, date, permco
+714            ) as c
+715            left join work.support_permco_map as p
+716              on c.permco=p.permco and c.date=p.date;
+NOTE: Table WORK.SUPPORT_CLASS_COUNTS created, with 55862 rows and 10 columns.
+
+717        
+718            create table work.support_class_me as
+719            select *,
+720                   case when n_ordinary_common_permnos=n_priced_common_permnos
+721                        then partial_common_me else . end as company_common_me,
+722                   case when n_mapped_gvkeys=1 and only_mapped_gvkey=gvkey and
+723                             n_ordinary_common_permnos=n_priced_common_permnos and
+724                             not missing(partial_common_me) and partial_common_me>0
+725                        then 1 else 0 end as company_map_ok
+726            from work.support_class_counts;
+NOTE: Table WORK.SUPPORT_CLASS_ME created, with 55862 rows and 12 columns.
+
+727        
+728            select count(*) as support_gvkey_permco_month_rows,
+729                   count(distinct gvkey) as support_firms_with_permco_audit,
+730                   sum(n_ordinary_common_permnos>1) as firm_months_multi_common,
+731                   sum(n_ordinary_common_permnos>1 and not missing(company_common_me)) as multi_share_complete,
+732                   sum(n_ordinary_common_permnos>1 and missing(company_common_me)) as multi_share_incomplete,
+733                   sum(n_mapped_gvkeys>1) as firm_months_multi_gvkey,
+734                   sum(n_unmapped_common_permnos>0) as firm_months_unmapped_common,
+735                   sum(n_ordinary_common_permnos>1 and n_unmapped_common_permnos>0) as multi_unmapped_firm_months,
+736                   sum(company_map_ok=1) as unambiguous_firm_months,
+737                   max(case when n_ordinary_common_permnos>1 and not missing(company_common_me) and
+738                                 not missing(primary_me)
+739                            then abs(company_common_me-primary_me) else . end) as max_multiclass_me_diff,
+740                   max(case when n_ordinary_common_permnos>1 and not missing(company_common_me) and
+741                                 not missing(primary_me) and primary_me>0
+742                            then company_common_me/primary_me else . end) as max_multiclass_to_primary_me
+743            from work.support_class_me;
+744        
+745            select count(*) as support_primary_months,
+746                   sum(missing(permco) or permco<=0) as months_without_valid_permco
+747            from work.support_primary_months;
+748        
+749            create table work.support_btm_candidates as
+750            select distinct p.gvkey, p.fyear, b.datadate, b.market_date,
+751                   p.btm as btm_primary, b.ceq_usd,
+752                   c.n_ordinary_common_permnos, c.n_priced_common_permnos,
+753                   c.n_mapped_gvkeys, c.n_unmapped_common_permnos,
+754                   c.primary_me, c.company_common_me, c.company_map_ok,
+755                   case when c.company_map_ok=1
+756                        then b.ceq_usd/c.company_common_me else . end as btm_company
+757            from work.support_panel_primary as p
+758            inner join work.btm_annual as b
+759              on p.gvkey=b.gvkey and p.fyear=b.fyear
+760            left join work.support_class_me as c
+761              on p.gvkey=c.gvkey and b.market_date=c.date;
+NOTE: Table WORK.SUPPORT_BTM_CANDIDATES created, with 4356 rows and 14 columns.
+
+762        
+763            select fyear, count(*) as rated_primary_btm_rows,
+22                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+764                   sum(n_ordinary_common_permnos>1) as btm_multi_cls,
+765                   sum(n_ordinary_common_permnos>1 and not missing(company_common_me)) as btm_multi_full,
+766                   sum(n_mapped_gvkeys>1) as btm_map_multi,
+767                   sum(n_unmapped_common_permnos>0) as btm_unmapped_class,
+768                   sum(company_map_ok=1) as company_btm_ready,
+769                   sum(missing(btm_company)) as btm_company_unavailable,
+770                   max(case when n_ordinary_common_permnos>1 and not missing(company_common_me) and
+771                                 not missing(primary_me)
+772                            then abs(company_common_me-primary_me) else . end) as max_comp_primary_diff
+773            from work.support_btm_candidates
+774            group by fyear
+775            order by fyear;
+776        
+777            create table work.support_company_panel_complete as
+778            select p.gvkey, p.fyear, b.btm_company as btm,
+779                   p.ret0, p.ret1, p.ret2, p.ret3, p.ret4, p.ret5, p.ret6
+780            from work.support_panel_primary as p
+781            inner join work.support_btm_candidates as b
+782              on p.gvkey=b.gvkey and p.fyear=b.fyear
+783            where not missing(b.btm_company) and
+784                  nmiss(p.ret0,p.ret1,p.ret2,p.ret3,p.ret4,p.ret5,p.ret6)=0;
+NOTE: Table WORK.SUPPORT_COMPANY_PANEL_COMPLETE created, with 4341 rows and 10 columns.
+
+785        
+786            create table work.support_company_counts as
+787            select gvkey, count(*) as n_rows,
+788                   min(fyear) as first_year, max(fyear) as last_year
+789            from work.support_company_panel_complete
+790            group by gvkey;
+NOTE: Table WORK.SUPPORT_COMPANY_COUNTS created, with 724 rows and 4 columns.
+
+791        
+792            create table work.support_panel as
+793            select p.*
+794            from work.support_company_panel_complete as p
+795            inner join work.support_company_counts as c
+796              on p.gvkey=c.gvkey
+797            where c.n_rows=6 and c.first_year=1993 and c.last_year=1998;
+NOTE: Table WORK.SUPPORT_PANEL created, with 4332 rows and 10 columns.
+
+798        
+799            create table work.support_counts as
+800            select gvkey, count(*) as n_panel_rows
+801            from work.support_panel
+802            group by gvkey;
+NOTE: Table WORK.SUPPORT_COUNTS created, with 722 rows and 2 columns.
+
+803        
+804            create table work.support_btm_resolution as
+805            select gvkey,
+806                   sum(missing(btm_company)) as n_unresolved_btm,
+807                   sum(n_mapped_gvkeys>1) as n_multi_gvkey_btm,
+808                   sum(n_unmapped_common_permnos>0) as n_unmapped_class_btm,
+809                   sum(n_ordinary_common_permnos>1) as n_multiclass_btm
+810            from work.support_btm_candidates
+811            group by gvkey;
+NOTE: Table WORK.SUPPORT_BTM_RESOLUTION created, with 726 rows and 5 columns.
+
+23                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+812        
+813            select count(*) as primary_rated_support_firms,
+814                   sum(n_unresolved_btm>0) as firms_unresolved_btm,
+815                   sum(n_multi_gvkey_btm>0) as firms_gvkey_conflict,
+816                   sum(n_unmapped_class_btm>0) as firms_with_unmapped_common_issue,
+817                   sum(n_multiclass_btm>0) as firms_with_multiclass_btm
+818            from work.support_btm_resolution;
+819        
+820            select count(*) as company_support_panel_rows,
+821                   count(distinct gvkey) as company_support_firms
+822            from work.support_panel;
+823        
+824            create table work.support_btm_class as
+825            select distinct gvkey, fyear, datadate, market_date,
+826                   n_ordinary_common_permnos, n_priced_common_permnos,
+827                   n_mapped_gvkeys, n_unmapped_common_permnos,
+828                   primary_me, company_common_me, company_map_ok
+829            from work.support_btm_candidates
+830            where gvkey in (select distinct gvkey from work.support_panel);
+NOTE: Table WORK.SUPPORT_BTM_CLASS created, with 4332 rows and 11 columns.
+
+831        
+832            select fyear, count(*) as company_support_btm_rows,
+833                   sum(n_ordinary_common_permnos>1) as company_btm_multiclass,
+834                   sum(n_mapped_gvkeys>1) as company_btm_map_conflicts,
+835                   sum(n_unmapped_common_permnos>0) as company_btm_unmapped_share,
+836                   sum(company_map_ok=1) as company_btm_used
+837            from work.support_btm_class
+838            group by fyear
+839            order by fyear;
+840        
+841            create table work.support_lc_coverage as
+842            select s.gvkey, count(distinct m.date) as lc_months_9398
+843            from (select distinct gvkey from work.support_panel) as s
+844            left join work.firm_month_lc as m
+845                on s.gvkey=m.gvkey and m.date>=&d93 and m.date<=&d98
+846            group by s.gvkey;
+NOTE: Table WORK.SUPPORT_LC_COVERAGE created, with 722 rows and 2 columns.
+
+847        
+848            select count(*) as lc_lu_support_firms,
+849                   sum(lc_months_9398>0) as support_firms_with_lc_months,
+850                   sum(lc_months_9398) as lc_lu_support_months
+851            from work.support_lc_coverage;
+852        quit;
+NOTE: The PROCEDURE SQL printed pages 23-30.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.98 seconds
+      cpu time            1.04 seconds
+      
+
+853        
+854        proc sort data=work.support_panel;
+855            by gvkey fyear;
+856        run;
+
+NOTE: There were 4332 observations read from the data set WORK.SUPPORT_PANEL.
+NOTE: The data set WORK.SUPPORT_PANEL has 4332 observations and 10 variables.
+24                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+857        
+858        title "Unit checks for the completed company-market-equity BTM support panel";
+859        proc means data=work.support_panel n nmiss mean std min p25 median p75 max;
+860            var btm ret0 ret1 ret2 ret3 ret4 ret5 ret6;
+861        run;
+
+NOTE: There were 4332 observations read from the data set WORK.SUPPORT_PANEL.
+NOTE: The PROCEDURE MEANS printed page 31.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+862        title;
+863        
+864        /* Least-squares means provide each firm's relative fixed effect in the balanced panel. */
+865        ods output LSMeans=work.conmkt_lsmeans;
+866        proc glm data=work.support_panel;
+867            class gvkey fyear;
+868            model btm=gvkey fyear ret0 ret1 ret2 ret3 ret4 ret5 ret6;
+869            lsmeans gvkey;
+870        run;
+
+NOTE: The data set WORK.CONMKT_LSMEANS has 722 observations and 3 variables.
+871        quit;
+
+NOTE: The PROCEDURE GLM printed pages 32-48.
+NOTE: PROCEDURE GLM used (Total process time):
+      real time           0.29 seconds
+      cpu time            0.50 seconds
+      
+
+872        ods output close;
+873        
+874        proc contents data=work.conmkt_lsmeans;
+875        run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+NOTE: The PROCEDURE CONTENTS printed page 49.
+
+876        
+877        data work.conmkt_lsmeans2;
+878            set work.conmkt_lsmeans(rename=(btmLSMean=LSMean));
+879        run;
+
+NOTE: There were 722 observations read from the data set WORK.CONMKT_LSMEANS.
+NOTE: The data set WORK.CONMKT_LSMEANS2 has 722 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+25                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+      
+
+880        
+881        proc means data=work.conmkt_lsmeans2 nway noprint;
+882            var LSMean;
+883            output out=work.conmkt_lsmean_center(drop=_TYPE_ _FREQ_) mean=mean_lsmean;
+884        run;
+
+NOTE: There were 722 observations read from the data set WORK.CONMKT_LSMEANS2.
+NOTE: The data set WORK.CONMKT_LSMEAN_CENTER has 1 observations and 1 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+885        
+886        data work.conmkt_byfirm;
+887            if _n_=1 then set work.conmkt_lsmean_center;
+888            set work.conmkt_lsmeans2;
+889            if not missing(gvkey) and not missing(LSMean);
+890            conmkt=-(LSMean-mean_lsmean);
+891            keep gvkey conmkt;
+892        run;
+
+NOTE: There were 1 observations read from the data set WORK.CONMKT_LSMEAN_CENTER.
+NOTE: There were 722 observations read from the data set WORK.CONMKT_LSMEANS2.
+NOTE: The data set WORK.CONMKT_BYFIRM has 722 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+893        
+894        title "CONMKT centering check on the rated company-BTM support cohort";
+895        proc means data=work.conmkt_byfirm n nmiss mean std min p25 median p75 max;
+896            var conmkt;
+897        run;
+
+NOTE: There were 722 observations read from the data set WORK.CONMKT_BYFIRM.
+NOTE: The PROCEDURE MEANS printed page 50.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+898        title;
+899        
+900        proc sql;
+901            create table work.controls_annual as
+902            select a.gvkey, a.fyear, a.datadate,
+903                   case when not missing(a.ib_usd) and not missing(a.at_usd) and a.at_usd ne 0
+904                        then a.ib_usd/a.at_usd else . end as roa,
+905                   case when not missing(a.dvc_usd) and not missing(a.at_usd) and a.at_usd ne 0
+906                        then a.dvc_usd/a.at_usd else . end as div,
+907                   /* The same-date balance-sheet conversion factor cancels in DLTT/AT. */
+908                   case when not missing(a.dltt) and not missing(a.at) and a.at ne 0
+909                        then a.dltt/a.at else . end as lev,
+910                   case when not missing(a.dltt_usd) and not missing(a.at_usd) and a.at_usd ne 0
+26                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+911                        then a.dltt_usd/a.at_usd else . end as lev_fx,
+912                   case when not missing(a.at_usd) and a.at_usd>0 then log(a.at_usd) else . end as size,
+913                   case when not missing(a.sale_usd) and not missing(p.sale_usd) and p.sale_usd ne 0
+914                        then a.sale_usd/p.sale_usd-1 else . end as salesgro,
+915                   /* All three same-date flow items share one FX factor, which cancels. */
+916                   case when not missing(a.xrd) and not missing(a.xad) and
+917                                 not missing(a.sale) and a.sale ne 0
+918                        then (a.xrd+a.xad)/a.sale else . end as rndadv,
+919                   case when not missing(a.xrd_usd) and not missing(a.xad_usd) and
+920                                 not missing(a.sale_usd) and a.sale_usd ne 0
+921                        then (a.xrd_usd+a.xad_usd)/a.sale_usd else . end as rndadv_fx
+922            from work.annual_usd as a
+923            left join work.annual_usd as p
+924                on a.gvkey=p.gvkey and a.fyear=p.fyear+1
+925            where a.fyear>=1993 and a.fyear<=1998;
+NOTE: Table WORK.CONTROLS_ANNUAL created, with 73488 rows and 11 columns.
+
+926        
+927            create table work.conacc_annual as
+928            select gvkey, fyear,
+929                   case when not missing(ib_usd) and not missing(dp_usd) and
+930                                 not missing(oancf_usd) and not missing(at_usd) and at_usd ne 0
+931                        then (ib_usd+dp_usd-oancf_usd)/at_usd else . end as acc_raw,
+932                   case when not missing(ib_usd) and not missing(xdp_usd) and
+933                                 not missing(oancf_usd) and not missing(at_usd) and at_usd ne 0
+934                        then (ib_usd+xdp_usd-oancf_usd)/at_usd else . end as acc_xdp
+935            from work.annual_usd
+936            where fyear>=1993 and fyear<=1998;
+NOTE: Table WORK.CONACC_ANNUAL created, with 73488 rows and 4 columns.
+
+937        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.13 seconds
+      
+
+938        
+939        title "Same-date cancellation checks for LEV and RNDADV";
+940        proc sql;
+941            select sum(not missing(lev) and not missing(lev_fx)) as lev_overlap_years,
+942                   max(case when not missing(lev) and not missing(lev_fx)
+943                            then abs(lev-lev_fx) else . end) as lev_max_abs_diff,
+944                   sum(not missing(lev_fx) and missing(lev)) as lev_fx_only_years,
+945                   sum(not missing(rndadv) and not missing(rndadv_fx)) as rnd_overlap_years,
+946                   max(case when not missing(rndadv) and not missing(rndadv_fx)
+947                            then abs(rndadv-rndadv_fx) else . end) as rnd_max_abs_diff,
+948                   sum(not missing(rndadv) and missing(rndadv_fx)) as rnd_raw_only_years,
+949                   sum(not missing(rndadv_fx) and missing(rndadv)) as rnd_fx_only_years
+950            from work.controls_annual;
+951        quit;
+NOTE: The PROCEDURE SQL printed page 51.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+952        title;
+953        
+27                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+954        proc means data=work.controls_annual nway noprint;
+955            class gvkey;
+956            var roa div lev lev_fx size salesgro rndadv rndadv_fx;
+957            output out=work.controls_summary(drop=_TYPE_ _FREQ_)
+958                n(roa)=n_roa n(div)=n_div n(lev)=n_lev n(lev_fx)=n_lev_fx n(size)=n_size
+959                n(salesgro)=n_salesgro n(rndadv)=n_rndadv n(rndadv_fx)=n_rndadv_fx
+960                mean(roa)=roa std(roa)=stdroa mean(div)=div mean(lev)=lev mean(lev_fx)=lev_fx
+961                mean(size)=size mean(salesgro)=salesgro mean(rndadv)=rndadv mean(rndadv_fx)=rndadv_fx;
+962        run;
+
+NOTE: There were 73488 observations read from the data set WORK.CONTROLS_ANNUAL.
+NOTE: The data set WORK.CONTROLS_SUMMARY has 16256 observations and 18 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+963        
+964        proc means data=work.conacc_annual nway noprint;
+965            class gvkey;
+966            var acc_raw acc_xdp;
+967            output out=work.conacc_summary(drop=_TYPE_ _FREQ_)
+968                n(acc_raw)=n_conacc mean(acc_raw)=mean_acc_raw
+969                n(acc_xdp)=n_conacc_xdp mean(acc_xdp)=mean_acc_xdp;
+970        run;
+
+NOTE: There were 73488 observations read from the data set WORK.CONACC_ANNUAL.
+NOTE: The data set WORK.CONACC_SUMMARY has 16256 observations and 5 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.05 seconds
+      
+
+971        
+972        data work.conacc_summary;
+973            set work.conacc_summary;
+974            if n_conacc>=1 then conacc=-mean_acc_raw;
+975            if n_conacc_xdp>=1 then conacc_xdp=-mean_acc_xdp;
+976        run;
+
+NOTE: There were 16256 observations read from the data set WORK.CONACC_SUMMARY.
+NOTE: The data set WORK.CONACC_SUMMARY has 16256 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+977        
+978        proc sql;
+979            create table work.main_pre as
+980            select c.gvkey, c.conmkt,
+981                   x.n_roa, x.n_div, x.n_lev, x.n_lev_fx, x.n_size, x.n_salesgro,
+982                   x.n_rndadv, x.n_rndadv_fx,
+983                   x.roa, x.stdroa, x.div, x.lev, x.lev_fx, x.size, x.salesgro,
+984                   x.rndadv, x.rndadv_fx,
+985                   a.n_conacc, a.conacc, a.n_conacc_xdp, a.conacc_xdp,
+986                   m.n_pairs as n_market_pairs, m.beta, m.mse
+987            from work.conmkt_byfirm as c
+28                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+988            left join work.controls_summary as x on c.gvkey=x.gvkey
+989            left join work.conacc_summary as a on c.gvkey=a.gvkey
+990            left join work.market_model as m on c.gvkey=m.gvkey;
+NOTE: Table WORK.MAIN_PRE created, with 722 rows and 26 columns.
+
+991        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+992        
+993        title "Available-period and market-model screen diagnostics among rated CONMKT support firms";
+994        proc sql;
+995            select count(*) as rated_support_firms,
+996                   sum(n_roa>=2) as firms_with_roa_sd,
+997                   sum(n_div>=1) as firms_with_div,
+998                   sum(n_lev>=1) as firms_with_lev,
+999                   sum(n_size>=1) as firms_with_size,
+1000                  sum(n_salesgro>=1) as firms_with_sales_growth,
+1001                  sum(n_rndadv>=1) as firms_with_rndadv,
+1002                  sum(n_rndadv_fx>=1) as firms_with_fx_based_rndadv,
+1003                  sum(n_rndadv>n_rndadv_fx) as firms_more_rndadv_years,
+1004                  sum(n_rndadv_fx>n_rndadv) as firms_more_fx_years,
+1005                  sum(n_rndadv=n_rndadv_fx) as firms_equal_rndadv_years,
+1006                  sum(n_rndadv>=1 and n_rndadv_fx=0) as firms_rndadv_fx_gain,
+1007                  sum(n_rndadv) as native_rndadv_years,
+1008                  sum(n_rndadv_fx) as fx_based_rndadv_years,
+1009                  sum(n_lev>=1) as firms_with_native_lev,
+1010                  sum(n_lev_fx>=1) as firms_with_fx_based_lev,
+1011                  sum(n_market_pairs>=24) as firms_with_24_months,
+1012                  sum(not missing(beta)) as firms_with_beta,
+1013                  sum(not missing(mse)) as firms_with_mse,
+1014                  sum(n_conacc>=1) as firms_with_conacc_dp,
+1015                  sum(n_conacc_xdp>=1) as firms_with_conacc_xdp
+1016           from work.main_pre;
+1017       quit;
+NOTE: The PROCEDURE SQL printed page 52.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1018       title;
+1019       
+1020       data out.main;
+1021           set work.main_pre;
+1022           if n_roa>=2 and n_div>=1 and n_lev>=1 and n_size>=1 and
+1023              n_salesgro>=1 and n_rndadv>=1 and n_market_pairs>=24 and
+1024              not missing(conmkt) and not missing(beta) and not missing(mse);
+1025           elig_mkt=1;
+1026           elig_acc=(n_conacc>=1 and not missing(conacc));
+1027       
+1028           label conmkt="CONMKT: negative relative firm effect"
+1029                 conacc="CONACC: negative mean accrual ratio"
+1030                 stdroa="STDROA: available-year sample SD of ROA"
+1031                 div="DIV: mean common dividends / assets"
+1032                 lev="LEV: mean long-term debt / assets"
+29                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+1033                 roa="ROA: mean income before extraordinary items / assets"
+1034                 size="SIZE: mean log total assets (USD millions)"
+1035                 salesgro="SALESGRO: mean annual sales growth"
+1036                 rndadv="RNDADV: mean research and advertising / sales"
+1037                 rndadv_fx="Audit: RNDADV after USD rate conversion"
+1038                 lev_fx="Audit: LEV after USD rate conversion"
+1039                 beta="Market-model beta"
+1040                 mse="Market-model mean squared residual"
+1041                 elig_mkt="Table 3 Panel A eligibility"
+1042                 elig_acc="Table 3 Panel B eligibility";
+1043       run;
+
+NOTE: There were 722 observations read from the data set WORK.MAIN_PRE.
+NOTE: The data set OUT.MAIN has 140 observations and 28 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1044       
+1045       title "Final Table 3 analysis sample counts";
+1046       proc sql;
+1047           select count(*) as conmkt_firm_rows,
+1048                  sum(elig_mkt=1) as conmkt_eligible,
+1049                  sum(elig_acc=1) as conacc_eligible,
+1050                  sum(n_market_pairs>=24) as market_model_screened,
+1051                  sum(n_conacc>=1) as conacc_dp_available,
+1052                  sum(n_conacc_xdp>=1) as conacc_xdp_available
+1053           from out.main;
+1054       
+1055           select count(*) as table3_conmkt_firms,
+1056                  sum(l.lc_months_9398>0) as table3_firms_with_lc_months,
+1057                  sum(l.lc_months_9398=0) as table3_firms_without_lc_months,
+1058                  sum(l.lc_months_9398) as table3_lc_months
+1059           from out.main as m
+1060           left join work.support_lc_coverage as l on m.gvkey=l.gvkey;
+1061       quit;
+NOTE: The PROCEDURE SQL printed pages 53-54.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1062       title;
+1063       
+1064       title "Descriptive statistics for the actual Table 3 sample";
+1065       proc means data=out.main n nmiss mean std p25 median p75;
+1066           var conmkt conacc stdroa div lev roa size salesgro rndadv beta mse;
+1067       run;
+
+NOTE: There were 140 observations read from the data set OUT.MAIN.
+NOTE: The PROCEDURE MEANS printed page 55.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1068       title;
+30                                                         The SAS System                     Tuesday, November  3, 2026 03:25:00 AM
+
+1069       
+1070       proc contents data=out.main;
+1071       run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+NOTE: The PROCEDURE CONTENTS printed pages 56-57.
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           10.12 seconds
+      cpu time            12.10 seconds
+      

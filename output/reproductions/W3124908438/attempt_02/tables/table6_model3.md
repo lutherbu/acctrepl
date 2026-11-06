@@ -1,0 +1,18 @@
+
+|                      |          (1)    |
+|                      | Announcement-window market-adjusted return    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| Unexpected annual EPS |        0.437*** |
+|                      |      (0.000)    |
+| Change in profit margin |        0.029    |
+|                      |      (0.192)    |
+| Change in asset turnover |        0.001    |
+|                      |      (0.301)    |
+| Change in RNOA       |        0.011    |
+|                      |      (0.120)    |
+| Constant             |        0.006*** |
+|                      |      (0.000)    |
+| Observations         |        25469    |
+| *R*<sup>2</sup>      |        0.017    |
+

@@ -1,0 +1,33 @@
+
+|                      |          (1)    |
+|                      | SD of future earnings    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| R&D                  |        0.257*** |
+|                      |      (0.000)    |
+| Capital expenditures |        0.094*** |
+|                      |      (0.000)    |
+| Advertising          |        0.109*** |
+|                      |      (0.000)    |
+| Log market value (USD billions) |       -0.013*** |
+|                      |      (0.000)    |
+| Leverage             |        0.052*** |
+|                      |      (0.000)    |
+| Constant             |        0.021*** |
+|                      |      (0.001)    |
+| Observations         |        21929    |
+| Average R-squared    |        0.253    |
+| Mean annual adjusted R-squared |        0.249    |
+| Annual fits          |           21    |
+| Full-rank years      |           21    |
+| Observed outcomes    |        16592    |
+| Imputed outcomes     |         5337    |
+| Imputed percent      |         24.3    |
+| R&D minus CapEx      |        0.163    |
+| Difference NW SE     |        0.018    |
+| Difference NW t      |         8.97    |
+| Difference two-sided p |        0.000    |
+
+Separate annual OLS cross-sections, averaged over fiscal years 1972–1992; coefficient-series inference uses Newey–West lag 5.<br>
+R&D minus CapEx is estimated as the R&D coefficient in the equivalent R&D and R&D+CapEx parameterization; its reported p-value is two-sided.
+

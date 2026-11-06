@@ -1,0 +1,1708 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend msglevel=i fullstimer;
+2          
+3          libname COMP "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname COMPIND "/storage/sas/base/comp/d_na/company" access=readonly;
+NOTE: Libref COMPIND was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/company
+5          libname CRSP "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+6          libname CCM "/storage/sas/base/crsp/a_ccm" access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+7          libname OUT "./data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3124170598/attempt_02/data
+8          
+9          /* Standard domestic industrial annual reports, including 1962 lag support. */
+10         data work.raw0;
+11             set COMP.FUNDA(keep=gvkey datadate fyear indfmt consol popsrc datafmt curcd fic pdate fdate
+12                 act che lct dlc dp at sale rect ppent ni ceq mkvalt oancf prcc_f csho sich
+13                 where=(indfmt='INDL' and consol='C' and popsrc='D' and datafmt='STD'));
+14             if fyear >= 1962 and fyear <= 1999;
+15             if not missing(gvkey) and not missing(fyear);
+16             format datadate date9.;
+17         run;
+
+NOTE: There were 599783 observations read from the data set COMP.FUNDA.
+      WHERE (indfmt='INDL') and (consol='C') and (popsrc='D') and (datafmt='STD');
+NOTE: The data set WORK.RAW0 has 285661 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+3                                                          The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      real time           0.55 seconds
+      user cpu time       0.09 seconds
+      system cpu time     0.46 seconds
+      memory              1557.68k
+      OS Memory           8616.00k
+      Timestamp           11/03/2026 08:23:52 AM
+      Step Count                        1  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     641
+      Page Swaps                        0
+      Voluntary Context Switches        2
+      Involuntary Context Switches      32
+      Block Input Operations            0
+      Block Output Operations           116624
+      
+
+18         
+19         /* The lag join requires a unique standardized GVKEY/fiscal-year row. */
+20         proc sql noprint;
+21             create table work.rawdup as
+22             select gvkey, fyear, count(*) as n,
+23                    count(distinct datadate) as ddate_v, count(datadate) as ddate_n,
+24                    count(distinct pdate) as pdate_v, count(pdate) as pdate_n,
+25                    count(distinct fdate) as fdate_v, count(fdate) as fdate_n,
+26                    count(distinct curcd) as curcd_v, count(curcd) as curcd_n,
+27                    count(distinct fic) as fic_v, count(fic) as fic_n,
+28                    count(distinct at) as at_v, count(at) as at_n,
+29                    count(distinct act) as act_v, count(act) as act_n,
+30                    count(distinct che) as che_v, count(che) as che_n,
+31                    count(distinct lct) as lct_v, count(lct) as lct_n,
+32                    count(distinct dlc) as dlc_v, count(dlc) as dlc_n,
+33                    count(distinct dp) as dp_v, count(dp) as dp_n,
+34                    count(distinct sale) as sale_v, count(sale) as sale_n,
+35                    count(distinct rect) as rect_v, count(rect) as rect_n,
+36                    count(distinct ppent) as ppent_v, count(ppent) as ppent_n,
+37                    count(distinct ni) as ni_v, count(ni) as ni_n,
+38                    count(distinct ceq) as ceq_v, count(ceq) as ceq_n,
+39                    count(distinct mkvalt) as mkvalt_v, count(mkvalt) as mkvalt_n,
+40                    count(distinct oancf) as oancf_v, count(oancf) as oancf_n,
+41                    count(distinct prcc_f) as prcc_f_v, count(prcc_f) as prcc_f_n,
+42                    count(distinct csho) as csho_v, count(csho) as csho_n,
+43                    count(distinct sich) as sich_v, count(sich) as sich_n
+44             from work.raw0
+45             group by gvkey, fyear
+46             having count(*) > 1;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.RAWDUP created, with 2 rows and 45 columns.
+
+47             select count(*) into :n_rawdup trimmed from work.rawdup;
+48         
+49             create table work.rawdup_summary as
+50             select fyear, count(*) as duplicated_gvkeys, sum(n) as duplicate_rows,
+51                    sum(ddate_v>1 or (ddate_n>0 and ddate_n<n)) as date_conflicts,
+52                    sum(pdate_v>1 or (pdate_n>0 and pdate_n<n)) as pdate_conflicts,
+53                    sum(fdate_v>1 or (fdate_n>0 and fdate_n<n)) as fdate_conflicts,
+54                    sum(curcd_v>1 or (curcd_n>0 and curcd_n<n)) as currency_conflicts,
+55                    sum((at_v>1 or (at_n>0 and at_n<n)) or
+56                        (act_v>1 or (act_n>0 and act_n<n)) or
+4                                                          The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+57                        (che_v>1 or (che_n>0 and che_n<n)) or
+58                        (lct_v>1 or (lct_n>0 and lct_n<n)) or
+59                        (dlc_v>1 or (dlc_n>0 and dlc_n<n)) or
+60                        (dp_v>1 or (dp_n>0 and dp_n<n)) or
+61                        (sale_v>1 or (sale_n>0 and sale_n<n)) or
+62                        (rect_v>1 or (rect_n>0 and rect_n<n)) or
+63                        (ppent_v>1 or (ppent_n>0 and ppent_n<n)) or
+64                        (ni_v>1 or (ni_n>0 and ni_n<n))) as model_input_conflicts,
+65                    sum((ceq_v>1 or (ceq_n>0 and ceq_n<n)) or
+66                        (mkvalt_v>1 or (mkvalt_n>0 and mkvalt_n<n)) or
+67                        (oancf_v>1 or (oancf_n>0 and oancf_n<n)) or
+68                         (prcc_f_v>1 or (prcc_f_n>0 and prcc_f_n<n)) or
+69                         (csho_v>1 or (csho_n>0 and csho_n<n)) or
+70                         (fic_v>1 or (fic_n>0 and fic_n<n))) as stratification_field_conflicts,
+71                    sum(sich_v>1 or (sich_n>0 and sich_n<n)) as sic_conflicts
+72             from work.rawdup
+73             group by fyear
+74             order by fyear;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.RAWDUP_SUMMARY created, with 2 rows and 10 columns.
+
+75         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.15 seconds
+      user cpu time       2.16 seconds
+      system cpu time     0.06 seconds
+      memory              65468.28k
+      OS Memory           73568.00k
+      Timestamp           11/03/2026 08:23:54 AM
+      Step Count                        2  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     4824
+      Page Swaps                        0
+      Voluntary Context Switches        3225
+      Involuntary Context Switches      52
+      Block Input Operations            0
+      Block Output Operations           448
+      
+
+76         proc print data=work.rawdup_summary noobs;
+77         run;
+
+NOTE: There were 2 observations read from the data set WORK.RAWDUP_SUMMARY.
+NOTE: The PROCEDURE PRINT printed page 1.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2521.25k
+      OS Memory           11940.00k
+      Timestamp           11/03/2026 08:23:54 AM
+      Step Count                        3  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     294
+      Page Swaps                        0
+      Voluntary Context Switches        2
+      Involuntary Context Switches      2
+      Block Input Operations            0
+5                                                          The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      Block Output Operations           0
+      
+
+78         %put NOTE: Duplicate standardized GVKEY/fiscal-year keys = &n_rawdup;
+NOTE: Duplicate standardized GVKEY/fiscal-year keys = 2
+79         
+80         /* Resolve duplicated firm-years by latest period date, then latest preliminary date. */
+81         proc sql;
+82             create table work.rawtop_date as
+83             select gvkey, fyear, max(datadate) as top_datadate
+84             from work.raw0 group by gvkey, fyear;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.RAWTOP_DATE created, with 285659 rows and 3 columns.
+
+85             create table work.rawtop_pdate as
+86             select a.gvkey, a.fyear, a.datadate, max(a.pdate) as top_pdate
+87             from work.raw0 as a inner join work.rawtop_date as d
+88               on a.gvkey=d.gvkey and a.fyear=d.fyear
+89              and (a.datadate=d.top_datadate or (missing(a.datadate) and missing(d.top_datadate)))
+90             group by a.gvkey, a.fyear, a.datadate;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.RAWTOP_PDATE created, with 285659 rows and 4 columns.
+
+91             create table work.rawtop as
+92             select a.*
+93             from work.raw0 as a inner join work.rawtop_pdate as p
+94               on a.gvkey=p.gvkey and a.fyear=p.fyear
+95              and (a.datadate=p.datadate or (missing(a.datadate) and missing(p.datadate)))
+96              and (a.pdate=p.top_pdate or (missing(a.pdate) and missing(p.top_pdate)));
+NOTE: Table WORK.RAWTOP created, with 285659 rows and 27 columns.
+
+97             create table work.rawtop_counts as
+98             select gvkey, fyear, count(*) as top_n,
+99                    count(distinct curcd) as curcd_v, count(curcd) as curcd_n,
+100                   count(distinct fic) as fic_v, count(fic) as fic_n,
+101                   count(distinct act) as act_v, count(act) as act_n,
+102                   count(distinct che) as che_v, count(che) as che_n,
+103                   count(distinct lct) as lct_v, count(lct) as lct_n,
+104                   count(distinct dlc) as dlc_v, count(dlc) as dlc_n,
+105                   count(distinct dp) as dp_v, count(dp) as dp_n,
+106                   count(distinct at) as at_v, count(at) as at_n,
+107                   count(distinct sale) as sale_v, count(sale) as sale_n,
+108                   count(distinct rect) as rect_v, count(rect) as rect_n,
+109                   count(distinct ppent) as ppent_v, count(ppent) as ppent_n,
+110                   count(distinct ni) as ni_v, count(ni) as ni_n,
+111                   count(distinct ceq) as ceq_v, count(ceq) as ceq_n,
+112                   count(distinct mkvalt) as mkvalt_v, count(mkvalt) as mkvalt_n,
+113                   count(distinct oancf) as oancf_v, count(oancf) as oancf_n,
+114                   count(distinct prcc_f) as prcc_f_v, count(prcc_f) as prcc_f_n,
+115                   count(distinct csho) as csho_v, count(csho) as csho_n,
+116                   count(distinct sich) as sich_v, count(sich) as sich_n
+117            from work.rawtop
+118            group by gvkey, fyear;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.RAWTOP_COUNTS created, with 285659 rows and 39 columns.
+
+119            create table work.rawtop_ambig as
+120            select * from work.rawtop_counts
+6                                                          The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+121            where top_n > 1 and
+122              (curcd_v>1 or (curcd_n>0 and curcd_n<top_n) or
+123               fic_v>1 or (fic_n>0 and fic_n<top_n) or
+124               act_v>1 or (act_n>0 and act_n<top_n) or
+125               che_v>1 or (che_n>0 and che_n<top_n) or
+126               lct_v>1 or (lct_n>0 and lct_n<top_n) or
+127               dlc_v>1 or (dlc_n>0 and dlc_n<top_n) or
+128               dp_v>1 or (dp_n>0 and dp_n<top_n) or
+129               at_v>1 or (at_n>0 and at_n<top_n) or
+130               sale_v>1 or (sale_n>0 and sale_n<top_n) or
+131               rect_v>1 or (rect_n>0 and rect_n<top_n) or
+132               ppent_v>1 or (ppent_n>0 and ppent_n<top_n) or
+133               ni_v>1 or (ni_n>0 and ni_n<top_n) or
+134               ceq_v>1 or (ceq_n>0 and ceq_n<top_n) or
+135               mkvalt_v>1 or (mkvalt_n>0 and mkvalt_n<top_n) or
+136               oancf_v>1 or (oancf_n>0 and oancf_n<top_n) or
+137               prcc_f_v>1 or (prcc_f_n>0 and prcc_f_n<top_n) or
+138               csho_v>1 or (csho_n>0 and csho_n<top_n) or
+139               sich_v>1 or (sich_n>0 and sich_n<top_n));
+NOTE: Table WORK.RAWTOP_AMBIG created, with 0 rows and 39 columns.
+
+140            select count(*) into :n_top_ambig trimmed from work.rawtop_ambig;
+141            create table work.rawtop_summary as
+142            select fyear, sum(top_n>1) as identical_vintage_ties
+143            from work.rawtop_counts
+144            group by fyear order by fyear;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.RAWTOP_SUMMARY created, with 38 rows and 2 columns.
+
+145        quit;
+NOTE: The PROCEDURE SQL printed page 2.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.29 seconds
+      user cpu time       2.28 seconds
+      system cpu time     0.19 seconds
+      memory              57471.60k
+      OS Memory           67912.00k
+      Timestamp           11/03/2026 08:23:56 AM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     10885
+      Page Swaps                        0
+      Voluntary Context Switches        4096
+      Involuntary Context Switches      73
+      Block Input Operations            0
+      Block Output Operations           323592
+      
+
+146        proc print data=work.rawtop_summary noobs;
+147        run;
+
+NOTE: There were 38 observations read from the data set WORK.RAWTOP_SUMMARY.
+NOTE: The PROCEDURE PRINT printed page 3.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              365.09k
+7                                                          The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      OS Memory           13988.00k
+      Timestamp           11/03/2026 08:23:56 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     10
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+148        %put NOTE: Conflicting tied latest-date/vintage firm-years = &n_top_ambig;
+NOTE: Conflicting tied latest-date/vintage firm-years = 0
+149        %if %sysevalf(&n_top_ambig > 0) %then %do;
+150            data _null_;
+151                put "ERROR: Tied latest Compustat date/vintage rows conflict on a model input";
+152                abort cancel;
+153            run;
+154        %end;
+155        proc sort data=work.raw0 out=work.raw_order;
+156            by gvkey fyear descending datadate descending pdate;
+157        run;
+
+NOTE: There were 285661 observations read from the data set WORK.RAW0.
+NOTE: SAS threaded sort was used.
+NOTE: The data set WORK.RAW_ORDER has 285661 observations and 27 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.07 seconds
+      user cpu time       0.06 seconds
+      system cpu time     0.09 seconds
+      memory              81426.45k
+      OS Memory           93156.00k
+      Timestamp           11/03/2026 08:23:56 AM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     6915
+      Page Swaps                        0
+      Voluntary Context Switches        3961
+      Involuntary Context Switches      22
+      Block Input Operations            0
+      Block Output Operations           116496
+      
+
+158        data work.rawselect;
+159            set work.raw_order;
+160            by gvkey fyear descending datadate descending pdate;
+161            if first.fyear;
+162        run;
+
+NOTE: There were 285661 observations read from the data set WORK.RAW_ORDER.
+NOTE: The data set WORK.RAWSELECT has 285659 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.04 seconds
+      memory              715.75k
+      OS Memory           13732.00k
+8                                                          The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      Timestamp           11/03/2026 08:23:56 AM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     17
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           116488
+      
+
+163        
+164        /* CRSP support follows the last actual reporting date in the selected fiscal-year pool. */
+165        proc sql noprint;
+166            select max(datadate) into :mve_end_date trimmed
+167            from work.rawselect;
+168        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              5351.53k
+      OS Memory           18856.00k
+      Timestamp           11/03/2026 08:23:56 AM
+      Step Count                        8  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     12
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+169        data _null_;
+170            selected_end=&mve_end_date;
+171            put "NOTE: Actual selected-fiscal-date market-equity endpoint = " selected_end date9.;
+172        run;
+
+NOTE: Actual selected-fiscal-date market-equity endpoint = 31MAY2000
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              338.75k
+      OS Memory           13732.00k
+      Timestamp           11/03/2026 08:23:56 AM
+      Step Count                        9  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     17
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+173        
+9                                                          The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+174        /* Date-effective CRSP USD market equity: aggregate common share classes per PERMCO. */
+175        proc sql;
+176            create table work.crsp_security_month as
+177            select m.permno, m.date,
+178                   case when count(distinct m.permco)=1 then max(m.permco) else . end as permco,
+179                   count(distinct m.permco) as permco_n,
+180                   count(n.permno) as name_rows,
+181                   case when count(distinct n.shrcd)=1 then max(n.shrcd) else . end as shrcd,
+182                   count(distinct n.shrcd) as shrcd_n,
+183                   max(n.shrcd in (10,11)) as common_candidate,
+184                   sum(case when not missing(n.permno) and
+185                                 (missing(n.shrcd) or n.shrcd not in (10,11))
+186                            then 1 else 0 end) as unknown_sharecode_rows,
+187                   case when count(distinct m.prc)=1 then max(abs(m.prc)) else . end as prc_usd,
+188                   count(distinct m.prc) as prc_n,
+189                   count(m.prc) as prc_obs,
+190                   case when count(distinct m.shrout)=1 then max(m.shrout) else . end as shrout_thousands,
+191                   count(distinct m.shrout) as shrout_n,
+192                   count(m.shrout) as shrout_obs
+193            from CRSP.MSF as m
+194            left join CRSP.STOCKNAMES as n
+195              on m.permno=n.permno
+196             and m.date >= n.namedt
+197             and (missing(n.nameenddt) or m.date <= n.nameenddt)
+198            where m.date >= '01JAN1962'd and m.date <= &mve_end_date
+199            group by m.permno, m.date;
+NOTE: SAS threaded sort was used.
+NOTE: Invalid (or missing) arguments to the ABS function have caused the function to return a missing value.
+NOTE: Table WORK.CRSP_SECURITY_MONTH created, with 2534935 rows and 15 columns.
+
+200        
+201            create table work.crsp_monthly_mve_audit as
+202            select permco, date,
+203                   sum(common_candidate) as common_security_count,
+204                   sum(case when common_candidate=1 and
+205                             (permco_n ne 1 or unknown_sharecode_rows>0 or prc_n>1 or shrout_n>1)
+206                            then 1 else 0 end) as conflict_security_count,
+207                   sum(case when common_candidate=1 and
+208                             (prc_obs=0 or shrout_obs=0 or missing(prc_usd) or prc_usd<=0 or
+209                              missing(shrout_thousands) or shrout_thousands<=0)
+210                            then 1 else 0 end) as incomplete_security_count,
+211                   sum(case when common_candidate=1 and permco_n=1 and shrcd_n=1 and
+212                             prc_n=1 and prc_obs>0 and shrout_n=1 and shrout_obs>0 and
+213                             prc_usd>0 and shrout_thousands>0
+214                            then prc_usd*shrout_thousands else 0 end)/1000 as clean_mve
+215            from work.crsp_security_month
+216            where common_candidate=1 and permco_n=1
+217            group by permco, date;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CRSP_MONTHLY_MVE_AUDIT created, with 2193902 rows and 6 columns.
+
+218        
+219            create table work.crsp_monthly_mve as
+220            select permco, date, common_security_count, conflict_security_count,
+221                   incomplete_security_count,
+222                   case when common_security_count>0 and conflict_security_count=0
+223                             and incomplete_security_count=0
+224                        then clean_mve else . end as crsp_mve,
+10                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+225                   (conflict_security_count>0) as crsp_mve_conflict
+226            from work.crsp_monthly_mve_audit;
+NOTE: Table WORK.CRSP_MONTHLY_MVE created, with 2193902 rows and 7 columns.
+
+227        
+228            create table work.crsp_security_month_audit as
+229            select year(date) as crsp_year,
+230                   count(*) as security_month_rows,
+231                   sum(name_rows=0) as no_eff_name_rows,
+232                   sum(name_rows>1) as multi_name_rows,
+233                   sum(unknown_sharecode_rows>0) as bad_sharecode_rows,
+234                   sum(common_candidate=1 and permco_n ne 1) as permco_conflicts,
+235                   sum(common_candidate=1 and prc_obs=0) as common_price_missing,
+236                   sum(common_candidate=1 and shrout_obs=0) as common_shares_missing,
+237                   sum(common_candidate=1 and prc_n>1) as common_price_value_conflicts,
+238                   sum(common_candidate=1 and shrout_n>1) as common_shares_value_conflicts,
+239                   sum(common_candidate=1 and prc_obs>0 and (missing(prc_usd) or prc_usd<=0)) as common_price_invalid,
+240                   sum(common_candidate=1 and shrout_obs>0 and (missing(shrout_thousands) or shrout_thousands<=0)) as
+240      ! common_shares_invalid
+241            from work.crsp_security_month
+242            group by calculated crsp_year
+243            order by calculated crsp_year;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CRSP_SECURITY_MONTH_AUDIT created, with 39 rows and 12 columns.
+
+244        
+245            create table work.crsp_company_month_audit as
+246            select year(date) as crsp_year,
+247                   count(*) as common_permco_months,
+248                   sum(common_security_count>1) as multiple_common_share_classes,
+249                   sum(conflict_security_count>0) as observed_conflict_permco_months,
+250                   sum(incomplete_security_count>0) as incomplete_permco_months,
+251                   sum(crsp_mve>0) as complete_permco_mve_months
+252            from work.crsp_monthly_mve
+253            group by calculated crsp_year
+254            order by calculated crsp_year;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CRSP_COMPANY_MONTH_AUDIT created, with 39 rows and 6 columns.
+
+255        
+256            create table work.mve_links as
+257            select a.gvkey, a.fyear, a.datadate, l.lpermco as permco,
+258                   case when l.linkprim='P' then 1 else 2 end as link_priority
+259            from work.rawselect as a
+260            inner join CCM.CCMXPF_LINKTABLE as l
+261              on a.gvkey=l.gvkey
+262             and l.linktype='LC'
+263             and l.linkprim in ('P','C')
+264             and not missing(l.lpermco)
+265             and (missing(l.linkdt) or l.linkdt <= a.datadate)
+266             and (l.linkenddt=.E or l.linkenddt >= a.datadate);
+NOTE: Table WORK.MVE_LINKS created, with 55013 rows and 5 columns.
+
+267        
+268            create table work.mve_link_priority as
+269            select gvkey, fyear, datadate, min(link_priority) as best_priority
+270            from work.mve_links
+271            group by gvkey, fyear, datadate;
+11                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.MVE_LINK_PRIORITY created, with 55013 rows and 4 columns.
+
+272        
+273            create table work.mve_link as
+274            select l.gvkey, l.fyear, l.datadate,
+275                   case when count(distinct l.permco)=1 then max(l.permco) else . end as permco,
+276                   count(distinct l.permco) as permco_n,
+277                   p.best_priority
+278            from work.mve_links as l
+279            inner join work.mve_link_priority as p
+280              on l.gvkey=p.gvkey and l.fyear=p.fyear and l.datadate=p.datadate
+281             and l.link_priority=p.best_priority
+282            group by l.gvkey, l.fyear, l.datadate, p.best_priority;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.MVE_LINK created, with 55013 rows and 6 columns.
+
+283        
+284            create table work.mve_crsp_date as
+285            select l.gvkey, l.fyear, l.datadate, l.permco, max(m.date) as crsp_date
+286            from work.mve_link as l
+287            inner join work.crsp_monthly_mve as m
+288              on l.permco=m.permco
+289             and m.date <= l.datadate
+290             and m.date >= intnx('month',l.datadate,-1,'beginning')
+291            where l.permco_n=1
+292            group by l.gvkey, l.fyear, l.datadate, l.permco;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.MVE_CRSP_DATE created, with 47752 rows and 5 columns.
+
+293        
+294            create table work.mve_crsp as
+295            select d.gvkey, d.fyear, d.datadate, d.permco, d.crsp_date,
+296                   m.common_security_count, m.incomplete_security_count,
+297                   m.crsp_mve, m.crsp_mve_conflict
+298            from work.mve_crsp_date as d
+299            inner join work.crsp_monthly_mve as m
+300              on d.permco=m.permco and d.crsp_date=m.date;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.MVE_CRSP created, with 47752 rows and 9 columns.
+
+301        
+302            create table work.mve_assigned as
+303            select a.gvkey, a.fyear, a.datadate,
+304                   l.permco as mve_permco, l.permco_n as mve_permco_n,
+305                   l.best_priority as mve_link_rank,
+306                   c.crsp_date as mve_crsp_date format=date9.,
+307                   case when c.crsp_mve>0 then a.datadate-c.crsp_date else . end as mve_quote_age,
+308                   c.common_security_count as mve_common_security_count,
+309                   c.incomplete_security_count as mve_incomplete_security_count,
+310                   case when l.permco_n > 1 then .
+311                        when c.crsp_mve_conflict=1 then .
+312                        when c.crsp_mve > 0 then c.crsp_mve
+313                        when (missing(l.permco_n) or l.permco_n=1) and a.fic='USA' and a.curcd='USD'
+314                         and a.prcc_f > 0 and a.csho > 0 then a.prcc_f*a.csho
+315                        else . end as mve,
+316                   case when l.permco_n > 1 then 'LINK_CONFLICT'
+317                        when c.crsp_mve_conflict=1 then 'CRSP_CONFLICT'
+12                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+318                        when c.crsp_mve > 0 then 'CRSP_LC'
+319                        when l.permco_n=1 and a.fic='USA' and a.curcd='USD'
+320                         and a.prcc_f > 0 and a.csho > 0 then 'COMP_US_LC'
+321                        when missing(l.permco_n) and a.fic='USA' and a.curcd='USD'
+322                         and a.prcc_f > 0 and a.csho > 0 then 'COMP_US_INFERRED'
+323                        else 'MISSING' end as mve_src length=16
+324            from work.rawselect as a
+325            left join work.mve_link as l
+326              on a.gvkey=l.gvkey and a.fyear=l.fyear and a.datadate=l.datadate
+327            left join work.mve_crsp as c
+328              on a.gvkey=c.gvkey and a.fyear=c.fyear and a.datadate=c.datadate;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.MVE_ASSIGNED created, with 285659 rows and 12 columns.
+
+329        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           8.73 seconds
+      user cpu time       9.68 seconds
+      system cpu time     1.10 seconds
+      memory              304449.89k
+      OS Memory           316500.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        10  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     127654
+      Page Swaps                        0
+      Voluntary Context Switches        48959
+      Involuntary Context Switches      266
+      Block Input Operations            0
+      Block Output Operations           1421640
+      
+
+330        proc print data=work.crsp_security_month_audit noobs;
+331        run;
+
+NOTE: There were 39 observations read from the data set WORK.CRSP_SECURITY_MONTH_AUDIT.
+NOTE: The PROCEDURE PRINT printed page 4.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              470.06k
+      OS Memory           14244.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        11  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     10
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+332        proc print data=work.crsp_company_month_audit noobs;
+333        run;
+
+NOTE: There were 39 observations read from the data set WORK.CRSP_COMPANY_MONTH_AUDIT.
+13                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+NOTE: The PROCEDURE PRINT printed page 5.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              390.03k
+      OS Memory           13988.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        12  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     10
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+334        proc freq data=work.mve_assigned;
+335            tables fyear*mve_src / nocol norow nopercent;
+336        run;
+
+NOTE: There were 285659 observations read from the data set WORK.MVE_ASSIGNED.
+NOTE: The PROCEDURE FREQ printed pages 6-7.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              856.53k
+      OS Memory           14244.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        13  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     104
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           312
+      
+
+337        proc means data=work.mve_assigned n min median max;
+338            class fyear;
+339            var mve_quote_age;
+340        run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 285659 observations read from the data set WORK.MVE_ASSIGNED.
+NOTE: The PROCEDURE MEANS printed pages 8-9.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.01 seconds
+      memory              8992.12k
+      OS Memory           21520.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        14  Switch Count  0
+      Page Faults                       0
+14                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      Page Reclaims                     2071
+      Page Swaps                        0
+      Voluntary Context Switches        93
+      Involuntary Context Switches      7
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+341        proc freq data=work.mve_assigned;
+342            where fyear=1999 and datadate > '31DEC1999'd;
+343            tables mve_src / nocol norow nopercent;
+344        run;
+
+NOTE: There were 1614 observations read from the data set WORK.MVE_ASSIGNED.
+      WHERE (fyear=1999) and (datadate>'31DEC1999'D);
+NOTE: The PROCEDURE FREQ printed page 10.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              571.15k
+      OS Memory           13988.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        15  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     21
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           136
+      
+
+345        proc means data=work.mve_assigned n min median max;
+346            where fyear=1999 and datadate > '31DEC1999'd;
+347            var mve_quote_age;
+348        run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 1614 observations read from the data set WORK.MVE_ASSIGNED.
+      WHERE (fyear=1999) and (datadate>'31DEC1999'D);
+NOTE: The PROCEDURE MEANS printed page 11.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              7305.90k
+      OS Memory           20688.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        16  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     1787
+      Page Swaps                        0
+      Voluntary Context Switches        23
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+15                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+
+349        proc freq data=work.mve_assigned;
+350            where mve_src='CRSP_LC';
+351            tables mve_link_rank*mve_common_security_count / nocol norow nopercent;
+352        run;
+
+NOTE: There were 47456 observations read from the data set WORK.MVE_ASSIGNED.
+      WHERE mve_src='CRSP_LC';
+NOTE: The PROCEDURE FREQ printed page 12.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              780.87k
+      OS Memory           14244.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        17  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     47
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      4
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+353        
+354        proc sql;
+355            select count(*) as selected_annual_rows,
+356                   min(fyear) as min_fyear, max(fyear) as max_fyear
+357            from work.rawselect;
+358        quit;
+NOTE: The PROCEDURE SQL printed page 13.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              5354.68k
+      OS Memory           19112.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        18  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     31
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+359        
+360        proc sql;
+361            select count(*) as raw_observations,
+362                   min(fyear) as min_fyear,
+363                   max(fyear) as max_fyear,
+364                   min(datadate) format=date9. as min_datadate,
+365                   max(datadate) format=date9. as max_datadate
+366            from work.raw0;
+16                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+367        quit;
+NOTE: The PROCEDURE SQL printed page 14.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              5382.00k
+      OS Memory           19112.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        19  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     15
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+368        proc freq data=work.raw0;
+369            tables fyear*curcd / nocol norow nopercent;
+370        run;
+
+NOTE: There were 285661 observations read from the data set WORK.RAW0.
+NOTE: The PROCEDURE FREQ printed pages 15-16.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              777.93k
+      OS Memory           14244.00k
+      Timestamp           11/03/2026 08:24:05 AM
+      Step Count                        20  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           296
+      
+
+371        
+372        /* Exact dated Compustat industry rows are the first fallback when FUNDA.SICH is absent. */
+373        proc sql;
+374            create table work.co_sic as
+375            select gvkey, datadate, consol, popsrc,
+376                   case when count(distinct floor(sich/100))=1
+377                        then max(floor(sich/100)) else . end as co_sic2,
+378                   count(distinct floor(sich/100)) as co_sic2_n
+379            from COMPIND.CO_INDUSTRY
+380            where datadate >= '01JAN1962'd and datadate <= &mve_end_date
+381              and consol='C' and popsrc='D'
+382              and not missing(sich) and sich >= 100 and sich <= 9999
+383            group by gvkey, datadate, consol, popsrc;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CO_SIC created, with 116896 rows and 6 columns.
+
+17                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+384        
+385            /* Audit exact dated and Compustat Data Year candidate matches before choosing SIC fallback. */
+386            create table work.co_sic_year as
+387            select gvkey, year, consol, popsrc,
+388                   case when count(distinct floor(sich/100))=1
+389                        then max(floor(sich/100)) else . end as co_sic2,
+390                   count(distinct floor(sich/100)) as co_sic2_n
+391            from COMPIND.CO_INDUSTRY
+392            where year >= 1962 and year <= 1999
+393              and consol='C' and popsrc='D'
+394              and not missing(sich) and sich >= 100 and sich <= 9999
+395            group by gvkey, year, consol, popsrc;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CO_SIC_YEAR created, with 116896 rows and 6 columns.
+
+396        
+397            create table work.co_join_audit as
+398            select a.fyear, count(*) as funda_rows,
+399                   sum(e.co_sic2_n=1) as exact_unique_sic_rows,
+400                   sum(e.co_sic2_n>1) as exact_conflict_rows,
+401                   sum(y.co_sic2_n=1) as year_unique_sic_rows,
+402                   sum(y.co_sic2_n>1) as year_conflict_rows
+403            from work.rawselect as a
+404            left join work.co_sic as e
+405              on a.gvkey=e.gvkey and a.datadate=e.datadate
+406             and a.consol=e.consol and a.popsrc=e.popsrc
+407            left join work.co_sic_year as y
+408              on a.gvkey=y.gvkey and a.fyear=y.year
+409             and a.consol=y.consol and a.popsrc=y.popsrc
+410            group by a.fyear
+411            order by a.fyear;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CO_JOIN_AUDIT created, with 38 rows and 6 columns.
+
+412        
+413            create table work.sicbase as
+414            select a.*,
+415                   case when not missing(a.sich) and a.sich >= 100 and a.sich <= 9999
+416                        then floor(a.sich/100)
+417                        when c.co_sic2_n=1 then c.co_sic2
+418                        else . end as sic2,
+419                   case when not missing(a.sich) and a.sich >= 100 and a.sich <= 9999
+420                        then 'FUNDA'
+421                        when c.co_sic2_n=1 then 'CO_INDUSTRY'
+422                        when c.co_sic2_n > 1 then 'CO_AMBIG'
+423                        else 'MISSING' end as sic_src length=12
+424            from work.rawselect as a
+425            left join work.co_sic as c
+426              on a.gvkey=c.gvkey and a.datadate=c.datadate
+427             and a.consol=c.consol and a.popsrc=c.popsrc;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.SICBASE created, with 285659 rows and 29 columns.
+
+428        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.67 seconds
+      user cpu time       0.68 seconds
+      system cpu time     0.18 seconds
+18                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      memory              75004.23k
+      OS Memory           87248.00k
+      Timestamp           11/03/2026 08:24:06 AM
+      Step Count                        21  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     12248
+      Page Swaps                        0
+      Voluntary Context Switches        6538
+      Involuntary Context Switches      44
+      Block Input Operations            0
+      Block Output Operations           309576
+      
+
+429        proc print data=work.co_join_audit noobs;
+430        run;
+
+NOTE: There were 38 observations read from the data set WORK.CO_JOIN_AUDIT.
+NOTE: The PROCEDURE PRINT printed page 17.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              389.18k
+      OS Memory           14756.00k
+      Timestamp           11/03/2026 08:24:06 AM
+      Step Count                        22  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     10
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+431        
+432        /* Dated CRSP SIC fallback only when both period-specific Compustat sources fail. */
+433        proc sql;
+434            create table work.need_crsp as
+435            select gvkey, fyear, datadate
+436            from work.sicbase
+437            where missing(sic2);
+NOTE: Table WORK.NEED_CRSP created, with 168832 rows and 3 columns.
+
+438        
+439            create table work.crsp_links as
+440            select a.gvkey, a.fyear, a.datadate,
+441                   l.lpermno as permno, l.linkprim, l.linktype,
+442                   case when l.linktype='LC' and l.linkprim='P' then 1
+443                        when l.linktype='LC' and l.linkprim='C' then 2
+444                        when l.linktype='LU' and l.linkprim='P' then 3
+445                        else 4 end as link_priority,
+446                   floor(n.siccd/100) as crsp_sic2
+447            from work.need_crsp as a
+448            inner join CCM.CCMXPF_LINKTABLE as l
+449              on a.gvkey=l.gvkey
+450             and l.linktype in ('LC','LU')
+451             and l.linkprim in ('P','C')
+19                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+452             and (missing(l.linkdt) or l.linkdt <= a.datadate)
+453             and (l.linkenddt=.E or l.linkenddt >= a.datadate)
+454             and not missing(l.lpermno)
+455            inner join CRSP.STOCKNAMES as n
+456              on l.lpermno=n.permno
+457             and n.namedt <= a.datadate
+458             and (missing(n.nameenddt) or n.nameenddt >= a.datadate)
+459             and n.siccd >= 100 and n.siccd <= 9999;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CRSP_LINKS created, with 92371 rows and 8 columns.
+
+460        
+461            create table work.crsp_priority as
+462            select gvkey, fyear, datadate, min(link_priority) as best_priority
+463            from work.crsp_links
+464            group by gvkey, fyear, datadate;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CRSP_PRIORITY created, with 92371 rows and 4 columns.
+
+465        
+466            create table work.crsp_sic as
+467            select l.gvkey, l.fyear, l.datadate,
+468                   case when count(distinct l.crsp_sic2)=1
+469                        then max(l.crsp_sic2) else . end as crsp_sic2,
+470                   count(distinct l.crsp_sic2) as crsp_sic2_n,
+471                   p.best_priority
+472            from work.crsp_links as l
+473            inner join work.crsp_priority as p
+474              on l.gvkey=p.gvkey and l.fyear=p.fyear and l.datadate=p.datadate
+475             and l.link_priority=p.best_priority
+476            group by l.gvkey, l.fyear, l.datadate, p.best_priority;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.CRSP_SIC created, with 92371 rows and 6 columns.
+
+477        
+478            create table work.sicall as
+479            select a.*,
+480                   case when missing(a.sic2) and s.crsp_sic2_n=1
+481                        then s.crsp_sic2 else a.sic2 end as sic2_final,
+482                   case when missing(a.sic2) and s.crsp_sic2_n=1 and s.best_priority=1
+483                        then 'CRSP_LC_P'
+484                        when missing(a.sic2) and s.crsp_sic2_n=1 and s.best_priority=2
+485                        then 'CRSP_LC_C'
+486                        when missing(a.sic2) and s.crsp_sic2_n=1 and s.best_priority=3
+487                        then 'CRSP_LU_P'
+488                        when missing(a.sic2) and s.crsp_sic2_n=1 and s.best_priority=4
+489                        then 'CRSP_LU_C'
+490                        when missing(a.sic2) and s.crsp_sic2_n > 1
+491                        then 'CRSP_AMBIG'
+492                        else a.sic_src end as sic_src_final length=12
+493            from work.sicbase as a
+494            left join work.crsp_sic as s
+495              on a.gvkey=s.gvkey and a.fyear=s.fyear and a.datadate=s.datadate;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.SICALL created, with 285659 rows and 31 columns.
+
+496        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+20                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      real time           0.38 seconds
+      user cpu time       0.28 seconds
+      system cpu time     0.18 seconds
+      memory              80723.25k
+      OS Memory           92496.00k
+      Timestamp           11/03/2026 08:24:06 AM
+      Step Count                        23  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     6806
+      Page Swaps                        0
+      Voluntary Context Switches        4694
+      Involuntary Context Switches      17
+      Block Input Operations            0
+      Block Output Operations           324808
+      
+
+497        
+498        data work.sicready;
+499            set work.sicall;
+500            sic2=sic2_final;
+501            sic_src=sic_src_final;
+502            drop sic2_final sic_src_final;
+503        run;
+
+NOTE: There were 285659 observations read from the data set WORK.SICALL.
+NOTE: The data set WORK.SICREADY has 285659 observations and 29 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.05 seconds
+      memory              655.12k
+      OS Memory           14500.00k
+      Timestamp           11/03/2026 08:24:06 AM
+      Step Count                        24  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     19
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      6
+      Block Input Operations            0
+      Block Output Operations           129800
+      
+
+504        
+505        proc freq data=work.sicready;
+506            tables fyear*sic_src / nocol norow nopercent;
+507        run;
+
+NOTE: There were 285659 observations read from the data set WORK.SICREADY.
+NOTE: The PROCEDURE FREQ printed pages 18-19.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.02 seconds
+      memory              806.03k
+      OS Memory           14500.00k
+      Timestamp           11/03/2026 08:24:06 AM
+      Step Count                        25  Switch Count  0
+21                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           312
+      
+
+508        proc sql;
+509            select count(*) as all_rows,
+510                   sum(missing(sic2)) as missing_sic_rows,
+511                   sum(sic_src='FUNDA') as funda_sic_rows,
+512                   sum(sic_src='CO_INDUSTRY') as co_industry_sic_rows,
+513                   sum(sic_src='CRSP_LC_P') as crsp_primary_sic_rows,
+514                   sum(sic_src='CRSP_LC_C') as crsp_crsp_assigned_sic_rows,
+515                   sum(sic_src='CRSP_LU_P') as crsp_lu_primary_sic_rows,
+516                   sum(sic_src='CRSP_LU_C') as crsp_lu_assigned_sic_rows,
+517                   sum(sic_src='CRSP_AMBIG') as crsp_ambiguous_sic_rows,
+518                   sum(sic_src='CO_AMBIG') as co_ambiguous_sic_rows
+519            from work.sicready;
+520        quit;
+NOTE: The PROCEDURE SQL printed page 20.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      user cpu time       0.05 seconds
+      system cpu time     0.02 seconds
+      memory              5456.68k
+      OS Memory           19368.00k
+      Timestamp           11/03/2026 08:24:06 AM
+      Step Count                        26  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     13
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+521        
+522        /* Exact prior fiscal-year join; 1962 records provide 1963 beginning assets and changes. */
+523        proc sql;
+524            create table work.lagged as
+525            select a.gvkey, a.datadate, a.fyear, a.curcd, a.fic, a.sich,
+526                   a.sic2, a.sic_src,
+527                   a.act, a.che, a.lct, a.dlc, a.dp, a.at,
+528                   a.sale, a.rect, a.ppent, a.ni, a.ceq, a.mkvalt, a.oancf,
+529                   a.prcc_f, a.csho, m.mve, m.mve_src,
+530                   m.mve_permco, m.mve_permco_n, m.mve_link_rank,
+531                   m.mve_crsp_date, m.mve_quote_age, m.mve_common_security_count,
+532                   m.mve_incomplete_security_count,
+533                   b.datadate as prevdate format=date9.,
+534                   b.curcd as curcd_lag,
+535                   b.act as act_lag, b.che as che_lag, b.lct as lct_lag,
+536                   b.dlc as dlc_lag, b.at as at_lag, b.sale as sale_lag,
+537                   b.rect as rect_lag, b.ni as ni_lag
+538            from work.sicready as a
+22                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+539            left join work.sicready as b
+540              on a.gvkey=b.gvkey and a.fyear=b.fyear+1
+541            left join work.mve_assigned as m
+542              on a.gvkey=m.gvkey and a.fyear=m.fyear and a.datadate=m.datadate
+543            where a.fyear >= 1963 and a.fyear <= 1999;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.LAGGED created, with 283087 rows and 42 columns.
+
+544        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.43 seconds
+      user cpu time       0.33 seconds
+      system cpu time     0.26 seconds
+      memory              89547.32k
+      OS Memory           101840.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        27  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     12535
+      Page Swaps                        0
+      Voluntary Context Switches        9575
+      Involuntary Context Switches      20
+      Block Input Operations            0
+      Block Output Operations           493200
+      
+
+545        
+546        /* Keep incomplete components missing. Require same USD denomination in both periods. */
+547        data work.support;
+548            set work.lagged;
+549            if curcd ne 'USD' or curcd_lag ne 'USD' then delete;
+550            if missing(sic2) or sic2 <= 0 then delete;
+551        
+552            ta=.; inv_at=.; d_sales=.; d_mj=.; ppe_n=.; roa_cur=.; roa_lag=.;
+553            btm=.; ep=.; sales_gr=.; ocf_at=.;
+554            if at_lag > 0 and nmiss(act,act_lag,che,che_lag,lct,lct_lag,dlc,dlc_lag,dp)=0 then
+555                ta=((act-act_lag)-(che-che_lag)-(lct-lct_lag)+(dlc-dlc_lag)-dp)/at_lag;
+556            if at_lag > 0 then inv_at=1/at_lag;
+557            if at_lag > 0 and nmiss(sale,sale_lag)=0 then d_sales=(sale-sale_lag)/at_lag;
+558            if at_lag > 0 and nmiss(sale,sale_lag,rect,rect_lag)=0 then
+559                d_mj=((sale-sale_lag)-(rect-rect_lag))/at_lag;
+560            if at_lag > 0 and not missing(ppent) then ppe_n=ppent/at_lag;
+561            if at > 0 and not missing(ni) then roa_cur=ni/at;
+562            if at_lag > 0 and not missing(ni_lag) then roa_lag=ni_lag/at_lag;
+563            if mve > 0 and not missing(ceq) then btm=ceq/mve;
+564            if mve > 0 and not missing(ni) then ep=ni/mve;
+565            if sale_lag ne 0 and nmiss(sale,sale_lag)=0 then sales_gr=(sale-sale_lag)/sale_lag;
+566            length ocf_src $6;
+567            ocf_src='MISSING';
+568            if at > 0 and not missing(oancf) then do;
+569                ocf_at=oancf/at;
+570                ocf_src='OANCF';
+571            end;
+572            else if at > 0 and not missing(ni) and not missing(ta) and
+573                    not missing(at_lag) and at_lag > 0 then do;
+574                ocf_at=(ni-(ta*at_lag))/at;
+575                ocf_src='NI_TA';
+576            end;
+23                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+577            label ta='Total accruals / lagged total assets'
+578                  inv_at='Inverse lagged total assets'
+579                  d_sales='Change in sales / lagged total assets'
+580                  d_mj='Change in sales less receivables / lagged total assets'
+581                  ppe_n='Net PPE / lagged total assets'
+582                  roa_cur='Current net income / total assets'
+583                  roa_lag='Lagged net income / lagged total assets';
+584        run;
+
+NOTE: There were 283087 observations read from the data set WORK.LAGGED.
+NOTE: The data set WORK.SUPPORT has 188911 observations and 54 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.07 seconds
+      memory              742.12k
+      OS Memory           14500.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        28  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     35
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      6
+      Block Input Operations            0
+      Block Output Operations           160264
+      
+
+585        
+586        proc freq data=work.lagged;
+587            tables curcd*curcd_lag / nocol norow nopercent;
+588        run;
+
+NOTE: There were 283087 observations read from the data set WORK.LAGGED.
+NOTE: The PROCEDURE FREQ printed page 21.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              782.28k
+      OS Memory           14500.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        29  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     55
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+589        proc sql;
+590            select count(*) as support_firm_years,
+591                   min(fyear) as support_min_year,
+592                   max(fyear) as support_max_year,
+593                   min(prevdate) format=date9. as earliest_lag_date,
+594                   max(datadate) format=date9. as latest_current_date
+24                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+595            from work.support;
+596        quit;
+NOTE: The PROCEDURE SQL printed page 22.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              5400.87k
+      OS Memory           19368.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        30  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     15
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+597        
+598        /* Auditable annual source coverage for direct and reconstructed stratification measures. */
+599        proc sql;
+600            select fyear, count(*) as support_rows,
+601                   sum(mkvalt>0) as n_mkvalt_positive,
+602                   sum(mve_src='CRSP_LC') as n_crsp_mve,
+603                   sum(mve_src='COMP_US_LC') as n_compustat_mve_lc_fallback,
+604                   sum(mve_src='COMP_US_INFERRED') as n_compustat_mve_inferred,
+605                   sum(fic='USA' and curcd='USD' and prcc_f>0 and csho>0) as n_comp_mve_candidates,
+606                   sum(mve_src='LINK_CONFLICT') as n_mve_link_conflict,
+607                   sum(mve_src='CRSP_CONFLICT') as n_crsp_mve_conflict,
+608                   sum(mve_incomplete_security_count>0) as n_incomplete_crsp_month,
+609                   sum(mve>0) as n_mve_measure,
+610                   sum(not missing(btm)) as n_btm,
+611                   sum(not missing(ep)) as n_ep,
+612                   sum(not missing(oancf) and at>0) as n_oancf_at,
+613                   sum(ocf_src='NI_TA') as n_ni_minus_ta_proxy,
+614                   sum(not missing(ocf_at)) as n_ocf_measure
+615            from work.support group by fyear order by fyear;
+NOTE: SAS threaded sort was used.
+616        quit;
+NOTE: The PROCEDURE SQL printed pages 23-25.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      user cpu time       0.08 seconds
+      system cpu time     0.03 seconds
+      memory              39863.76k
+      OS Memory           51644.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        31  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     1523
+      Page Swaps                        0
+      Voluntary Context Switches        1473
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           0
+      
+25                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+
+617        proc freq data=work.support;
+618            where fyear=1999 and datadate > '31DEC1999'd;
+619            tables mve_src / nocol norow nopercent;
+620        run;
+
+NOTE: There were 1292 observations read from the data set WORK.SUPPORT.
+      WHERE (fyear=1999) and (datadate>'31DEC1999'D);
+NOTE: The PROCEDURE FREQ printed page 26.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              570.62k
+      OS Memory           14500.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        32  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     19
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           136
+      
+
+621        proc means data=work.support n min median max;
+622            where fyear=1999 and datadate > '31DEC1999'd;
+623            var mve_quote_age;
+624        run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 1292 observations read from the data set WORK.SUPPORT.
+      WHERE (fyear=1999) and (datadate>'31DEC1999'D);
+NOTE: The PROCEDURE MEANS printed page 27.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.02 seconds
+      memory              7321.15k
+      OS Memory           21200.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        33  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     1787
+      Page Swaps                        0
+      Voluntary Context Switches        23
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+625        
+626        /* Auditable support counts by fiscal year before Stata's group-specific fit rules. */
+627        proc sql;
+628            select count(*) as eligible_support_rows,
+629                   min(fyear) as first_fyear, max(fyear) as last_fyear,
+630                   min(prevdate) format=date9. as earliest_lag_date,
+26                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+631                   max(datadate) format=date9. as latest_current_date,
+632                   sum(not missing(ta) and not missing(inv_at) and not missing(d_sales) and not missing(ppe_n))
+633                       as n_j,
+634                   sum(not missing(ta) and not missing(inv_at) and not missing(d_mj) and not missing(ppe_n))
+635                       as n_mj,
+636                   sum(not missing(ta) and not missing(inv_at) and not missing(d_sales) and not missing(ppe_n) and not
+636      ! missing(roa_lag))
+637                       as n_j_roa_lag,
+638                   sum(not missing(ta) and not missing(inv_at) and not missing(d_sales) and not missing(ppe_n) and not
+638      ! missing(roa_cur))
+639                       as n_j_roa_cur,
+640                   sum(not missing(ta) and not missing(inv_at) and not missing(d_mj) and not missing(ppe_n) and not
+640      ! missing(roa_lag))
+641                       as n_mj_roa_lag,
+642                   sum(not missing(ta) and not missing(inv_at) and not missing(d_mj) and not missing(ppe_n) and not
+642      ! missing(roa_cur))
+643                       as n_mj_roa_cur
+644            from work.support;
+645        
+646            select fyear, count(*) as support_rows,
+647                   sum(not missing(ta) and not missing(inv_at) and not missing(d_sales) and not missing(ppe_n)) as n_jones,
+648                   sum(not missing(ta) and not missing(inv_at) and not missing(d_mj) and not missing(ppe_n)) as n_modified_jones,
+649                   sum(not missing(ta) and not missing(inv_at) and not missing(d_sales) and not missing(ppe_n) and not
+649      ! missing(roa_lag)) as n_jones_roa_lag,
+650                   sum(not missing(ta) and not missing(inv_at) and not missing(d_sales) and not missing(ppe_n) and not
+650      ! missing(roa_cur)) as n_jones_roa_current,
+651                   sum(not missing(ta) and not missing(inv_at) and not missing(d_mj) and not missing(ppe_n) and not
+651      ! missing(roa_lag)) as n_modified_jones_roa_lag,
+652                   sum(not missing(ta) and not missing(inv_at) and not missing(d_mj) and not missing(ppe_n) and not
+652      ! missing(roa_cur)) as n_modified_jones_roa_current
+653            from work.support
+654            group by fyear
+655            order by fyear;
+NOTE: SAS threaded sort was used.
+656        quit;
+NOTE: The PROCEDURE SQL printed pages 28-29.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.14 seconds
+      user cpu time       0.14 seconds
+      system cpu time     0.03 seconds
+      memory              23527.70k
+      OS Memory           35516.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        34  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     2080
+      Page Swaps                        0
+      Voluntary Context Switches        740
+      Involuntary Context Switches      4
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+657        proc freq data=work.support;
+658            tables fyear*sic_src / nocol norow nopercent;
+659        run;
+
+NOTE: There were 188911 observations read from the data set WORK.SUPPORT.
+27                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+NOTE: The PROCEDURE FREQ printed pages 30-31.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              803.18k
+      OS Memory           14500.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        35  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           312
+      
+
+660        proc sql;
+661            create table work.boundary_dates as
+662            select fyear, year(datadate) as date_year, count(*) as firm_years,
+663                   min(datadate) as first_datadate format=date9.,
+664                   max(datadate) as last_datadate format=date9.
+665            from work.support
+666            where fyear=1963 or fyear=1999 or year(datadate)=1962 or year(datadate)=2000
+667            group by fyear, calculated date_year
+668            order by fyear, calculated date_year;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.BOUNDARY_DATES created, with 4 rows and 5 columns.
+
+669        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.01 seconds
+      memory              5508.26k
+      OS Memory           19368.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        36  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     258
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           136
+      
+
+670        proc print data=work.boundary_dates noobs;
+671        run;
+
+NOTE: There were 4 observations read from the data set WORK.BOUNDARY_DATES.
+NOTE: The PROCEDURE PRINT printed page 32.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              385.18k
+28                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+      OS Memory           13988.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        37  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     10
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+672        
+673        /* Handoff preserves the broad SIC-assigned USD support pool; Stata fits each model. */
+674        data OUT.compustat_accrual_sim(label='Kothari et al. grouped-regression support population');
+675            set work.support;
+676            keep gvkey fyear datadate prevdate sic2 sic_src curcd curcd_lag
+677                 ta inv_at d_sales d_mj ppe_n roa_cur roa_lag
+678                 btm ep mve mve_src mve_permco mve_permco_n mve_link_rank
+679                 mve_crsp_date mve_quote_age mve_common_security_count mve_incomplete_security_count
+680                 sales_gr ocf_at ocf_src;
+681            label ta='Total accruals / lagged total assets'
+682                  inv_at='Inverse lagged total assets'
+683                  d_sales='Change in sales / lagged total assets'
+684                  d_mj='Change in sales less receivables / lagged total assets'
+685                  ppe_n='Net PPE / lagged total assets'
+686                  roa_cur='Current net income / total assets'
+687                  roa_lag='Lagged net income / lagged total assets'
+688                  btm='Book-to-market ratio'
+689                  ep='Earnings-to-price ratio'
+690                  mve='Fiscal market equity from dated CRSP or guarded Compustat fallback, in $ millions'
+691                  sales_gr='Sales growth'
+692                  ocf_at='Operating cash flow / total assets';
+693            format datadate prevdate date9.;
+694        run;
+
+NOTE: There were 188911 observations read from the data set WORK.SUPPORT.
+NOTE: The data set OUT.COMPUSTAT_ACCRUAL_SIM has 188911 observations and 29 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.03 seconds
+      memory              684.56k
+      OS Memory           13988.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        38  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     34
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           88968
+      
+
+695        
+696        libname OUT clear;
+NOTE: Libref OUT has been deassigned.
+29                                                         The SAS System                     Tuesday, November  3, 2026 08:23:00 AM
+
+697        libname CCM clear;
+NOTE: Libref CCM has been deassigned.
+698        libname CRSP clear;
+NOTE: Libref CRSP has been deassigned.
+699        libname COMPIND clear;
+NOTE: Libref COMPIND has been deassigned.
+700        libname COMP clear;
+NOTE: Libref COMP has been deassigned.
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           16.22 seconds
+      user cpu time       16.14 seconds
+      system cpu time     2.94 seconds
+      memory              313206.60k
+      OS Memory           316500.00k
+      Timestamp           11/03/2026 08:24:07 AM
+      Step Count                        38  Switch Count  86
+      Page Faults                       0
+      Page Reclaims                     197075
+      Page Swaps                        0
+      Voluntary Context Switches        83578
+      Involuntary Context Switches      593
+      Block Input Operations            0
+      Block Output Operations           3604480
+      

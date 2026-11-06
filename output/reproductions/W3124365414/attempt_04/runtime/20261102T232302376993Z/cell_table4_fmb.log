@@ -1,0 +1,182 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3124365414/at
+> tempt_04/runtime/20261102T232302376993Z/cell_table4_fmb.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/reg.dta", clear
+(Roychowdhury (2006) Table 4 baseline sample)
+
+. 
+. egen long panel_id = group(gvkey)
+
+. xtset panel_id fyear
+
+Panel variable: panel_id (unbalanced)
+ Time variable: fyear, 1987 to 2001, but with gaps
+         Delta: 1 unit
+
+. 
+. label variable ab_cfo "Abnormal CFO"
+
+. label variable ab_disexp "Abnormal discretionary expenses"
+
+. label variable ab_prod "Abnormal production costs"
+
+. label variable size "SIZE"
+
+. label variable mtb "MTB"
+
+. label variable netincome "Net income"
+
+. label variable suspect_ni "SUSPECT_NI"
+
+. 
+. est clear
+
+. xtfmb ab_cfo size mtb netincome suspect_ni, lag(1)
+
+Fama-MacBeth (1973) Two-Step procedure           Number of obs     =     50520
+                                                 Num. time periods =        15
+                                                 F(  4,    14)     =      5.70
+                                                 Prob > F          =    0.0061
+Newey-West corrected SE (lag length: 1)          avg. R-squared    =    0.2192
+------------------------------------------------------------------------------
+             |            Fama-MacBeth
+      ab_cfo | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        size |   -.000113   .0040567    -0.03   0.978    -.0088139    .0085878
+         mtb |   .0002265   .0001745     1.30   0.215    -.0001478    .0006008
+   netincome |   .2461029   .0600852     4.10   0.001     .1172331    .3749728
+  suspect_ni |  -.0129535   .0062123    -2.09   0.056    -.0262774    .0003705
+       _cons |   .0003016   .0001463     2.06   0.058    -.0000123    .0006154
+------------------------------------------------------------------------------
+
+
+. est store m_cfo
+
+. xtfmb ab_disexp size mtb netincome suspect_ni, lag(1)
+
+Fama-MacBeth (1973) Two-Step procedure           Number of obs     =     50520
+                                                 Num. time periods =        15
+                                                 F(  4,    14)     =     20.72
+                                                 Prob > F          =    0.0000
+Newey-West corrected SE (lag length: 1)          avg. R-squared    =    0.1005
+------------------------------------------------------------------------------
+             |            Fama-MacBeth
+   ab_disexp | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        size |   .0160436     .00371     4.32   0.001     .0080864    .0240008
+         mtb |   .0005192   .0004112     1.26   0.227    -.0003627    .0014011
+   netincome |  -.2559934    .061844    -4.14   0.001    -.3886356   -.1233512
+  suspect_ni |  -.0668535   .0099156    -6.74   0.000    -.0881205   -.0455866
+       _cons |   .0015437   .0002101     7.35   0.000     .0010931    .0019943
+------------------------------------------------------------------------------
+
+
+. est store m_disexp
+
+. xtfmb ab_prod size mtb netincome suspect_ni, lag(1)
+
+Fama-MacBeth (1973) Two-Step procedure           Number of obs     =     50520
+                                                 Num. time periods =        15
+                                                 F(  4,    14)     =     15.26
+                                                 Prob > F          =    0.0001
+Newey-West corrected SE (lag length: 1)          avg. R-squared    =    0.0390
+------------------------------------------------------------------------------
+             |            Fama-MacBeth
+     ab_prod | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        size |   -.004585    .001137    -4.03   0.001    -.0070238   -.0021463
+         mtb |  -.0003462   .0002068    -1.67   0.116    -.0007898    .0000973
+   netincome |  -.1118708   .0309403    -3.62   0.003    -.1782311   -.0455106
+  suspect_ni |   .0460897   .0085738     5.38   0.000     .0277007    .0644788
+       _cons |  -.0011023   .0002144    -5.14   0.000    -.0015622   -.0006425
+------------------------------------------------------------------------------
+
+
+. est store m_prod
+
+. 
+. esttab m_cfo m_disexp m_prod using "tables/table4_main.md", cells(b(star fmt(
+> 3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles("
+> Abnormal CFO" "Abnormal discretionary expenses" "Abnormal production costs") 
+> varlabels(_cons "Intercept" size "SIZE" mtb "MTB" netincome "Net income" susp
+> ect_ni "SUSPECT_NI") addnotes("Annual OLS cross-sections combined using Fama-
+> MacBeth; Newey-West HAC lag 1." "N is the aggregate number of complete firm-y
+> ears; annual counts are not reported in the source.")
+(file tables/table4_main.md not found)
+(output written to tables/table4_main.md)
+
+. esttab m_cfo m_disexp m_prod using "tables/table4_main.rtf", cells(b(star fmt
+> (3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles(
+> "Abnormal CFO" "Abnormal discretionary expenses" "Abnormal production costs")
+>  varlabels(_cons "Intercept" size "SIZE" mtb "MTB" netincome "Net income" sus
+> pect_ni "SUSPECT_NI") addnotes("Annual OLS cross-sections combined using Fama
+> -MacBeth; Newey-West HAC lag 1." "N is the aggregate number of complete firm-
+> years; annual counts are not reported in the source.")
+(file tables/table4_main.rtf not found)
+(output written to tables/table4_main.rtf)
+
+. esttab m_cfo m_disexp m_prod using "tables/table4_main.csv", cells(b(star fmt
+> (3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles(
+> "Abnormal CFO" "Abnormal discretionary expenses" "Abnormal production costs")
+>  varlabels(_cons "Intercept" size "SIZE" mtb "MTB" netincome "Net income" sus
+> pect_ni "SUSPECT_NI") addnotes("Annual OLS cross-sections combined using Fama
+> -MacBeth; Newey-West HAC lag 1." "N is the aggregate number of complete firm-
+> years; annual counts are not reported in the source.")
+(file tables/table4_main.csv not found)
+(output written to tables/table4_main.csv)
+
+. esttab m_cfo m_disexp m_prod using "tables/table4_main.tex", cells(b(star fmt
+> (3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label mtitles(
+> "Abnormal CFO" "Abnormal discretionary expenses" "Abnormal production costs")
+>  varlabels(_cons "Intercept" size "SIZE" mtb "MTB" netincome "Net income" sus
+> pect_ni "SUSPECT_NI") addnotes("Annual OLS cross-sections combined using Fama
+> -MacBeth; Newey-West HAC lag 1." "N is the aggregate number of complete firm-
+> years; annual counts are not reported in the source.")
+(file tables/table4_main.tex not found)
+(output written to tables/table4_main.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

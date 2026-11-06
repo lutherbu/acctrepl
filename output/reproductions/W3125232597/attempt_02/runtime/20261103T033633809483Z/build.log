@@ -1,0 +1,3117 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 11:36:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 11:36:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend nodate nonumber mprint mlogic symbolgen;
+2          
+3          /* Read-only sources; these aliases point to the exact catalog files. */
+4          libname sdc "/storage/sas/base/tfn/sdc_ma" access=readonly;
+NOTE: Libref SDC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/tfn/sdc_ma
+5          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+6          libname compsec "/storage/sas/base/comp/d_na/security" access=readonly;
+NOTE: Libref COMPSEC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+7          libname compfx "/storage/sas/base/comp/d_global/currency" access=readonly;
+NOTE: Libref COMPFX was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_global/currency
+8          libname crsp "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+9          libname ccm "/storage/sas/base/crsp/a_ccm" access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+10         libname tfn "/storage/sas/base/tfn/s34" access=readonly;
+NOTE: Libref TFN was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/tfn/s34
+11         libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3125232597/attempt_02/data
+12         
+13         %let annstart='01JAN1983'd;
+                                                           The SAS System
+
+14         %let annend='31DEC2009'd;
+15         %let rawstart='01JAN1975'd;
+16         %let rawend='31DEC2012'd;
+17         
+18         /* Inspect the actual local SDC categories before applying the paper screens. */
+19         data work.sdc_audit;
+20             set sdc.wrds_ma_details(keep=master_deal_no dateann dateeff form statuscode
+21                 repurch anationcode tnationcode apublic tpublic acusip master_cusip rankval
+22                 pct_cash pct_stk tender attitude
+23                 where=(dateann >= &annstart and dateann <= &annend));
+SYMBOLGEN:  Macro variable ANNSTART resolves to '01JAN1983'd
+SYMBOLGEN:  Macro variable ANNEND resolves to '31DEC2009'd
+24         run;
+
+NOTE: There were 718353 observations read from the data set SDC.WRDS_MA_DETAILS.
+      WHERE (dateann>='01JAN1983'D and dateann<='31DEC2009'D);
+NOTE: The data set WORK.SDC_AUDIT has 718353 observations and 17 variables.
+NOTE: DATA statement used (Total process time):
+      real time           3.01 seconds
+      cpu time            1.13 seconds
+      
+
+25         
+26         title "Local SDC categories in the paper announcement window";
+27         proc freq data=work.sdc_audit;
+28             tables form statuscode repurch anationcode tnationcode apublic tpublic tender attitude / missing;
+29         run;
+
+NOTE: There were 718353 observations read from the data set WORK.SDC_AUDIT.
+NOTE: The PROCEDURE FREQ printed pages 1-12.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.13 seconds
+      cpu time            0.14 seconds
+      
+
+30         title;
+31         
+32         title "Local SDC transaction-value and consideration fields";
+33         proc means data=work.sdc_audit n nmiss min p1 p25 median p75 p99 max;
+34             var rankval pct_cash pct_stk;
+35         run;
+
+NOTE: There were 718353 observations read from the data set WORK.SDC_AUDIT.
+NOTE: The PROCEDURE MEANS printed page 13.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.18 seconds
+      
+
+36         title;
+37         
+38         /* Count the source acquisition screen before the $1m value and linking gates,
+39            so differences from the published Table 1 attrition can be located. */
+40         data work.sdc_base_screen;
+41             set work.sdc_audit;
+42             form_u=upcase(strip(form));
+43             if form_u not in ('M','MERGER','AM','ACQ. MAJ. INT.','AA','ACQ. OF ASSETS') and
+44                index(form_u,'MAJORITY')=0 then delete;
+                                                           The SAS System
+
+45             if upcase(strip(statuscode)) ne 'C' then delete;
+46             if upcase(strip(anationcode)) ne 'US' or upcase(strip(tnationcode)) ne 'US' then delete;
+47             if upcase(strip(apublic)) ne 'PUBLIC' or upcase(strip(tpublic)) ne 'PUBLIC' then delete;
+48             if upcase(strip(repurch)) not in ('N','NO') then delete;
+49             if missing(master_deal_no) then delete;
+50         run;
+
+NOTE: There were 718353 observations read from the data set WORK.SDC_AUDIT.
+NOTE: The data set WORK.SDC_BASE_SCREEN has 6681 observations and 18 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+51         title "Local completed public U.S. SDC sample before transaction-value/link screens";
+52         proc sql;
+53             select count(*) as sdc_base_rows,
+54                    count(distinct master_deal_no) as sdc_base_deals,
+55                    sum(not missing(rankval) and rankval<1) as rankval_below_1m,
+56                    sum(missing(rankval)) as rankval_missing,
+57                    sum(not missing(rankval) and rankval>=1) as rankval_at_least_1m,
+58                    sum(missing(acusip)) as bidder_cusip_missing,
+59                    sum(missing(master_cusip)) as target_cusip_missing
+60             from work.sdc_base_screen;
+61         quit;
+NOTE: The PROCEDURE SQL printed page 14.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+62         title;
+63         
+64         
+65         
+66         /* The source says completed M/AM/AA, public U.S. bidder and target,
+67            and no repurchases. WRDS exposes descriptive FORM and public-status fields. */
+68         data work.events0;
+69             set work.sdc_audit;
+70             length dealid $10 form_code $2 attitude_u $9;
+71             dealid=strip(master_deal_no);
+72             form_u=upcase(strip(form));
+73             if form_u in ('M','MERGER') then form_code='M';
+74             else if form_u in ('AM','ACQ. MAJ. INT.') or index(form_u,'MAJORITY')>0 then form_code='AM';
+75             else if form_u in ('AA','ACQ. OF ASSETS') then form_code='AA';
+76             else delete;
+77             if upcase(strip(statuscode)) ne 'C' then delete;
+78             if upcase(strip(anationcode)) ne 'US' or upcase(strip(tnationcode)) ne 'US' then delete;
+79             if upcase(strip(apublic)) ne 'PUBLIC' or upcase(strip(tpublic)) ne 'PUBLIC' then delete;
+80             if upcase(strip(repurch)) in ('Y','YES') then delete;
+81             if upcase(strip(repurch)) not in ('N','NO') then delete;
+82             if missing(dealid) or missing(acusip) or missing(master_cusip) then delete;
+83             cusip_a=upcase(strip(acusip));
+84             cusip_t=upcase(strip(master_cusip));
+85             attitude_u=upcase(strip(attitude));
+86             if rankval < 1 or missing(rankval) then delete;
+87             dealvalue_m=rankval;
+88             format dateann dateeff yymmdd10.;
+                                                           The SAS System
+
+89             keep dealid dateann dateeff form_code rankval dealvalue_m cusip_a cusip_t
+90                  pct_cash pct_stk tender attitude_u;
+91         run;
+
+NOTE: There were 718353 observations read from the data set WORK.SDC_AUDIT.
+NOTE: The data set WORK.EVENTS0 has 5983 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.10 seconds
+      
+
+92         
+93         /* MASTER_DEAL_NO is the SDC deal key. Ambiguous duplicate rows are retained in
+94            the count report and excluded rather than arbitrarily collapsed. */
+95         proc sql;
+96             create table work.event_key_counts as
+97             select dealid, count(*) as n_rows
+98             from work.events0
+99             group by dealid;
+NOTE: Table WORK.EVENT_KEY_COUNTS created, with 5983 rows and 2 columns.
+
+100            select count(*) as sdc_candidate_rows,
+101                   count(distinct dealid) as sdc_candidate_deals,
+102                   sum(n_rows>1) as duplicate_deal_keys,
+103                   sum(case when n_rows>1 then n_rows else 0 end) as rows_in_duplicate_keys
+104            from work.event_key_counts;
+105            create table work.events1 as
+106            select e.*
+107            from work.events0 as e inner join work.event_key_counts as k
+108              on e.dealid=k.dealid
+109            where k.n_rows=1;
+NOTE: Table WORK.EVENTS1 created, with 5983 rows and 12 columns.
+
+110        quit;
+NOTE: The PROCEDURE SQL printed page 15.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+111        
+112        /* Effective-dated Compustat security history, rather than FUNDA header CUSIP. */
+113        data work.cusip_hist0;
+114            set compsec.sec_idhist(keep=gvkey iid item itemvalue efffrom effthru);
+115            if upcase(strip(item)) in ('CUSIP','NCUSIP');
+116            if missing(itemvalue) then delete;
+117            length cusip6 $6 cusip8 $8;
+118            cusip6=substr(compress(upcase(strip(itemvalue))),1,6);
+119            cusip8=substr(compress(upcase(strip(itemvalue))),1,8);
+120            if lengthn(cusip6) ne 6 then delete;
+121            if missing(efffrom) then efffrom='01JAN1900'd;
+122            if missing(effthru) then effthru='31DEC9999'd;
+123            keep gvkey iid cusip6 cusip8 efffrom effthru item;
+124        run;
+
+NOTE: There were 861868 observations read from the data set COMPSEC.SEC_IDHIST.
+NOTE: The data set WORK.CUSIP_HIST0 has 131864 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+125        proc sql;
+126            create table work.cusip_hist_unique as
+127            select distinct gvkey,cusip6,cusip8,efffrom,effthru
+128            from work.cusip_hist0;
+NOTE: Table WORK.CUSIP_HIST_UNIQUE created, with 118577 rows and 5 columns.
+
+129        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.05 seconds
+      
+
+130        
+131        data work.event_party_cusip;
+132            set work.events1(in=a) work.events1(in=t);
+133            length role $1 cusip6 $6;
+134            if a then do; role='A'; cusip6=cusip_a; end;
+135            else do; role='T'; cusip6=cusip_t; end;
+136            keep dealid role cusip6 dateann dateeff;
+137        run;
+
+NOTE: There were 5983 observations read from the data set WORK.EVENTS1.
+NOTE: There were 5983 observations read from the data set WORK.EVENTS1.
+NOTE: The data set WORK.EVENT_PARTY_CUSIP has 11966 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+138        
+139        proc sql;
+140            create table work.party_gvkey_candidates as
+141            select distinct p.dealid,p.role,p.cusip6,p.dateann,p.dateeff,h.gvkey
+142            from work.event_party_cusip as p inner join work.cusip_hist0 as h
+143              on p.cusip6=h.cusip6 and p.dateann>=h.efffrom and p.dateann<=h.effthru;
+NOTE: Table WORK.PARTY_GVKEY_CANDIDATES created, with 10458 rows and 6 columns.
+
+144            create table work.party_gvkey_counts as
+145            select dealid,role,count(distinct gvkey) as n_gvkey,max(gvkey) as gvkey length=6
+146            from work.party_gvkey_candidates group by dealid,role;
+NOTE: Table WORK.PARTY_GVKEY_COUNTS created, with 10369 rows and 4 columns.
+
+147            create table work.party_gvkey as
+148            select p.dealid,p.role,p.cusip6,p.dateann,p.dateeff,c.gvkey
+149            from work.event_party_cusip as p inner join work.party_gvkey_counts as c
+150              on p.dealid=c.dealid and p.role=c.role
+151            where c.n_gvkey=1;
+NOTE: Table WORK.PARTY_GVKEY created, with 10306 rows and 6 columns.
+
+152            select role, count(*) as matched_participant_rows,
+153                   sum(n_gvkey=0) as no_historical_cusip_match,
+154                   sum(n_gvkey>1) as ambiguous_historical_cusip_match
+155            from work.party_gvkey_counts group by role;
+156        quit;
+                                                           The SAS System
+
+NOTE: The PROCEDURE SQL printed page 16.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+157        
+158        /* Dated CCM links. P/C markers and LC/LU link types are retained; .B/.E open
+159           endpoints are accepted, and no equality to FUNDA header IID is imposed. */
+160        data work.ccm_links0;
+161            set ccm.ccmxpf_linktable(keep=gvkey linkprim liid linktype lpermno lpermco
+162                linkdt linkenddt
+163                where=(linktype in ('LC','LU') and linkprim in ('P','C') and lpermno>0));
+164            if missing(linkdt) then linkdt='01JAN1900'd;
+165            if missing(linkenddt) then linkenddt='31DEC9999'd;
+166            prim_rank=(linkprim='P');
+167            type_rank=(linktype='LC');
+168            permno=lpermno;
+169            keep gvkey liid linkprim linktype lpermco permno linkdt linkenddt prim_rank type_rank;
+170        run;
+
+NOTE: There were 33324 observations read from the data set CCM.CCMXPF_LINKTABLE.
+      WHERE linktype in ('LC', 'LU') and linkprim in ('C', 'P') and (lpermno>0);
+NOTE: The data set WORK.CCM_LINKS0 has 33324 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+171        
+172        proc sql;
+173            create table work.party_link_candidates0 as
+174            select p.*,l.permno,l.lpermco,l.liid,l.linkprim,l.linktype,
+175                   l.prim_rank,l.type_rank
+176            from work.party_gvkey as p inner join work.ccm_links0 as l
+177              on p.gvkey=l.gvkey and p.dateann>=l.linkdt and p.dateann<=l.linkenddt;
+NOTE: Table WORK.PARTY_LINK_CANDIDATES0 created, with 9641 rows and 13 columns.
+
+178            create table work.party_link_best as
+179            select dealid,role,min(prim_rank*2+type_rank) as best_rank
+180            from work.party_link_candidates0 group by dealid,role;
+NOTE: Table WORK.PARTY_LINK_BEST created, with 9641 rows and 3 columns.
+
+181            create table work.party_link_counts as
+182            select c.dealid,c.role,b.best_rank,count(distinct c.permno) as n_permno,
+183                   max(c.gvkey) as gvkey length=6,max(c.cusip6) as cusip6 length=6,
+184                   max(c.dateann) as dateann,max(c.dateeff) as dateeff,max(c.permno) as permno
+185            from work.party_link_candidates0 as c inner join work.party_link_best as b
+186              on c.dealid=b.dealid and c.role=b.role
+187            where c.prim_rank*2+c.type_rank=b.best_rank
+188            group by c.dealid,c.role,b.best_rank;
+NOTE: Table WORK.PARTY_LINK_COUNTS created, with 9641 rows and 9 columns.
+
+189            create table work.party_link as
+190            select * from work.party_link_counts where n_permno=1;
+NOTE: Table WORK.PARTY_LINK created, with 9641 rows and 9 columns.
+
+191        quit;
+                                                           The SAS System
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+192        
+193        /* Require an effective common-share name on the event date. */
+194        data work.crsp_names0;
+195            set crsp.stocknames(keep=permno permco namedt nameenddt shrcd ncusip cusip);
+196            if shrcd in (10,11);
+197            if missing(namedt) then namedt='01JAN1900'd;
+198            if missing(nameenddt) then nameenddt='31DEC9999'd;
+199        run;
+
+NOTE: There were 83280 observations read from the data set CRSP.STOCKNAMES.
+NOTE: The data set WORK.CRSP_NAMES0 has 59913 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+200        proc sql;
+201            create table work.party_name_candidates as
+202            select p.*,n.permco,n.shrcd
+203            from work.party_link as p inner join work.crsp_names0 as n
+204              on p.permno=n.permno and p.dateann>=n.namedt and p.dateann<=n.nameenddt;
+NOTE: Table WORK.PARTY_NAME_CANDIDATES created, with 9303 rows and 11 columns.
+
+205            create table work.party_name_counts as
+206            select dealid,role,count(distinct permno) as n_permno,
+207                   max(gvkey) as gvkey length=6,max(cusip6) as cusip6 length=6,
+208                   max(dateann) as dateann,max(dateeff) as dateeff,max(permno) as permno,
+209                   max(permco) as permco
+210            from work.party_name_candidates group by dealid,role;
+NOTE: Table WORK.PARTY_NAME_COUNTS created, with 9303 rows and 9 columns.
+
+211            create table work.party as
+212            select * from work.party_name_counts where n_permno=1;
+NOTE: Table WORK.PARTY created, with 9303 rows and 9 columns.
+
+213            select role,count(*) as dated_common_share_participants
+214            from work.party group by role;
+215        quit;
+NOTE: The PROCEDURE SQL printed page 17.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+216        
+217        
+218        
+219        /* Daily cross-rates use the documented FROM currency to USD direction. Keep
+220           only unique positive observations; a missing/ambiguous quote stays missing. */
+221        data work.fx_dly_raw;
+222            set compfx.g_exrt_dly(keep=datadate tocurd fromcurd exratd exrattpd
+223                where=(datadate >= &rawstart and datadate <= &rawend and tocurd='USD'));
+SYMBOLGEN:  Macro variable RAWSTART resolves to '01JAN1975'd
+                                                           The SAS System
+
+SYMBOLGEN:  Macro variable RAWEND resolves to '31DEC2012'd
+224            if exratd>0 and not missing(fromcurd);
+225            fromcur=upcase(strip(fromcurd));
+226            keep datadate fromcur exratd exrattpd;
+227        run;
+
+NOTE: There were 10884 observations read from the data set COMPFX.G_EXRT_DLY.
+      WHERE (datadate>='01JAN1975'D and datadate<='31DEC2012'D) and (tocurd='USD');
+NOTE: The data set WORK.FX_DLY_RAW has 10884 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.18 seconds
+      cpu time            0.17 seconds
+      
+
+228        proc sql;
+229            create table work.fx_dly_key as
+230            select datadate,fromcur,count(*) as n_rate,max(exratd) as rate,
+231                   max(exrattpd) as rate_type
+232            from work.fx_dly_raw group by datadate,fromcur;
+NOTE: Table WORK.FX_DLY_KEY created, with 10884 rows and 5 columns.
+
+233            create table work.fx_dly as
+234            select datadate,fromcur,case when n_rate=1 then rate else . end as rate,
+235                   n_rate,rate_type
+236            from work.fx_dly_key;
+NOTE: Table WORK.FX_DLY created, with 10884 rows and 5 columns.
+
+237            select count(*) as fx_date_currency_keys,
+238                   sum(n_rate>1) as ambiguous_fx_keys
+239            from work.fx_dly;
+240        quit;
+NOTE: The PROCEDURE SQL printed page 18.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+241        
+242        /* Quarterly accounting rows. FQTR/FYEARQ identify fiscal quarters. A calendar
+243           quarter key is retained only for event anchors and calendar-peer controls;
+244           duplicate dated rows in that key are diagnosed, then the latest is kept. */
+245        data work.fq_raw;
+246            set comp.fundq(keep=gvkey datadate fdateq fyearq fqtr indfmt consol popsrc datafmt
+247                curcdq ibq mkvaltq cshoq prccq atq ceqq
+248                where=(datadate >= &rawstart and datadate <= &rawend and
+SYMBOLGEN:  Macro variable RAWSTART resolves to '01JAN1975'd
+SYMBOLGEN:  Macro variable RAWEND resolves to '31DEC2012'd
+249                       indfmt='INDL' and consol='C' and popsrc='D' and datafmt='STD'));
+250            if not missing(gvkey) and not missing(datadate);
+251            qidx=year(datadate)*4+qtr(datadate);
+252            if not missing(fyearq) and fqtr>=1 and fqtr<=4 then fqidx=fyearq*4+fqtr;
+253            else fqidx=.;
+254            noncalendar_q=(month(datadate) ne 3*qtr(datadate));
+255            calyear=year(datadate);
+256        run;
+
+NOTE: There were 1374331 observations read from the data set COMP.FUNDQ.
+      WHERE (datadate>='01JAN1975'D and datadate<='31DEC2012'D) and (indfmt='INDL') and (consol='C') and (popsrc='D') and 
+                                                           The SAS System
+
+      (datafmt='STD');
+NOTE: The data set WORK.FQ_RAW has 1374331 observations and 20 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.18 seconds
+      cpu time            1.17 seconds
+      
+
+257        proc sql;
+258            create table work.fq_dups as
+259            select gvkey,qidx,count(*) as n_rows
+260            from work.fq_raw group by gvkey,qidx having count(*)>1;
+NOTE: Table WORK.FQ_DUPS created, with 2401 rows and 3 columns.
+
+261            select count(*) as quarterly_duplicate_keys,
+262                   sum(n_rows) as rows_in_quarterly_duplicate_keys
+263            from work.fq_dups;
+264        quit;
+NOTE: The PROCEDURE SQL printed page 19.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.34 seconds
+      
+
+265        proc sort data=work.fq_raw out=work.fq_sort;
+266            by gvkey qidx datadate fdateq;
+267        run;
+
+NOTE: There were 1374331 observations read from the data set WORK.FQ_RAW.
+NOTE: The data set WORK.FQ_SORT has 1374331 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.25 seconds
+      cpu time            0.51 seconds
+      
+
+268        data work.fq_one;
+269            set work.fq_sort;
+270            by gvkey qidx;
+271            if last.qidx;
+272        run;
+
+NOTE: There were 1374331 observations read from the data set WORK.FQ_SORT.
+NOTE: The data set WORK.FQ_ONE has 1371930 observations and 20 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.25 seconds
+      
+
+273        proc sort data=work.fq_one out=work.fq_fiscal_sort;
+274            by gvkey fqidx datadate fdateq;
+275        run;
+
+NOTE: There were 1371930 observations read from the data set WORK.FQ_ONE.
+NOTE: The data set WORK.FQ_FISCAL_SORT has 1371930 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.48 seconds
+      
+
+                                                           The SAS System
+
+276        data work.fq_fiscal_one;
+277            set work.fq_fiscal_sort;
+278            by gvkey fqidx;
+279            if not missing(fqidx) and last.fqidx;
+280        run;
+
+NOTE: There were 1371930 observations read from the data set WORK.FQ_FISCAL_SORT.
+NOTE: The data set WORK.FQ_FISCAL_ONE has 1371368 observations and 20 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.22 seconds
+      cpu time            0.22 seconds
+      
+
+281        proc sql;
+282            create table work.fq_fiscal_dups as
+283            select gvkey,fqidx,count(*) as n_rows
+284            from work.fq_one where not missing(fqidx)
+285            group by gvkey,fqidx having count(*)>1;
+NOTE: Table WORK.FQ_FISCAL_DUPS created, with 500 rows and 3 columns.
+
+286            select count(*) as duplicated_fiscal_quarter_keys,
+287                   sum(n_rows) as dup_fiscal_rows
+288            from work.fq_fiscal_dups;
+289            select count(*) as calendar_quarter_rows,
+290                   sum(missing(fqidx)) as rows_missing_fiscal_quarter_key,
+291                   sum(noncalendar_q=1) as noncalendar_fiscal_quarter_rows,
+292                   sum(noncalendar_q=0) as calendar_end_fiscal_quarter_rows
+293            from work.fq_one;
+294        quit;
+NOTE: The PROCEDURE SQL printed pages 20-21.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.39 seconds
+      cpu time            0.56 seconds
+      
+
+295        
+296        /* Prior fiscal-quarter market equity for earnings. Translate point-in-time
+297           company MVE to USD using the latest unique direct daily rate in [date-5,date]. */
+298        proc sql;
+299            create table work.q_pair as
+300            select a.*,b.mkvaltq as mve_lag,b.curcdq as curcd_lag,
+301                   b.datadate as prev_qdate format=yymmdd10.
+302            from work.fq_one as a left join work.fq_fiscal_one as b
+303              on a.gvkey=b.gvkey and not missing(a.fqidx) and b.fqidx=a.fqidx-1;
+NOTE: Table WORK.Q_PAIR created, with 1371930 rows and 23 columns.
+
+304            create table work.q_fx_candidates as
+305            select q.gvkey,q.qidx,q.datadate,q.curcdq,
+306                   x.datadate as fxdate,x.rate as usd_rate,x.n_rate as n_fx_rate,
+307                   x.rate_type as fx_type
+308            from work.fq_one as q left join work.fx_dly as x
+309              on upcase(strip(q.curcdq))=x.fromcur and x.datadate<=q.datadate
+310             and x.datadate>=q.datadate-5;
+NOTE: Table WORK.Q_FX_CANDIDATES created, with 1371930 rows and 8 columns.
+
+311            create table work.q_fx_date as
+312            select gvkey,qidx,max(fxdate) as fxdate format=yymmdd10.
+313            from work.q_fx_candidates group by gvkey,qidx;
+                                                           The SAS System
+
+NOTE: Table WORK.Q_FX_DATE created, with 1371930 rows and 3 columns.
+
+314            create table work.q_fx as
+315            select c.gvkey,c.qidx,c.datadate,c.curcdq,c.usd_rate,c.n_fx_rate,c.fx_type
+316            from work.q_fx_candidates as c inner join work.q_fx_date as d
+317              on c.gvkey=d.gvkey and c.qidx=d.qidx and c.fxdate=d.fxdate;
+NOTE: Table WORK.Q_FX created, with 1371930 rows and 7 columns.
+
+318        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.02 seconds
+      cpu time            3.23 seconds
+      
+
+319        proc sql;
+320            create table work.q_fx_one as
+321            select gvkey,qidx,count(*) as n_quote,max(n_fx_rate) as n_fx_rate,
+322                   max(usd_rate) as usd_rate,max(curcdq) as curcdq,max(fx_type) as fx_type
+323            from work.q_fx group by gvkey,qidx;
+NOTE: Table WORK.Q_FX_ONE created, with 1371930 rows and 7 columns.
+
+324        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.27 seconds
+      cpu time            0.29 seconds
+      
+
+325        proc sort data=work.q_pair; by gvkey qidx; run;
+
+NOTE: There were 1371930 observations read from the data set WORK.Q_PAIR.
+NOTE: The data set WORK.Q_PAIR has 1371930 observations and 23 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.33 seconds
+      cpu time            0.54 seconds
+      
+
+326        proc sort data=work.q_fx_one; by gvkey qidx; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+327        data work.fq_base;
+328            merge work.q_pair(in=a) work.q_fx_one(in=b);
+329            by gvkey qidx;
+330            if a;
+331            if upcase(strip(curcdq))='USD' then usd_factor=1;
+332            else if b and n_quote=1 and n_fx_rate=1 and usd_rate>0 then usd_factor=usd_rate;
+333            if not missing(mkvaltq) and not missing(usd_factor) then mve_usd=mkvaltq*usd_factor;
+334            if not missing(ibq) and not missing(mve_lag) and mve_lag>0 and
+335               upcase(strip(curcdq))=upcase(strip(curcd_lag)) then earnings=ibq/mve_lag;
+336            if not missing(mkvaltq) and not missing(prccq) and not missing(cshoq)
+337               and cshoq ne 0 then mve_audit=prccq*cshoq;
+338            if not missing(mkvaltq) and not missing(mve_audit) and mve_audit ne 0
+339               then mve_audit_ratio=mkvaltq/mve_audit;
+340            label mve_usd='Company market equity, USD millions at reported quarter-end'
+                                                           The SAS System
+
+341                  earnings='IBQ divided by prior-quarter company market equity';
+342        run;
+
+NOTE: There were 1371930 observations read from the data set WORK.Q_PAIR.
+NOTE: There were 1371930 observations read from the data set WORK.Q_FX_ONE.
+NOTE: The data set WORK.FQ_BASE has 1371930 observations and 32 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.51 seconds
+      cpu time            0.51 seconds
+      
+
+343        
+344        title "Quarterly company market-value audit and USD conversion coverage";
+345        proc means data=work.fq_base n nmiss min p1 p50 p99 max;
+346            var mkvaltq mve_audit mve_usd usd_factor earnings;
+347        run;
+
+NOTE: There were 1371930 observations read from the data set WORK.FQ_BASE.
+NOTE: The PROCEDURE MEANS printed page 22.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.37 seconds
+      cpu time            0.88 seconds
+      
+
+348        title;
+349        proc sql;
+350            select count(*) as quarterly_rows,
+351                   sum(not missing(mve_usd)) as usd_market_value_rows,
+352                   sum(not missing(mkvaltq) and missing(mve_usd)) as missing_fx_rows,
+353                   sum(not missing(mve_audit) and not missing(mkvaltq)) as mve_audit_rows
+354            from work.fq_base;
+355            select calyear,curcdq,count(*) as firm_quarters,
+356                   sum(not missing(mkvaltq)) as comp_mveq_observed,
+357                   sum(not missing(mve_usd)) as comp_mveq_usd_converted,
+358                   sum(not missing(mve_audit_ratio)) as priced_share_audit,
+359                   median(mve_audit_ratio) as median_comp_to_price_share_ratio
+360            from work.fq_base group by calyear,curcdq order by calyear,curcdq;
+361        quit;
+NOTE: The PROCEDURE SQL printed pages 23-25.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.45 seconds
+      cpu time            0.72 seconds
+      
+
+362        
+363        /* CRSP security links for each Compustat quarter. Validity is checked at the
+364           actual Compustat period end; ambiguous company links remain out. */
+365        proc sql;
+366            create table work.fq_link_candidates as
+367            select q.gvkey,q.qidx,q.fqidx,q.datadate,l.permno,l.prim_rank,l.type_rank
+368            from work.fq_one as q inner join work.ccm_links0 as l
+369              on q.gvkey=l.gvkey and q.datadate>=l.linkdt and q.datadate<=l.linkenddt
+370            inner join work.crsp_names0 as n
+371              on l.permno=n.permno and q.datadate>=n.namedt
+372             and q.datadate<=n.nameenddt and n.shrcd in (10,11);
+NOTE: Table WORK.FQ_LINK_CANDIDATES created, with 741629 rows and 7 columns.
+
+373            create table work.fq_link_best as
+                                                           The SAS System
+
+374            select gvkey,qidx,min(prim_rank*2+type_rank) as best_rank
+375            from work.fq_link_candidates group by gvkey,qidx;
+NOTE: Table WORK.FQ_LINK_BEST created, with 741629 rows and 3 columns.
+
+376            create table work.fq_link_counts as
+377            select c.gvkey,c.qidx,c.fqidx,c.datadate,b.best_rank,count(distinct c.permno) as n_permno,
+378                   max(c.permno) as permno
+379            from work.fq_link_candidates as c inner join work.fq_link_best as b
+380              on c.gvkey=b.gvkey and c.qidx=b.qidx
+381            where c.prim_rank*2+c.type_rank=b.best_rank
+382            group by c.gvkey,c.qidx,c.fqidx,c.datadate,b.best_rank;
+NOTE: Table WORK.FQ_LINK_COUNTS created, with 741629 rows and 7 columns.
+
+383            create table work.fq_link as
+384            select * from work.fq_link_counts where n_permno=1;
+NOTE: Table WORK.FQ_LINK created, with 741629 rows and 7 columns.
+
+385        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.35 seconds
+      cpu time            1.58 seconds
+      
+
+386        
+387        data work.msf_raw;
+388            set crsp.msf(keep=permno permco date ret prc shrout cfacshr
+389                where=(date >= &rawstart and date <= &rawend));
+SYMBOLGEN:  Macro variable RAWSTART resolves to '01JAN1975'd
+SYMBOLGEN:  Macro variable RAWEND resolves to '31DEC2012'd
+390            if not missing(permno) and not missing(date);
+391            qidx=year(date)*4+qtr(date);
+392            mkey=year(date)*12+month(date);
+393        run;
+
+NOTE: There were 3178153 observations read from the data set CRSP.MSF.
+      WHERE (date>='01JAN1975'D and date<='31DEC2012'D);
+NOTE: The data set WORK.MSF_RAW has 3178153 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.69 seconds
+      cpu time            0.69 seconds
+      
+
+394        /* Legacy CRSP.MSF does not store DLRET. Merge the unique monthly CRSP.MSEDELIST
+395           delisting return by normalized month and combine it with RET. */
+396        data work.mse_raw;
+397            set crsp.msedelist(keep=permno dlstdt dlret
+398                where=(dlstdt >= &rawstart and dlstdt <= &rawend));
+SYMBOLGEN:  Macro variable RAWSTART resolves to '01JAN1975'd
+SYMBOLGEN:  Macro variable RAWEND resolves to '31DEC2012'd
+399            date=dlstdt;
+400            if not missing(permno) and not missing(date);
+401            mkey=year(date)*12+month(date);
+402        run;
+
+NOTE: There were 20624 observations read from the data set CRSP.MSEDELIST.
+      WHERE (dlstdt>='01JAN1975'D and dlstdt<='31DEC2012'D);
+NOTE: The data set WORK.MSE_RAW has 20624 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+403        proc sql;
+404            create table work.mse_month0 as
+405            select permno,mkey,count(*) as n_mse_rows,
+406                   sum(not missing(dlret)) as n_dlret,max(dlret) as dlret
+407            from work.mse_raw group by permno,mkey;
+NOTE: Table WORK.MSE_MONTH0 created, with 20624 rows and 5 columns.
+
+408            create table work.mse_month as
+409            select permno,mkey,n_mse_rows,n_dlret,
+410                   case when n_dlret=1 then dlret else . end as dlret
+411            from work.mse_month0;
+NOTE: Table WORK.MSE_MONTH created, with 20624 rows and 5 columns.
+
+412            select count(*) as permno_months_with_delisting,
+413                   sum(n_dlret=1) as unique_monthly_dlret,
+414                   sum(n_dlret>1) as ambiguous_monthly_dlret
+415            from work.mse_month;
+416            create table work.msf_month_return0 as
+417            select m.*,d.dlret,d.n_mse_rows,d.n_dlret
+418            from work.msf_raw as m left join work.mse_month as d
+419              on m.permno=d.permno and m.mkey=d.mkey;
+NOTE: Table WORK.MSF_MONTH_RETURN0 created, with 3178153 rows and 12 columns.
+
+420        quit;
+NOTE: The PROCEDURE SQL printed page 26.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.91 seconds
+      cpu time            1.31 seconds
+      
+
+421        data work.msf_raw;
+422            set work.msf_month_return0;
+423            if not missing(ret) and not missing(dlret) then ret_use=(1+ret)*(1+dlret)-1;
+424            else if missing(ret) and not missing(dlret) then ret_use=dlret;
+425            else ret_use=ret;
+426        run;
+
+NOTE: There were 3178153 observations read from the data set WORK.MSF_MONTH_RETURN0.
+NOTE: The data set WORK.MSF_RAW has 3178153 observations and 13 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.41 seconds
+      cpu time            0.39 seconds
+      
+
+427        proc sql;
+428            create table work.msf_month_counts as
+429            select permno,date,count(*) as n_rows
+430            from work.msf_raw group by permno,date;
+NOTE: Table WORK.MSF_MONTH_COUNTS created, with 3178153 rows and 3 columns.
+
+431            create table work.msf_month_unique as
+432            select m.* from work.msf_raw as m inner join work.msf_month_counts as c
+433              on m.permno=c.permno and m.date=c.date where c.n_rows=1;
+NOTE: Table WORK.MSF_MONTH_UNIQUE created, with 3178153 rows and 13 columns.
+                                                           The SAS System
+
+
+434            create table work.crsp_mve_issue as
+435            select m.permno,m.permco,m.date,m.qidx,m.prc,m.shrout,
+436                   abs(m.prc)*m.shrout/1000 as mve_usd
+437            from work.msf_month_unique as m inner join work.crsp_names0 as n
+438              on m.permno=n.permno and m.date>=n.namedt and m.date<=n.nameenddt
+439            where n.shrcd in (10,11) and not missing(m.permco) and
+440                  not missing(m.prc) and m.prc ne 0 and m.shrout>0;
+NOTE: Table WORK.CRSP_MVE_ISSUE created, with 2474623 rows and 7 columns.
+
+441            create table work.crsp_mve_co as
+442            select permco,date,qidx,sum(mve_usd) as crsp_mve_usd,
+443                   count(distinct permno) as n_common_issues
+444            from work.crsp_mve_issue group by permco,date,qidx;
+NOTE: Table WORK.CRSP_MVE_CO created, with 2447700 rows and 5 columns.
+
+445        
+446            create table work.fq_permco_candidates as
+447            select q.gvkey,q.qidx,l.lpermco as permco,l.prim_rank,l.type_rank
+448            from work.fq_one as q inner join work.ccm_links0 as l
+449              on q.gvkey=l.gvkey and l.lpermco>0 and q.datadate>=l.linkdt and q.datadate<=l.linkenddt;
+NOTE: Table WORK.FQ_PERMCO_CANDIDATES created, with 899182 rows and 5 columns.
+
+450            create table work.fq_permco_best as
+451            select gvkey,qidx,min(prim_rank*2+type_rank) as best_rank
+452            from work.fq_permco_candidates group by gvkey,qidx;
+NOTE: Table WORK.FQ_PERMCO_BEST created, with 899182 rows and 3 columns.
+
+453            create table work.fq_permco_counts as
+454            select c.gvkey,c.qidx,b.best_rank,count(distinct c.permco) as n_permco,
+455                   max(c.permco) as permco
+456            from work.fq_permco_candidates as c inner join work.fq_permco_best as b
+457              on c.gvkey=b.gvkey and c.qidx=b.qidx
+458            where c.prim_rank*2+c.type_rank=b.best_rank
+459            group by c.gvkey,c.qidx,b.best_rank;
+NOTE: Table WORK.FQ_PERMCO_COUNTS created, with 899182 rows and 5 columns.
+
+460            create table work.fq_permco as
+461            select * from work.fq_permco_counts where n_permco=1;
+NOTE: Table WORK.FQ_PERMCO created, with 899182 rows and 5 columns.
+
+462            create table work.fq_crsp_mve_dates as
+463            select p.gvkey,p.qidx,max(m.date) as mve_date format=yymmdd10.
+464            from work.fq_permco as p inner join work.fq_one as q
+465              on p.gvkey=q.gvkey and p.qidx=q.qidx
+466            inner join work.crsp_mve_co as m
+467              on p.permco=m.permco and m.date<=q.datadate and m.date>=q.datadate-45
+468            group by p.gvkey,p.qidx;
+NOTE: Table WORK.FQ_CRSP_MVE_DATES created, with 735312 rows and 3 columns.
+
+469            create table work.fq_crsp_mve as
+470            select p.gvkey,p.qidx,p.permco,d.mve_date,m.crsp_mve_usd,m.n_common_issues
+471            from work.fq_permco as p inner join work.fq_crsp_mve_dates as d
+472              on p.gvkey=d.gvkey and p.qidx=d.qidx
+473            inner join work.crsp_mve_co as m
+474              on p.permco=m.permco and d.mve_date=m.date;
+NOTE: Table WORK.FQ_CRSP_MVE created, with 735312 rows and 6 columns.
+
+                                                           The SAS System
+
+475            create table work.fq_market0 as
+476            select a.*,c.permco as crsp_permco,c.mve_date as crsp_mve_date,
+477                   c.crsp_mve_usd,c.n_common_issues,
+478                   case when not missing(a.mve_usd) and a.mve_usd>0 then a.mve_usd
+479                        when not missing(c.crsp_mve_usd) and c.crsp_mve_usd>0 then c.crsp_mve_usd
+480                        else . end as mve_usd_final,
+481                   case when not missing(a.mve_usd) and a.mve_usd>0 then 'COMP'
+482                        when not missing(c.crsp_mve_usd) and c.crsp_mve_usd>0 then 'CRSP_PERMCO'
+483                        else 'MISSING' end as mve_source length=12
+484            from work.fq_base as a left join work.fq_crsp_mve as c
+485              on a.gvkey=c.gvkey and a.qidx=c.qidx;
+NOTE: Table WORK.FQ_MARKET0 created, with 1371930 rows and 38 columns.
+
+486            select calyear,mve_source,count(*) as firm_quarters,
+487                   sum(not missing(mve_usd_final)) as mve_usd_final_rows,
+488                   mean(n_common_issues) as mean_crsp_common_issues
+489            from work.fq_market0 group by calyear,mve_source order by calyear,mve_source;
+490            create table work.fq_market_fiscal0 as
+491            select * from work.fq_market0 where not missing(fqidx);
+NOTE: Table WORK.FQ_MARKET_FISCAL0 created, with 1371868 rows and 38 columns.
+
+492        quit;
+NOTE: The PROCEDURE SQL printed pages 27-28.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           13.31 seconds
+      cpu time            15.57 seconds
+      
+
+493        proc sort data=work.fq_market_fiscal0 out=work.fq_market_fiscal_sort;
+494            by gvkey fqidx datadate fdateq;
+495        run;
+
+NOTE: There were 1371868 observations read from the data set WORK.FQ_MARKET_FISCAL0.
+NOTE: The data set WORK.FQ_MARKET_FISCAL_SORT has 1371868 observations and 38 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.37 seconds
+      cpu time            0.70 seconds
+      
+
+496        data work.fq_market_fiscal;
+497            set work.fq_market_fiscal_sort;
+498            by gvkey fqidx;
+499            if last.fqidx;
+500        run;
+
+NOTE: There were 1371868 observations read from the data set WORK.FQ_MARKET_FISCAL_SORT.
+NOTE: The data set WORK.FQ_MARKET_FISCAL has 1371368 observations and 38 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.34 seconds
+      cpu time            0.35 seconds
+      
+
+501        proc sql;
+502            create table work.fq_market as
+503            select a.*,p.mve_usd_final as prev_mve_usd_final,
+504                   case when not missing(a.mve_lag) and a.mve_lag>0 and
+505                             upcase(strip(a.curcdq))=upcase(strip(a.curcd_lag)) and
+506                             not missing(a.ibq) then a.ibq/a.mve_lag
+                                                           The SAS System
+
+507                        when not missing(p.mve_usd_final) and p.mve_usd_final>0 and
+508                             not missing(a.ibq) and not missing(a.usd_factor) then
+509                             (a.ibq*a.usd_factor)/p.mve_usd_final
+510                        else . end as earnings_final
+511            from work.fq_market0 as a left join work.fq_market_fiscal as p
+512              on a.gvkey=p.gvkey and not missing(a.fqidx) and a.fqidx=p.fqidx+1;
+NOTE: Table WORK.FQ_MARKET created, with 1371930 rows and 40 columns.
+
+513        
+514            /* Common calendar-quarter BHR is retained for aligned peer correlations. */
+515            create table work.fq_msf as
+516            select l.gvkey,l.qidx,l.permno,m.date,m.ret_use as ret
+517            from work.fq_link as l inner join work.msf_raw as m
+518              on l.permno=m.permno and l.qidx=m.qidx;
+NOTE: Table WORK.FQ_MSF created, with 2220502 rows and 5 columns.
+
+519        
+520            /* Fiscal-quarter BHR uses the CRSP monthly observations ending in the
+521               Compustat DATADATE month and the preceding two months. */
+522            create table work.fq_msf_fiscal as
+523            select l.gvkey,l.qidx,l.fqidx,l.datadate,l.permno,m.date,m.mkey,m.ret_use as ret
+524            from work.fq_link as l inner join work.msf_raw as m
+525              on l.permno=m.permno
+526             and m.mkey between (year(l.datadate)*12+month(l.datadate)-2)
+527                            and (year(l.datadate)*12+month(l.datadate));
+NOTE: Table WORK.FQ_MSF_FISCAL created, with 2219123 rows and 8 columns.
+
+528        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           22.83 seconds
+      cpu time            23.28 seconds
+      
+
+529        proc sort data=work.fq_msf; by gvkey qidx date; run;
+
+NOTE: There were 2220502 observations read from the data set WORK.FQ_MSF.
+NOTE: The data set WORK.FQ_MSF has 2220502 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.19 seconds
+      cpu time            0.56 seconds
+      
+
+530        data work.q_bhr;
+531            set work.fq_msf;
+532            by gvkey qidx;
+533            retain grossret nmonth nret perm_hold nperm;
+534            if first.qidx then do;
+535                grossret=1; nmonth=0; nret=0; perm_hold=permno; nperm=0;
+536            end;
+537            nmonth+1;
+538            if permno ne perm_hold then nperm+1;
+539            if not missing(ret) and ret>-1 then do; grossret=grossret*(1+ret); nret+1; end;
+540            else nret=-1000;
+541            if last.qidx then do;
+542                bhr=.;
+543                if nmonth=3 and nret=3 and nperm=0 then bhr=grossret-1;
+544                output;
+545            end;
+                                                           The SAS System
+
+546            keep gvkey qidx permno bhr nmonth nret nperm;
+547        run;
+
+NOTE: There were 2220502 observations read from the data set WORK.FQ_MSF.
+NOTE: The data set WORK.Q_BHR has 741629 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.15 seconds
+      
+
+548        proc sort data=work.fq_msf_fiscal; by gvkey qidx date; run;
+
+NOTE: There were 2219123 observations read from the data set WORK.FQ_MSF_FISCAL.
+NOTE: The data set WORK.FQ_MSF_FISCAL has 2219123 observations and 8 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.65 seconds
+      
+
+549        data work.q_bhr_fiscal;
+550            set work.fq_msf_fiscal;
+551            by gvkey qidx;
+552            retain grossretf nmonthf nretf perm_holdf npermf;
+553            if first.qidx then do;
+554                grossretf=1; nmonthf=0; nretf=0; perm_holdf=permno; npermf=0;
+555            end;
+556            nmonthf+1;
+557            if permno ne perm_holdf then npermf+1;
+558            if not missing(ret) and ret>-1 then do;
+559                grossretf=grossretf*(1+ret); nretf+1;
+560            end;
+561            else nretf=-1000;
+562            if last.qidx then do;
+563                bhr_fiscal=.;
+564                if nmonthf=3 and nretf=3 and npermf=0 then bhr_fiscal=grossretf-1;
+565                output;
+566            end;
+567            keep gvkey qidx fqidx datadate permno bhr_fiscal nmonthf nretf npermf;
+568        run;
+
+NOTE: There were 2219123 observations read from the data set WORK.FQ_MSF_FISCAL.
+NOTE: The data set WORK.Q_BHR_FISCAL has 741629 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.15 seconds
+      cpu time            0.16 seconds
+      
+
+569        proc sql;
+570            create table work.fq_final0 as
+571            select a.*,r.bhr,r.nmonth,r.nret,r.nperm,
+572                   f.bhr_fiscal,f.nmonthf,f.nretf,f.npermf
+573            from work.fq_market as a left join work.q_bhr as r
+574              on a.gvkey=r.gvkey and a.qidx=r.qidx
+575            left join work.q_bhr_fiscal as f
+576              on a.gvkey=f.gvkey and a.qidx=f.qidx;
+NOTE: Table WORK.FQ_FINAL0 created, with 1371930 rows and 48 columns.
+
+577        quit;
+                                                           The SAS System
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.45 seconds
+      cpu time            1.97 seconds
+      
+
+578        data work.fq_final;
+579            set work.fq_final0;
+580            earnings=earnings_final;
+581            drop earnings_final;
+582        run;
+
+NOTE: There were 1371930 observations read from the data set WORK.FQ_FINAL0.
+NOTE: The data set WORK.FQ_FINAL has 1371930 observations and 47 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.40 seconds
+      cpu time            0.40 seconds
+      
+
+583        proc sql;
+584            select count(*) as quarterly_firm_observations,
+585                   sum(not missing(earnings)) as valid_earnings,
+586                   sum(not missing(bhr)) as complete_three_month_returns,
+587                   sum(not missing(bhr_fiscal)) as complete_fiscal_month_returns,
+588                   sum(noncalendar_q=1) as noncalendar_fiscal_quarter_rows,
+589                   sum(noncalendar_q=1 and not missing(bhr) and not missing(bhr_fiscal)
+590                       and abs(bhr-bhr_fiscal)>1e-12) as offcal_changed_ret,
+591                   sum(not missing(earnings) and not missing(bhr)) as valid_regression_rows
+592            from work.fq_final;
+593        quit;
+NOTE: The PROCEDURE SQL printed page 29.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.28 seconds
+      cpu time            0.28 seconds
+      
+
+594        
+595        /* Annual Compustat inputs and aligned prior-year assets. */
+596        data work.fa_raw;
+597            set comp.funda(keep=gvkey datadate fdate fyear indfmt consol popsrc datafmt curcd sich
+598                at ceq dltt dlc oibdp xint txt dv mkvalt csho prcc_f
+599                where=(datadate >= &rawstart and datadate <= &rawend and
+SYMBOLGEN:  Macro variable RAWSTART resolves to '01JAN1975'd
+SYMBOLGEN:  Macro variable RAWEND resolves to '31DEC2012'd
+600                       indfmt='INDL' and consol='C' and popsrc='D' and datafmt='STD'));
+601            if not missing(gvkey) and not missing(datadate);
+602            calyear=year(datadate);
+603            sic2=floor(sich/100);
+604        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      156329 at 603:10   156329 at 603:20   
+NOTE: There were 378382 observations read from the data set COMP.FUNDA.
+      WHERE (datadate>='01JAN1975'D and datadate<='31DEC2012'D) and (indfmt='INDL') and (consol='C') and (popsrc='D') and 
+      (datafmt='STD');
+NOTE: The data set WORK.FA_RAW has 378382 observations and 23 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.57 seconds
+                                                           The SAS System
+
+      cpu time            0.57 seconds
+      
+
+605        proc sql;
+606            create table work.fa_dups as
+607            select gvkey,fyear,count(*) as n_rows
+608            from work.fa_raw group by gvkey,fyear having count(*)>1;
+NOTE: Table WORK.FA_DUPS created, with 19 rows and 3 columns.
+
+609            select count(*) as annual_duplicate_keys,
+610                   sum(n_rows) as rows_in_annual_duplicate_keys from work.fa_dups;
+611        quit;
+NOTE: The PROCEDURE SQL printed page 30.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.10 seconds
+      
+
+612        proc sort data=work.fa_raw out=work.fa_sort;
+613            by gvkey fyear datadate fdate;
+614        run;
+
+NOTE: There were 378382 observations read from the data set WORK.FA_RAW.
+NOTE: The data set WORK.FA_SORT has 378382 observations and 23 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.17 seconds
+      
+
+615        data work.fa_one;
+616            set work.fa_sort;
+617            by gvkey fyear;
+618            if last.fyear;
+619        run;
+
+NOTE: There were 378382 observations read from the data set WORK.FA_SORT.
+NOTE: The data set WORK.FA_ONE has 378359 observations and 23 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+620        proc sql;
+621            create table work.fa_pair as
+622            select a.*,p.at as at_lag,p.curcd as curcd_lag
+623            from work.fa_one as a left join work.fa_one as p
+624              on a.gvkey=p.gvkey and a.fyear=p.fyear+1;
+NOTE: Table WORK.FA_PAIR created, with 378359 rows and 25 columns.
+
+625        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.27 seconds
+      cpu time            0.39 seconds
+      
+
+626        data work.fa_roa;
+627            set work.fa_pair;
+628            avgat=.; roa=.; lev=.; tobin=.; fcf=.;
+                                                           The SAS System
+
+629            if not missing(at) and not missing(at_lag) and at>0 and at_lag>0 and
+630               upcase(strip(curcd))=upcase(strip(curcd_lag)) then do;
+631                avgat=(at+at_lag)/2;
+632                if not missing(oibdp) then roa=oibdp/avgat;
+633            end;
+634            if not missing(dltt) and not missing(dlc) and not missing(at) and at>0
+635               then lev=(dltt+dlc)/at;
+636            if not missing(mkvalt) and not missing(at) and not missing(ceq) and at>0
+637               then tobin=(mkvalt+at-ceq)/at;
+638            if not missing(prcc_f) and not missing(csho) and csho ne 0 then
+639               annual_mve_audit=prcc_f*csho;
+640            if not missing(mkvalt) and not missing(annual_mve_audit) and annual_mve_audit ne 0
+641               then annual_mve_audit_ratio=mkvalt/annual_mve_audit;
+642            if not missing(oibdp) and not missing(xint) and not missing(txt) and
+643               not missing(dv) and not missing(at) and at>0 then fcf=(oibdp-xint-txt-dv)/at;
+644        run;
+
+NOTE: There were 378359 observations read from the data set WORK.FA_PAIR.
+NOTE: The data set WORK.FA_ROA has 378359 observations and 32 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.12 seconds
+      
+
+645        proc sort data=work.fa_roa out=work.fa_cal_sort;
+646            by gvkey calyear datadate fdate;
+647        run;
+
+NOTE: There were 378359 observations read from the data set WORK.FA_ROA.
+NOTE: The data set WORK.FA_CAL_SORT has 378359 observations and 32 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.19 seconds
+      
+
+648        data work.fa_cal;
+649            set work.fa_cal_sort;
+650            by gvkey calyear;
+651            if last.calyear;
+652        run;
+
+NOTE: There were 378359 observations read from the data set WORK.FA_CAL_SORT.
+NOTE: The data set WORK.FA_CAL has 377321 observations and 32 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.10 seconds
+      
+
+653        
+654        /* FUNDQ in this local Compustat vintage has no SIC column. Carry the latest
+655           nonmissing annual historical SIC (FUNDA.SICH) to each quarterly record. */
+656        data work.fa_sic;
+657            set work.fa_cal(keep=gvkey datadate sic2);
+658            period_date=datadate;
+659            annual_sic2=sic2;
+660            keep gvkey period_date annual_sic2;
+661        run;
+
+                                                           The SAS System
+
+NOTE: There were 377321 observations read from the data set WORK.FA_CAL.
+NOTE: The data set WORK.FA_SIC has 377321 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+662        data work.q_sic_stack;
+663            set work.fa_sic(in=is_annual) work.fq_final(in=is_quarter);
+664            if is_annual then rowtype=0;
+665            else do;
+666                rowtype=1;
+667                period_date=datadate;
+668            end;
+669        run;
+
+NOTE: There were 377321 observations read from the data set WORK.FA_SIC.
+NOTE: There were 1371930 observations read from the data set WORK.FQ_FINAL.
+NOTE: The data set WORK.Q_SIC_STACK has 1749251 observations and 50 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.48 seconds
+      cpu time            0.48 seconds
+      
+
+670        proc sort data=work.q_sic_stack;
+671            by gvkey period_date rowtype;
+672        run;
+
+NOTE: There were 1749251 observations read from the data set WORK.Q_SIC_STACK.
+NOTE: The data set WORK.Q_SIC_STACK has 1749251 observations and 50 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.78 seconds
+      cpu time            1.14 seconds
+      
+
+673        data work.fq_final_sic;
+674            set work.q_sic_stack;
+675            by gvkey period_date rowtype;
+676            retain active_sic2;
+677            if first.gvkey then active_sic2=.;
+678            if rowtype=0 then do;
+679                if not missing(annual_sic2) then active_sic2=annual_sic2;
+680            end;
+681            else if rowtype=1 then do;
+682                sic2=active_sic2;
+683                output;
+684            end;
+685            drop rowtype annual_sic2 active_sic2 period_date;
+686        run;
+
+NOTE: There were 1749251 observations read from the data set WORK.Q_SIC_STACK.
+NOTE: The data set WORK.FQ_FINAL_SIC has 1371930 observations and 48 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.46 seconds
+      cpu time            0.47 seconds
+      
+
+687        data work.fq_final;
+                                                           The SAS System
+
+688            set work.fq_final_sic;
+689        run;
+
+NOTE: There were 1371930 observations read from the data set WORK.FQ_FINAL_SIC.
+NOTE: The data set WORK.FQ_FINAL has 1371930 observations and 48 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.53 seconds
+      cpu time            0.52 seconds
+      
+
+690        title "Annual company market-value currency and price-share audit";
+691        proc sql;
+692            select calyear,curcd,count(*) as annual_firm_rows,
+693                   sum(not missing(mkvalt)) as comp_mve_observed,
+694                   sum(not missing(annual_mve_audit_ratio)) as priced_share_audit,
+695                   median(annual_mve_audit_ratio) as median_comp_to_price_share_ratio
+696            from work.fa_cal group by calyear,curcd order by calyear,curcd;
+697        quit;
+NOTE: The PROCEDURE SQL printed pages 31-32.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.17 seconds
+      
+
+698        title;
+699        
+700        /* Annual Tobin-Q fallback uses the same date-valid CCM PERMCO aggregation
+701           when Compustat MKVALT is absent. Reporting-currency AT/CEQ are converted
+702           with a direct positive daily quote at the annual report date. */
+703        proc sql;
+704            create table work.fa_fx_candidates as
+705            select a.gvkey,a.calyear,a.datadate,a.curcd,x.datadate as fxdate,
+706                   x.rate,x.n_rate,x.rate_type
+707            from work.fa_cal as a left join work.fx_dly as x
+708              on upcase(strip(a.curcd))=x.fromcur and x.datadate<=a.datadate
+709             and x.datadate>=a.datadate-5;
+NOTE: Table WORK.FA_FX_CANDIDATES created, with 377321 rows and 8 columns.
+
+710            create table work.fa_fx_dates as
+711            select gvkey,calyear,max(fxdate) as fxdate format=yymmdd10.
+712            from work.fa_fx_candidates group by gvkey,calyear;
+NOTE: Table WORK.FA_FX_DATES created, with 377321 rows and 3 columns.
+
+713            create table work.fa_fx as
+714            select c.gvkey,c.calyear,c.curcd,c.datadate,c.rate,c.n_rate,c.rate_type
+715            from work.fa_fx_candidates as c inner join work.fa_fx_dates as d
+716              on c.gvkey=d.gvkey and c.calyear=d.calyear and c.fxdate=d.fxdate;
+NOTE: Table WORK.FA_FX created, with 377321 rows and 7 columns.
+
+717            create table work.fa_fx_one as
+718            select gvkey,calyear,count(*) as n_quote,max(n_rate) as n_fx_rate,
+719                   max(rate) as usd_rate,max(curcd) as curcd,max(rate_type) as fx_type
+720            from work.fa_fx group by gvkey,calyear;
+NOTE: Table WORK.FA_FX_ONE created, with 377321 rows and 7 columns.
+
+721        
+722            create table work.fa_permco_candidates as
+723            select a.gvkey,a.calyear,l.lpermco as permco,l.prim_rank,l.type_rank
+                                                           The SAS System
+
+724            from work.fa_cal as a inner join work.ccm_links0 as l
+725              on a.gvkey=l.gvkey and l.lpermco>0 and
+726                 a.datadate>=l.linkdt and a.datadate<=l.linkenddt;
+NOTE: Table WORK.FA_PERMCO_CANDIDATES created, with 234325 rows and 5 columns.
+
+727            create table work.fa_permco_best as
+728            select gvkey,calyear,min(prim_rank*2+type_rank) as best_rank
+729            from work.fa_permco_candidates group by gvkey,calyear;
+NOTE: Table WORK.FA_PERMCO_BEST created, with 234325 rows and 3 columns.
+
+730            create table work.fa_permco_counts as
+731            select c.gvkey,c.calyear,b.best_rank,count(distinct c.permco) as n_permco,
+732                   max(c.permco) as permco
+733            from work.fa_permco_candidates as c inner join work.fa_permco_best as b
+734              on c.gvkey=b.gvkey and c.calyear=b.calyear
+735            where c.prim_rank*2+c.type_rank=b.best_rank
+736            group by c.gvkey,c.calyear,b.best_rank;
+NOTE: Table WORK.FA_PERMCO_COUNTS created, with 234325 rows and 5 columns.
+
+737            create table work.fa_permco as
+738            select * from work.fa_permco_counts where n_permco=1;
+NOTE: Table WORK.FA_PERMCO created, with 234325 rows and 5 columns.
+
+739            create table work.fa_mve_dates as
+740            select p.gvkey,p.calyear,max(m.date) as mve_date format=yymmdd10.
+741            from work.fa_permco as p inner join work.fa_cal as a
+742              on p.gvkey=a.gvkey and p.calyear=a.calyear
+743            inner join work.crsp_mve_co as m
+744              on p.permco=m.permco and m.date<=a.datadate and m.date>=a.datadate-45
+745            group by p.gvkey,p.calyear;
+NOTE: Table WORK.FA_MVE_DATES created, with 191805 rows and 3 columns.
+
+746            create table work.fa_crsp_mve as
+747            select p.gvkey,p.calyear,p.permco,d.mve_date,m.crsp_mve_usd,m.n_common_issues
+748            from work.fa_permco as p inner join work.fa_mve_dates as d
+749              on p.gvkey=d.gvkey and p.calyear=d.calyear
+750            inner join work.crsp_mve_co as m
+751              on p.permco=m.permco and d.mve_date=m.date;
+NOTE: Table WORK.FA_CRSP_MVE created, with 191805 rows and 6 columns.
+
+752            create table work.fa_final0 as
+753            select a.*,f.n_quote,f.n_fx_rate,f.usd_rate,f.fx_type,
+754                   c.crsp_mve_usd,c.n_common_issues,c.mve_date as crsp_mve_date,
+755                   case when upcase(strip(a.curcd))='USD' then 1
+756                        when f.n_quote=1 and f.n_fx_rate=1 and f.usd_rate>0 then f.usd_rate
+757                        else . end as annual_usd_factor
+758            from work.fa_cal as a
+759            left join work.fa_fx_one as f on a.gvkey=f.gvkey and a.calyear=f.calyear
+760            left join work.fa_crsp_mve as c on a.gvkey=c.gvkey and a.calyear=c.calyear;
+NOTE: Table WORK.FA_FINAL0 created, with 377321 rows and 40 columns.
+
+761        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.18 seconds
+      cpu time            2.64 seconds
+      
+
+762        data work.fa_final;
+                                                           The SAS System
+
+763            set work.fa_final0;
+764            annual_mve_usd=.;
+765            if not missing(mkvalt) and not missing(annual_usd_factor) then
+766               annual_mve_usd=mkvalt*annual_usd_factor;
+767            if missing(tobin) and not missing(crsp_mve_usd) and crsp_mve_usd>0 and
+768               not missing(at) and at>0 and not missing(ceq) and
+769               not missing(annual_usd_factor) then
+770               tobin=(crsp_mve_usd+(at-ceq)*annual_usd_factor)/(at*annual_usd_factor);
+771            if not missing(annual_mve_usd) then annual_mve_source='COMP';
+772            else if not missing(crsp_mve_usd) then annual_mve_source='CRSP_PERMCO';
+773            else annual_mve_source='MISSING';
+774            label annual_mve_usd='Fiscal-year company market equity, USD millions';
+775        run;
+
+NOTE: There were 377321 observations read from the data set WORK.FA_FINAL0.
+NOTE: The data set WORK.FA_FINAL has 377321 observations and 42 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.10 seconds
+      
+
+776        title "Annual Compustat and CRSP PERMCO market-value coverage by calendar year";
+777        proc sql;
+778            select calyear,annual_mve_source,count(*) as annual_firm_rows,
+779                   sum(not missing(annual_mve_usd)) as market_value_available,
+780                   sum(not missing(tobin)) as tobin_q_available,
+781                   mean(n_common_issues) as mean_crsp_common_issues
+782            from work.fa_final group by calyear,annual_mve_source order by calyear,annual_mve_source;
+783        quit;
+NOTE: The PROCEDURE SQL printed pages 33-34.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.16 seconds
+      
+
+784        title;
+785        
+786        /* Deal-specific accounting records at the calendar-quarter and prior fiscal
+787           year used by the Table 3 control definitions. */
+788        proc sql;
+789            create table work.party_wide as
+790            select dealid,
+791              max(case when role='A' then gvkey end) as acqgvkey length=6,
+792              max(case when role='A' then permno end) as acqpermno,
+793              max(case when role='A' then permco end) as acqpermco,
+794              max(case when role='T' then gvkey end) as trggvkey length=6,
+795              max(case when role='T' then permno end) as trgpermno,
+796              max(case when role='T' then permco end) as trgpermco,
+797              max(case when role='A' then cusip6 end) as acqcusip length=6,
+798              max(case when role='T' then cusip6 end) as trgcusip length=6
+799            from work.party group by dealid;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+                                                           The SAS System
+
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.PARTY_WIDE created, with 5506 rows and 9 columns.
+
+800        
+801            create table work.event_pre as
+802            select e.*,p.acqgvkey,p.acqpermno,p.acqpermco,p.trggvkey,p.trgpermno,p.trgpermco,
+803                   p.acqcusip,p.trgcusip,
+804                   qa.mve_usd_final as acq_mve_usd,qa.mkvaltq as acq_mve_local,
+805                   qa.curcdq as acq_curcdq,qa.sic2 as acq_sic2,
+806                   qt.mve_usd_final as trg_mve_usd,qt.mkvaltq as trg_mve_local,
+807                   qt.curcdq as trg_curcdq,qt.sic2 as trg_sic2,
+808                   aa.lev as acq_lev,aa.tobin as acq_tobin,aa.roa as acq_roa,aa.fcf as acq_fcf,
+809                   aa.sic2 as acq_sic2a,aa.calyear as acq_calyear,
+810                   ta.lev as trg_lev,ta.tobin as trg_tobin,ta.roa as trg_roa,
+811                   ta.sic2 as trg_sic2a,ta.calyear as trg_calyear,
+812                   (year(e.dateann)*4+qtr(e.dateann)-1) as anchorq,
+813                   year(e.dateann)-1 as baseyear
+814            from work.events1 as e
+815            left join work.party_wide as p on e.dealid=p.dealid
+816            left join work.fq_final as qa
+817              on p.acqgvkey=qa.gvkey and qa.qidx=year(e.dateann)*4+qtr(e.dateann)-1
+818            left join work.fq_final as qt
+819              on p.trggvkey=qt.gvkey and qt.qidx=year(e.dateann)*4+qtr(e.dateann)-1
+820            left join work.fa_final as aa
+821              on p.acqgvkey=aa.gvkey and aa.calyear=year(e.dateann)-1
+822            left join work.fa_final as ta
+823              on p.trggvkey=ta.gvkey and ta.calyear=year(e.dateann)-1;
+NOTE: Table WORK.EVENT_PRE created, with 5983 rows and 41 columns.
+
+824        
+825            create table work.events2 as
+826            select *,
+827              case when acq_mve_usd>0 then log(acq_mve_usd) else . end as acq_size,
+828              case when trg_mve_usd>0 then log(trg_mve_usd) else . end as trg_size,
+829              case when not missing(acq_mve_usd) and acq_mve_usd>0
+830                   then dealvalue_m/acq_mve_usd else . end as rel_size,
+831              case when (not missing(pct_cash) and (pct_cash<0 or pct_cash>100)) or
+832                             (not missing(pct_stk) and (pct_stk<0 or pct_stk>100)) or
+833                             (not missing(pct_cash) and not missing(pct_stk) and
+834                              pct_cash+pct_stk>100) then .
+835                   when not missing(pct_cash) and pct_cash>=90 then 1
+836                   when not missing(pct_cash) and pct_cash<90 then 0
+837                   when missing(pct_cash) and not missing(pct_stk) and pct_stk>10 then 0
+838                   else . end as all_cash,
+839              case when (not missing(pct_cash) and (pct_cash<0 or pct_cash>100)) or
+840                             (not missing(pct_stk) and (pct_stk<0 or pct_stk>100)) or
+841                             (not missing(pct_cash) and not missing(pct_stk) and
+842                              pct_cash+pct_stk>100) then .
+843                   when not missing(pct_stk) and pct_stk>=90 then 1
+844                   when not missing(pct_stk) and pct_stk<90 then 0
+                                                           The SAS System
+
+845                   when missing(pct_stk) and not missing(pct_cash) and pct_cash>10 then 0
+846                   else . end as all_stock,
+847              case when upcase(strip(tender)) in ('Y','YES') then 1
+848                   when upcase(strip(tender)) in ('N','NO') then 0 else . end as tender_d,
+849              case when attitude_u='HOSTILE' then 1
+850                   when attitude_u in ('FRIENDLY','NEUTRAL','UNSOLICITED','UNSOLIC.','NOT APPLICABLE','NOT APPL.','N/A') then 0
+851                   else . end as hostile,
+852              case when not missing(acq_sic2a) and not missing(trg_sic2a)
+853                   then (acq_sic2a ne trg_sic2a) else . end as diffind
+854            from work.event_pre
+855            where acq_mve_usd>0 and dealvalue_m/acq_mve_usd>=0.01;
+NOTE: Table WORK.EVENTS2 created, with 4697 rows and 49 columns.
+
+856        
+857            select count(*) as rows_after_value_screen,
+858                   sum(missing(acq_mve_usd) or acq_mve_usd<=0) as missing_or_nonpositive_acq_mve,
+859                   sum(acq_mve_usd>0 and dealvalue_m/acq_mve_usd<0.01)
+860                       as below_one_percent_relative_size,
+861                   sum(acq_mve_usd>0 and dealvalue_m/acq_mve_usd>=0.01)
+862                       as rows_after_relative_size_screen
+863            from work.event_pre;
+864            select count(*) as public_completed_us_deals,
+865                   sum(rankval>=1) as deal_value_at_least_1m,
+866                   sum(not missing(acq_mve_usd)) as with_acquirer_prequarter_mve,
+867                   sum(rel_size>=0.01) as after_relative_value_screen,
+868                   sum(not missing(acqgvkey)) as acquirer_gvkey_mapped,
+869                   sum(not missing(trggvkey)) as target_gvkey_mapped
+870            from work.events2;
+871        quit;
+NOTE: The PROCEDURE SQL printed pages 35-36.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.59 seconds
+      cpu time            1.05 seconds
+      
+
+872        
+873        /* The median dummy follows the research-design text (below median=1); the
+874           appendix gives the opposite direction. Ties are coded zero. */
+875        proc univariate data=work.events2 noprint;
+876            var acq_tobin;
+877            output out=work.q_median median=acq_q_median;
+878        run;
+
+NOTE: The data set WORK.Q_MEDIAN has 1 observations and 1 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+879        data work.events3;
+880            if _n_=1 then set work.q_median;
+881            set work.events2;
+882            if not missing(acq_tobin) then acq_tobin_dum=(acq_tobin<acq_q_median);
+883            else acq_tobin_dum=.;
+884            if not missing(acq_tobin_dum) and not missing(acq_fcf) then
+885               acq_q_fcf=acq_tobin_dum*acq_fcf;
+886            else acq_q_fcf=.;
+887            label acq_tobin_dum='1 if acquirer Tobin Q is below median'
+                                                           The SAS System
+
+888                  acq_q_fcf='Acquirer Tobin Q dummy times free cash flow'
+889                  all_cash='At least 90 percent cash consideration'
+890                  all_stock='At least 90 percent stock consideration'
+891                  rel_size='SDC RANKVAL / prior-quarter acquirer market value';
+892        run;
+
+NOTE: There were 1 observations read from the data set WORK.Q_MEDIAN.
+NOTE: There were 4697 observations read from the data set WORK.EVENTS2.
+NOTE: The data set WORK.EVENTS3 has 4697 observations and 52 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+893        
+894        /* Inspect transaction percentage units, primary event screens, and accounting
+895           coverage before interpreting any fitted outcomes. */
+896        title "Material U.S. public acquisitions and source event-control coding";
+897        proc means data=work.events3 n nmiss mean p1 p25 median p75 p99 max;
+898            var rankval dealvalue_m acq_mve_usd trg_mve_usd rel_size pct_cash pct_stk;
+899        run;
+
+NOTE: There were 4697 observations read from the data set WORK.EVENTS3.
+NOTE: The PROCEDURE MEANS printed page 37.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+900        proc freq data=work.events3;
+901            tables form_code all_cash all_stock all_cash*all_stock tender_d hostile diffind / missing;
+902        run;
+
+NOTE: There were 4697 observations read from the data set WORK.EVENTS3.
+NOTE: The PROCEDURE FREQ printed pages 38-39.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+903        title;
+904        proc sql;
+905            select count(*) as material_deals,
+906                   sum(not missing(acq_lev)) as acquirer_leverage,
+907                   sum(not missing(acq_tobin)) as acquirer_q,
+908                   sum(not missing(acq_roa)) as acquirer_roa,
+909                   sum(not missing(acq_fcf)) as acquirer_fcf,
+910                   sum(not missing(trg_lev)) as target_leverage,
+911                   sum(not missing(trg_tobin)) as target_q,
+912                   sum(not missing(trg_roa)) as target_roa,
+913                   sum(not missing(all_cash)) as cash_classified,
+914                   sum(not missing(all_stock)) as stock_classified,
+915                   sum(not missing(tender_d)) as tender_classified,
+916                   sum(not missing(hostile)) as attitude_classified
+917            from work.events3;
+918            select count(*) as payment_rows,
+919                   sum(not missing(all_cash)) as cash_dummy_classified,
+920                   sum(not missing(all_stock)) as stock_dummy_classified,
+                                                           The SAS System
+
+921                   sum((not missing(pct_cash) and (pct_cash<0 or pct_cash>100)) or
+922                       (not missing(pct_stk) and (pct_stk<0 or pct_stk>100)) or
+923                       (not missing(pct_cash) and not missing(pct_stk) and
+924                        pct_cash+pct_stk>100)) as inconsistent_percentage_rows,
+925                   sum(missing(pct_cash) and not missing(pct_stk) and
+926                       pct_stk>10 and pct_stk<=100) as cash_dummy_zero_from_stock_share,
+927                   sum(missing(pct_stk) and not missing(pct_cash) and
+928                       pct_cash>10 and pct_cash<=100) as stock_dummy_zero_from_cash_share
+929            from work.events3;
+930        quit;
+NOTE: The PROCEDURE SQL printed pages 40-41.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+931        
+932        /* CRSP market sessions assign event day zero to the first actual session on or
+933           after announcement. This retains the specified trading-day estimation span. */
+934        data work.dsi_raw;
+935            set crsp.dsi(keep=date vwretd where=(date >= &rawstart and date <= &rawend));
+SYMBOLGEN:  Macro variable RAWSTART resolves to '01JAN1975'd
+SYMBOLGEN:  Macro variable RAWEND resolves to '31DEC2012'd
+936        run;
+
+NOTE: There were 9588 observations read from the data set CRSP.DSI.
+      WHERE (date>='01JAN1975'D and date<='31DEC2012'D);
+NOTE: The data set WORK.DSI_RAW has 9588 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+937        proc sort data=work.dsi_raw out=work.dsi_sort; by date; run;
+
+NOTE: There were 9588 observations read from the data set WORK.DSI_RAW.
+NOTE: The data set WORK.DSI_SORT has 9588 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+938        data work.dsi_sessions;
+939            set work.dsi_sort;
+940            session_num+1;
+941        run;
+
+NOTE: There were 9588 observations read from the data set WORK.DSI_SORT.
+NOTE: The data set WORK.DSI_SESSIONS has 9588 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+942        
+943        data work.event_parties;
+944            set work.party(keep=dealid role dateann permno gvkey cusip6);
+945        run;
+                                                           The SAS System
+
+
+NOTE: There were 9303 observations read from the data set WORK.PARTY.
+NOTE: The data set WORK.EVENT_PARTIES has 9303 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+946        data work.event_session_dates;
+947            set work.event_parties;
+948            do candidate_date=dateann to dateann+7;
+949                output;
+950            end;
+951        run;
+
+NOTE: There were 9303 observations read from the data set WORK.EVENT_PARTIES.
+NOTE: The data set WORK.EVENT_SESSION_DATES has 74424 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+952        proc sql;
+953            create table work.event_session0 as
+954            select p.dealid,p.role,p.dateann,p.permno,p.gvkey,p.cusip6,
+955                   min(s.session_num) as session0
+956            from work.event_session_dates as p inner join work.dsi_sessions as s
+957              on p.candidate_date=s.date
+958            group by p.dealid,p.role,p.dateann,p.permno,p.gvkey,p.cusip6;
+NOTE: Table WORK.EVENT_SESSION0 created, with 9303 rows and 7 columns.
+
+959        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+960        
+961        data work.dsf_raw;
+962            set crsp.dsf(keep=permno date ret
+963                where=(date >= &rawstart and date <= &rawend));
+SYMBOLGEN:  Macro variable RAWSTART resolves to '01JAN1975'd
+SYMBOLGEN:  Macro variable RAWEND resolves to '31DEC2012'd
+964            if not missing(permno) and not missing(date);
+965        run;
+
+NOTE: There were 65962565 observations read from the data set CRSP.DSF.
+      WHERE (date>='01JAN1975'D and date<='31DEC2012'D);
+NOTE: The data set WORK.DSF_RAW has 65962565 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           6.17 seconds
+      cpu time            5.97 seconds
+      
+
+966        proc sql;
+967            create table work.dsf_dup as
+968            select permno,date,count(*) as n_rows from work.dsf_raw
+969            group by permno,date having count(*)>1;
+                                                           The SAS System
+
+NOTE: Table WORK.DSF_DUP created, with 0 rows and 3 columns.
+
+970            select count(*) as duplicate_daily_security_dates,
+971                   sum(n_rows) as rows_in_duplicate_daily_dates from work.dsf_dup;
+972            create table work.dsf_key_counts as
+973            select permno,date,count(*) as n_rows from work.dsf_raw group by permno,date;
+NOTE: Table WORK.DSF_KEY_COUNTS created, with 65962565 rows and 3 columns.
+
+974            create table work.dsf_unique as
+975            select d.* from work.dsf_raw as d inner join work.dsf_key_counts as k
+976              on d.permno=k.permno and d.date=k.date where k.n_rows=1;
+NOTE: Table WORK.DSF_UNIQUE created, with 65962565 rows and 3 columns.
+
+977        quit;
+NOTE: The PROCEDURE SQL printed page 42.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           36.59 seconds
+      cpu time            1:03.25
+      
+
+978        data work.event_session_window;
+979            set work.event_session0;
+980            if not missing(session0) then do eventday=-205 to 3;
+981                session_num=session0+eventday;
+982                output;
+983            end;
+984        run;
+
+NOTE: There were 9303 observations read from the data set WORK.EVENT_SESSION0.
+NOTE: The data set WORK.EVENT_SESSION_WINDOW has 1944327 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.11 seconds
+      
+
+985        proc sql;
+986            create table work.event_daily0 as
+987            select p.dealid,p.role,p.permno,p.gvkey,p.session0,s.date,s.session_num,
+988                   s.vwretd,d.ret,p.eventday
+989            from work.event_session_window as p inner join work.dsi_sessions as s
+990              on s.session_num=p.session_num
+991            inner join work.dsf_unique as d on d.permno=p.permno and d.date=s.date;
+NOTE: Table WORK.EVENT_DAILY0 created, with 1918253 rows and 10 columns.
+
+992        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.44 seconds
+      cpu time            2.81 seconds
+      
+
+993        
+994        proc sql;
+995            create table work.mm_coverage as
+996            select dealid,role,count(*) as n_window,
+997                   sum(not missing(ret) and not missing(vwretd)) as n_complete,
+998                   std(vwretd) as sd_market
+999            from work.event_daily0 where eventday>=-205 and eventday<=-6
+1000           group by dealid,role;
+                                                           The SAS System
+
+NOTE: Table WORK.MM_COVERAGE created, with 9300 rows and 5 columns.
+
+1001           create table work.mm_est as
+1002           select * from work.event_daily0
+1003           where eventday>=-205 and eventday<=-6 and not missing(ret) and not missing(vwretd);
+NOTE: Table WORK.MM_EST created, with 1832162 rows and 10 columns.
+
+1004       quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.89 seconds
+      cpu time            1.17 seconds
+      
+
+1005       proc sort data=work.mm_est; by dealid role eventday; run;
+
+NOTE: There were 1832162 observations read from the data set WORK.MM_EST.
+NOTE: The data set WORK.MM_EST has 1832162 observations and 10 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.21 seconds
+      cpu time            0.53 seconds
+      
+
+1006       ods listing close;
+1007       ods output ANOVA=work.mm_anova;
+1008       proc reg data=work.mm_est outest=work.mm_out;
+1009           by dealid role;
+1010           model ret=vwretd;
+1011       quit;
+
+NOTE: The data set WORK.MM_ANOVA has 27888 observations and 10 variables.
+NOTE: The data set WORK.MM_OUT has 9296 observations and 9 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.89 seconds
+      cpu time            0.89 seconds
+      
+
+1012       ods output close;
+1013       ods listing;
+1014       data work.mm_parms;
+1015           set work.mm_out;
+1016           if _TYPE_='PARMS' and not missing(Intercept) and not missing(vwretd);
+1017           alpha=Intercept;
+1018           beta=vwretd;
+1019           keep dealid role alpha beta;
+1020       run;
+
+NOTE: There were 9296 observations read from the data set WORK.MM_OUT.
+NOTE: The data set WORK.MM_PARMS has 9296 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1021       proc sql;
+1022           create table work.mm_rank as
+1023           select dealid,role,
+1024                  max(case when upcase(Source)='MODEL' then DF end) as model_df,
+1025                  max(case when upcase(Source)='ERROR' then DF end) as error_df
+                                                           The SAS System
+
+1026           from work.mm_anova group by dealid,role;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.MM_RANK created, with 9296 rows and 4 columns.
+
+1027           create table work.mm_valid as
+1028           select p.*,c.n_window,c.n_complete,c.sd_market,r.model_df,r.error_df
+1029           from work.mm_parms as p inner join work.mm_coverage as c
+1030             on p.dealid=c.dealid and p.role=c.role
+1031           inner join work.mm_rank as r on p.dealid=r.dealid and p.role=r.role
+1032           where c.n_complete>=3 and c.sd_market>0 and r.model_df=1 and r.error_df>=1;
+NOTE: Table WORK.MM_VALID created, with 9296 rows and 9 columns.
+
+1033           create table work.car_day as
+1034           select d.dealid,d.role,d.eventday,d.ret,d.vwretd,
+1035                  d.ret-(m.alpha+m.beta*d.vwretd) as abret
+1036           from work.event_daily0 as d inner join work.mm_valid as m
+1037             on d.dealid=m.dealid and d.role=m.role
+1038           where d.eventday in (-1,0,1) and not missing(d.ret) and not missing(d.vwretd);
+NOTE: Table WORK.CAR_DAY created, with 27816 rows and 6 columns.
+
+1039           create table work.car_by_role as
+1040           select dealid,role,count(abret) as n_eventdays,sum(abret) as car
+1041           from work.car_day group by dealid,role;
+NOTE: Table WORK.CAR_BY_ROLE created, with 9294 rows and 4 columns.
+
+1042           create table work.car_wide as
+1043           select dealid,
+1044             max(case when role='A' and n_eventdays=3 then car end) as acq_car,
+1045             max(case when role='T' and n_eventdays=3 then car end) as trg_car,
+1046             max(case when role='A' and n_eventdays=3 then n_eventdays end) as n_acq_eventdays,
+1047             max(case when role='T' and n_eventdays=3 then n_eventdays end) as n_trg_eventdays
+1048           from work.car_by_role group by dealid;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.CAR_WIDE created, with 5502 rows and 5 columns.
+
+1049           create table work.car_diagnostics as
+1050           select c.role,count(*) as estimable_market_models,
+1051                  mean(c.n_complete) as mean_estimation_days,
+1052                  min(c.n_complete) as min_estimation_days,
+1053                  max(c.n_complete) as max_estimation_days,
+1054                  sum(c.sd_market<=0) as zero_market_variance_groups
+1055           from work.mm_valid as c group by c.role;
+NOTE: Table WORK.CAR_DIAGNOSTICS created, with 2 rows and 6 columns.
+
+1056           select role,count(*) as linked_event_participants,
+1057                  sum(not missing(session0)) as participants_with_day0
+1058           from work.event_session0 group by role;
+1059       quit;
+                                                           The SAS System
+
+NOTE: The PROCEDURE SQL printed page 43.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.14 seconds
+      
+
+1060       title "Market-model parameter window coverage and native PROC REG fits";
+1061       proc print data=work.car_diagnostics noobs; run;
+
+NOTE: There were 2 observations read from the data set WORK.CAR_DIAGNOSTICS.
+NOTE: The PROCEDURE PRINT printed page 44.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1062       title;
+1063       title "Daily return coverage over the specified market-model window";
+1064       proc means data=work.mm_coverage n mean median min p25 p75 max;
+1065           class role;
+1066           var n_window n_complete sd_market;
+1067       run;
+
+NOTE: There were 9300 observations read from the data set WORK.MM_COVERAGE.
+NOTE: The PROCEDURE MEANS printed page 45.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1068       title;
+1069       
+1070       
+1071       
+1072       
+1073       /* Full same-industry quarterly accounting-system maps. Requests are unique by
+1074          target, pre-announcement calendar quarter, and target SIC2, so repeated deals
+1075          reuse the same map. All firms reporting in that SIC2 at the anchor quarter
+1076          enter; each map then uses the firm's 16 preceding fiscal quarters. */
+1077       proc sql;
+1078           create table work.target_req as
+1079           select distinct e.trggvkey as targetgvkey length=6,e.anchorq,e.trg_sic2 as sic2,
+1080                  e.trgpermno,q.fqidx as target_fqidx,
+1081                  intnx('qtr',min(e.dateann),-16,'b') as win_start format=yymmdd10.,
+1082                  intnx('qtr',min(e.dateann),-1,'e') as win_end format=yymmdd10.
+1083           from work.events3 as e inner join work.fq_final as q
+1084             on q.gvkey=e.trggvkey and q.qidx=e.anchorq
+1085           where not missing(e.trggvkey) and not missing(e.trg_sic2) and not missing(e.trgpermno)
+1086             and not missing(q.fqidx)
+1087           group by e.trggvkey,e.anchorq,e.trg_sic2,e.trgpermno,q.fqidx;
+NOTE: Table WORK.TARGET_REQ created, with 2528 rows and 7 columns.
+
+1088       
+1089           create table work.event_industry as
+1090           select distinct anchorq,sic2 from work.target_req;
+NOTE: Table WORK.EVENT_INDUSTRY created, with 1307 rows and 2 columns.
+
+1091           create table work.industry_members as
+                                                           The SAS System
+
+1092           select i.anchorq,i.sic2,q.gvkey as peer_gvkey length=6,
+1093                  q.fqidx as anchor_fqidx
+1094           from work.event_industry as i inner join work.fq_final as q
+1095             on q.qidx=i.anchorq and q.sic2=i.sic2
+1096           where not missing(q.gvkey) and not missing(q.fqidx);
+NOTE: Table WORK.INDUSTRY_MEMBERS created, with 398177 rows and 4 columns.
+
+1097           create table work.comp_hist0 as
+1098           select m.anchorq,m.sic2,m.peer_gvkey as gvkey length=6,m.anchor_fqidx,
+1099                  q.qidx,q.fqidx,q.datadate,q.fdateq,q.earnings,q.bhr_fiscal,q.noncalendar_q
+1100           from work.industry_members as m inner join work.fq_final as q
+1101             on q.gvkey=m.peer_gvkey and q.qidx<=m.anchorq
+1102            and q.fqidx between m.anchor_fqidx-15 and m.anchor_fqidx;
+NOTE: Table WORK.COMP_HIST0 created, with 5768830 rows and 11 columns.
+
+1103           create table work.comp_hist_dups as
+1104           select anchorq,sic2,gvkey,fqidx,count(*) as n_rows
+1105           from work.comp_hist0 group by anchorq,sic2,gvkey,fqidx having count(*)>1;
+NOTE: Table WORK.COMP_HIST_DUPS created, with 2850 rows and 5 columns.
+
+1106           select count(*) as duplicate_window_keys,
+1107                  sum(n_rows) as duplicate_window_rows
+1108           from work.comp_hist_dups;
+1109       quit;
+NOTE: The PROCEDURE SQL printed page 46.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.82 seconds
+      cpu time            4.34 seconds
+      
+
+1110       proc sort data=work.comp_hist0; by anchorq sic2 gvkey fqidx datadate fdateq; run;
+
+NOTE: There were 5768830 observations read from the data set WORK.COMP_HIST0.
+NOTE: The data set WORK.COMP_HIST0 has 5768830 observations and 11 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           1.19 seconds
+      cpu time            2.65 seconds
+      
+
+1111       data work.comp_hist;
+1112           set work.comp_hist0;
+1113           by anchorq sic2 gvkey fqidx;
+1114           if last.fqidx;
+1115       run;
+
+NOTE: There were 5768830 observations read from the data set WORK.COMP_HIST0.
+NOTE: The data set WORK.COMP_HIST has 5765980 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.69 seconds
+      cpu time            0.69 seconds
+      
+
+1116       proc sql;
+1117           create table work.comp_fiscal_dups as
+1118           select anchorq,sic2,gvkey,fqidx,count(*) as n_rows
+1119           from work.comp_hist group by anchorq,sic2,gvkey,fqidx having count(*)>1;
+NOTE: Table WORK.COMP_FISCAL_DUPS created, with 0 rows and 5 columns.
+
+                                                           The SAS System
+
+1120           select count(*) as postdedup_fiscal_rows,
+1121                  sum(qidx>anchorq) as post_anchor_rows,
+1122                  sum(fqidx<anchor_fqidx-15 or fqidx>anchor_fqidx) as out_window_rows
+1123           from work.comp_hist;
+1124           create table work.comp_window_check as
+1125           select anchorq,sic2,gvkey,min(fqidx) as min_fqidx,max(fqidx) as max_fqidx,
+1126                  count(distinct fqidx) as n_fiscal_keys,
+1127                  max(anchor_fqidx) as anchor_fqidx
+1128           from work.comp_hist group by anchorq,sic2,gvkey;
+NOTE: Table WORK.COMP_WINDOW_CHECK created, with 398177 rows and 7 columns.
+
+1129           select count(*) as fiscal_windows,
+1130                  max(n_fiscal_keys) as max_window_keys,
+1131                  sum(n_fiscal_keys>16) as windows_over_16_keys,
+1132                  sum(max_fqidx-min_fqidx+1>16) as windows_over_16_span
+1133           from work.comp_window_check;
+1134       quit;
+NOTE: The PROCEDURE SQL printed pages 47-48.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.69 seconds
+      cpu time            4.67 seconds
+      
+
+1135       data work.comp_roll;
+1136           set work.comp_hist;
+1137           if not missing(earnings) and not missing(bhr_fiscal);
+1138       run;
+
+NOTE: There were 5765980 observations read from the data set WORK.COMP_HIST.
+NOTE: The data set WORK.COMP_ROLL has 3424499 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.37 seconds
+      cpu time            0.38 seconds
+      
+
+1139       proc sort data=work.comp_roll; by anchorq sic2 gvkey fqidx; run;
+
+NOTE: There were 3424499 observations read from the data set WORK.COMP_ROLL.
+NOTE: The data set WORK.COMP_ROLL has 3424499 observations and 11 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.50 seconds
+      cpu time            1.12 seconds
+      
+
+1140       /* Center and scale within the exact regression group before PROC REG. The
+1141          common factor 1000 is applied to both centered variables, so the slope is
+1142          unchanged; adding the saved group means back reconstructs the original
+1143          intercept. This addresses PROC REG's small-range warnings without changing
+1144          the intercept OLS estimand or its residual degrees of freedom. */
+1145       proc means data=work.comp_roll noprint;
+1146           by anchorq sic2 gvkey;
+1147           var earnings bhr_fiscal;
+1148           output out=work.comp_means(drop=_TYPE_ _FREQ_)
+1149               mean=mean_earn mean_bhr;
+1150       run;
+
+NOTE: There were 3424499 observations read from the data set WORK.COMP_ROLL.
+NOTE: The data set WORK.COMP_MEANS has 264324 observations and 5 variables.
+                                                           The SAS System
+
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.28 seconds
+      cpu time            0.27 seconds
+      
+
+1151       data work.comp_roll_fit;
+1152           merge work.comp_roll(in=in_roll) work.comp_means;
+1153           by anchorq sic2 gvkey;
+1154           if in_roll;
+1155           earn_c=(earnings-mean_earn)*1000;
+1156           bhr_c=(bhr_fiscal-mean_bhr)*1000;
+1157       run;
+
+NOTE: There were 3424499 observations read from the data set WORK.COMP_ROLL.
+NOTE: There were 264324 observations read from the data set WORK.COMP_MEANS.
+NOTE: The data set WORK.COMP_ROLL_FIT has 3424499 observations and 15 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.60 seconds
+      cpu time            0.60 seconds
+      
+
+1158       ods listing close;
+1159       ods output ANOVA=work.comp_anova;
+1160       proc reg data=work.comp_roll_fit outest=work.comp_out;
+1161           by anchorq sic2 gvkey;
+1162           model earn_c=bhr_c;
+1163       quit;
+
+NOTE: The data set WORK.COMP_ANOVA has 792972 observations and 11 variables.
+NOTE: The data set WORK.COMP_OUT has 264324 observations and 10 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           23.52 seconds
+      cpu time            23.52 seconds
+      
+
+1164       ods output close;
+1165       ods listing;
+1166       proc sql;
+1167           create table work.comp_n as
+1168           select anchorq,sic2,gvkey,count(*) as n_obs,std(bhr_fiscal) as sd_bhr
+1169           from work.comp_roll group by anchorq,sic2,gvkey;
+NOTE: Table WORK.COMP_N created, with 264324 rows and 5 columns.
+
+1170           select count(*) as peer_firm_windows,
+1171                  sum(n_obs>=14) as windows_with_14_quarters,
+1172                  sum(n_obs>=14 and not missing(sd_bhr) and sd_bhr>0)
+1173                      as eligible_positive_bhr_variance,
+1174                  sum(n_obs>=14 and not missing(sd_bhr) and sd_bhr=0)
+1175                      as eligible_zero_bhr_variance,
+1176                  sum(n_obs<14) as windows_below_14_quarters
+1177           from work.comp_n;
+1178           select count(*) as valid_firm_window_rows,
+1179                  sum(noncalendar_q=1) as offcal_comp_rows
+1180           from work.comp_roll;
+1181       quit;
+NOTE: The PROCEDURE SQL printed pages 49-50.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.45 seconds
+                                                           The SAS System
+
+      cpu time            0.45 seconds
+      
+
+1182       proc sql;
+1183           create table work.comp_parms0 as
+1184           select p.anchorq,p.sic2,p.gvkey,
+1185                  (m.mean_earn+p.Intercept/1000-p.bhr_c*m.mean_bhr) as alpha,
+1186                  p.bhr_c as beta
+1187           from work.comp_out as p inner join work.comp_means as m
+1188             on p.anchorq=m.anchorq and p.sic2=m.sic2 and p.gvkey=m.gvkey
+1189           where p._TYPE_='PARMS' and not missing(p.Intercept) and not missing(p.bhr_c);
+NOTE: Table WORK.COMP_PARMS0 created, with 264324 rows and 5 columns.
+
+1190       
+1191           create table work.comp_rank as
+1192           select anchorq,sic2,gvkey,
+1193                  max(case when upcase(Source)='MODEL' then DF end) as model_df,
+1194                  max(case when upcase(Source)='ERROR' then DF end) as error_df
+1195           from work.comp_anova group by anchorq,sic2,gvkey;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.COMP_RANK created, with 264324 rows and 5 columns.
+
+1196           select count(*) as native_anova_groups,
+1197                  sum(model_df=1 and error_df>=12) as full_rank_n,
+1198                  sum(missing(model_df) or missing(error_df) or model_df ne 1 or error_df<12)
+1199                      as rank_df_fail_n
+1200           from work.comp_rank;
+1201           select count(*) as coef_complete_n from work.comp_parms0;
+1202           create table work.comp_parms as
+1203           select p.*,n.n_obs,n.sd_bhr,r.model_df,r.error_df
+1204           from work.comp_parms0 as p inner join work.comp_n as n
+1205             on p.anchorq=n.anchorq and p.sic2=n.sic2 and p.gvkey=n.gvkey
+1206           inner join work.comp_rank as r
+1207             on p.anchorq=r.anchorq and p.sic2=r.sic2 and p.gvkey=r.gvkey
+1208           where n.n_obs>=14 and n.sd_bhr>0 and r.model_df=1 and r.error_df>=12;
+NOTE: Table WORK.COMP_PARMS created, with 177862 rows and 9 columns.
+
+1209           select count(*) as accepted_map_n from work.comp_parms;
+1210       
+1211           create table work.comp_pairs_q as
+1212           select t.targetgvkey,t.anchorq,t.sic2,cj.gvkey as peergvkey length=6,
+1213                  q.qidx,q.fqidx,(ci.alpha+ci.beta*q.bhr_fiscal) as pred_i,
+1214                  (cj.alpha+cj.beta*q.bhr_fiscal) as pred_j
+1215           from work.target_req as t
+1216           inner join work.comp_parms as ci
+1217             on ci.anchorq=t.anchorq and ci.sic2=t.sic2 and ci.gvkey=t.targetgvkey
+1218           inner join work.comp_parms as cj
+1219             on cj.anchorq=t.anchorq and cj.sic2=t.sic2 and cj.gvkey ne t.targetgvkey
+1220           inner join work.comp_hist as q
+1221             on q.anchorq=t.anchorq and q.sic2=t.sic2 and q.gvkey=t.targetgvkey
+1222           where not missing(q.bhr_fiscal);
+NOTE: Table WORK.COMP_PAIRS_Q created, with 5520140 rows and 8 columns.
+
+1223       
+1224           create table work.comp_pair as
+                                                           The SAS System
+
+1225           select targetgvkey,anchorq,sic2,peergvkey,count(*) as n_overlap,
+1226                  mean(abs(pred_i-pred_j)) as pair_absdiff
+1227           from work.comp_pairs_q
+1228           group by targetgvkey,anchorq,sic2,peergvkey
+1229           having calculated n_overlap>=14;
+NOTE: Table WORK.COMP_PAIR created, with 347162 rows and 6 columns.
+
+1230           create table work.target_comp as
+1231           select targetgvkey,anchorq,sic2,-mean(pair_absdiff) as trg_comp,
+1232                  count(*) as n_comp_peers,mean(n_overlap) as mean_comp_overlap
+1233           from work.comp_pair group by targetgvkey,anchorq,sic2;
+NOTE: Table WORK.TARGET_COMP created, with 1765 rows and 6 columns.
+
+1234           select count(*) as target_event_firm_windows,
+1235                  sum(not missing(trg_comp)) as targets_with_comparability,
+1236                  mean(n_comp_peers) as mean_valid_peer_maps,
+1237                  min(n_comp_peers) as min_valid_peer_maps,
+1238                  max(n_comp_peers) as max_valid_peer_maps
+1239           from work.target_comp;
+1240       quit;
+NOTE: The PROCEDURE SQL printed pages 51-54.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           3.37 seconds
+      cpu time            5.53 seconds
+      
+
+1241       
+1242       /* Rank at the eligible acquisition level, so repeated deals count as separate
+1243          Table 3 observations even when the target score is reused within a quarter. */
+1244       proc sql;
+1245           create table work.target_scores0 as
+1246           select e.dealid,e.trggvkey as targetgvkey length=6,e.anchorq,e.trg_sic2 as sic2,
+1247                  c.trg_comp,c.n_comp_peers,c.mean_comp_overlap
+1248           from work.events3 as e left join work.target_comp as c
+1249             on e.trggvkey=c.targetgvkey and e.anchorq=c.anchorq and e.trg_sic2=c.sic2;
+NOTE: Table WORK.TARGET_SCORES0 created, with 4697 rows and 7 columns.
+
+1250       quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1251       proc rank data=work.target_scores0 out=work.target_comp_rank groups=10;
+1252           var trg_comp;
+1253           ranks trg_decile;
+1254       run;
+
+NOTE: The data set WORK.TARGET_COMP_RANK has 4697 observations and 8 variables.
+NOTE: PROCEDURE RANK used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1255       data work.target_comp_rank;
+1256           set work.target_comp_rank;
+1257           if not missing(trg_decile) then trg_comprnk=trg_decile/9;
+1258           label trg_comp='Raw target financial-statement comparability'
+                                                           The SAS System
+
+1259                 trg_comprnk='Decile rank of target comparability divided by nine';
+1260       run;
+
+NOTE: There were 4697 observations read from the data set WORK.TARGET_COMP_RANK.
+NOTE: The data set WORK.TARGET_COMP_RANK has 4697 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1261       
+1262       /* Standard PROC CORR computes pairwise raw quarterly return correlations
+1263          against all other firms in the target SIC2 over the same 16 quarters. */
+1264       proc sql;
+1265           create table work.corr_pairs0 as
+1266           select t.targetgvkey,t.anchorq,t.sic2,m.peer_gvkey as peergvkey length=6,
+1267                  qt.qidx,qt.bhr as target_bhr,qp.bhr as peer_bhr
+1268           from work.target_req as t
+1269           inner join work.industry_members as m
+1270             on m.anchorq=t.anchorq and m.sic2=t.sic2 and m.peer_gvkey ne t.targetgvkey
+1271           inner join work.fq_final as qt
+1272             on qt.gvkey=t.targetgvkey and qt.qidx between t.anchorq-15 and t.anchorq
+1273           inner join work.fq_final as qp
+1274             on qp.gvkey=m.peer_gvkey and qp.qidx=qt.qidx
+1275           where not missing(qt.bhr) and not missing(qp.bhr);
+NOTE: Table WORK.CORR_PAIRS0 created, with 8300749 rows and 7 columns.
+
+1276           create table work.corr_n as
+1277           select targetgvkey,anchorq,sic2,peergvkey,count(*) as n_overlap
+1278           from work.corr_pairs0 group by targetgvkey,anchorq,sic2,peergvkey
+1279           having calculated n_overlap>=14;
+NOTE: Table WORK.CORR_N created, with 353622 rows and 5 columns.
+
+1280           create table work.corr_pairs as
+1281           select p.* from work.corr_pairs0 as p inner join work.corr_n as n
+1282             on p.targetgvkey=n.targetgvkey and p.anchorq=n.anchorq and
+1283                p.sic2=n.sic2 and p.peergvkey=n.peergvkey;
+NOTE: Table WORK.CORR_PAIRS created, with 5578720 rows and 7 columns.
+
+1284       quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           6.20 seconds
+      cpu time            7.99 seconds
+      
+
+1285       proc sort data=work.corr_pairs; by targetgvkey anchorq sic2 peergvkey qidx; run;
+
+NOTE: There were 5578720 observations read from the data set WORK.CORR_PAIRS.
+NOTE: The data set WORK.CORR_PAIRS has 5578720 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.69 seconds
+      cpu time            1.79 seconds
+      
+
+1286       proc corr data=work.corr_pairs outp=work.corr_out noprint;
+1287           by targetgvkey anchorq sic2 peergvkey;
+1288           var target_bhr peer_bhr;
+1289       run;
+                                                           The SAS System
+
+
+NOTE: The data set WORK.CORR_OUT has 1768110 observations and 8 variables.
+NOTE: PROCEDURE CORR used (Total process time):
+      real time           0.94 seconds
+      cpu time            0.94 seconds
+      
+
+1290       data work.corr_pair;
+1291           set work.corr_out;
+1292           if _TYPE_='CORR' and _NAME_='target_bhr';
+1293           paircorr=peer_bhr;
+1294           keep targetgvkey anchorq sic2 peergvkey paircorr;
+1295       run;
+
+NOTE: There were 1768110 observations read from the data set WORK.CORR_OUT.
+NOTE: The data set WORK.CORR_PAIR has 353622 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+1296       proc sql;
+1297           create table work.target_corr as
+1298           select targetgvkey,anchorq,sic2,mean(paircorr) as stock_corr,
+1299                  count(paircorr) as n_corr_peers
+1300           from work.corr_pair group by targetgvkey,anchorq,sic2;
+NOTE: Table WORK.TARGET_CORR created, with 1788 rows and 5 columns.
+
+1301           select count(*) as valid_target_peer_pairs,mean(n_overlap) as mean_corr_overlap
+1302           from work.corr_n;
+1303       quit;
+NOTE: The PROCEDURE SQL printed page 55.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.11 seconds
+      
+
+1304       
+1305       /* Daily target-return synchronicity: standard PROC REG adjusted R-squared,
+1306          left on its native [0,1] scale. */
+1307       proc sql;
+1308           create table work.sync_daily0 as
+1309           select distinct t.targetgvkey,t.anchorq,t.sic2,t.trgpermno,
+1310                  d.date,d.ret,s.vwretd
+1311           from work.target_req as t
+1312           inner join work.dsf_unique as d
+1313             on d.permno=t.trgpermno and d.date between t.win_start and t.win_end
+1314           inner join work.dsi_sessions as s on s.date=d.date;
+NOTE: Table WORK.SYNC_DAILY0 created, with 2162093 rows and 7 columns.
+
+1315           create table work.sync_n as
+1316           select targetgvkey,anchorq,sic2,count(*) as n_obs,
+1317                  sum(not missing(ret) and not missing(vwretd)) as n_complete,
+1318                  std(vwretd) as sd_market
+1319           from work.sync_daily0 group by targetgvkey,anchorq,sic2;
+NOTE: Table WORK.SYNC_N created, with 2526 rows and 6 columns.
+
+1320           create table work.sync_fit_data as
+                                                           The SAS System
+
+1321           select * from work.sync_daily0 where not missing(ret) and not missing(vwretd);
+NOTE: Table WORK.SYNC_FIT_DATA created, with 2148586 rows and 7 columns.
+
+1322       quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           3.06 seconds
+      cpu time            3.49 seconds
+      
+
+1323       proc sort data=work.sync_fit_data; by targetgvkey anchorq sic2 date; run;
+
+NOTE: There were 2148586 observations read from the data set WORK.SYNC_FIT_DATA.
+NOTE: The data set WORK.SYNC_FIT_DATA has 2148586 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.23 seconds
+      cpu time            0.58 seconds
+      
+
+1324       ods listing close;
+1325       ods output ANOVA=work.sync_anova FitStatistics=work.sync_fitstats;
+1326       proc reg data=work.sync_fit_data outest=work.sync_out;
+1327           by targetgvkey anchorq sic2;
+1328           model ret=vwretd;
+1329       quit;
+
+NOTE: The data set WORK.SYNC_FITSTATS has 7575 observations and 11 variables.
+NOTE: The data set WORK.SYNC_ANOVA has 7575 observations and 11 variables.
+NOTE: The data set WORK.SYNC_OUT has 2525 observations and 10 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.39 seconds
+      cpu time            0.39 seconds
+      
+
+1330       ods output close;
+1331       ods listing;
+1332       data work.sync_adj;
+1333           set work.sync_fitstats;
+1334           if upcase(strip(label2))='ADJ R-SQ';
+1335           sync_adj=nvalue2;
+1336           keep targetgvkey anchorq sic2 sync_adj;
+1337       run;
+
+NOTE: There were 7575 observations read from the data set WORK.SYNC_FITSTATS.
+NOTE: The data set WORK.SYNC_ADJ has 2525 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1338       proc sql;
+1339           create table work.sync_rank as
+1340           select targetgvkey,anchorq,sic2,
+1341                  max(case when upcase(Source)='MODEL' then DF end) as model_df,
+1342                  max(case when upcase(Source)='ERROR' then DF end) as error_df
+1343           from work.sync_anova group by targetgvkey,anchorq,sic2;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+                                                           The SAS System
+
+      expression.
+NOTE: Table WORK.SYNC_RANK created, with 2525 rows and 5 columns.
+
+1344           create table work.target_sync as
+1345           select p.targetgvkey,p.anchorq,p.sic2,
+1346                  p.sync_adj as sync,n.n_complete as sync_days,
+1347                  r.model_df,r.error_df
+1348           from work.sync_adj as p inner join work.sync_n as n
+1349             on p.targetgvkey=n.targetgvkey and p.anchorq=n.anchorq and p.sic2=n.sic2
+1350           inner join work.sync_rank as r
+1351             on p.targetgvkey=r.targetgvkey and p.anchorq=r.anchorq and p.sic2=r.sic2
+1352           where n.n_complete>=3 and n.sd_market>0 and r.model_df=1 and r.error_df>=1;
+NOTE: Table WORK.TARGET_SYNC created, with 2525 rows and 7 columns.
+
+1353           select count(*) as target_sync_fits,
+1354                  mean(sync_days) as mean_daily_sessions,
+1355                  min(sync_days) as min_daily_sessions,
+1356                  max(sync_days) as max_daily_sessions,
+1357                  min(sync) as min_adjusted_r2,max(sync) as max_adjusted_r2
+1358           from work.target_sync;
+1359       quit;
+NOTE: The PROCEDURE SQL printed page 56.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+1360       
+1361       /* S34 BLOCK construction. The WRDS guide says RDATE is holdings-effective,
+1362          FDATE is the vendor vintage, SHARES is split-adjusted from RDATE to FDATE,
+1363          and SHROUT2 is a thousands-of-shares FDATE field. Select the first vintage
+1364          per manager/report date, map the eight-character holding CUSIP to dated
+1365          CRSP NCUSIP, and translate SHARES back to the RDATE CRSP share basis. */
+1366       data work.s34_raw;
+1367           set tfn.s34(keep=fdate rdate mgrno cusip shares shrout2
+1368               where=(rdate >= '01JAN1982'd and rdate <= &annend and
+SYMBOLGEN:  Macro variable ANNEND resolves to '31DEC2009'd
+1369                      fdate >= '01JAN1982'd and fdate <= &annend));
+SYMBOLGEN:  Macro variable ANNEND resolves to '31DEC2009'd
+1370           if not missing(mgrno) and not missing(cusip) and not missing(shares);
+1371           s34cusip8=substr(compress(upcase(strip(cusip))),1,8);
+1372           if lengthn(s34cusip8)=8;
+1373           rdate_mkey=year(rdate)*12+month(rdate);
+1374           fdate_mkey=year(fdate)*12+month(fdate);
+1375       run;
+
+NOTE: There were 44888887 observations read from the data set TFN.S34.
+      WHERE (rdate>='01JAN1982'D and rdate<='31DEC2009'D) and (fdate>='01JAN1982'D and fdate<='31DEC2009'D);
+NOTE: The data set WORK.S34_RAW has 44888468 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           25.53 seconds
+      cpu time            25.40 seconds
+      
+
+1376       proc sql;
+1377           create table work.s34_firstdate as
+1378           select mgrno,rdate,min(fdate) as fdate format=yymmdd10.
+1379           from work.s34_raw group by mgrno,rdate;
+                                                           The SAS System
+
+NOTE: Table WORK.S34_FIRSTDATE created, with 164672 rows and 3 columns.
+
+1380           create table work.block_target_cusips as
+1381           select distinct e.dealid,e.dateann,e.trggvkey,e.trgpermno,
+1382                  sh.cusip8,sh.efffrom,sh.effthru
+1383           from work.events3 as e inner join work.cusip_hist_unique as sh
+1384             on e.trggvkey=sh.gvkey and sh.effthru>=e.dateann-183
+1385            and sh.efffrom<=e.dateann
+1386           where not missing(e.trggvkey) and not missing(e.trgpermno);
+NOTE: Table WORK.BLOCK_TARGET_CUSIPS created, with 3814 rows and 7 columns.
+
+1387           select count(*) as s34_first_keys,
+1388                  sum(fdate<rdate) as vintage_before_report_date
+1389           from work.s34_firstdate;
+1390       quit;
+NOTE: The PROCEDURE SQL printed page 57.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           8.78 seconds
+      cpu time            17.58 seconds
+      
+
+1391       data work.block_target_months;
+1392           set work.block_target_cusips;
+1393           first_mkey=year(dateann-183)*12+month(dateann-183);
+1394           last_mkey=year(dateann)*12+month(dateann);
+1395           do rdate_mkey=first_mkey to last_mkey;
+1396               output;
+1397           end;
+1398           keep dealid dateann trggvkey trgpermno cusip8 efffrom effthru rdate_mkey;
+1399       run;
+
+NOTE: There were 3814 observations read from the data set WORK.BLOCK_TARGET_CUSIPS.
+NOTE: The data set WORK.BLOCK_TARGET_MONTHS has 26769 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1400       proc sql;
+1401           create table work.s34_target_first as
+1402           select t.dealid,t.dateann,t.trggvkey,t.trgpermno,
+1403                  h.s34cusip8,h.mgrno,h.rdate,h.fdate,h.shares,h.shrout2,
+1404                  h.rdate_mkey,h.fdate_mkey
+1405           from work.block_target_months as t inner join work.s34_raw as h
+1406             on t.cusip8=h.s34cusip8 and t.rdate_mkey=h.rdate_mkey
+1407            and h.rdate>=t.efffrom and h.rdate<=t.effthru
+1408            and h.rdate>=t.dateann-183 and h.rdate<=t.dateann
+1409           inner join work.s34_firstdate as v
+1410             on h.mgrno=v.mgrno and h.rdate=v.rdate and h.fdate=v.fdate
+1411           where h.fdate<=t.dateann and h.shares>=0;
+NOTE: Table WORK.S34_TARGET_FIRST created, with 395509 rows and 12 columns.
+
+1412       
+1413           create table work.block_candidates as
+1414           select h.dealid,h.dateann,h.trggvkey,h.trgpermno,h.s34cusip8,
+1415                  h.mgrno,h.rdate,h.fdate,h.shares,h.shrout2,
+1416                  r.shrout as rdate_shrout,r.cfacshr as rdate_cfacshr,
+1417                  f.cfacshr as fdate_cfacshr,
+                                                           The SAS System
+
+1418                  f.shrout as fdate_crsp_shrout,
+1419                  f.cfacshr/r.cfacshr as cfac_ratio,
+1420                  case when h.shrout2>0 then h.shares/(h.shrout2*1000) else . end as s34_fdate_fraction,
+1421                  h.shares*(f.cfacshr/r.cfacshr) as shares_rdate,
+1422                  h.shares*(f.cfacshr/r.cfacshr)/(r.shrout*1000) as ownerfrac,
+1423                  case when h.shrout2>0 and r.shrout>0 then
+1424                    h.shares/(h.shrout2*1000)-h.shares*(f.cfacshr/r.cfacshr)/(r.shrout*1000)
+1425                    else . end as frac_basis_diff
+1426           from work.s34_target_first as h inner join work.crsp_names0 as n
+1427             on n.permno=h.trgpermno and n.ncusip=h.s34cusip8
+1428            and h.rdate>=n.namedt and h.rdate<=n.nameenddt
+1429           inner join work.msf_raw as r
+1430             on r.permno=h.trgpermno and r.mkey=h.rdate_mkey
+1431           inner join work.msf_raw as f
+1432             on f.permno=h.trgpermno and f.mkey=h.fdate_mkey
+1433           where r.shrout>0 and
+1434                 r.cfacshr>0 and f.cfacshr>0;
+NOTE: Table WORK.BLOCK_CANDIDATES created, with 393360 rows and 19 columns.
+
+1435       
+1436           create table work.block_mgrdate_counts as
+1437           select dealid,mgrno,rdate,count(*) as n_rows
+1438           from work.block_candidates group by dealid,mgrno,rdate;
+NOTE: Table WORK.BLOCK_MGRDATE_COUNTS created, with 392933 rows and 4 columns.
+
+1439           create table work.block_unique0 as
+1440           select b.* from work.block_candidates as b
+1441           inner join work.block_mgrdate_counts as c
+1442             on b.dealid=c.dealid and b.mgrno=c.mgrno and b.rdate=c.rdate
+1443           where c.n_rows=1 and not missing(b.ownerfrac);
+NOTE: Table WORK.BLOCK_UNIQUE0 created, with 392506 rows and 19 columns.
+
+1444           create table work.block_mgr_best as
+1445           select dealid,mgrno,max(rdate) as rdate format=yymmdd10.
+1446           from work.block_unique0 group by dealid,mgrno;
+NOTE: Table WORK.BLOCK_MGR_BEST created, with 230887 rows and 3 columns.
+
+1447           create table work.block_mgr as
+1448           select b.* from work.block_unique0 as b inner join work.block_mgr_best as m
+1449             on b.dealid=m.dealid and b.mgrno=m.mgrno and b.rdate=m.rdate;
+NOTE: Table WORK.BLOCK_MGR created, with 230887 rows and 19 columns.
+
+1450           create table work.block_event as
+1451           select dealid,max(ownerfrac>0.05) as block,
+1452                  count(*) as n_observed_managers,max(rdate) as latest_holdings_rdate format=yymmdd10.,
+1453                  max(fdate) as max_fdate format=yymmdd10.
+1454           from work.block_mgr group by dealid;
+NOTE: Table WORK.BLOCK_EVENT created, with 3474 rows and 5 columns.
+
+1455           select count(*) as target_first_vintage_holdings
+1456           from work.s34_target_first;
+1457           select count(*) as target_with_holdings,
+1458                  sum(block=1) as target_events_with_gt5_manager,
+1459                  sum(block=0) as target_events_no_gt5_manager
+1460           from work.block_event;
+1461           select count(*) as matched_manager_reports,
+1462                  min(ownerfrac) as min_fraction,
+1463                  median(ownerfrac) as median_fraction,
+                                                           The SAS System
+
+1464                  max(ownerfrac) as max_fraction,
+1465                  sum(ownerfrac>1) as fractions_over_one,
+1466                  sum(cfac_ratio ne 1) as nontrivial_split_ratios,
+1467                  median(cfac_ratio) as median_split_ratio,
+1468                  median(s34_fdate_fraction) as median_fdate_fraction,
+1469                  median(frac_basis_diff) as med_basis_diff
+1470           from work.block_mgr;
+1471       quit;
+NOTE: The PROCEDURE SQL printed pages 58-60.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           7.63 seconds
+      cpu time            8.29 seconds
+      
+
+1472       title "S34 manager ownership fraction tails";
+1473       proc means data=work.block_mgr n nmiss min p1 median p99 max;
+1474           var ownerfrac cfac_ratio s34_fdate_fraction frac_basis_diff;
+1475       run;
+
+NOTE: There were 230887 observations read from the data set WORK.BLOCK_MGR.
+NOTE: The PROCEDURE MEANS printed page 61.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.43 seconds
+      
+
+1476       title;
+1477       
+1478       /* Annual performance match. Match peers in the acquisition year before
+1479          announcement using the ordered 80%–120% ROA band, including negative ROA. */
+1480       proc sql;
+1481           create table work.delta_peer_candidates as
+1482           select e.dealid,e.acqgvkey,e.acq_sic2a as sic2,e.baseyear,
+1483                  e.acq_roa as match_roa,p.gvkey as peergvkey length=6,p.roa as peer_base_roa
+1484           from work.events3 as e inner join work.fa_cal as p
+1485             on p.calyear=e.baseyear and p.sic2=e.acq_sic2a
+1486           where not missing(e.acqgvkey) and not missing(e.acq_roa) and
+1487                 not missing(e.acq_sic2a) and p.gvkey ne e.acqgvkey and not missing(p.roa)
+1488             and p.roa>=min(0.8*e.acq_roa,1.2*e.acq_roa)
+1489             and p.roa<=max(0.8*e.acq_roa,1.2*e.acq_roa);
+NOTE: Table WORK.DELTA_PEER_CANDIDATES created, with 205144 rows and 7 columns.
+
+1490           create table work.delta_peer_n as
+1491           select dealid,count(distinct peergvkey) as n_match_peers
+1492           from work.delta_peer_candidates group by dealid;
+NOTE: Table WORK.DELTA_PEER_N created, with 3526 rows and 2 columns.
+
+1493       
+1494           create table work.peer_roa_year as
+1495           select m.dealid,y.calyear,median(y.roa) as peer_median_roa,
+1496                  count(y.roa) as n_peer_roa
+1497           from work.delta_peer_candidates as m inner join work.events3 as e
+1498             on m.dealid=e.dealid
+1499           inner join work.fa_cal as y on y.gvkey=m.peergvkey
+1500             and y.calyear between year(e.dateeff)-3 and year(e.dateeff)+3
+1501             and y.calyear ne year(e.dateeff)
+1502           where not missing(e.dateeff)
+1503           group by m.dealid,y.calyear;
+                                                           The SAS System
+
+NOTE: Table WORK.PEER_ROA_YEAR created, with 21045 rows and 4 columns.
+
+1504       
+1505           create table work.acq_roa_year as
+1506           select e.dealid,year(e.dateeff) as compyear,y.calyear,
+1507                  y.roa as acq_roa_year,p.peer_median_roa,p.n_peer_roa,
+1508                  y.roa-p.peer_median_roa as adj_roa
+1509           from work.events3 as e inner join work.fa_cal as y
+1510             on y.gvkey=e.acqgvkey and
+1511                y.calyear between year(e.dateeff)-3 and year(e.dateeff)+3
+1512                and y.calyear ne year(e.dateeff)
+1513           left join work.peer_roa_year as p
+1514             on e.dealid=p.dealid and y.calyear=p.calyear
+1515           where not missing(e.dateeff);
+NOTE: Table WORK.ACQ_ROA_YEAR created, with 26062 rows and 7 columns.
+
+1516       quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.79 seconds
+      cpu time            1.10 seconds
+      
+
+1517       proc sort data=work.acq_roa_year; by dealid calyear; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1518       data work.delta_out;
+1519           set work.acq_roa_year;
+1520           by dealid;
+1521           retain pre_sum post_sum pre_n post_n;
+1522           if first.dealid then do; pre_sum=0; post_sum=0; pre_n=0; post_n=0; end;
+1523           if not missing(adj_roa) then do;
+1524               if calyear>=compyear-3 and calyear<=compyear-1 then do;
+1525                   pre_sum+adj_roa; pre_n+1;
+1526               end;
+1527               else if calyear>=compyear+1 and calyear<=compyear+3 then do;
+1528                   post_sum+adj_roa; post_n+1;
+1529               end;
+1530           end;
+1531           if last.dealid then do;
+1532               delta_roa=.;
+1533               if pre_n=3 and post_n=3 then delta_roa=post_sum/3-pre_sum/3;
+1534               output;
+1535           end;
+1536           keep dealid compyear pre_n post_n delta_roa;
+1537           label delta_roa='Post-completion mean benchmark-adjusted ROA less pre-completion mean';
+1538       run;
+
+NOTE: There were 26062 observations read from the data set WORK.ACQ_ROA_YEAR.
+NOTE: The data set WORK.DELTA_OUT has 4697 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+                                                           The SAS System
+
+
+1539       proc sql;
+1540           select count(*) as events_with_dateeff,
+1541                  count(distinct dealid) as delta_peer_matched,
+1542                  mean(n_match_peers) as mean_match_peers,
+1543                  min(n_match_peers) as min_match_peers,
+1544                  max(n_match_peers) as max_match_peers
+1545           from work.delta_peer_n;
+1546           select count(*) as delta_year_rows,
+1547                  sum(pre_n=3 and post_n=3) as complete_six_year_delta_roa,
+1548                  sum(missing(delta_roa)) as missing_delta_roa
+1549           from work.delta_out;
+1550       quit;
+NOTE: The PROCEDURE SQL printed pages 62-63.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1551       
+1552       /* Merge the separately constructed outcomes and controls without allowing
+1553          Delta ROA's longer window to restrict either CAR regression. */
+1554       proc sql;
+1555           create table work.analysis0 as
+1556           select e.*,c.acq_car,c.trg_car,c.n_acq_eventdays,c.n_trg_eventdays,
+1557                  r.trg_comprnk,r.trg_comp,r.n_comp_peers,
+1558                  x.stock_corr,x.n_corr_peers,
+1559                  s.sync,s.sync_days,
+1560                  b.block,b.n_observed_managers,b.latest_holdings_rdate,b.max_fdate,
+1561                  d.delta_roa,d.compyear,d.pre_n,d.post_n,
+1562                  case when e.acq_mve_usd>0 and e.trg_mve_usd>0 and
+1563                            not missing(c.acq_car) and not missing(c.trg_car)
+1564                       then (e.acq_mve_usd/(e.acq_mve_usd+e.trg_mve_usd))*c.acq_car+
+1565                            (e.trg_mve_usd/(e.acq_mve_usd+e.trg_mve_usd))*c.trg_car
+1566                       else . end as synergy
+1567           from work.events3 as e
+1568           left join work.car_wide as c on e.dealid=c.dealid
+1569           left join work.target_comp_rank as r on e.dealid=r.dealid
+1570           left join work.target_corr as x
+1571             on e.trggvkey=x.targetgvkey and e.anchorq=x.anchorq and e.trg_sic2=x.sic2
+1572           left join work.target_sync as s
+1573             on e.trggvkey=s.targetgvkey and e.anchorq=s.anchorq and e.trg_sic2=s.sic2
+1574           left join work.block_event as b on e.dealid=b.dealid
+1575           left join work.delta_out as d on e.dealid=d.dealid;
+NOTE: Table WORK.ANALYSIS0 created, with 4697 rows and 72 columns.
+
+1576       quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+1577       
+1578       data work.analysis;
+1579           set work.analysis0;
+1580           acq_complete=(not missing(acq_car) and not missing(trg_comprnk) and
+1581              not missing(acq_size) and not missing(acq_lev) and not missing(acq_tobin_dum) and
+1582              not missing(acq_roa) and not missing(acq_fcf) and not missing(acq_q_fcf) and
+                                                           The SAS System
+
+1583              not missing(trg_size) and not missing(trg_lev) and not missing(trg_tobin) and
+1584              not missing(trg_roa) and not missing(stock_corr) and not missing(sync) and
+1585              not missing(block) and not missing(all_cash) and not missing(all_stock) and
+1586              not missing(tender_d) and not missing(hostile) and not missing(diffind) and
+1587              not missing(rel_size));
+1588           synergy_complete=(acq_complete and not missing(synergy));
+1589           delta_complete=(not missing(delta_roa) and not missing(trg_comprnk) and
+1590              not missing(acq_size) and not missing(acq_lev) and not missing(acq_tobin_dum) and
+1591              not missing(acq_roa) and not missing(acq_fcf) and not missing(acq_q_fcf) and
+1592              not missing(trg_size) and not missing(trg_lev) and not missing(trg_tobin) and
+1593              not missing(trg_roa) and not missing(stock_corr) and not missing(sync) and
+1594              not missing(block) and not missing(all_cash) and not missing(all_stock) and
+1595              not missing(tender_d) and not missing(hostile) and not missing(diffind) and
+1596              not missing(rel_size));
+1597       run;
+
+NOTE: There were 4697 observations read from the data set WORK.ANALYSIS0.
+NOTE: The data set WORK.ANALYSIS has 4697 observations and 75 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1598       
+1599       title "Outcome, main-regressor and complete-control coverage in the handoff";
+1600       proc sql;
+1601           select count(*) as material_deal_rows,
+1602                  sum(not missing(acq_car)) as available_acquirer_car,
+1603                  sum(not missing(synergy)) as available_synergy,
+1604                  sum(not missing(delta_roa)) as available_delta_roa,
+1605                  sum(not missing(trg_comprnk)) as avail_comprank,
+1606                  sum(not missing(stock_corr)) as available_stock_corr,
+1607                  sum(not missing(sync)) as available_sync,
+1608                  sum(not missing(block)) as observed_block,
+1609                  sum(acq_complete) as acq_car_full_controls,
+1610                  sum(synergy_complete) as synergy_full_controls,
+1611                  sum(delta_complete) as delta_roa_full_controls
+1612           from work.analysis;
+1613       quit;
+NOTE: The PROCEDURE SQL printed page 64.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1614       title;
+1615       title "Final deal-level outcome and control distributions";
+1616       proc means data=work.analysis n nmiss mean std p1 p25 median p75 p99 min max;
+1617           var acq_car synergy delta_roa trg_comprnk acq_size acq_lev acq_tobin_dum
+1618               acq_roa acq_fcf acq_q_fcf trg_size trg_lev trg_tobin trg_roa
+1619               stock_corr sync block all_cash all_stock tender_d hostile diffind rel_size;
+1620       run;
+
+NOTE: There were 4697 observations read from the data set WORK.ANALYSIS.
+NOTE: The PROCEDURE MEANS printed pages 65-66.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+                                                           The SAS System
+
+      
+
+1621       title;
+1622       title "Table 2 comparison: acquisition CAR complete-control sample";
+1623       proc means data=work.analysis n mean std p25 median p75;
+1624           where acq_complete=1;
+1625           var acq_car trg_car synergy delta_roa trg_comp acq_mve_usd acq_lev acq_tobin
+1626               acq_roa acq_fcf trg_mve_usd trg_lev trg_tobin trg_roa all_cash all_stock
+1627               tender_d hostile diffind rel_size block stock_corr sync;
+1628       run;
+
+NOTE: There were 1334 observations read from the data set WORK.ANALYSIS.
+      WHERE acq_complete=1;
+NOTE: The PROCEDURE MEANS printed page 67.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1629       title "Table 2 comparison: synergy complete-control sample";
+1630       proc means data=work.analysis n mean std p25 median p75;
+1631           where synergy_complete=1;
+1632           var acq_car trg_car synergy delta_roa trg_comp acq_mve_usd acq_lev acq_tobin
+1633               acq_roa acq_fcf trg_mve_usd trg_lev trg_tobin trg_roa all_cash all_stock
+1634               tender_d hostile diffind rel_size block stock_corr sync;
+1635       run;
+
+NOTE: There were 1332 observations read from the data set WORK.ANALYSIS.
+      WHERE synergy_complete=1;
+NOTE: The PROCEDURE MEANS printed page 68.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1636       title "Table 2 comparison: delta ROA complete-control sample";
+1637       proc means data=work.analysis n mean std p25 median p75;
+1638           where delta_complete=1;
+1639           var acq_car trg_car synergy delta_roa trg_comp acq_mve_usd acq_lev acq_tobin
+1640               acq_roa acq_fcf trg_mve_usd trg_lev trg_tobin trg_roa all_cash all_stock
+1641               tender_d hostile diffind rel_size block stock_corr sync;
+1642       run;
+
+NOTE: There were 1041 observations read from the data set WORK.ANALYSIS.
+      WHERE delta_complete=1;
+NOTE: The PROCEDURE MEANS printed page 69.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+1643       title;
+1644       proc sql;
+1645           create table work.final_dup as
+1646           select dealid,count(*) as n_rows from work.analysis group by dealid having count(*)>1;
+NOTE: Table WORK.FINAL_DUP created, with 0 rows and 2 columns.
+
+1647           select count(*) as duplicate_final_deal_keys from work.final_dup;
+                                                           The SAS System
+
+1648       quit;
+NOTE: The PROCEDURE SQL printed page 70.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1649       
+1650       data out.us_acquisitions_1307;
+1651           set work.analysis;
+1652           keep dealid acq_car synergy delta_roa trg_comprnk acq_size acq_lev acq_tobin_dum
+1653                acq_roa acq_fcf acq_q_fcf trg_size trg_lev trg_tobin trg_roa
+1654                stock_corr sync block all_cash all_stock tender_d hostile diffind rel_size
+1655                acq_mve_usd trg_mve_usd n_comp_peers n_corr_peers sync_days
+1656                n_observed_managers latest_holdings_rdate max_fdate
+1657                acq_complete synergy_complete delta_complete;
+1658           label acq_car='Acquirer three-day market-model cumulative abnormal return'
+1659                 synergy='Acquirer and target CAR weighted by prior-quarter company market value'
+1660                 delta_roa='Post-completion less pre-completion benchmark-adjusted ROA'
+1661                 trg_comprnk='Target comparability decile rank divided by nine'
+1662                 acq_size='Log prior-quarter acquirer company market value in USD millions'
+1663                 trg_size='Log prior-quarter target company market value in USD millions'
+1664                 acq_lev='Acquirer long-term and short-term debt over total assets'
+1665                 trg_lev='Target long-term and short-term debt over total assets'
+1666                 acq_tobin_dum='One if acquirer Tobin Q is below sample median'
+1667                 acq_roa='Acquirer operating income before depreciation over average assets'
+1668                 trg_roa='Target operating income before depreciation over average assets'
+1669                 acq_fcf='Acquirer free cash flow over total assets'
+1670                 acq_q_fcf='Acquirer Q dummy times free cash flow'
+1671                 trg_tobin='Target market value of assets over book assets'
+1672                 stock_corr='Mean target-to-industry quarterly return correlation'
+1673                 sync='Target daily stock-return adjusted R-squared on market return'
+1674                 block='Any observed institution manager holds more than five percent'
+1675                 all_cash='At least ninety percent of consideration paid in cash'
+1676                 all_stock='At least ninety percent of consideration paid in stock'
+1677                 tender_d='SDC tender-offer indicator'
+1678                 hostile='SDC hostile-attitude indicator'
+1679                 diffind='Acquirer and target have different two-digit SIC'
+1680                 rel_size='SDC ranking deal value divided by prior-quarter acquirer MVE';
+1681       run;
+
+NOTE: There were 4697 observations read from the data set WORK.ANALYSIS.
+NOTE: The data set OUT.US_ACQUISITIONS_1307 has 4697 observations and 35 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+1682       
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           3:19.27
+      cpu time            4:15.86
+      

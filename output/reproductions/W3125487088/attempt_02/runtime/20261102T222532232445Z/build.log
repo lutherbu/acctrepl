@@ -1,0 +1,1832 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 06:25:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 06:25:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+1          options errorabend nodate nonumber;
+2          libname comp '/storage/sas/base/comp/d_na' access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+3          libname compsec '/storage/sas/base/comp/d_na/security' access=readonly;
+NOTE: Libref COMPSEC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+4          libname crsp '/storage/sas/base/crsp/a_ccm' access=readonly;
+NOTE: Libref CRSP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+5          libname crspstk '/storage/sas/base/crsp/a_stock' access=readonly;
+NOTE: Libref CRSPSTK was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+6          libname out 'data';
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3125487088/attempt_02/data
+7          
+8          data work.funda_raw;
+9              length pref_fmt $4;
+10             set comp.funda(keep=gvkey datadate fyear indfmt datafmt consol popsrc
+11                            iid hiid curcd epspx ajex prcc_f sich naicsh
+12                            where=(fyear >= 1950 and fyear <= 2001
+13                                   and popsrc='D' and datafmt='STD' and consol='C'
+14                                   and indfmt in ('INDL','FS')));
+15             sich_valid=(not missing(sich) and 100<=sich and sich<=9999);
+16             sich_zero=(sich=0);
+17             naicsh_zero=(naicsh=0);
+18             naics_sector=.;
+19             if not missing(naicsh) and naicsh>=10 then do;
+20                 naics_digits=floor(log10(naicsh))+1;
+21                 naics_sector=floor(naicsh/(10**(naics_digits-2)));
+22             end;
+                                                           The SAS System
+
+23             if sich_valid and 6000 <= sich and sich <= 6999 then pref_fmt='FS';
+24             else if sich_valid then pref_fmt='INDL';
+25             else if naics_sector=52 then pref_fmt='FS';
+26             else if not missing(naics_sector) then pref_fmt='INDL';
+27             else pref_fmt='';
+28             if indfmt=pref_fmt and not missing(pref_fmt) then fmtmatch=1;
+29             else fmtmatch=0;
+30         run;
+
+NOTE: There were 343242 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1950 and fyear<=2001) and (popsrc='D') and (datafmt='STD') and (consol='C') and indfmt in ('FS', 'INDL');
+NOTE: The data set WORK.FUNDA_RAW has 343242 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.56 seconds
+      cpu time            0.56 seconds
+      
+
+31         
+32         proc sql;
+33             create table work.rawcounts as
+34             select count(*) as filtered_source_rows,
+35                    max(lengthn(strip(gvkey))) as max_gvkey_chars
+36             from work.funda_raw;
+NOTE: Table WORK.RAWCOUNTS created, with 1 rows and 2 columns.
+
+37         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.02 seconds
+      
+
+38         
+39         proc sort data=work.funda_raw out=work.funda_uniq nodupkey;
+40             by gvkey fyear datadate iid hiid curcd indfmt epspx ajex prcc_f sich naicsh;
+41         run;
+
+NOTE: There were 343242 observations read from the data set WORK.FUNDA_RAW.
+NOTE: 0 observations with duplicate key values were deleted.
+NOTE: The data set WORK.FUNDA_UNIQ has 343242 observations and 22 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.19 seconds
+      
+
+42         proc sort data=work.funda_raw out=work.valrows nodupkey;
+43             by gvkey fyear datadate iid hiid curcd epspx ajex prcc_f sich naicsh;
+44         run;
+
+NOTE: There were 343242 observations read from the data set WORK.FUNDA_RAW.
+NOTE: 4334 observations with duplicate key values were deleted.
+NOTE: The data set WORK.VALROWS has 338908 observations and 22 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.19 seconds
+      
+
+45         data work.prefrows;
+46             set work.funda_uniq;
+                                                           The SAS System
+
+47             if fmtmatch=1;
+48         run;
+
+NOTE: There were 343242 observations read from the data set WORK.FUNDA_UNIQ.
+NOTE: The data set WORK.PREFROWS has 153854 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+49         proc sort data=work.prefrows nodupkey;
+50             by gvkey fyear datadate iid hiid curcd epspx ajex prcc_f sich naicsh;
+51         run;
+
+NOTE: There were 153854 observations read from the data set WORK.PREFROWS.
+NOTE: 0 observations with duplicate key values were deleted.
+NOTE: The data set WORK.PREFROWS has 153854 observations and 22 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+52         
+53         proc sql;
+54             create table work.prefstats as
+55             select gvkey, fyear, count(*) as preferred_rows
+56             from work.prefrows
+57             group by gvkey, fyear;
+NOTE: Table WORK.PREFSTATS created, with 153853 rows and 3 columns.
+
+58         
+59             create table work.fystats as
+60             select v.gvkey, v.fyear, min(v.datadate) as firstdate,
+61                    max(v.datadate) as lastdate, count(*) as candidates,
+62                    coalesce(p.preferred_rows,0) as preferred_rows
+63             from work.valrows as v
+64             left join work.prefstats as p
+65               on v.gvkey=p.gvkey and v.fyear=p.fyear
+66             group by v.gvkey, v.fyear, p.preferred_rows;
+NOTE: Table WORK.FYSTATS created, with 322642 rows and 6 columns.
+
+67         
+68             create table work.annual0 as
+69             select v.*
+70             from work.valrows as v
+71             inner join work.fystats as s
+72               on v.gvkey=s.gvkey and v.fyear=s.fyear
+73             where s.candidates=1
+74             union corr
+75             select p.*
+76             from work.prefrows as p
+77             inner join work.fystats as s
+78               on p.gvkey=s.gvkey and p.fyear=s.fyear
+79             where s.candidates>1 and s.firstdate=s.lastdate
+80               and s.preferred_rows=1;
+NOTE: Table WORK.ANNUAL0 created, with 319049 rows and 22 columns.
+
+81         
+                                                           The SAS System
+
+82             create table work.fycounts as
+83             select count(*) as firmyears_selected
+84             from work.annual0;
+NOTE: Table WORK.FYCOUNTS created, with 1 rows and 1 columns.
+
+85         
+86             create table work.ambig as
+87             select count(*) as firmyears_ambiguous
+88             from work.fystats
+89             where candidates>1 and
+90                   (firstdate ne lastdate or preferred_rows ne 1);
+NOTE: Table WORK.AMBIG created, with 1 rows and 1 columns.
+
+91         
+92             create table work.ambigyr as
+93             select fyear, count(*) as ambiguous_firmyears
+94             from work.fystats
+95             where candidates>1 and
+96                   (firstdate ne lastdate or preferred_rows ne 1)
+97             group by fyear
+98             order by fyear;
+NOTE: Table WORK.AMBIGYR created, with 36 rows and 2 columns.
+
+99         
+100            create table work.indcov as
+101            select fyear, count(*) as source_rows,
+102                   sum(sich_valid) as valid_sich_rows,
+103                   sum(sich_zero) as zero_sich_rows,
+104                   sum(not missing(sich) and sich_valid=0 and sich_zero=0)
+105                       as other_invalid_sich_rows,
+106                   sum(not missing(naicsh) and naicsh>0) as positive_naicsh_rows,
+107                   sum(naicsh_zero) as zero_naicsh_rows,
+108                   sum(naics_sector=52) as naics_finance_sector_rows
+109            from work.valrows
+110            group by fyear
+111            order by fyear;
+NOTE: Table WORK.INDCOV created, with 52 rows and 8 columns.
+
+112        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.56 seconds
+      cpu time            0.79 seconds
+      
+
+113        
+114        data work.annual;
+115            set work.annual0;
+116            source_fmt=indfmt;
+117            keep gvkey fyear datadate iid hiid curcd indfmt source_fmt sich naicsh
+118                 epspx ajex prcc_f;
+119        run;
+
+NOTE: There were 319049 observations read from the data set WORK.ANNUAL0.
+NOTE: The data set WORK.ANNUAL has 319049 observations and 13 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+                                                           The SAS System
+
+
+120        
+121        proc sql;
+122            create table work.period0 as
+123            select a.gvkey, a.fyear, a.datadate, a.iid, a.hiid, a.curcd,
+124                   a.indfmt, a.sich, a.naicsh, a.epspx, a.ajex, a.prcc_f,
+125                   b.datadate as prevdate, b.iid as previid, b.hiid as prevhiid,
+126                   b.curcd as prevcur, b.ajex as prevajex,
+127                   b.prcc_f as prevprcc
+128            from work.annual as a
+129            left join work.annual as b
+130              on a.gvkey=b.gvkey and a.fyear=b.fyear+1
+131            where a.fyear between 1951 and 2001;
+NOTE: Table WORK.PERIOD0 created, with 318384 rows and 18 columns.
+
+132        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.22 seconds
+      cpu time            0.32 seconds
+      
+
+133        
+134        data work.period0;
+135            set work.period0;
+136            lagok=(not missing(prevdate));
+137            dateok=(lagok and prevdate<datadate);
+138            iidok=(lagok and strip(iid)=strip(previid));
+139            hiidok=(lagok and not missing(hiid) and not missing(prevhiid)
+140                    and strip(hiid)=strip(prevhiid));
+141            epsok=(not missing(epspx) and not missing(ajex) and ajex>0
+142                   and not missing(prevajex) and prevajex>0);
+143            ret_days=datadate-prevdate;
+144            eps_prior_basis=.;
+145            if epsok then eps_prior_basis=epspx*prevajex/ajex;
+146        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      26244 at 143:22   
+NOTE: There were 318384 observations read from the data set WORK.PERIOD0.
+NOTE: The data set WORK.PERIOD0 has 318384 observations and 25 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.11 seconds
+      
+
+147        
+148        data work.issues;
+149            length iid $4;
+150            set work.period0(keep=gvkey hiid lagok dateok hiidok);
+151            if lagok and dateok and hiidok;
+152            iid=hiid;
+153            keep gvkey iid;
+154        run;
+
+NOTE: There were 318384 observations read from the data set WORK.PERIOD0.
+NOTE: The data set WORK.ISSUES has 285150 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+155        proc sort data=work.issues nodupkey;
+156            by gvkey iid;
+157        run;
+
+NOTE: There were 285150 observations read from the data set WORK.ISSUES.
+NOTE: 259975 observations with duplicate key values were deleted.
+NOTE: The data set WORK.ISSUES has 25175 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.05 seconds
+      
+
+158        
+159        data work.links;
+160            length iid $4 sdate edate 8 is_x 8;
+161            set crsp.ccmxpf_linktable(keep=gvkey liid lpermno linkdt linkenddt
+162                                      linkprim linktype USEDFLAG);
+163            if USEDFLAG ne 1 or linkprim not in ('P','C')
+164               or linktype not in ('LC','LU')
+165               or missing(lpermno) then delete;
+166            iid=liid;
+167            is_x=0;
+168            if not missing(iid)
+169               and substr(strip(upcase(iid)),lengthn(strip(upcase(iid))),1)='X'
+170               then is_x=1;
+171            if linkdt=.B then sdate=-1000000;
+172            else if not missing(linkdt) then sdate=linkdt;
+173            else delete;
+174            if linkenddt=.E or linkenddt=. then edate=1000000;
+175            else if not missing(linkenddt) then edate=linkenddt;
+176            else delete;
+177            if edate<sdate then delete;
+178            keep gvkey iid lpermno linkdt linkenddt linkprim linktype USEDFLAG
+179                 sdate edate is_x;
+180        run;
+
+NOTE: There were 92711 observations read from the data set CRSP.CCMXPF_LINKTABLE.
+NOTE: The data set WORK.LINKS has 33324 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+181        proc sql;
+182            create table work.linkintervals as
+183            select distinct p.gvkey, p.fyear, p.hiid, p.prevdate, p.datadate,
+184                   l.lpermno as permno, l.sdate, l.edate, l.is_x,
+185                   (l.iid=p.hiid) as direct_id
+186            from work.period0 as p
+187            inner join work.links as l
+188              on p.gvkey=l.gvkey and (l.iid=p.hiid or l.is_x=1)
+189            where p.lagok=1 and p.dateok=1 and p.hiidok=1;
+NOTE: Table WORK.LINKINTERVALS created, with 299435 rows and 10 columns.
+
+                                                           The SAS System
+
+190        
+191            create table work.rowcand as
+192            select distinct p.gvkey, p.fyear, l.lpermno as permno
+193            from work.period0 as p
+194            inner join work.links as l
+195              on p.gvkey=l.gvkey and (l.iid=p.hiid or l.is_x=1)
+196            where p.lagok=1 and p.dateok=1 and p.hiidok=1
+197              and l.sdate<=p.prevdate and l.edate>=p.datadate;
+NOTE: Table WORK.ROWCAND created, with 174639 rows and 3 columns.
+
+198        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.45 seconds
+      cpu time            0.55 seconds
+      
+
+199        
+200        proc sort data=work.linkintervals;
+201            by gvkey fyear hiid permno sdate edate;
+202        run;
+
+NOTE: There were 299435 observations read from the data set WORK.LINKINTERVALS.
+NOTE: The data set WORK.LINKINTERVALS has 299435 observations and 10 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.13 seconds
+      
+
+203        data work.linkseg;
+204            set work.linkintervals;
+205            by gvkey fyear hiid permno;
+206            retain segstart segend dummy_x_history direct_id_history;
+207            if first.permno then do;
+208                segstart=sdate;
+209                segend=edate;
+210                dummy_x_history=is_x;
+211                direct_id_history=direct_id;
+212            end;
+213            else if sdate<=segend+1 then do;
+214                if edate>segend then segend=edate;
+215                dummy_x_history=max(dummy_x_history,is_x);
+216                direct_id_history=max(direct_id_history,direct_id);
+217            end;
+218            else do;
+219                output;
+220                segstart=sdate;
+221                segend=edate;
+222                dummy_x_history=is_x;
+223                direct_id_history=direct_id;
+224            end;
+225            if last.permno then output;
+226            keep gvkey fyear hiid permno segstart segend
+227                 dummy_x_history direct_id_history;
+228        run;
+
+NOTE: There were 299435 observations read from the data set WORK.LINKINTERVALS.
+NOTE: The data set WORK.LINKSEG has 253231 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+229        
+230        proc sql;
+231            create table work.linkcand0 as
+232            select p.gvkey, p.fyear, l.permno,
+233                   l.dummy_x_history, l.direct_id_history,
+234                   max(k.is_x) as dummy_x_used,
+235                   max(case when k.iid=p.hiid then 1 else 0 end) as direct_id_used
+236            from work.period0 as p
+237            inner join work.linkseg as l
+238              on p.gvkey=l.gvkey and p.fyear=l.fyear and p.hiid=l.hiid
+239            inner join work.links as k
+240              on p.gvkey=k.gvkey and l.permno=k.lpermno
+241             and (k.iid=p.hiid or k.is_x=1)
+242             and k.sdate<=p.datadate and k.edate>=p.prevdate
+243            where p.lagok=1 and p.dateok=1 and p.hiidok=1
+244              and l.segstart<=p.prevdate and l.segend>=p.datadate
+245            group by p.gvkey, p.fyear, l.permno,
+246                     l.dummy_x_history, l.direct_id_history;
+NOTE: Table WORK.LINKCAND0 created, with 175859 rows and 7 columns.
+
+247        
+248            create table work.rowlinkstats as
+249            select gvkey, fyear, count(*) as rowlinkcnt
+250            from work.rowcand
+251            group by gvkey, fyear;
+NOTE: Table WORK.ROWLINKSTATS created, with 174639 rows and 3 columns.
+
+252        
+253            create table work.linkcand as
+254            select gvkey, fyear, permno, max(dummy_x_used) as dummy_x_used,
+255                   max(direct_id_used) as direct_id_used,
+256                   max(dummy_x_history) as dummy_x_history,
+257                   max(direct_id_history) as direct_id_history
+258            from work.linkcand0
+259            group by gvkey, fyear, permno;
+NOTE: Table WORK.LINKCAND created, with 175859 rows and 7 columns.
+
+260        
+261            create table work.linkstats as
+262            select gvkey, fyear, count(*) as linkcnt, max(permno) as permno,
+263                   max(dummy_x_used) as dummy_x_used,
+264                   max(direct_id_used) as direct_id_used,
+265                   max(dummy_x_history) as dummy_x_history,
+266                   max(direct_id_history) as direct_id_history
+267            from work.linkcand
+268            group by gvkey, fyear;
+NOTE: Table WORK.LINKSTATS created, with 175859 rows and 8 columns.
+
+269        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.54 seconds
+      cpu time            1.57 seconds
+      
+
+                                                           The SAS System
+
+270        
+271        proc sql;
+272            create table work.periodlink as
+273            select p.*, coalesce(l.linkcnt,0) as linkcnt,
+274                   coalesce(r.rowlinkcnt,0) as rowlinkcnt,
+275                   coalesce(l.dummy_x_used,0) as dummy_x_used,
+276                   coalesce(l.direct_id_used,0) as direct_id_used,
+277                   coalesce(l.dummy_x_history,0) as dummy_x_history,
+278                   coalesce(l.direct_id_history,0) as direct_id_history,
+279                   l.permno as permno
+280            from work.period0 as p
+281            left join work.linkstats as l
+282              on p.gvkey=l.gvkey and p.fyear=l.fyear
+283            left join work.rowlinkstats as r
+284              on p.gvkey=r.gvkey and p.fyear=r.fyear;
+NOTE: Table WORK.PERIODLINK created, with 318384 rows and 32 columns.
+
+285        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.32 seconds
+      
+
+286        
+287        data work.win;
+288            set work.periodlink;
+289            if lagok and dateok and hiidok and linkcnt=1;
+290            keep gvkey fyear iid hiid curcd prevdate datadate ret_days permno;
+291        run;
+
+NOTE: There were 318384 observations read from the data set WORK.PERIODLINK.
+NOTE: The data set WORK.WIN has 175859 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+292        proc sort data=work.win;
+293            by gvkey fyear;
+294        run;
+
+NOTE: There were 175859 observations read from the data set WORK.WIN.
+NOTE: The data set WORK.WIN has 175859 observations and 9 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+295        
+296        data work.marketcal;
+297            length date 8;
+298            set crspstk.dsi(keep=date
+299                            where=(date >= '01JAN1948'd
+300                                   and date <= '31DEC2003'd));
+301        run;
+
+NOTE: There were 14238 observations read from the data set CRSPSTK.DSI.
+      WHERE (date>='01JAN1948'D and date<='31DEC2003'D);
+                                                           The SAS System
+
+NOTE: The data set WORK.MARKETCAL has 14238 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.01 seconds
+      
+
+302        proc sort data=work.marketcal nodupkey;
+303            by date;
+304        run;
+
+NOTE: There were 14238 observations read from the data set WORK.MARKETCAL.
+NOTE: 0 observations with duplicate key values were deleted.
+NOTE: The data set WORK.MARKETCAL has 14238 observations and 1 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+305        data work.marketcal;
+306            set work.marketcal;
+307            mktday+1;
+308        run;
+
+NOTE: There were 14238 observations read from the data set WORK.MARKETCAL.
+NOTE: The data set WORK.MARKETCAL has 14238 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+309        
+310        data work.events;
+311            length date 8;
+312            set work.win;
+313            which=1;
+314            date=prevdate;
+315            output;
+316            which=2;
+317            date=datadate;
+318            output;
+319            keep gvkey fyear which date;
+320        run;
+
+NOTE: There were 175859 observations read from the data set WORK.WIN.
+NOTE: The data set WORK.EVENTS has 351718 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+321        proc sort data=work.events;
+322            by date;
+323        run;
+
+NOTE: There were 351718 observations read from the data set WORK.EVENTS.
+NOTE: The data set WORK.EVENTS has 351718 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+                                                           The SAS System
+
+      cpu time            0.09 seconds
+      
+
+324        data work.anchor_rank;
+325            merge work.marketcal(in=im) work.events(in=ie);
+326            by date;
+327            retain lastday lastdate;
+328            if im then do;
+329                lastday=mktday;
+330                lastdate=date;
+331            end;
+332            if ie then do;
+333                eventrank=lastday;
+334                eventmkt=lastdate;
+335                output;
+336            end;
+337            keep gvkey fyear which eventrank eventmkt;
+338        run;
+
+NOTE: There were 14238 observations read from the data set WORK.MARKETCAL.
+NOTE: There were 351718 observations read from the data set WORK.EVENTS.
+NOTE: The data set WORK.ANCHOR_RANK has 351718 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+339        proc sort data=work.anchor_rank;
+340            by gvkey fyear which;
+341        run;
+
+NOTE: There were 351718 observations read from the data set WORK.ANCHOR_RANK.
+NOTE: The data set WORK.ANCHOR_RANK has 351718 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.11 seconds
+      
+
+342        data work.marketcnt;
+343            set work.anchor_rank;
+344            by gvkey fyear;
+345            retain rprev rcurr dprev dcurr;
+346            if first.fyear then call missing(rprev,rcurr,dprev,dcurr);
+347            if which=1 then do;
+348                rprev=eventrank;
+349                dprev=eventmkt;
+350            end;
+351            else do;
+352                rcurr=eventrank;
+353                dcurr=eventmkt;
+354            end;
+355            if last.fyear then do;
+356                expdays=rcurr-rprev;
+357                output;
+358            end;
+359            keep gvkey fyear rprev rcurr dprev dcurr expdays;
+360        run;
+
+                                                           The SAS System
+
+NOTE: There were 351718 observations read from the data set WORK.ANCHOR_RANK.
+NOTE: The data set WORK.MARKETCNT has 175859 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+361        proc sql;
+362            create table work.marketwin as
+363            select m.*, a.date as exp_first, b.date as exp_last
+364            from work.marketcnt as m
+365            left join work.marketcal as a
+366              on a.mktday=m.rprev+1
+367            left join work.marketcal as b
+368              on b.mktday=m.rcurr;
+NOTE: Table WORK.MARKETWIN created, with 175859 rows and 9 columns.
+
+369        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.15 seconds
+      
+
+370        
+371        data work.permnos;
+372            set work.win(keep=permno);
+373        run;
+
+NOTE: There were 175859 observations read from the data set WORK.WIN.
+NOTE: The data set WORK.PERMNOS has 175859 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+374        proc sort data=work.permnos nodupkey;
+375            by permno;
+376        run;
+
+NOTE: There were 175859 observations read from the data set WORK.PERMNOS.
+NOTE: 157215 observations with duplicate key values were deleted.
+NOTE: The data set WORK.PERMNOS has 18644 observations and 1 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+377        
+378        data work.dsf0;
+379            if _n_=1 then do;
+380                declare hash hp(dataset:'work.permnos');
+381                hp.defineKey('permno');
+382                hp.defineDone();
+383            end;
+384            set crspstk.dsf(keep=permno date prc ret
+385                            where=(date >= '01JAN1948'd
+386                                   and date <= '31DEC2003'd));
+387            if hp.check()=0;
+                                                           The SAS System
+
+388        run;
+
+NOTE: There were 18644 observations read from the data set WORK.PERMNOS.
+NOTE: There were 63178989 observations read from the data set CRSPSTK.DSF.
+      WHERE (date>='01JAN1948'D and date<='31DEC2003'D);
+NOTE: The data set WORK.DSF0 has 55932109 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           16.27 seconds
+      cpu time            9.94 seconds
+      
+
+389        proc sort data=work.dsf0;
+390            by permno date;
+391        run;
+
+NOTE: There were 55932109 observations read from the data set WORK.DSF0.
+NOTE: The data set WORK.DSF0 has 55932109 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           5.21 seconds
+      cpu time            13.05 seconds
+      
+
+392        data work.dsfuniq work.dsfdup;
+393            set work.dsf0;
+394            by permno date;
+395            if first.date and last.date then output work.dsfuniq;
+396            else if first.date then output work.dsfdup;
+397        run;
+
+NOTE: There were 55932109 observations read from the data set WORK.DSF0.
+NOTE: The data set WORK.DSFUNIQ has 55932109 observations and 4 variables.
+NOTE: The data set WORK.DSFDUP has 0 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           3.96 seconds
+      cpu time            3.97 seconds
+      
+
+398        
+399        data work.dayret;
+400            length gvkey $7 fyear 8 prevdate datadate 8 rc 8;
+401            if _n_=1 then do;
+402                declare hash hw(dataset:'work.win',multidata:'y');
+403                hw.defineKey('permno');
+404                hw.defineData('gvkey','fyear','prevdate','datadate');
+405                hw.defineDone();
+406            end;
+407            set work.dsfuniq(keep=permno date ret);
+408            rc=hw.find();
+409            do while (rc=0);
+410                if date>prevdate and date<=datadate then output;
+411                rc=hw.find_next();
+412            end;
+413            keep gvkey fyear permno date ret;
+414        run;
+
+NOTE: Variable gvkey is uninitialized.
+NOTE: Variable fyear is uninitialized.
+NOTE: Variable prevdate is uninitialized.
+                                                           The SAS System
+
+NOTE: Variable datadate is uninitialized.
+NOTE: There were 175859 observations read from the data set WORK.WIN.
+NOTE: There were 55932109 observations read from the data set WORK.DSFUNIQ.
+NOTE: The data set WORK.DAYRET has 44308161 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           23.53 seconds
+      cpu time            23.53 seconds
+      
+
+415        proc sort data=work.dayret;
+416            by gvkey fyear date;
+417        run;
+
+NOTE: There were 44308161 observations read from the data set WORK.DAYRET.
+NOTE: The data set WORK.DAYRET has 44308161 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           4.83 seconds
+      cpu time            12.21 seconds
+      
+
+418        
+419        data work.retagg;
+420            set work.dayret;
+421            by gvkey fyear;
+422            retain nday ret_bad logret zero_ret first_obs last_obs;
+423            if first.fyear then do;
+424                nday=0;
+425                ret_bad=0;
+426                logret=0;
+427                zero_ret=0;
+428                first_obs=date;
+429            end;
+430            last_obs=date;
+431            nday+1;
+432            if missing(ret) or ret < -1 then ret_bad=1;
+433            else if ret=-1 then zero_ret=1;
+434            else logret=logret+log(1+ret);
+435            if last.fyear then do;
+436                ret_annual=.;
+437                if nday>0 and ret_bad=0 then do;
+438                    if zero_ret=1 then ret_annual=-1;
+439                    else ret_annual=exp(logret)-1;
+440                end;
+441                output;
+442            end;
+443            keep gvkey fyear nday ret_bad ret_annual first_obs last_obs;
+444        run;
+
+NOTE: There were 44308161 observations read from the data set WORK.DAYRET.
+NOTE: The data set WORK.RETAGG has 175603 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           1.92 seconds
+      cpu time            1.93 seconds
+      
+
+445        proc sort data=work.retagg;
+446            by gvkey fyear;
+447        run;
+                                                           The SAS System
+
+
+NOTE: There were 175603 observations read from the data set WORK.RETAGG.
+NOTE: The data set WORK.RETAGG has 175603 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+448        proc sort data=work.marketwin;
+449            by gvkey fyear;
+450        run;
+
+NOTE: There were 175859 observations read from the data set WORK.MARKETWIN.
+NOTE: The data set WORK.MARKETWIN has 175859 observations and 9 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+451        data work.retagg2;
+452            merge work.retagg(in=a) work.marketwin(in=b);
+453            by gvkey fyear;
+454            if a or b;
+455            ret=.;
+456            retok=0;
+457            if a and b and not missing(expdays) and expdays>0
+458               and nday=expdays and first_obs=exp_first
+459               and last_obs=exp_last and ret_bad=0 then do;
+460                ret=ret_annual;
+461                retok=1;
+462            end;
+463            keep gvkey fyear ret nday ret_bad retok expdays exp_first exp_last
+464                 first_obs last_obs;
+465        run;
+
+NOTE: There were 175603 observations read from the data set WORK.RETAGG.
+NOTE: There were 175859 observations read from the data set WORK.MARKETWIN.
+NOTE: The data set WORK.RETAGG2 has 175859 observations and 11 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.03 seconds
+      
+
+466        
+467        data work.qwin;
+468            set work.win;
+469            if strip(upcase(curcd))='USD';
+470            keep gvkey fyear permno prevdate;
+471        run;
+
+NOTE: There were 175859 observations read from the data set WORK.WIN.
+NOTE: The data set WORK.QWIN has 175830 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+472        data work.quotehit;
+                                                           The SAS System
+
+473            length gvkey $7 fyear 8 prevdate 8 qdate 8 qgap 8 qprice 8 rc 8;
+474            if _n_=1 then do;
+475                declare hash hq(dataset:'work.qwin',multidata:'y');
+476                hq.defineKey('permno');
+477                hq.defineData('gvkey','fyear','prevdate');
+478                hq.defineDone();
+479            end;
+480            set work.dsfuniq(keep=permno date prc);
+481            rc=hq.find();
+482            do while (rc=0);
+483                if date<=prevdate and date>=prevdate-7 and not missing(prc) then do;
+484                    qdate=date;
+485                    qgap=prevdate-date;
+486                    qprice=abs(prc);
+487                    output;
+488                end;
+489                rc=hq.find_next();
+490            end;
+491            keep gvkey fyear qdate qgap qprice;
+492        run;
+
+NOTE: Variable gvkey is uninitialized.
+NOTE: Variable fyear is uninitialized.
+NOTE: Variable prevdate is uninitialized.
+NOTE: There were 175830 observations read from the data set WORK.QWIN.
+NOTE: There were 55932109 observations read from the data set WORK.DSFUNIQ.
+NOTE: The data set WORK.QUOTEHIT has 873867 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           23.50 seconds
+      cpu time            23.51 seconds
+      
+
+493        proc sort data=work.quotehit;
+494            by gvkey fyear descending qdate;
+495        run;
+
+NOTE: There were 873867 observations read from the data set WORK.QUOTEHIT.
+NOTE: The data set WORK.QUOTEHIT has 873867 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.26 seconds
+      
+
+496        data work.qbest;
+497            set work.quotehit;
+498            by gvkey fyear;
+499            if first.fyear;
+500            rename qdate=crsp_date qgap=crsp_gap qprice=crsp_price;
+501        run;
+
+NOTE: There were 873867 observations read from the data set WORK.QUOTEHIT.
+NOTE: The data set WORK.QBEST has 173155 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+502        
+                                                           The SAS System
+
+503        proc sql;
+504            create table work.dupflag as
+505            select w.gvkey, w.fyear,
+506                   max(case when d.date>w.prevdate and d.date<=w.datadate
+507                            then 1 else 0 end) as retdup,
+508                   max(case when d.date<=w.prevdate and d.date>=w.prevdate-7
+509                            then 1 else 0 end) as pricedup
+510            from work.win as w
+511            inner join work.dsfdup as d
+512              on w.permno=d.permno
+513            group by w.gvkey, w.fyear;
+NOTE: Table WORK.DUPFLAG created, with 0 rows and 4 columns.
+
+514        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+515        
+516        data work.dcur0;
+517            if _n_=1 then do;
+518                declare hash hi(dataset:'work.issues');
+519                hi.defineKey('gvkey','iid');
+520                hi.defineDone();
+521            end;
+522            set compsec.sec_dprc(keep=gvkey iid datadate curcdd
+523                                 where=(datadate >= '01JAN1948'd
+524                                        and datadate <= '31DEC2003'd));
+525            if hi.check()=0 and not missing(curcdd);
+526        run;
+
+NOTE: There were 25175 observations read from the data set WORK.ISSUES.
+NOTE: There were 53760141 observations read from the data set COMPSEC.SEC_DPRC.
+      WHERE (datadate>='01JAN1948'D and datadate<='31DEC2003'D);
+NOTE: The data set WORK.DCUR0 has 45632395 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           13.13 seconds
+      cpu time            9.32 seconds
+      
+
+527        proc sort data=work.dcur0 out=work.dcur1 nodupkey;
+528            by gvkey iid datadate curcdd;
+529        run;
+
+NOTE: There were 45632395 observations read from the data set WORK.DCUR0.
+NOTE: 0 observations with duplicate key values were deleted.
+NOTE: The data set WORK.DCUR1 has 45632395 observations and 4 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           3.63 seconds
+      cpu time            9.70 seconds
+      
+
+530        proc sql;
+531            create table work.dcurcnt as
+532            select gvkey, iid, datadate, count(*) as ncur
+533            from work.dcur1
+534            group by gvkey, iid, datadate;
+                                                           The SAS System
+
+NOTE: Table WORK.DCURCNT created, with 45632395 rows and 4 columns.
+
+535        
+536            create table work.dcur as
+537            select a.gvkey, a.iid, a.datadate, a.curcdd
+538            from work.dcur1 as a
+539            inner join work.dcurcnt as c
+540              on a.gvkey=c.gvkey and a.iid=c.iid and a.datadate=c.datadate
+541            where c.ncur=1;
+NOTE: Table WORK.DCUR created, with 45632395 rows and 4 columns.
+
+542        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           15.67 seconds
+      cpu time            15.65 seconds
+      
+
+543        
+544        data work.dreq;
+545            length iid $4;
+546            set work.period0;
+547            if lagok and dateok and hiidok;
+548            iid=hiid;
+549            do doff=0 to 7;
+550                datadate=prevdate-doff;
+551                output;
+552            end;
+553            keep gvkey iid fyear prevdate doff datadate;
+554        run;
+
+NOTE: There were 318384 observations read from the data set WORK.PERIOD0.
+NOTE: The data set WORK.DREQ has 2281200 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.12 seconds
+      
+
+555        proc sort data=work.dreq;
+556            by gvkey iid datadate;
+557        run;
+
+NOTE: There were 2281200 observations read from the data set WORK.DREQ.
+NOTE: The data set WORK.DREQ has 2281200 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.55 seconds
+      
+
+558        proc sort data=work.dcur;
+559            by gvkey iid datadate;
+560        run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+                                                           The SAS System
+
+561        data work.dhit;
+562            merge work.dreq(in=a) work.dcur(in=b);
+563            by gvkey iid datadate;
+564            if a and b;
+565        run;
+
+NOTE: There were 2281200 observations read from the data set WORK.DREQ.
+NOTE: There were 45632395 observations read from the data set WORK.DCUR.
+NOTE: The data set WORK.DHIT has 647351 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           3.82 seconds
+      cpu time            3.82 seconds
+      
+
+566        proc sort data=work.dhit;
+567            by gvkey fyear doff;
+568        run;
+
+NOTE: There were 647351 observations read from the data set WORK.DHIT.
+NOTE: The data set WORK.DHIT has 647351 observations and 7 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.17 seconds
+      
+
+569        data work.dbest;
+570            set work.dhit;
+571            by gvkey fyear;
+572            if first.fyear;
+573            rename datadate=secday_date curcdd=daycur doff=secday_gap;
+574        run;
+
+NOTE: There were 647351 observations read from the data set WORK.DHIT.
+NOTE: The data set WORK.DBEST has 132032 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.05 seconds
+      
+
+575        
+576        data work.mcur0;
+577            if _n_=1 then do;
+578                declare hash hi(dataset:'work.issues');
+579                hi.defineKey('gvkey','iid');
+580                hi.defineDone();
+581            end;
+582            set compsec.sec_mthprc(keep=gvkey iid datadate curcdm
+583                                   where=(datadate >= '01JAN1948'd
+584                                          and datadate <= '31DEC2003'd));
+585            if hi.check()=0 and not missing(curcdm);
+586            monid=intck('month','01JAN1948'd,datadate);
+587        run;
+
+NOTE: There were 25175 observations read from the data set WORK.ISSUES.
+NOTE: There were 3475030 observations read from the data set COMPSEC.SEC_MTHPRC.
+      WHERE (datadate>='01JAN1948'D and datadate<='31DEC2003'D);
+NOTE: The data set WORK.MCUR0 has 3077961 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.76 seconds
+      cpu time            0.76 seconds
+      
+
+588        proc sort data=work.mcur0 out=work.mcur1 nodupkey;
+589            by gvkey iid monid datadate curcdm;
+590        run;
+
+NOTE: There were 3077961 observations read from the data set WORK.MCUR0.
+NOTE: 0 observations with duplicate key values were deleted.
+NOTE: The data set WORK.MCUR1 has 3077961 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.21 seconds
+      cpu time            0.64 seconds
+      
+
+591        proc sql;
+592            create table work.mcurmax as
+593            select gvkey, iid, monid, max(datadate) as datadate
+594            from work.mcur1
+595            group by gvkey, iid, monid;
+NOTE: Table WORK.MCURMAX created, with 3077961 rows and 4 columns.
+
+596        
+597            create table work.mcurcnt as
+598            select a.gvkey, a.iid, a.monid, a.datadate, count(*) as ncur
+599            from work.mcur1 as a
+600            inner join work.mcurmax as m
+601              on a.gvkey=m.gvkey and a.iid=m.iid
+602             and a.monid=m.monid and a.datadate=m.datadate
+603            group by a.gvkey, a.iid, a.monid, a.datadate;
+NOTE: Table WORK.MCURCNT created, with 3077961 rows and 5 columns.
+
+604        
+605            create table work.mcur as
+606            select a.gvkey, a.iid, a.monid, a.datadate, a.curcdm
+607            from work.mcur1 as a
+608            inner join work.mcurcnt as c
+609              on a.gvkey=c.gvkey and a.iid=c.iid and a.monid=c.monid
+610             and a.datadate=c.datadate
+611            where c.ncur=1;
+NOTE: Table WORK.MCUR created, with 3077961 rows and 5 columns.
+
+612        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.23 seconds
+      cpu time            2.63 seconds
+      
+
+613        
+614        data work.mreq;
+615            length iid $4;
+616            set work.period0;
+617            if lagok and dateok and hiidok;
+618            iid=hiid;
+619            targetmon=intck('month','01JAN1948'd,prevdate);
+620            do moff=0 to 1;
+621                monid=targetmon-moff;
+                                                           The SAS System
+
+622                output;
+623            end;
+624            keep gvkey iid fyear prevdate moff monid;
+625        run;
+
+NOTE: There were 318384 observations read from the data set WORK.PERIOD0.
+NOTE: The data set WORK.MREQ has 570300 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+626        proc sort data=work.mreq;
+627            by gvkey iid monid;
+628        run;
+
+NOTE: There were 570300 observations read from the data set WORK.MREQ.
+NOTE: The data set WORK.MREQ has 570300 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.15 seconds
+      
+
+629        proc sort data=work.mcur;
+630            by gvkey iid monid;
+631        run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+632        data work.mhit;
+633            merge work.mreq(in=a) work.mcur(in=b);
+634            by gvkey iid monid;
+635            if a and b and datadate<=prevdate
+636               and prevdate-datadate<=45;
+637            mth_gap=prevdate-datadate;
+638        run;
+
+NOTE: There were 570300 observations read from the data set WORK.MREQ.
+NOTE: There were 3077961 observations read from the data set WORK.MCUR.
+NOTE: The data set WORK.MHIT has 395430 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.29 seconds
+      cpu time            0.30 seconds
+      
+
+639        proc sort data=work.mhit;
+640            by gvkey fyear moff;
+641        run;
+
+NOTE: There were 395430 observations read from the data set WORK.MHIT.
+NOTE: The data set WORK.MHIT has 395430 observations and 9 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.13 seconds
+                                                           The SAS System
+
+      
+
+642        data work.mbest;
+643            set work.mhit;
+644            by gvkey fyear;
+645            if first.fyear;
+646            rename datadate=secmth_date curcdm=mthcur;
+647        run;
+
+NOTE: There were 395430 observations read from the data set WORK.MHIT.
+NOTE: The data set WORK.MBEST has 198865 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+648        
+649        proc sql;
+650            create table work.stage0 as
+651            select p.*, coalesce(l.linkcnt,0) as linkcnt,
+652                   coalesce(rl.rowlinkcnt,0) as rowlinkcnt,
+653                   coalesce(l.dummy_x_used,0) as dummy_x_used,
+654                   coalesce(l.direct_id_used,0) as direct_id_used,
+655                   coalesce(l.dummy_x_history,0) as dummy_x_history,
+656                   coalesce(l.direct_id_history,0) as direct_id_history,
+657                   l.permno, r.nday, r.ret_bad, r.ret, r.retok,
+658                   r.expdays, r.exp_first, r.exp_last, r.first_obs, r.last_obs,
+659                   q.crsp_date, q.crsp_gap, q.crsp_price,
+660                   x.retdup, x.pricedup,
+661                   d.secday_date, d.secday_gap, d.daycur,
+662                   m.secmth_date, m.mth_gap, m.mthcur
+663            from work.period0 as p
+664            left join work.linkstats as l
+665              on p.gvkey=l.gvkey and p.fyear=l.fyear
+666            left join work.rowlinkstats as rl
+667              on p.gvkey=rl.gvkey and p.fyear=rl.fyear
+668            left join work.retagg2 as r
+669              on p.gvkey=r.gvkey and p.fyear=r.fyear
+670            left join work.qbest as q
+671              on p.gvkey=q.gvkey and p.fyear=q.fyear
+672            left join work.dupflag as x
+673              on p.gvkey=x.gvkey and p.fyear=x.fyear
+674            left join work.dbest as d
+675              on p.gvkey=d.gvkey and p.fyear=d.fyear
+676            left join work.mbest as m
+677              on p.gvkey=m.gvkey and p.fyear=m.fyear;
+NOTE: Table WORK.STAGE0 created, with 318384 rows and 52 columns.
+
+678        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.62 seconds
+      cpu time            0.77 seconds
+      
+
+679        
+680        data work.stage1;
+681            length price_cur epscur $3 price_source $4;
+682            set work.stage0;
+                                                           The SAS System
+
+683            if missing(linkcnt) then linkcnt=0;
+684            if missing(dummy_x_used) then dummy_x_used=0;
+685            if missing(direct_id_used) then direct_id_used=0;
+686            if missing(dummy_x_history) then dummy_x_history=0;
+687            if missing(direct_id_history) then direct_id_history=0;
+688            if missing(retdup) then retdup=0;
+689            if missing(pricedup) then pricedup=0;
+690            if retdup=1 then ret=.;
+691            if missing(ret_bad) then ret_bad=0;
+692            retok=(retok=1 and not missing(ret) and ret_bad=0 and retdup=0
+693                   and nday=expdays and first_obs=exp_first
+694                   and last_obs=exp_last);
+695            price_cur='';
+696            price=.;
+697            price_date=.;
+698            price_gap=.;
+699            price_source='';
+700            cur_conflict=0;
+701            curmatch=0;
+702            if not missing(curcd) then do;
+703                epscur=strip(upcase(curcd));
+704                daycur=strip(upcase(daycur));
+705                mthcur=strip(upcase(mthcur));
+706                if not missing(daycur) and not missing(mthcur)
+707                   and daycur ne mthcur then cur_conflict=1;
+708                if not missing(daycur) and not missing(mthcur)
+709                   and daycur=mthcur then price_cur=daycur;
+710                else if not missing(daycur) and missing(mthcur) then price_cur=daycur;
+711                else if missing(daycur) and not missing(mthcur) then price_cur=mthcur;
+712                if epscur='USD' then do;
+713                    price_source='CRSP';
+714                    price_cur='USD';
+715                    if pricedup=0 and not missing(crsp_price) and crsp_price>0 then do;
+716                        price=crsp_price;
+717                        price_date=crsp_date;
+718                        price_gap=crsp_gap;
+719                        curmatch=1;
+720                    end;
+721                end;
+722                else if cur_conflict=0 and not missing(price_cur)
+723                     and price_cur=epscur and not missing(prevprcc)
+724                     and prevprcc>0 then do;
+725                    price_source='COMP';
+726                    price=prevprcc;
+727                    price_date=prevdate;
+728                    price_gap=0;
+729                    curmatch=1;
+730                end;
+731            end;
+732            priceok=(curmatch=1 and not missing(price) and price>0
+733                     and not missing(eps_prior_basis));
+734            eps_price=.;
+735            if priceok then eps_price=eps_prior_basis/price;
+736            dum=.;
+737            dum_return=.;
+738            if not missing(ret) then do;
+739                dum=(ret<0);
+740                dum_return=dum*ret;
+                                                           The SAS System
+
+741            end;
+742            complete=(not missing(eps_price) and not missing(ret)
+743                      and not missing(dum) and not missing(dum_return));
+744        run;
+
+NOTE: There were 318384 observations read from the data set WORK.STAGE0.
+NOTE: The data set WORK.STAGE1 has 318384 observations and 65 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.17 seconds
+      cpu time            0.18 seconds
+      
+
+745        
+746        proc sort data=work.stage1;
+747            by fyear;
+748        run;
+
+NOTE: There were 318384 observations read from the data set WORK.STAGE1.
+NOTE: The data set WORK.STAGE1 has 318384 observations and 65 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.21 seconds
+      cpu time            0.32 seconds
+      
+
+749        proc univariate data=work.stage1 noprint;
+750            where complete=1;
+751            by fyear;
+752            var eps_price ret;
+753            output out=work.cutoffs pctlpts=1 99 pctlpre=eps_ ret_;
+754        run;
+
+NOTE: The data set WORK.CUTOFFS has 51 observations and 5 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+755        data work.final0;
+756            merge work.stage1(in=a) work.cutoffs;
+757            by fyear;
+758            if a and complete=1;
+759            if eps_1<=eps_price and eps_price<=eps_99
+760               and ret_1<=ret and ret<=ret_99;
+761        run;
+
+NOTE: There were 318384 observations read from the data set WORK.STAGE1.
+NOTE: There were 51 observations read from the data set WORK.CUTOFFS.
+NOTE: The data set WORK.FINAL0 has 139737 observations and 69 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+762        data work.final;
+763            set work.final0;
+764            keep gvkey fyear iid previid hiid prevhiid hiidok curcd prevcur indfmt sich naicsh
+765                 datadate prevdate ret_days epspx ajex prevajex eps_prior_basis
+766                 prevprcc price price_source price_cur price_date price_gap
+                                                           The SAS System
+
+767                 secday_date secday_gap secmth_date mth_gap crsp_date
+768                 crsp_gap linkcnt rowlinkcnt dummy_x_used direct_id_used
+769                 dummy_x_history direct_id_history permno
+770                 nday expdays exp_first exp_last
+771                 first_obs last_obs ret_bad ret retok retdup pricedup
+772                 cur_conflict curmatch eps_price dum dum_return;
+773        run;
+
+NOTE: There were 139737 observations read from the data set WORK.FINAL0.
+NOTE: The data set WORK.FINAL has 139737 observations and 54 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+774        
+775        proc sql;
+776            create table work.attrsum as
+777            select count(*) as source_firmyears,
+778                   sum(lagok) as adjacent_lags,
+779                   sum(dateok) as ordered_actual_dates,
+780                   sum(iidok) as stable_header_iid,
+781                   sum(hiidok) as stable_historical_primary_hiid,
+782                   sum(epsok) as eps_and_split_inputs,
+783                   sum(linkcnt=1) as unique_crsp_links,
+784                   sum(rowlinkcnt=1) as unique_single_row_links,
+785                   sum(linkcnt=1 and rowlinkcnt=0) as segment_only_unique_links,
+786                   sum(linkcnt=1 and dummy_x_used=1) as unique_links_using_dummy_x,
+787                   sum(linkcnt=1 and direct_id_used=1) as unique_links_using_hiid,
+788                   sum(linkcnt=1 and dummy_x_history=1) as unique_links_x_history,
+789                   sum(linkcnt=1 and direct_id_history=1) as unique_links_hiid_history,
+790                   sum(retok) as complete_daily_returns,
+791                   sum(curmatch=1) as matched_currency_and_price,
+792                   sum(complete) as complete_regression_rows
+793            from work.stage1;
+NOTE: Table WORK.ATTRSUM created, with 1 rows and 16 columns.
+
+794        
+795            create table work.attryear as
+796            select fyear, count(*) as source_rows,
+797                   sum(lagok) as lag_rows,
+798                   sum(iidok) as same_header_iid,
+799                   sum(hiidok) as same_historical_primary_hiid,
+800                   sum(linkcnt=1) as unique_links,
+801                   sum(rowlinkcnt=1) as unique_single_row_links,
+802                   sum(linkcnt=1 and rowlinkcnt=0) as segment_only_unique_links,
+803                   sum(linkcnt=1 and dummy_x_used=1) as unique_links_using_dummy_x,
+804                   sum(linkcnt=1 and direct_id_used=1) as unique_links_using_hiid,
+805                   sum(linkcnt=1 and dummy_x_history=1) as unique_links_x_history,
+806                   sum(linkcnt=1 and direct_id_history=1) as unique_links_hiid_history,
+807                   sum(retok) as valid_return,
+808                   sum(priceok) as valid_price,
+809                   sum(complete) as complete_rows
+810            from work.stage1
+811            group by fyear
+812            order by fyear;
+NOTE: Table WORK.ATTRYEAR created, with 51 rows and 15 columns.
+
+                                                           The SAS System
+
+813        
+814            create table work.tailcount as
+815            select count(*) as final_firmyears
+816            from work.final;
+NOTE: Table WORK.TAILCOUNT created, with 1 rows and 1 columns.
+
+817        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.17 seconds
+      cpu time            0.18 seconds
+      
+
+818        
+819        title 'Annual source selection and construction attrition';
+820        proc print data=work.rawcounts noobs;
+821        run;
+
+NOTE: There were 1 observations read from the data set WORK.RAWCOUNTS.
+NOTE: The PROCEDURE PRINT printed page 1.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+822        proc print data=work.fycounts noobs;
+823        run;
+
+NOTE: There were 1 observations read from the data set WORK.FYCOUNTS.
+NOTE: The PROCEDURE PRINT printed page 2.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+824        proc print data=work.ambig noobs;
+825        run;
+
+NOTE: There were 1 observations read from the data set WORK.AMBIG.
+NOTE: The PROCEDURE PRINT printed page 3.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+826        proc print data=work.ambigyr noobs;
+827        run;
+
+NOTE: There were 36 observations read from the data set WORK.AMBIGYR.
+NOTE: The PROCEDURE PRINT printed page 4.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+828        proc print data=work.indcov noobs;
+829        run;
+
+NOTE: There were 52 observations read from the data set WORK.INDCOV.
+                                                           The SAS System
+
+NOTE: The PROCEDURE PRINT printed page 5.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+830        proc print data=work.attrsum noobs;
+831        run;
+
+NOTE: There were 1 observations read from the data set WORK.ATTRSUM.
+NOTE: The PROCEDURE PRINT printed page 6.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+832        proc print data=work.tailcount noobs;
+833        run;
+
+NOTE: There were 1 observations read from the data set WORK.TAILCOUNT.
+NOTE: The PROCEDURE PRINT printed page 7.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+834        proc print data=work.attryear noobs;
+835        run;
+
+NOTE: There were 51 observations read from the data set WORK.ATTRYEAR.
+NOTE: The PROCEDURE PRINT printed pages 8-9.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+836        title 'Retained source paths and currencies';
+837        proc freq data=work.final;
+838            tables fyear*price_source curcd*price_cur / missing;
+839            tables dummy_x_used*direct_id_used
+840                   dummy_x_history*direct_id_history / missing;
+841        run;
+
+NOTE: There were 139737 observations read from the data set WORK.FINAL.
+NOTE: The PROCEDURE FREQ printed pages 10-17.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+842        title 'Currency and prior-price availability before annual trimming';
+843        proc freq data=work.stage1;
+844            tables curcd*curmatch curcd*price_source cur_conflict / missing;
+845        run;
+
+NOTE: There were 318384 observations read from the data set WORK.STAGE1.
+NOTE: The PROCEDURE FREQ printed page 18.
+NOTE: PROCEDURE FREQ used (Total process time):
+                                                           The SAS System
+
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+846        title 'Actual prior-to-current return-window lengths before annual trimming';
+847        data work.span_pre;
+848            length span_class $16;
+849            set work.stage1;
+850            if complete=1;
+851            if ret_days<300 then span_class='short (<300d)';
+852            else if ret_days>400 then span_class='long (>400d)';
+853            else span_class='300-400d';
+854        run;
+
+NOTE: There were 318384 observations read from the data set WORK.STAGE1.
+NOTE: The data set WORK.SPAN_PRE has 145055 observations and 66 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+855        proc freq data=work.span_pre;
+856            tables span_class / missing;
+857        run;
+
+NOTE: There were 145055 observations read from the data set WORK.SPAN_PRE.
+NOTE: The PROCEDURE FREQ printed page 19.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+858        title 'Actual prior-to-current return-window lengths after annual trimming';
+859        data work.span_final;
+860            length span_class $16;
+861            set work.final0;
+862            if ret_days<300 then span_class='short (<300d)';
+863            else if ret_days>400 then span_class='long (>400d)';
+864            else span_class='300-400d';
+865        run;
+
+NOTE: There were 139737 observations read from the data set WORK.FINAL0.
+NOTE: The data set WORK.SPAN_FINAL has 139737 observations and 70 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+866        proc freq data=work.span_final;
+867            tables span_class / missing;
+868        run;
+
+NOTE: There were 139737 observations read from the data set WORK.SPAN_FINAL.
+NOTE: The PROCEDURE FREQ printed page 20.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+                                                           The SAS System
+
+
+869        title 'Return-window coverage and missing or invalid daily returns';
+870        data work.return_audit;
+871            length return_status $38;
+872            set work.stage1;
+873            if linkcnt ne 1 then return_status='No unique date-valid PERMNO';
+874            else if missing(expdays) or expdays<=0 then return_status='No valid DSI window';
+875            else if missing(nday) then return_status='No DSF daily observations';
+876            else if retdup=1 then return_status='Duplicate DSF PERMNO-date';
+877            else if last_obs ne exp_last then return_status='No DSF at last expected day';
+878            else if first_obs ne exp_first then return_status='No DSF at first expected day';
+879            else if nday<expdays then return_status='Interior DSI-session gap';
+880            else if nday>expdays then return_status='Extra DSF session in window';
+881            else if ret_bad=1 then return_status='Missing or invalid daily RET';
+882            else if retok=1 then return_status='Complete daily RET window';
+883            else return_status='Other incomplete return window';
+884        run;
+
+NOTE: There were 318384 observations read from the data set WORK.STAGE1.
+NOTE: The data set WORK.RETURN_AUDIT has 318384 observations and 66 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.12 seconds
+      
+
+885        proc freq data=work.return_audit;
+886            tables return_status / missing;
+887        run;
+
+NOTE: There were 318384 observations read from the data set WORK.RETURN_AUDIT.
+NOTE: The PROCEDURE FREQ printed page 21.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+888        title 'Final analysis variable and return coverage distributions';
+889        proc means data=work.final n nmiss mean std min p1 p50 p99 max maxdec=6;
+890            var epspx ajex prevajex eps_prior_basis prevprcc price eps_price
+891                ret ret_days nday expdays price_gap crsp_gap secday_gap mth_gap;
+892        run;
+
+NOTE: There were 139737 observations read from the data set WORK.FINAL.
+NOTE: The PROCEDURE MEANS printed page 22.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.41 seconds
+      
+
+893        title 'SAS output sample structure';
+894        proc contents data=work.final;
+895        run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+NOTE: The PROCEDURE CONTENTS printed pages 23-24.
+                                                           The SAS System
+
+
+896        title;
+897        
+898        data out.reg;
+899            set work.final;
+900            label eps_price='EPSPX rebased to prior share basis / prior price'
+901                  ret='Compounded raw CRSP daily total return'
+902                  dum='Indicator for negative Return'
+903                  dum_return='DUM times Return'
+904                  ret_days='Days between actual adjacent DATADATEs';
+905            format datadate prevdate price_date crsp_date
+906                   secday_date secmth_date exp_first exp_last
+907                   first_obs last_obs yymmdd10.;
+908        run;
+
+NOTE: There were 139737 observations read from the data set WORK.FINAL.
+NOTE: The data set OUT.REG has 139737 observations and 54 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+909        
+910        %put FULL_BUILD_DONE;
+FULL_BUILD_DONE
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           2:06.66
+      cpu time            2:20.82
+      

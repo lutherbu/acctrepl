@@ -1,0 +1,57 @@
+# Design
+
+## Retained baseline scopes
+
+This build contains only Table 2, column 6, Panel A (operating accruals) and Panel B (total accruals), both estimating the paper's equation (6) by ordinary least squares. The original PDF describes a 1988–2002 nonfinancial firm-year sample with available Compustat and CRSP data; Table 2 reports 61,989 observations, while Table 1 describes the wider 63,875-firm-year financial-statement pool (physical PDF pp. 7–9, 19–20). The period is not restricted to NYSE/AMEX firms (footnote 5, p. 7). This build does not use later stock-return, Mishkin, analyst, institutional-holdings, or stepwise regressions.
+
+## Source fields and formulas
+
+The original paper's Compustat item numbers are mapped to the current local annual Funda mnemonics using the provider guide and checked against the catalog labels:
+
+- Earnings before extraordinary items, legacy annual item A123: `IBC` (provider guide physical p. 850), rather than income-statement `IB` (A18).
+- Cash flow from operating activities, A308: `OANCF` (physical p. 871).
+- Cash flow from investing activities, A311: `IVNCF` (physical p. 861), retaining its reported sign.
+- Cash flow from financing activities, A313: `FINCF` (physical p. 840), used for Table 1 descriptives and trimming where observed.
+- Special items, item 17: `SPI` (physical p. 279).
+
+The local `COMP.FUNDA` labels identify `IBC` as “Income Before Extraordinary Items (Cash Flow),” `OANCF` and `IVNCF` as operating and investing net cash flows, `FINCF` as financing net cash flow, and `SPI` as special items. The paper's footnote 6 (physical PDF p. 8) treats subtracting cash from discontinued operations and extraordinary items (`XIDOC`, item 124) as a robustness definition. I therefore use `OANCF` without that subtraction. Missing `SPI` is set to zero as expressly directed by the paper (p. 8); no other accounting amount is imputed.
+
+For fiscal year `t`, the current variables are `Earnings = IBC`, `CFO = OANCF`, `CFI = IVNCF`, `FCF = OANCF + IVNCF`, `OPACC = IBC - OANCF`, and `TACC = IBC - FCF`. Table 1 also reports `CFF = FINCF`. Each is divided by `(AT_t + AT_{t-1})/2`. I use actual annual records with `fyear = t-1`; I require positive observed assets and matching `CURCD` in the two periods so the average is in one currency. The current annual `CURCD` is retained as observed; `CURNCD` is never used as a reporting-currency proxy. Currency transitions without a provider-verified conversion are unavailable for these ratios.
+
+The dependent variable is actual `IBC_{t+1}` divided by `(AT_{t+1}+AT_t)/2` when the next fiscal-year statement, assets, and matching currency are observed. The paper does not say which asset dates define its average-assets deflator. If next-year `IBC` is absent, a substitution is made only for a performance-related CRSP delisting with an actual delisting date inside the `DATADATE_t` to `DATADATE_{t+1}` interval. If no next statement exists, the interval ends at the one-year anniversary of `DATADATE_t`. The paper does not list CRSP codes; I use the standard CRSP/Shumway performance category `DLSTCD=500` or `520–584` as an explicit best-effort choice. A nonmissing next-year `IBC` that cannot be scaled because future assets or currency are unavailable is left missing and is never converted into a delisting substitution.
+
+For an eligible missing-earnings event, the outcome numerator is the negative of common book equity (`CEQ`) if book equity is nonnegative, and zero if it is negative, following footnote 11 (physical PDF p. 13). The paper does not specify the book-equity date or deflator when next-year earnings are missing. I use the latest annual statement dated on or before the actual delisting date: next-year `CEQ` is eligible only when its `DATADATE` is no later than `DLSTDT`; otherwise the current-year `CEQ` is used. The same event-date rule governs the assets deflator: next-year average assets are used only when the next statement date is no later than the delisting date; otherwise the current-period average assets `(AT_t + AT_{t-1})/2` are used. Thus a statement dated after the delisting event cannot determine its replacement. If the chosen book equity is unavailable, the outcome remains missing. The paper does not state the delist timing rule, so the actual event window and the anniversary boundary for rows without a next statement remain disclosed best-effort choices. Event dates, book dates, deflator dates, and after-event checks are output in the SAS listing.
+
+`SI` equals one when `SPI / average assets <= -0.02`. Table 2's note uses an inclusive 2% threshold (physical PDF p. 20), while the equation (5) prose says greater than 2% (p. 20); the table note governs this build. The continuous `SPI` ratio is not trimmed.
+
+## Population, trimming, and deciles
+
+The source population uses annual `COMP.FUNDA` records with domestic population, industrial format, standard data format, consolidated statements, and cash-flow statement format 7 for the current-year observations. Fiscal-year 1987 is retained for the lagged assets, and 2003 is retained for future accounting values, including actual `DATADATE`s into 2004. Current-year financial firms with SIC 6000–6999 are excluded. Historical Compustat `SICH` is used when present; if it is missing or zero, the dated CRSP `SICCD` from the valid security-name interval is used. Rows with no usable historical SIC are not classified. The build requires a dated CCM link valid on the Compustat `DATADATE`, a unique acceptable link (`LINKPRIM=P` preferred, then `C`; `LINKTYPE=LC` or `LU`), and a CRSP security-name/price-history interval covering that date. CCM `.E` link ends are treated as open ends, with the recorded date bounds respected. All covered CRSP exchanges are retained.
+
+The paper trims the 1% tails of financial-statement variables other than special items (physical PDF p. 9). Since it does not state a cutoff population or whether cutoffs are annual, this build uses pooled, variable-specific 1st and 99th percentiles over the 1988–2002 eligible pre-trim sample, then drops rows outside any observed current-variable cutoff; observed `FINCF` participates in that trim, but missing `FINCF` is not a Table 2 regressor screen. Future earnings has its own pooled 1st/99th percentile cutoffs among eligible future outcomes before final Table 2 completeness. Values are dropped, not winsorized. This leaves Table 1 and the regression sample distinguishable, and the Table 2 flag marks the common complete-case pool for both panels.
+
+The Figure 1 caption states that observations in the 61,989-firm-year sample are ranked annually in ascending order, with decile 1 containing the most negative accruals (physical PDF p. 19). Table 2 names the bottom accrual decile but does not repeat the annual rule. In this build, `PROC RANK` assigns ten groups separately by fiscal year among the final common Table 2 sample, using its default mean treatment for ties (`TIES=MEAN`). The bottom SAS group (rank 0) sets `Low OPACC` or `Low TACC`.
+
+## Estimation and output
+
+Panel A estimates exactly `Earnings_{t+1} = constant + CFO_t + OPACC_t + Earnings_t×LowOPACC_t + Earnings_t×LowOPACC_t×SI_t`. Panel B replaces CFO/OPACC with FCF/TACC and uses the corresponding earnings interactions. The equations contain no additional earnings, low-decile, SI, or lower-order interaction terms. Stata `regress` supplies conventional OLS standard errors; the paper gives no covariance correction or clustering rule. Table exports use the assigned template's two-sided p-values and 10%, 5%, and 1% star levels. The paper's legend uses 5% and 1% only, so stars are compared at the available thresholds rather than calibrated to match.
+
+Native Stata descriptive exports report the Table 1 Panel A moments for the trimmed current-year pool and the actual Table 2 regression inputs for the common equation-(6) sample. The Table 1 descriptive cell also emits native Pearson and Spearman matrices for its eight variables. The source comparisons, sample counts, focal estimates, published stars, and adjusted R-squareds are recorded in `review.md`.
+
+## Source conflicts and extraction corrections
+
+- The paper's Table 2 note says `SI >= 2%` of average assets while its equation (5) prose says `SI > 2%`; the inclusive note is selected.
+- Footnote 11 on physical PDF p. 13 says to substitute negative book equity for missing future earnings after performance delisting, and to substitute zero if book equity is negative. The Table 2 note on p. 20 omits that last clause; the more detailed footnote governs.
+- The cached article extraction strips a star in the Table 2 legend. The original PDF displays `* 5% significance; ** 1% significance`; the PDF governs.
+- The extracted A123/earnings label can be confused with `IB`/item 18. The original paper says item 123 (pp. 8, 20); the Compustat provider guide maps A123 to `IBC`, confirming the source-corrected field.
+- Extracted sample-source lists include I/B/E/S and 13F data, but the original paper limits those sources to later tests (physical PDF p. 9). They do not define either retained baseline scope.
+
+## Local validation and observed differences
+
+The final helper validation is clean: two declared scopes, zero blocked scopes, no errors or warnings. Native SAS run `20261103T052920420134Z` returned success. Native Stata run `20261103T052936839243Z` completed all four cells successfully. After adding native correlation output to the Table 1 descriptive cell, only that changed cell reran successfully in `20261103T053042771683Z`; the other cell outputs were unchanged. The SAS formula probe and handoff formula checks each report zero errors.
+
+The SAS current-year candidate pool has 80,597 firm-years before trimming. Current-variable tail trimming removes 5,749 rows, leaving 74,848 Table 1 observations. Of those, 4,040 have no usable next-year earnings outcome before lead trimming (3,984 raw future `IBC` missing with no qualifying performance delisting, 56 with observed raw `IBC` that cannot be scaled because the actual lead asset/currency support fails). These cases are not imputed. Among the remaining 70,808, future earnings tail trimming drops 724, leaving 70,084 observations in the common Table 2 sample.
+
+The actual dated delisting audit finds 1,008 Table 2 replacements, each using a raw missing future `IBC` and a qualifying CRSP performance event after current `DATADATE` and no later than the chosen interval end. There are 44 events before an observed next-year statement and 964 where the next-year statement is absent and the interval ends on the one-year anniversary of current `DATADATE`. Book equity is positive in 759 cases (substitute `-CEQ`), negative in 249 (substitute zero), and exactly zero in none. Twelve cases use next-year book equity and actual next-year average assets; 996 use current-year book equity and current-period average assets. The source does not specify its event-code set or book/asset dates, so these remain disclosed best-effort choices.
+
+The source reports 63,875 Table 1 observations and 61,989 Table 2 observations. This build's completed counts and estimates are compared in `review.md`; any differences remain observed results, not selection targets. A1's event-date audit found 12 cases that had used a next-year balance sheet dated after delisting. Attempt 2 applies the event-date rule above and records any resulting change to future-outcome cutoffs, Table 2 eligibility, annual decile assignments, and coefficients in `review.md`.

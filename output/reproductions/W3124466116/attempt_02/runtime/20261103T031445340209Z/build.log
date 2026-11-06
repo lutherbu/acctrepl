@@ -1,0 +1,1299 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend msglevel=i;
+2          
+3          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname compseg "/storage/sas/base/comp/d_seghist" access=readonly;
+NOTE: Libref COMPSEG was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_seghist
+5          libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3124466116/attempt_02/data
+6          
+7          /* Standard annual company records, restricted to the paper's fiscal years. */
+8          data work.funda0;
+9              set comp.funda(
+10                 keep=gvkey datadate fyear indfmt consol popsrc datafmt fic curcd
+11                      sich sale pi pidom pifo txfed txfo txc txdi txt at seq
+12                 where=(fyear ge 1990 and fyear le 1997)
+13             );
+INFO: Index fyear not used.  Sorting into index order may help.
+14             if upcase(strip(indfmt)) ne 'INDL' then delete;
+15             if upcase(strip(consol)) ne 'C' then delete;
+16             if upcase(strip(popsrc)) ne 'D' then delete;
+17             if upcase(strip(datafmt)) ne 'STD' then delete;
+18             if missing(gvkey) or missing(datadate) then delete;
+19         run;
+
+NOTE: There were 141796 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1990 and fyear<=1997);
+NOTE: The data set WORK.FUNDA0 has 91176 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.47 seconds
+      cpu time            0.47 seconds
+      
+3                                                          The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+
+20         
+21         proc sql;
+22             create table work.funddup as
+23             select gvkey, datadate, count(*) as n
+24             from work.funda0
+25             group by gvkey, datadate
+26             having calculated n gt 1;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.FUNDDUP created, with 0 rows and 3 columns.
+
+27             select count(*) into :funddup trimmed from work.funddup;
+28         quit;
+NOTE: The PROCEDURE SQL printed page 1.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+29         data _null_;
+30             if &funddup gt 0 then do;
+31                 put "ERROR: Duplicate standard Funda GVKEY-DATADATE keys require a source-supported selection rule.";
+32                 abort cancel;
+33             end;
+34         run;
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+35         
+36         /* Record source currency and tax-component diagnostics before sample screens. */
+37         title "Funda reporting currency among standard 1990-1997 records";
+38         proc freq data=work.funda0;
+39             tables curcd / missing;
+40         run;
+
+NOTE: There were 91176 observations read from the data set WORK.FUNDA0.
+NOTE: The PROCEDURE FREQ printed page 2.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+41         title "Minimum-data field availability in standard annual records";
+42         proc means data=work.funda0 n nmiss;
+43             var sale pi pidom pifo txfed txfo at seq sich;
+44         run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 91176 observations read from the data set WORK.FUNDA0.
+NOTE: The PROCEDURE MEANS printed page 3.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+4                                                          The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+45         proc sql;
+46             select count(*) as standard_rows,
+47                    sum(case when not missing(sale) and not missing(pi) and
+48                                  not missing(txfed) and not missing(txfo) and
+49                                  not missing(at) and not missing(seq) then 1 else 0 end)
+50                        as complete_etr_inputs,
+51                    sum(case when not missing(sale) and not missing(pi) and
+52                                  not missing(pidom) and not missing(pifo) and
+53                                  not missing(txfed) and not missing(txfo) and
+54                                  not missing(at) and not missing(seq) then 1 else 0 end)
+55                        as complete_all_tax_variables,
+56                    sum(case when not missing(sale) and not missing(pi) and
+57                                  not missing(pidom) and not missing(pifo) and
+58                                  not missing(txfed) and not missing(txfo) and
+59                                  not missing(at) and not missing(seq) and
+60                                  not missing(sich) then 1 else 0 end)
+61                        as complete_all_variables_and_sic
+62             from work.funda0;
+63         quit;
+NOTE: The PROCEDURE SQL printed page 4.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+64         
+65         title "Current tax component availability and crosswalk check";
+66         data work.tax_audit;
+67             set work.funda0;
+68             if not missing(txfed) and not missing(txfo) and not missing(txc) then do;
+69                 taxdiff = txfed + txfo - txc;
+70                 taxboth = 1;
+71             end;
+72             else do;
+73                 taxdiff = .;
+74                 taxboth = 0;
+75             end;
+76         run;
+
+NOTE: There were 91176 observations read from the data set WORK.FUNDA0.
+NOTE: The data set WORK.TAX_AUDIT has 91176 observations and 23 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+77         proc means data=work.tax_audit n nmiss mean std min p50 max;
+78             var txfed txfo txc txdi txt taxdiff;
+79         run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 91176 observations read from the data set WORK.TAX_AUDIT.
+NOTE: The PROCEDURE MEANS printed page 5.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.15 seconds
+      
+
+5                                                          The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+80         proc freq data=work.tax_audit;
+81             tables taxboth / missing;
+82         run;
+
+NOTE: There were 91176 observations read from the data set WORK.TAX_AUDIT.
+NOTE: The PROCEDURE FREQ printed page 6.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+83         
+84         /* Paper ETR-pool exclusions, kept as sequential populations for attrition. */
+85         data work.funda_us;
+86             set work.funda0;
+87             if upcase(strip(fic))='USA';
+88         run;
+
+NOTE: There were 91176 observations read from the data set WORK.FUNDA0.
+NOTE: The data set WORK.FUNDA_US has 78897 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+      
+
+89         
+90         data work.funda_usd;
+91             set work.funda_us;
+92             if upcase(strip(curcd))='USD';
+93         run;
+
+NOTE: There were 78897 observations read from the data set WORK.FUNDA_US.
+NOTE: The data set WORK.FUNDA_USD has 78749 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+94         
+95         data work.funda_nonzero;
+96             set work.funda_usd;
+97             if missing(at) or missing(pi) then delete;
+98             if at=0 or pi=0 then delete;
+99         run;
+
+NOTE: There were 78749 observations read from the data set WORK.FUNDA_USD.
+NOTE: The data set WORK.FUNDA_NONZERO has 66264 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+100        
+101        data work.funda_equity;
+102            set work.funda_nonzero;
+103            if missing(seq) or at lt 0 or seq lt 0 then delete;
+104        run;
+
+6                                                          The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+NOTE: There were 66264 observations read from the data set WORK.FUNDA_NONZERO.
+NOTE: The data set WORK.FUNDA_EQUITY has 61165 observations and 21 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+105        
+106        data work.funda_etr;
+107            set work.funda_equity;
+108            if missing(txfed) or missing(txfo) then delete;
+109            ctax = txfed + txfo;
+110            if missing(ctax) then delete;
+111        run;
+
+NOTE: There were 61165 observations read from the data set WORK.FUNDA_EQUITY.
+NOTE: The data set WORK.FUNDA_ETR has 46437 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+112        
+113        title "Historical SIC availability and industry codes before industry exclusions";
+114        proc sql;
+115            select fyear,
+116                   sum(missing(sich)) as missing_sic_n,
+117                   sum(sich=0) as sic_zero_n,
+118                   sum(4900 le sich and sich le 4999) as utility_sic_n,
+119                   sum(6000 le sich and sich le 6099) as bank_sic_n,
+120                   sum(6300 le sich and sich le 6399) as insurance_carrier_sic_n,
+121                   sum(6100 le sich and sich le 6299) as other_finance_6100_6299_n,
+122                   sum(6400 le sich and sich le 6999) as other_finance_6400_6999_n
+123            from work.funda_etr
+124            group by fyear
+125            order by fyear;
+NOTE: SAS threaded sort was used.
+126        quit;
+NOTE: The PROCEDURE SQL printed page 7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+127        
+128        data work.funda_industry;
+129            set work.funda_etr;
+130            if not missing(sich) and
+131               ((4900 le sich and sich le 4999) or
+132                (6000 le sich and sich le 6099) or
+133                (6300 le sich and sich le 6399)) then delete;
+134        run;
+
+NOTE: There were 46437 observations read from the data set WORK.FUNDA_ETR.
+NOTE: The data set WORK.FUNDA_INDUSTRY has 44746 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+7                                                          The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+      
+
+135        
+136        data work.funda_positive;
+137            set work.funda_industry;
+138            if pi le 0 or ctax le 0 then delete;
+139            wwetr = ctax / pi;
+140            if wwetr gt 1 then wwetr=1;
+141            roa = pi / at;
+142            if not missing(sale) and sale gt -1 then size=log(1+sale);
+143            else size=.;
+144            pti = log(1+pi);
+145        run;
+
+NOTE: There were 44746 observations read from the data set WORK.FUNDA_INDUSTRY.
+NOTE: The data set WORK.FUNDA_POSITIVE has 23551 observations and 26 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+146        
+147        proc means data=work.funda_positive noprint;
+148            var roa;
+149            output out=work.roa_cut p1=roa_p1 p99=roa_p99;
+150        run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 23551 observations read from the data set WORK.FUNDA_POSITIVE.
+NOTE: The data set WORK.ROA_CUT has 1 observations and 4 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+151        data work.etrpool;
+152            if _n_=1 then set work.roa_cut;
+153            set work.funda_positive;
+154            if roa lt roa_p1 or roa gt roa_p99 then delete;
+155            drop _TYPE_ _FREQ_ roa_p1 roa_p99;
+156            etrpool=1;
+157        run;
+
+NOTE: There were 1 observations read from the data set WORK.ROA_CUT.
+NOTE: There were 23551 observations read from the data set WORK.FUNDA_POSITIVE.
+NOTE: The data set WORK.ETRPOOL has 23081 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+158        
+159        title "Sequential ETR-pool counts";
+160        proc sql;
+161            select "standard annual records" as step length=32, count(*) as n from work.funda0
+162            union all select "US-incorporated" as step, count(*) as n from work.funda_us
+163            union all select "USD reporting currency" as step, count(*) as n from work.funda_usd
+164            union all select "nonzero observed PI and AT" as step, count(*) as n from work.funda_nonzero
+8                                                          The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+165            union all select "nonnegative observed AT and SEQ" as step, count(*) as n from work.funda_equity
+166            union all select "observed TXFED and TXFO" as step, count(*) as n from work.funda_etr
+167            union all select "exclude banks carriers utilities" as step, count(*) as n from work.funda_industry
+168            union all select "positive PI and current taxes" as step, count(*) as n from work.funda_positive
+169            union all select "after pooled ROA tail trim" as step, count(*) as n from work.etrpool;
+170        quit;
+NOTE: The PROCEDURE SQL printed page 8.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+171        data work.etr_sic;
+172            set work.etrpool;
+173            if missing(sich) then sicgrp=.;
+174            else if 0 le sich and sich lt 2000 then sicgrp=1;
+175            else if 2000 le sich and sich lt 3000 then sicgrp=2;
+176            else if 3000 le sich and sich lt 4000 then sicgrp=3;
+177            else if 4000 le sich and sich lt 5000 then sicgrp=4;
+178            else if 5000 le sich and sich lt 6000 then sicgrp=5;
+179            else if 6000 le sich and sich le 8000 then sicgrp=6;
+180            else if sich gt 8000 then sicgrp=7;
+181        run;
+
+NOTE: There were 23081 observations read from the data set WORK.ETRPOOL.
+NOTE: The data set WORK.ETR_SIC has 23081 observations and 28 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+182        title "Broad ETR pool by fiscal year and reconstructed SIC group";
+183        proc freq data=work.etr_sic;
+184            tables fyear*sicgrp / missing;
+185        run;
+
+NOTE: There were 23081 observations read from the data set WORK.ETR_SIC.
+NOTE: The PROCEDURE FREQ printed page 9.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+186        proc freq data=work.etrpool;
+187            tables fyear / missing;
+188        run;
+
+NOTE: There were 23081 observations read from the data set WORK.ETRPOOL.
+NOTE: The PROCEDURE FREQ printed page 10.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+189        title "Broad ETR pool outcome and core input distributions";
+190        proc means data=work.etrpool n nmiss mean std p1 p25 p50 p75 p99 min max;
+191            var wwetr sale pi at roa size pti pifo txfed txfo;
+192        run;
+9                                                          The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 23081 observations read from the data set WORK.ETRPOOL.
+NOTE: The PROCEDURE MEANS printed page 11.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.20 seconds
+      
+
+193        
+194        /* Restrict the only catalog-listed geographic operating-segment table to
+195           exact firm-date keys in the ETR pool and the necessary fields. */
+196        proc sql;
+197            create table work.segraw as
+198            select s.gvkey, s.datadate, s.stype, s.sid, s.geotp, s.snms,
+199                   s.ias, s.curcds, s.isosrc, s.srcdate
+200            from compseg.wrds_segmerged as s
+201            inner join work.etrpool as f
+202              on s.gvkey=f.gvkey and s.datadate=f.datadate;
+NOTE: Table WORK.SEGRAW created, with 84829 rows and 10 columns.
+
+203        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.59 seconds
+      cpu time            0.59 seconds
+      
+
+204        
+205        title "Observed segment method and geographic type";
+206        proc freq data=work.segraw;
+207            tables stype*geotp / missing;
+208        run;
+
+NOTE: There were 84829 observations read from the data set WORK.SEGRAW.
+NOTE: The PROCEDURE FREQ printed page 12.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+209        title "Geographic segment currency and source currency";
+210        proc freq data=work.segraw;
+211            where index(upcase(strip(stype)), 'GEO') gt 0;
+212            tables curcds*isosrc / missing;
+213        run;
+
+NOTE: There were 50559 observations read from the data set WORK.SEGRAW.
+      WHERE INDEX(UPCASE(STRIP(stype)), 'GEO')>0;
+NOTE: The PROCEDURE FREQ printed page 13.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+214        
+215        data work.seg_vintage;
+216            set work.segraw;
+217            if upcase(strip(stype)) ne 'GEOSEG' then delete;
+10                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+218            datayr=year(datadate);
+219            srcyr=year(srcdate);
+220            vintage_gap=srcyr-datayr;
+221        run;
+
+NOTE: There were 84829 observations read from the data set WORK.SEGRAW.
+NOTE: The data set WORK.SEG_VINTAGE has 50559 observations and 13 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+222        title "Geographic segment source-date vintages";
+223        proc means data=work.seg_vintage n nmiss min p25 median p75 max;
+224            var datayr srcyr vintage_gap;
+225        run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 50559 observations read from the data set WORK.SEG_VINTAGE.
+NOTE: The PROCEDURE MEANS printed page 14.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+226        proc freq data=work.seg_vintage;
+227            tables srcyr / missing;
+228        run;
+
+NOTE: There were 50559 observations read from the data set WORK.SEG_VINTAGE.
+NOTE: The PROCEDURE FREQ printed page 15.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+229        
+230        proc sql;
+231            create table work.snms_counts_all as
+232            select upcase(compbl(strip(snms))) as snms length=256,
+233                   count(*) as n,
+234                   min(datadate) as min_data format=date9.,
+235                   max(datadate) as max_data format=date9.,
+236                   min(srcdate) as min_src format=date9.,
+237                   max(srcdate) as max_src format=date9.
+238            from work.seg_vintage
+239            group by calculated snms
+240            order by n desc, calculated snms;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.SNMS_COUNTS_ALL created, with 303 rows and 6 columns.
+
+241        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.07 seconds
+      
+
+242        proc sort data=work.snms_counts_all;
+11                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+243            by descending n snms;
+244        run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+245        data work.snms_counts_ranked;
+246            set work.snms_counts_all;
+247            diagnostic_rank=_n_;
+248        run;
+
+NOTE: There were 303 observations read from the data set WORK.SNMS_COUNTS_ALL.
+NOTE: The data set WORK.SNMS_COUNTS_RANKED has 303 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+249        data work.snms_counts;
+250            set work.snms_counts_ranked;
+251            if diagnostic_rank gt 120 then delete;
+252        run;
+
+NOTE: There were 303 observations read from the data set WORK.SNMS_COUNTS_RANKED.
+NOTE: The data set WORK.SNMS_COUNTS has 120 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+253        title "Most frequent reported geographic segment names";
+254        proc print data=work.snms_counts noobs;
+255        run;
+
+NOTE: There were 120 observations read from the data set WORK.SNMS_COUNTS.
+NOTE: The PROCEDURE PRINT printed pages 16-18.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+256        
+257        proc sql;
+258            create table work.geotp_audit as
+259            select stype, geotp, count(*) as n,
+260                   sum(case when missing(strip(snms)) then 1 else 0 end) as snms_missing,
+261                   sum(case when missing(ias) then 1 else 0 end) as ias_missing,
+262                   sum(case when ias gt 0 then 1 else 0 end) as ias_positive,
+263                   sum(case when upcase(strip(curcds)) ne 'USD' or missing(curcds)
+264                            then 1 else 0 end) as nonusd_rows
+265            from work.segraw
+266            where index(upcase(strip(stype)), 'GEO') gt 0
+267            group by stype, geotp
+268            order by stype, geotp;
+NOTE: SAS threaded sort was used.
+12                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+NOTE: Table WORK.GEOTP_AUDIT created, with 3 rows and 7 columns.
+
+269        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+270        title "Geographic type, name, asset, and currency audit";
+271        proc print data=work.geotp_audit noobs;
+272        run;
+
+NOTE: There were 3 observations read from the data set WORK.GEOTP_AUDIT.
+NOTE: The PROCEDURE PRINT printed page 19.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+273        
+274        /* Select the latest source date within each firm-date geographic report.
+275           Keep only the current provider's GeoSeg records; do not interpret GEOTP as
+276           a legacy country code. */
+277        proc sql;
+278            create table work.segmaxsrc as
+279            select gvkey, datadate, stype, max(srcdate) as maxsrc format=date9.
+280            from work.seg_vintage
+281            group by gvkey, datadate, stype;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.SEGMAXSRC created, with 23068 rows and 4 columns.
+
+282            create table work.seglatest as
+283            select s.*
+284            from work.seg_vintage as s
+285            inner join work.segmaxsrc as m
+286              on s.gvkey=m.gvkey and s.datadate=m.datadate and
+287                 s.stype=m.stype and s.srcdate=m.maxsrc;
+NOTE: Table WORK.SEGLATEST created, with 50443 rows and 13 columns.
+
+288        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+289        
+290        proc sql;
+291            create table work.sid_vintage as
+292            select gvkey, datadate, stype, sid,
+293                   count(*) as source_rows,
+294                   count(distinct srcdate) as source_dates,
+295                   count(distinct geotp) as type_values,
+296                   count(distinct curcds) as currency_values
+297            from work.seg_vintage
+298            group by gvkey, datadate, stype, sid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.SID_VINTAGE created, with 50470 rows and 8 columns.
+
+13                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+299            select count(*) as sid_group_n,
+300                   sum(source_dates gt 1) as multi_vintage_sid_n,
+301                   sum(source_rows gt 1) as repeated_sid_row_n,
+302                   sum(type_values gt 1) as type_change_sid_n,
+303                   sum(currency_values gt 1) as currency_change_sid_n
+304            from work.sid_vintage;
+305        
+306        quit;
+NOTE: The PROCEDURE SQL printed page 20.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.09 seconds
+      
+
+307        
+308        /* Parse observed descriptions into the paper's location indicators and into
+309           canonical geographic tokens. The token table supports a pairwise audit of
+310           repeated countries and broad-region/country hierarchy overlap. */
+311        data work.segnorm(keep=gvkey datadate stype sid geotp snms ias curcds isosrc srcdate
+312                                datayr srcyr vintage_gap segment_row_id gcode geotp_up name_up
+313                                loc_africa loc_asia loc_japan loc_middeast loc_europe loc_uk
+314                                loc_france loc_germany loc_oceania loc_samerica loc_canada loc_mexico
+315                                row_unknown row_aggregate row_scope_gap loc_bad broad_europe broad_asia
+316                                broad_namerica)
+317             work.segtokens(keep=gvkey datadate segment_row_id token_canon token_group
+318                                 token_broad token_aggregate token_unknown);
+319            set work.seglatest;
+320            length geotp_up $32 name_up $256 tok $128 token_canon $128 token_group $8;
+321            segment_row_id=_n_;
+322            geotp_up=upcase(compbl(strip(geotp)));
+323            name_up=upcase(compbl(strip(snms)));
+324            gcode=.;
+325            if index(geotp_up,'TOTAL FOREIGN') gt 0 then gcode=1;
+326            else if index(geotp_up,'NONDOMESTIC') gt 0 or
+327                    index(geotp_up,'NON-DOMESTIC') gt 0 or
+328                    index(geotp_up,'NON DOMESTIC') gt 0 then gcode=3;
+329            else if geotp_up='DOMESTIC' then gcode=2;
+330            else do;
+331                geotp_num=input(strip(geotp),?? best32.);
+332                if geotp_num in (1,2,3) then gcode=geotp_num;
+333            end;
+334            loc_africa=0; loc_asia=0; loc_japan=0; loc_middeast=0;
+335            loc_europe=0; loc_uk=0; loc_france=0; loc_germany=0;
+336            loc_oceania=0; loc_samerica=0; loc_canada=0; loc_mexico=0;
+337            row_unknown=0; row_aggregate=0; row_scope_gap=0; loc_bad=0;
+338            broad_europe=0; broad_asia=0; broad_namerica=0;
+339            if gcode=3 then do;
+340                if missing(name_up) then do;
+341                    row_unknown=1;
+342                    row_aggregate=1;
+343                end;
+344                else do ti=1 to countw(name_up,',');
+345                    tok=upcase(compbl(strip(scan(name_up,ti,','))));
+346                    token_canon=tok; token_group=''; token_broad=0; token_aggregate=0;
+347                    token_unknown=0;
+348                    if tok in ('AFRICA') then do;
+349                        loc_africa=1; token_group='AF'; token_broad=1;
+350                    end;
+14                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+351                    else if tok in ('SOUTH AFRICA','REPUBLIC OF SOUTH AFRICA') then do;
+352                        loc_africa=1; token_canon='SOUTH AFRICA'; token_group='AF';
+353                    end;
+354                    else if tok in ('ASIA','FAR EAST') then do;
+355                        loc_asia=1; token_group='ASIA'; token_broad=1;
+356                        broad_asia=1;
+357                    end;
+358                    else if tok in ('PHILIPPINES','CHINA','INDIA','TAIWAN','HONG KONG',
+359                                    'SINGAPORE','KOREA','SOUTH KOREA','NORTH KOREA',
+360                                    'THAILAND','MALAYSIA','INDONESIA','PAKISTAN',
+361                                    'BANGLADESH','SRI LANKA','VIETNAM') then do;
+362                        loc_asia=1; token_group='ASIA';
+363                    end;
+364                    else if tok='JAPAN' then do;
+365                        loc_japan=1; token_group='ASIA';
+366                    end;
+367                    else if tok in ('MIDDLE EAST','MIDEAST') then do;
+368                        loc_middeast=1; token_group='ME'; token_broad=1;
+369                    end;
+370                    else if tok in ('UNITED ARAB EMIRATES','UAE','SAUDI ARABIA',
+371                                    'ISRAEL','JORDAN','KUWAIT','BAHRAIN','QATAR',
+372                                    'OMAN','IRAQ','IRAN','LEBANON','SYRIA','YEMEN') then do;
+373                        loc_middeast=1; token_group='ME';
+374                    end;
+375                    else if tok in ('EUROPE','WESTERN EUROPE','EASTERN EUROPE') then do;
+376                        loc_europe=1; token_group='EU'; token_broad=1;
+377                        broad_europe=1;
+378                    end;
+379                    else if tok in ('UNITED KINGDOM','GREAT BRITAIN','BRITAIN','UK','U.K.',
+380                                    'ENGLAND','SCOTLAND','WALES') then do;
+381                        loc_uk=1; token_canon='UK'; token_group='EU';
+382                    end;
+383                    else if tok='FRANCE' then do; loc_france=1; token_group='EU'; end;
+384                    else if tok='GERMANY' then do; loc_germany=1; token_group='EU'; end;
+385                    else if tok in ('ITALY','SPAIN','PORTUGAL','NETHERLANDS','BELGIUM',
+386                                    'SWITZERLAND','SWEDEN','NORWAY','DENMARK','FINLAND',
+387                                    'IRELAND','AUSTRIA','GREECE','POLAND','RUSSIA',
+388                                    'CZECH REPUBLIC','LUXEMBOURG','HUNGARY','ROMANIA',
+389                                    'TURKEY','ICELAND') then do;
+390                        loc_europe=1; token_group='EU';
+391                    end;
+392                    else if tok in ('OCEANIA','PACIFIC') then do;
+393                        loc_oceania=1; token_group='OC'; token_broad=1;
+394                    end;
+395                    else if tok in ('AUSTRALIA','NEW ZEALAND') then do;
+396                        loc_oceania=1; token_group='OC';
+397                    end;
+398                    else if tok in ('SOUTH AMERICA','SAMERICA') then do;
+399                        loc_samerica=1; token_group='SA'; token_broad=1;
+400                    end;
+401                    else if tok in ('BRAZIL','ARGENTINA','CHILE','COLOMBIA','VENEZUELA',
+402                                    'PERU','ECUADOR','URUGUAY','BOLIVIA','PARAGUAY') then do;
+403                        loc_samerica=1; token_group='SA';
+404                    end;
+405                    else if tok='CANADA' then do; loc_canada=1; token_group='NA'; end;
+406                    else if tok='MEXICO' then do; loc_mexico=1; token_group='NA'; end;
+407                    else if tok='NORTH AMERICA' then do;
+408                        token_group='NA'; token_broad=1; broad_namerica=1;
+15                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+409                        row_unknown=1;
+410                    end;
+411                    else if tok in ('OTHER FOREIGN','OTHER COUNTRIES','OTHER REGIONS',
+412                                    'REST OF WORLD','REST OF THE WORLD','WORLDWIDE',
+413                                    'INTERNATIONAL','FOREIGN','OTHER') then do;
+414                        token_aggregate=1; row_aggregate=1; row_unknown=1;
+415                    end;
+416                    else if tok in ('DOMESTIC','UNITED STATES','USA','U.S.A.') then do;
+417                        row_unknown=1; loc_bad=1;
+418                    end;
+419                    else do;
+420                        row_unknown=1; token_unknown=1;
+421                    end;
+422                    output work.segtokens;
+423                end;
+424            end;
+425            if broad_europe=1 and (loc_uk=0 or loc_france=0 or loc_germany=0) then row_scope_gap=1;
+426            if broad_asia=1 and loc_japan=0 then row_scope_gap=1;
+427            if broad_namerica=1 and (loc_canada=0 or loc_mexico=0) then row_scope_gap=1;
+428            if gcode=3 and (missing(curcds) or upcase(strip(curcds)) ne 'USD') then loc_bad=1;
+429            output work.segnorm;
+430        run;
+
+NOTE: There were 50443 observations read from the data set WORK.SEGLATEST.
+NOTE: The data set WORK.SEGNORM has 50443 observations and 36 variables.
+NOTE: The data set WORK.SEGTOKENS has 3352 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+431        
+432        proc sql;
+433            create table work.component_overlap_pairs as
+434            select distinct a.gvkey, a.datadate,
+435                   a.segment_row_id as row_a, b.segment_row_id as row_b
+436            from work.segtokens as a
+437            inner join work.segtokens as b
+438              on a.gvkey=b.gvkey and a.datadate=b.datadate and
+439                 a.segment_row_id lt b.segment_row_id
+440            where a.token_canon=b.token_canon or
+441                  (not missing(a.token_group) and a.token_group=b.token_group and
+442                   (a.token_broad=1 or b.token_broad=1)) or
+443                  a.token_aggregate=1 or b.token_aggregate=1;
+NOTE: Table WORK.COMPONENT_OVERLAP_PAIRS created, with 236 rows and 4 columns.
+
+444        
+445            create table work.component_overlap as
+446            select gvkey, datadate, count(*) as overlap_pairs
+447            from work.component_overlap_pairs
+448            group by gvkey, datadate;
+NOTE: Table WORK.COMPONENT_OVERLAP created, with 169 rows and 3 columns.
+
+449        
+450            create table work.latest_sid_audit as
+451            select gvkey, datadate, stype, sid, count(*) as latest_rows,
+452                   count(distinct geotp) as type_values,
+453                   count(distinct curcds) as currency_values,
+16                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+454                   count(distinct srcdate) as source_dates,
+455                   count(distinct snms) as name_values
+456            from work.seglatest
+457            group by gvkey, datadate, stype, sid;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.LATEST_SID_AUDIT created, with 50443 rows and 9 columns.
+
+458        
+459            create table work.component_sid_audit as
+460            select gvkey, datadate, count(*) as component_rows,
+461                   count(distinct sid) as component_distinct_sids,
+462                   sum(missing(sid)) as component_missing_sid_n,
+463                   sum(missing(srcdate)) as component_missing_srcdate_n
+464            from work.segnorm
+465            where gcode=3
+466            group by gvkey, datadate;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.COMPONENT_SID_AUDIT created, with 21846 rows and 6 columns.
+
+467        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.16 seconds
+      
+
+468        
+469        title "Latest-source component SID, vintage, and hierarchy-overlap audit";
+470        proc sql;
+471            select count(*) as component_report_n,
+472                   sum(component_rows ne component_distinct_sids) as bad_component_sid_report_n,
+473                   sum(component_missing_srcdate_n gt 0) as missing_vintage_report_n
+474            from work.component_sid_audit;
+475            select count(*) as latest_sid_group_n,
+476                   sum(latest_rows gt 1) as duplicate_latest_sid_n,
+477                   sum(type_values gt 1) as latest_sid_type_change_n,
+478                   sum(currency_values gt 1) as latest_sid_currency_change_n,
+479                   sum(source_dates gt 1) as latest_sid_date_change_n
+480            from work.latest_sid_audit;
+481            select count(*) as overlap_report_n,
+482                   sum(overlap_pairs) as overlap_segment_pair_n
+483            from work.component_overlap;
+484        quit;
+NOTE: The PROCEDURE SQL printed pages 21-23.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+485        
+486        proc sql;
+487            create table work.component_names_all as
+488            select name_up as snms length=256, count(*) as n,
+489                   min(datadate) as min_data format=date9.,
+490                   max(datadate) as max_data format=date9.
+491            from work.segnorm
+492            where gcode=3
+493            group by name_up
+494            order by n desc, name_up;
+17                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.COMPONENT_NAMES_ALL created, with 289 rows and 4 columns.
+
+495        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.04 seconds
+      
+
+496        proc sort data=work.component_names_all;
+497            by descending n snms;
+498        run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+499        data work.component_names_ranked;
+500            set work.component_names_all;
+501            diagnostic_rank=_n_;
+502        run;
+
+NOTE: There were 289 observations read from the data set WORK.COMPONENT_NAMES_ALL.
+NOTE: The data set WORK.COMPONENT_NAMES_RANKED has 289 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+503        data work.component_names_top;
+504            set work.component_names_ranked;
+505            if diagnostic_rank gt 120 then delete;
+506        run;
+
+NOTE: There were 289 observations read from the data set WORK.COMPONENT_NAMES_RANKED.
+NOTE: The data set WORK.COMPONENT_NAMES_TOP has 120 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+507        title "Most frequent NonDomestic segment descriptions";
+508        proc print data=work.component_names_top noobs;
+509        run;
+
+NOTE: There were 120 observations read from the data set WORK.COMPONENT_NAMES_TOP.
+NOTE: The PROCEDURE PRINT printed pages 24-26.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+510        
+511        /* Aggregate at the firm-date level. A Total Foreign amount is used alone.
+512           Without it, observed NonDomestic IAS rows are summed only when their SIDs,
+513           USD currency, source dates, amounts, and token-level non-overlap audit
+18                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+514           support an unambiguous component sum. A domestic row is not required to
+515           sum foreign components; an explicit Domestic-only report is required for
+516           an asset zero. */
+517        proc sql;
+518            create table work.segsum0 as
+519            select gvkey, datadate,
+520                   count(*) as geo_rows,
+521                   sum(case when gcode=1 then 1 else 0 end) as n_total,
+522                   sum(case when gcode=2 then 1 else 0 end) as n_domestic,
+523                   sum(case when gcode=3 then 1 else 0 end) as n_nondom,
+524                   sum(case when missing(gcode) then 1 else 0 end) as n_unknown_type,
+525                   max(case when gcode=1 then ias else . end) as foreign_total,
+526                   max(case when gcode=1 and not missing(ias) and
+527                                 upcase(strip(curcds))='USD' and not missing(sid) and
+528                                 not missing(srcdate) then 1 else 0 end) as total_ok,
+529                   sum(case when gcode=3 then ias else 0 end) as component_asset_sum,
+530                   sum(case when gcode=3 and ias gt 0 then 1 else 0 end) as component_positive_n,
+531                   sum(case when gcode=3 and missing(ias) then 1 else 0 end) as component_missing_n,
+532                   sum(case when gcode=3 and
+533                                 (missing(curcds) or upcase(strip(curcds)) ne 'USD')
+534                            then 1 else 0 end) as component_nonusd_n,
+535                   sum(case when gcode=3 and missing(srcdate) then 1 else 0 end) as component_missing_srcdate_n,
+536                   sum(case when gcode=3 and missing(sid) then 1 else 0 end) as component_missing_sid_n,
+537                   sum(case when gcode=3 then row_unknown else 0 end) as component_unknown_n,
+538                   sum(case when gcode=3 then row_aggregate else 0 end) as component_aggregate_n,
+539                   max(case when gcode=3 then row_scope_gap else 0 end) as location_scope_gap,
+540                   max(loc_africa) as loc_africa,
+541                   max(loc_asia) as loc_asia,
+542                   max(loc_japan) as loc_japan,
+543                   max(loc_middeast) as loc_middeast,
+544                   max(loc_europe) as loc_europe,
+545                   max(loc_uk) as loc_uk,
+546                   max(loc_france) as loc_france,
+547                   max(loc_germany) as loc_germany,
+548                   max(loc_oceania) as loc_oceania,
+549                   max(loc_samerica) as loc_samerica,
+550                   max(loc_canada) as loc_canada,
+551                   max(loc_mexico) as loc_mexico,
+552                   max(loc_bad) as loc_bad,
+553                   max(case when gcode in (1,3) and ias gt 0 then 1 else 0 end) as foreign_positive,
+554                   sum(case when gcode=1 and missing(srcdate) then 1 else 0 end) as total_missing_srcdate_n,
+555                   sum(case when gcode=1 and missing(sid) then 1 else 0 end) as total_missing_sid_n,
+556                   sum(case when gcode=2 and missing(srcdate) then 1 else 0 end) as domestic_missing_srcdate_n
+557            from work.segnorm
+558            group by gvkey, datadate;
+NOTE: SAS threaded sort was used.
+NOTE: Table WORK.SEGSUM0 created, with 23068 rows and 35 columns.
+
+559        
+560            create table work.segsum as
+561            select a.*,
+562                   coalesce(s.component_rows,0) as component_rows,
+563                   coalesce(s.component_distinct_sids,0) as component_distinct_sids,
+564                   coalesce(s.component_missing_srcdate_n,0) as component_sid_vintage_missing_n,
+565                   coalesce(o.overlap_pairs,0) as component_overlap_pairs
+566            from work.segsum0 as a
+567            left join work.component_sid_audit as s
+568              on a.gvkey=s.gvkey and a.datadate=s.datadate
+19                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+569            left join work.component_overlap as o
+570              on a.gvkey=o.gvkey and a.datadate=o.datadate;
+NOTE: Table WORK.SEGSUM created, with 23068 rows and 39 columns.
+
+571        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.09 seconds
+      
+
+572        
+573        proc sort data=work.etrpool; by gvkey datadate; run;
+
+NOTE: There were 23081 observations read from the data set WORK.ETRPOOL.
+NOTE: SAS sort was used.
+NOTE: The data set WORK.ETRPOOL has 23081 observations and 27 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+574        proc sort data=work.segsum; by gvkey datadate; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+575        data out.mnc_etr_regressions;
+576            merge work.etrpool(in=inpool) work.segsum;
+577            by gvkey datadate;
+578            if inpool;
+579        
+580            foreign_assets=.;
+581            asset_source=.;
+582            if n_total=1 and total_ok=1 and not missing(foreign_total) then do;
+583                foreign_assets=foreign_total;
+584                asset_source=1;
+585            end;
+586            else if n_total=0 and n_nondom gt 0 and
+587                    n_unknown_type=0 and component_missing_n=0 and
+588                    component_nonusd_n=0 and component_missing_srcdate_n=0 and
+589                    domestic_missing_srcdate_n=0 and
+590                    component_missing_sid_n=0 and
+591                    component_rows=component_distinct_sids and
+592                    component_overlap_pairs=0 and
+593                    (n_nondom=1 or (component_unknown_n=0 and component_aggregate_n=0)) then do;
+594                foreign_assets=component_asset_sum;
+595                asset_source=2;
+596            end;
+597            else if n_total=0 and n_nondom=0 and n_domestic gt 0 and
+598                    n_unknown_type=0 and geo_rows gt 0 and
+599                    domestic_missing_srcdate_n=0 then do;
+600                foreign_assets=0;
+601                asset_source=3;
+602            end;
+603            if not missing(foreign_assets) and at gt 0 then foroper=foreign_assets/at;
+20                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+604            else foroper=.;
+605            foroper2=foroper*foroper;
+606        
+607            if not missing(pifo) and pifo gt 0 then mnc=1;
+608            else if not missing(foreign_assets) and foreign_assets gt 0 then mnc=1;
+609            else if not missing(pifo) and pifo le 0 and
+610                    not missing(foreign_assets) and foreign_assets le 0 then mnc=0;
+611            else mnc=.;
+612            if not missing(mnc) then do;
+613                mncsize=mnc*size;
+614                mncpti=mnc*pti;
+615            end;
+616            else do;
+617                mncsize=.; mncpti=.;
+618            end;
+619        
+620            geo_reported=(geo_rows gt 0);
+621            geo_unclassified=0;
+622            if component_unknown_n gt 0 or component_aggregate_n gt 0 or
+623               location_scope_gap=1 or n_unknown_type gt 0 then geo_unclassified=1;
+624            geo_aggregate_only=0;
+625            if n_total gt 0 and n_nondom=0 and foreign_total gt 0 then geo_aggregate_only=1;
+626            if component_aggregate_n gt 0 then geo_aggregate_only=1;
+627            if geo_aggregate_only=1 then geo_unclassified=1;
+628        
+629            loc_ready=0;
+630            if n_unknown_type=0 and loc_bad=0 then do;
+631                if n_nondom gt 0 and component_unknown_n=0 and
+632                   component_aggregate_n=0 and location_scope_gap=0 and
+633                   component_missing_srcdate_n=0 then loc_ready=1;
+634                else if n_total=1 and n_nondom=0 and total_ok=1 and
+635                        not missing(foreign_total) and foreign_total=0 then loc_ready=1;
+636                else if n_total=0 and n_nondom=0 and n_domestic gt 0 and
+637                        geo_rows gt 0 and domestic_missing_srcdate_n=0 then loc_ready=1;
+638            end;
+639            if n_total gt 0 and n_nondom gt 0 and foreign_total le 0 then loc_ready=0;
+640            geo_absence_observed=loc_ready;
+641        
+642            if loc_ready=1 then do;
+643                africa=loc_africa; asia=loc_asia; japan=loc_japan;
+644                middeast=loc_middeast; europe=loc_europe; uk=loc_uk;
+645                france=loc_france; germany=loc_germany; oceania=loc_oceania;
+646                samerica=loc_samerica; canada=loc_canada; mexico=loc_mexico;
+647            end;
+648            else do;
+649                africa=.; asia=.; japan=.; middeast=.; europe=.; uk=.;
+650                france=.; germany=.; oceania=.; samerica=.; canada=.; mexico=. ;
+651            end;
+652        
+653            indus1=0; indus2=0; indus3=0; indus4=0; indus5=0; indus6=0;
+654            if not missing(sich) then do;
+655                if 0 le sich and sich lt 2000 then indus1=1;
+656                else if 2000 le sich and sich lt 3000 then indus2=1;
+657                else if 3000 le sich and sich lt 4000 then indus3=1;
+658                else if 4000 le sich and sich lt 5000 then indus4=1;
+659                else if 5000 le sich and sich lt 6000 then indus5=1;
+660                else if 6000 le sich and sich le 8000 then indus6=1;
+661                else if sich le 0 then do;
+21                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+662                    indus1=.; indus2=.; indus3=.; indus4=.; indus5=.; indus6=.;
+663                end;
+664            end;
+665            yr1991=(fyear=1991); yr1992=(fyear=1992); yr1993=(fyear=1993);
+666            yr1994=(fyear=1994); yr1995=(fyear=1995); yr1996=(fyear=1996);
+667            yr1997=(fyear=1997);
+668        
+669            table4=0;
+670            if not missing(sich) and not missing(size) and not missing(pti) and
+671               not missing(wwetr) and not missing(foroper) and not missing(mnc) and
+672               not missing(africa) and not missing(asia) and not missing(japan) and
+673               not missing(middeast) and not missing(europe) and not missing(uk) and
+674               not missing(france) and not missing(germany) and not missing(oceania) and
+675               not missing(samerica) and not missing(canada) and not missing(mexico) and
+676               not missing(indus1) then table4=1;
+677        
+678            label wwetr='Worldwide current ETR';
+679            label size='ln(1 + net sales, USD millions)';
+680            label pti='ln(1 + pretax income, USD millions)';
+681            label foroper='Foreign assets / total assets';
+682            label foreign_assets='Foreign assets (USD millions)';
+683            label asset_source='Foreign asset construction source';
+684            label mnc='Multinational indicator';
+685            label datadate='Fiscal year-end date';
+686        run;
+
+NOTE: Missing values were generated as a result of performing an operation on missing values.
+      Each place is given by: (Number of times) at (Line):(Column).
+      17536 at 605:21   
+NOTE: There were 23081 observations read from the data set WORK.ETRPOOL.
+NOTE: There were 23068 observations read from the data set WORK.SEGSUM.
+NOTE: The data set OUT.MNC_ETR_REGRESSIONS has 23081 observations and 102 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+687        
+688        title "Segment code, source-date, and currency attrition";
+689        proc freq data=out.mnc_etr_regressions;
+690            tables fyear*table4 fyear*mnc fyear*loc_ready / missing;
+691        run;
+
+NOTE: There were 23081 observations read from the data set OUT.MNC_ETR_REGRESSIONS.
+NOTE: The PROCEDURE FREQ printed pages 27-29.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+692        title "Table 4 flag and unresolved geography diagnostics";
+693        proc means data=out.mnc_etr_regressions n nmiss mean std p1 p25 p50 p75 p99 min max;
+694            var wwetr size pti foreign_assets foroper foroper2 mnc africa asia japan
+695                middeast europe uk france germany oceania samerica canada mexico;
+696        run;
+
+NOTE: Multiple concurrent threads will be used to summarize data.
+NOTE: There were 23081 observations read from the data set OUT.MNC_ETR_REGRESSIONS.
+22                                                         The SAS System                     Tuesday, November  3, 2026 11:14:00 AM
+
+NOTE: The PROCEDURE MEANS printed page 30.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.10 seconds
+      
+
+697        proc sql;
+698            select count(*) as etr_pool_n,
+699                   sum(table4) as table4_complete_n,
+700                   sum(missing(sich)) as missing_sic_pool_n,
+701                   sum(missing(foroper)) as missing_foroper_n,
+702                   sum(missing(mnc)) as missing_mnc_n,
+703                   sum(missing(loc_ready) or loc_ready=0) as location_unavailable_n,
+704                   sum(foroper gt 1) as foroper_above_one_n,
+705                   sum(geo_reported=0) as no_geographic_report_n,
+706                   sum(geo_unclassified=1) as unclassified_geography_n,
+707                   sum(geo_aggregate_only=1) as aggregate_only_geography_n,
+708                   sum(geo_absence_observed=1) as observed_location_absence_n,
+709                   sum(asset_source=1) as total_foreign_asset_rows_n,
+710                   sum(asset_source=2) as summed_component_asset_rows_n,
+711                   sum(asset_source=3) as domestic_zero_asset_rows_n
+712            from out.mnc_etr_regressions;
+713        quit;
+NOTE: The PROCEDURE SQL printed page 31.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+714        
+715        title;
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           2.14 seconds
+      cpu time            2.51 seconds
+      

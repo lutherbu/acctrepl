@@ -1,0 +1,1658 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 07:22:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 07:22:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend nodate nonumber;
+2          
+3          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname fx "/storage/sas/base/comp/d_global/currency" access=readonly;
+NOTE: Libref FX was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_global/currency
+5          libname sec "/storage/sas/base/comp/d_na/security" access=readonly;
+NOTE: Libref SEC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+6          libname crspstk "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSPSTK was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+7          libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3124365414/attempt_04/data
+8          
+9          /* Annual Compustat inputs. The first two years are construction history only. */
+10         data work.raw_comp;
+11             set comp.funda(keep=gvkey iid hiid datadate fyear indfmt consol popsrc datafmt
+12                            sich curcd at oancf sale cogs invt ib prcc_f csho ceq xrd xad xsga
+13                            rect ppent lct dlc dltt
+14                            where=(fyear >= 1985 and fyear <= 2001 and indfmt='INDL' and
+15                                   consol='C' and popsrc='D' and datafmt='STD'));
+16             if not missing(gvkey) and not missing(fyear);
+17         run;
+
+NOTE: There were 185455 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1985 and fyear<=2001) and (indfmt='INDL') and (consol='C') and (popsrc='D') and (datafmt='STD');
+NOTE: The data set WORK.RAW_COMP has 185455 observations and 28 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.53 seconds
+      cpu time            0.53 seconds
+      
+
+18         
+19         /* Resolve fiscal-year key duplicates explicitly, retaining the latest date. */
+20         proc sql noprint;
+21             select count(*) into :dupkeys trimmed
+22             from (select gvkey, fyear, count(*) as n
+23                   from work.raw_comp group by gvkey, fyear having calculated n > 1);
+24             select count(*) into :dupties trimmed
+25             from (select gvkey, fyear, datadate, count(*) as n
+26                   from work.raw_comp group by gvkey, fyear, datadate having calculated n > 1);
+27             select count(*) into :nraw trimmed from work.raw_comp;
+28             select intnx('month', min(datadate), 0, 'b'),
+29                    intnx('month', max(datadate), 0, 'e')
+30               into :price_start trimmed, :price_end trimmed
+31               from work.raw_comp;
+32         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.13 seconds
+      
+
+33         %put NOTE: Compustat filtered rows=&nraw duplicate GVKEY-fiscal-year keys=&dupkeys same-date duplicate groups=&dupties.;
+NOTE: Compustat filtered rows=185455 duplicate GVKEY-fiscal-year keys=0 same-date duplicate groups=0
+34         %if &dupties > 0 %then %do;
+35             data _null_;
+36                 put "ERROR: Same-date GVKEY/fiscal-year duplicates require a source-specific selection rule.";
+37                 abort cancel;
+38             run;
+39         %end;
+40         
+41         proc sort data=work.raw_comp out=work.raw_sorted;
+42             by gvkey fyear datadate;
+43         run;
+
+NOTE: There were 185455 observations read from the data set WORK.RAW_COMP.
+NOTE: The data set WORK.RAW_SORTED has 185455 observations and 28 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+44         data work.raw_unique;
+45             set work.raw_sorted;
+46             by gvkey fyear datadate;
+47             if last.fyear;
+48         run;
+
+NOTE: There were 185455 observations read from the data set WORK.RAW_SORTED.
+NOTE: The data set WORK.RAW_UNIQUE has 185455 observations and 28 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+49         
+                                                           The SAS System
+
+50         /* Xpressfeed cross-rate factors: annual flows use EXRAT12M. */
+51         data work.fx_month_raw;
+52             set fx.g_exrt_mth(keep=datadate fromcurm tocurm exrat12m);
+53             if fromcurm='GBP';
+54         run;
+
+NOTE: There were 75838 observations read from the data set FX.G_EXRT_MTH.
+NOTE: The data set WORK.FX_MONTH_RAW has 75838 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+55         proc sql noprint;
+56             select count(*) into :fxmdups trimmed
+57             from (select datadate, tocurm, count(*) as n
+58                   from work.fx_month_raw group by datadate, tocurm having calculated n > 1);
+59         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+      
+
+60         %if &fxmdups > 0 %then %do;
+61             data _null_;
+62                 put "ERROR: Duplicate Xpressfeed monthly FX date/currency keys require review.";
+63                 abort cancel;
+64             run;
+65         %end;
+66         proc sql;
+67             create table work.fx_month as
+68             select c.datadate, c.tocurm as fxcurr,
+69                    c.exrat12m as rate12m_cur, u.exrat12m as rate12m_usd,
+70                    case when c.tocurm='USD' then 1
+71                         when c.exrat12m > 0 and u.exrat12m > 0 then u.exrat12m/c.exrat12m end as flowfac
+72             from work.fx_month_raw as c
+73             left join work.fx_month_raw as u
+74               on c.datadate=u.datadate and c.fromcurm=u.fromcurm and u.tocurm='USD';
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.FX_MONTH created, with 75838 rows and 5 columns.
+
+75         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+76         
+77         /* Pair positive GBP-to-reporting and GBP-to-USD daily quotes on the exact
+78            source date. Preserve each EXRATTPD value as provenance; the code can be
+79            blank or differ across legs even when both dated currency quotes exist. */
+80         data work.fx_day_raw;
+81             set fx.g_exrt_dly(keep=datadate fromcurd tocurd exratd exrattpd);
+82             if fromcurd='GBP' and tocurd in ('USD','CAD') and exratd > 0;
+83         run;
+
+NOTE: There were 2221564 observations read from the data set FX.G_EXRT_DLY.
+                                                           The SAS System
+
+NOTE: The data set WORK.FX_DAY_RAW has 31662 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+84         proc sql noprint;
+85             select count(*) into :fxddups trimmed
+86             from (select datadate, tocurd, count(*) as n
+87                   from work.fx_day_raw group by datadate, tocurd having calculated n > 1);
+88         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+
+89         %if &fxddups > 0 %then %do;
+90             data _null_;
+91                 put "ERROR: Duplicate Xpressfeed daily FX date/currency keys require review.";
+92                 abort cancel;
+93             run;
+94         %end;
+95         proc sql;
+96             create table work.fx_day_pair as
+97             select c.datadate, c.tocurd as fxcurr,
+98                    c.exrattpd as exrattpd_cur, u.exrattpd as exrattpd_usd,
+99                    c.exratd as rate_cur, u.exratd as rate_usd,
+100                   case when c.tocurd='USD' then 1
+101                        when c.exratd > 0 and u.exratd > 0 then u.exratd/c.exratd end as bsfac,
+102                   (not missing(c.exratd) and not missing(u.exratd)) as has_both_rates
+103            from work.fx_day_raw as c
+104            left join work.fx_day_raw as u
+105              on c.datadate=u.datadate and u.tocurd='USD';
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.FX_DAY_PAIR created, with 31662 rows and 8 columns.
+
+106        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+107        data work.fx_day_best; set work.fx_day_pair; run;
+
+NOTE: There were 31662 observations read from the data set WORK.FX_DAY_PAIR.
+NOTE: The data set WORK.FX_DAY_BEST has 31662 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+108        
+109        /* Price route sources are retained at their documented issue/date grains.
+110           IID is kept below only to reproduce A3's route for route-impact checks. */
+111        data work.month_desc;
+112            set sec.sec_mth(keep=gvkey iid datadate primiss
+113                            where=(datadate >= &price_start and datadate <= &price_end));
+                                                           The SAS System
+
+114        run;
+
+NOTE: There were 2196164 observations read from the data set SEC.SEC_MTH.
+      WHERE (datadate>=9283 and datadate<=15491);
+NOTE: The data set WORK.MONTH_DESC has 2196164 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.26 seconds
+      
+
+115        data work.month_price;
+116            set sec.sec_mthprc(keep=gvkey iid datadate curcdm prccm
+117                               where=(datadate >= &price_start and datadate <= &price_end));
+118        run;
+
+NOTE: There were 2162015 observations read from the data set SEC.SEC_MTHPRC.
+      WHERE (datadate>=9283 and datadate<=15491);
+NOTE: The data set WORK.MONTH_PRICE has 2162015 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.26 seconds
+      
+
+119        
+120        /* Bounded preflight on actual non-header HIID rows and the exact catalog
+121           columns used below. Daily extraction is limited to one sampled GVKEY here;
+122           the full short-gap join follows after these fields/cardinalities pass. */
+123        data work.price_pf_keys;
+124            set work.raw_unique;
+125            if fyear < 1986 or fyear > 2000 or missing(hiid) or strip(hiid)=strip(iid) then delete;
+126            pf_n+1;
+127            if pf_n > 100 then stop;
+128            monthdate=intnx('month',datadate,0,'e');
+129            keep gvkey iid hiid datadate fyear monthdate prcc_f;
+130        run;
+
+NOTE: There were 1130 observations read from the data set WORK.RAW_UNIQUE.
+NOTE: The data set WORK.PRICE_PF_KEYS has 100 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+131        proc sql noprint;
+132            select max(gvkey) into :pfgvkey trimmed from work.price_pf_keys;
+133        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+134        proc sql;
+135            create table work.price_pf_month as
+136            select k.gvkey,k.fyear,k.datadate,k.hiid,k.iid,k.prcc_f,
+137                   hm.primiss as hiid_primiss,hp.prccm as hiid_prccm,hp.curcdm as hiid_curcdm
+138            from work.price_pf_keys as k
+139            left join work.month_desc as hm
+140              on k.gvkey=hm.gvkey and k.datadate=hm.datadate and strip(k.hiid)=strip(hm.iid)
+                                                           The SAS System
+
+141            left join work.month_price as hp
+142              on k.gvkey=hp.gvkey and k.datadate=hp.datadate and strip(k.hiid)=strip(hp.iid);
+NOTE: Table WORK.PRICE_PF_MONTH created, with 100 rows and 9 columns.
+
+143            select count(*) as sampled_historical_keys,
+144                   sum(not missing(hiid_primiss)) as sampled_dated_marker_matches,
+145                   sum(not missing(hiid_prccm)) as sampled_same_issue_month_prices,
+146                   sum(not missing(hiid_curcdm)) as sampled_month_currencies
+147            from work.price_pf_month;
+148        quit;
+NOTE: The PROCEDURE SQL printed page 1.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.51 seconds
+      cpu time            1.09 seconds
+      
+
+149        proc sql;
+150            create table work.price_pf_p as
+151            select k.gvkey,k.fyear,k.datadate,k.monthdate,k.hiid,
+152                   count(m.iid) as p_count,max(m.iid) as p_iid
+153            from work.price_pf_keys as k
+154            left join work.month_desc as m
+155              on k.gvkey=m.gvkey and k.datadate=m.datadate and m.primiss='P'
+156            group by k.gvkey,k.fyear,k.datadate,k.monthdate,k.hiid;
+NOTE: Table WORK.PRICE_PF_P created, with 100 rows and 7 columns.
+
+157            create table work.price_pf_p_price as
+158            select p.*,m.prccm,m.curcdm
+159            from work.price_pf_p as p
+160            left join work.month_price as m
+161              on p.gvkey=m.gvkey and p.datadate=m.datadate and strip(p.p_iid)=strip(m.iid)
+162            where p.p_count=1;
+NOTE: Table WORK.PRICE_PF_P_PRICE created, with 72 rows and 9 columns.
+
+163            select count(*) as sampled_primary_key_groups,
+164                   sum(p_count=1) as sampled_unique_primary_markers,
+165                   sum(p_count>1) as sampled_multiple_primary_markers,
+166                   sum(not missing(prccm)) as sampled_unique_primary_prices,
+167                   sum(not missing(curcdm)) as sampled_unique_primary_curcd
+168            from work.price_pf_p_price;
+169        quit;
+NOTE: The PROCEDURE SQL printed page 2.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.42 seconds
+      cpu time            0.98 seconds
+      
+
+170        %if %length(&pfgvkey) > 0 %then %do;
+171            data work.price_pf_daily_source;
+172                set sec.sec_dprc(keep=gvkey iid datadate curcdd prccd
+173                                 where=(gvkey="&pfgvkey" and datadate >= &price_start-3 and
+174                                        datadate <= &price_end));
+175            run;
+
+NOTE: There were 5298 observations read from the data set SEC.SEC_DPRC.
+      WHERE (gvkey='001189') and (datadate>=9280 and datadate<=15491);
+NOTE: The data set WORK.PRICE_PF_DAILY_SOURCE has 5298 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+176            proc sql;
+177                create table work.price_pf_daily as
+178                select k.gvkey,k.fyear,k.datadate,k.hiid,d.datadate as quote_date,
+179                       d.curcdd,d.prccd
+180                from work.price_pf_keys as k
+181                left join work.price_pf_daily_source as d
+182                  on k.gvkey=d.gvkey and strip(k.hiid)=strip(d.iid)
+183                 and d.datadate <= k.datadate and d.datadate >= k.datadate-3
+184                where k.gvkey="&pfgvkey";
+NOTE: Table WORK.PRICE_PF_DAILY created, with 20 rows and 7 columns.
+
+185                select count(distinct fyear) as sampled_daily_keys,
+186                       sum(not missing(curcdd)) as sampled_daily_currency_matches,
+187                       sum(not missing(prccd)) as sampled_daily_price_matches
+188                from work.price_pf_daily;
+189            quit;
+NOTE: The PROCEDURE SQL printed page 3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+190        %end;
+191        
+192        proc sql noprint;
+193            select count(*) into :monthdescdups trimmed
+194            from (select gvkey,iid,datadate,count(*) as n from work.month_desc
+195                  group by gvkey,iid,datadate having calculated n > 1);
+196            select count(*) into :monthpricedups trimmed
+197            from (select gvkey,iid,datadate,count(*) as n from work.month_price
+198                  group by gvkey,iid,datadate having calculated n > 1);
+199        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.56 seconds
+      cpu time            1.11 seconds
+      
+
+200        %if &monthdescdups > 0 or &monthpricedups > 0 %then %do;
+201            data _null_;
+202                put "ERROR: Duplicate security monthly issue/date keys require review.";
+203                abort cancel;
+204            run;
+205        %end;
+206        
+207        /* Resolve each annual PRCC_F endpoint against its historical issue ID. A
+208           monthly price is same-date evidence only at fiscal month-end; exact daily
+209           price evidence is checked at the actual Funda DATADATE. */
+210        data work.price_keys;
+211            set work.raw_unique(keep=gvkey iid hiid fyear datadate prcc_f);
+212            monthdate=intnx('month',datadate,0,'e');
+213        run;
+
+NOTE: There were 185455 observations read from the data set WORK.RAW_UNIQUE.
+NOTE: The data set WORK.PRICE_KEYS has 185455 observations and 7 variables.
+                                                           The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+
+214        proc sql;
+215            create table work.price_p_count as
+216            select gvkey,datadate,count(*) as p_count,max(iid) as p_iid
+217            from work.month_desc
+218            where primiss='P'
+219            group by gvkey,datadate;
+NOTE: Table WORK.PRICE_P_COUNT created, with 2085323 rows and 4 columns.
+
+220            create table work.price_p_unique as
+221            select * from work.price_p_count where p_count=1;
+NOTE: Table WORK.PRICE_P_UNIQUE created, with 2045352 rows and 4 columns.
+
+222        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.53 seconds
+      cpu time            0.82 seconds
+      
+
+223        
+224        /* Distinct candidate lookups make one daily source join cover HIID, legacy
+225           IID, and a unique dated P issue when HIID is absent. Identifiers remain
+226           intact; the daily match allows only the nearest prior quote within 3 days. */
+227        proc sql;
+228            create table work.daily_ids as
+229            select distinct gvkey,datadate,strip(iid) as price_iid length=21
+230            from work.price_keys where not missing(iid)
+231            union
+232            select distinct gvkey,datadate,strip(hiid) as price_iid length=21
+233            from work.price_keys where not missing(hiid)
+234            union
+235            select distinct k.gvkey,k.datadate,strip(p.p_iid) as price_iid length=21
+236            from work.price_keys as k inner join work.price_p_unique as p
+237              on k.gvkey=p.gvkey and k.datadate=p.datadate;
+NOTE: Table WORK.DAILY_IDS created, with 200326 rows and 3 columns.
+
+238            create table work.daily_price_candidates as
+239            select k.gvkey,k.price_iid,k.datadate,d.datadate as quote_date,
+240                   d.curcdd,d.prccd
+241            from work.daily_ids as k
+242            inner join sec.sec_dprc as d
+243              on k.gvkey=d.gvkey and strip(k.price_iid)=strip(d.iid)
+244             and d.datadate <= k.datadate and d.datadate >= k.datadate-3
+245            where d.datadate >= &price_start-3 and d.datadate <= &price_end;
+NOTE: Table WORK.DAILY_PRICE_CANDIDATES created, with 406469 rows and 6 columns.
+
+246        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           21.04 seconds
+      cpu time            21.18 seconds
+      
+
+247        proc sql noprint;
+248            select count(*) into :dailypricedups trimmed
+                                                           The SAS System
+
+249            from (select gvkey,price_iid,quote_date,count(*) as n from work.daily_price_candidates
+250                  group by gvkey,price_iid,quote_date having calculated n > 1);
+251        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.12 seconds
+      
+
+252        %if &dailypricedups > 0 %then %do;
+253            data _null_;
+254                put "ERROR: Duplicate security daily issue/date keys require review.";
+255                abort cancel;
+256            run;
+257        %end;
+258        proc sort data=work.daily_price_candidates;
+259            by gvkey price_iid datadate descending quote_date;
+260        run;
+
+NOTE: There were 406469 observations read from the data set WORK.DAILY_PRICE_CANDIDATES.
+NOTE: The data set WORK.DAILY_PRICE_CANDIDATES has 406469 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.15 seconds
+      
+
+261        data work.daily_price_target;
+262            set work.daily_price_candidates;
+263            by gvkey price_iid datadate;
+264            if first.datadate;
+265            quote_gap=datadate-quote_date;
+266        run;
+
+NOTE: There were 406469 observations read from the data set WORK.DAILY_PRICE_CANDIDATES.
+NOTE: The data set WORK.DAILY_PRICE_TARGET has 145683 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+267        
+268        /* A short daily quote lag is supported only when CRSP's observed market
+269           calendar has no session between the quote and the annual endpoint. */
+270        data work.market_days;
+271            set crspstk.dsi(keep=date);
+272            where date >= &price_start-3 and date <= &price_end;
+273        run;
+
+NOTE: There were 4293 observations read from the data set CRSPSTK.DSI.
+      WHERE (date>=9280 and date<=15491);
+NOTE: The data set WORK.MARKET_DAYS has 4293 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+274        data work.daily_price_checked;
+275            if _n_=1 then do;
+276                declare hash md(dataset:"work.market_days");
+                                                           The SAS System
+
+277                md.defineKey("date");
+278                md.defineData("date");
+279                md.defineDone();
+280            end;
+281            set work.daily_price_target;
+282            market_sessions_gap=0;
+283            if not missing(quote_date) then do calendar_date=quote_date+1 to datadate;
+284                date=calendar_date;
+285                if md.find()=0 then market_sessions_gap+1;
+286            end;
+287            drop date calendar_date;
+288        run;
+
+NOTE: There were 4293 observations read from the data set WORK.MARKET_DAYS.
+NOTE: There were 145683 observations read from the data set WORK.DAILY_PRICE_TARGET.
+NOTE: The data set WORK.DAILY_PRICE_CHECKED has 145683 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+289        
+290        proc sql;
+291            create table work.price_evidence as
+292            select k.gvkey,k.fyear,k.datadate,k.monthdate,k.iid,k.hiid,k.prcc_f,
+293                   hm.primiss as hiid_primiss,
+294                   hp.prccm as hiid_prccm,hp.curcdm as hiid_curcdm,
+295                   hd.prccd as hiid_prccd,hd.curcdd as hiid_curcdd,
+296                   hd.quote_date as hiid_quote_date,hd.quote_gap as hiid_quote_gap,
+297                   hd.market_sessions_gap as hiid_market_sessions_gap,
+298                   ps.p_count,pu.p_iid,pp.prccm as p_prccm,pp.curcdm as p_curcdm,
+299                   pd.prccd as p_prccd,pd.curcdd as p_curcdd,
+300                   pd.quote_date as p_quote_date,pd.quote_gap as p_quote_gap,
+301                   pd.market_sessions_gap as p_market_sessions_gap,
+302                   om.curcdm as old_month_curcd,od.curcdd as old_day_curcd,
+303                   od.quote_gap as old_day_quote_gap
+304            from work.price_keys as k
+305            left join work.month_desc as hm
+306              on k.gvkey=hm.gvkey and k.datadate=hm.datadate and strip(k.hiid)=strip(hm.iid)
+307            left join work.month_price as hp
+308              on k.gvkey=hp.gvkey and k.datadate=hp.datadate and strip(k.hiid)=strip(hp.iid)
+309            left join work.daily_price_checked as hd
+310              on k.gvkey=hd.gvkey and k.datadate=hd.datadate and strip(k.hiid)=strip(hd.price_iid)
+311            left join work.price_p_count as ps
+312              on k.gvkey=ps.gvkey and k.datadate=ps.datadate
+313            left join work.price_p_unique as pu
+314              on k.gvkey=pu.gvkey and k.datadate=pu.datadate
+315            left join work.month_price as pp
+316              on pu.gvkey=pp.gvkey and pu.datadate=pp.datadate and strip(pu.p_iid)=strip(pp.iid)
+317            left join work.daily_price_checked as pd
+318              on pu.gvkey=pd.gvkey and k.datadate=pd.datadate and strip(pu.p_iid)=strip(pd.price_iid)
+319            left join work.month_price as om
+320              on k.gvkey=om.gvkey and k.monthdate=om.datadate and strip(k.iid)=strip(om.iid)
+321            left join work.daily_price_checked as od
+322              on k.gvkey=od.gvkey and k.datadate=od.datadate and strip(k.iid)=strip(od.price_iid);
+NOTE: Table WORK.PRICE_EVIDENCE created, with 185455 rows and 27 columns.
+
+323        quit;
+                                                           The SAS System
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           2.06 seconds
+      cpu time            3.52 seconds
+      
+
+324        
+325        data work.price_routes;
+326            set work.price_evidence;
+327            length price_curcd old_price_curcd p_iid $4 price_source old_price_source $1
+328                   price_route $12 price_issue $21 price_selected_marker $2;
+329            price_quote_gap=.;
+330            price_date=.;
+331            price_abs_diff=.;
+332            format price_date yymmdd10.;
+333            price_market_sessions_gap=.;
+334            price_dated_p_count=p_count;
+335            hiid_month_ok=0; hiid_day_ok=0; p_month_ok=0; p_day_ok=0;
+336            if not missing(prcc_f) and not missing(hiid_prccm) then
+337                hiid_month_ok=(datadate=monthdate and abs(prcc_f-hiid_prccm) <= 0.00005);
+338            if not missing(prcc_f) and not missing(hiid_prccd) then
+339                hiid_day_ok=(abs(prcc_f-hiid_prccd) <= 0.000000005 and
+340                             (hiid_quote_gap=0 or
+341                              (hiid_quote_gap>=1 and hiid_quote_gap<=3 and
+342                               hiid_market_sessions_gap=0)));
+343            if not missing(prcc_f) and not missing(p_prccm) then
+344                p_month_ok=(datadate=monthdate and abs(prcc_f-p_prccm) <= 0.00005);
+345            if not missing(prcc_f) and not missing(p_prccd) then
+346                p_day_ok=(abs(prcc_f-p_prccd) <= 0.000000005 and
+347                          (p_quote_gap=0 or
+348                           (p_quote_gap>=1 and p_quote_gap<=3 and
+349                            p_market_sessions_gap=0)));
+350            price_currency_conflict=0;
+351            if datadate=monthdate and not missing(hiid_curcdm) and not missing(hiid_curcdd) and
+352               hiid_curcdm ne hiid_curcdd then price_currency_conflict=1;
+353            if datadate=monthdate and not missing(p_curcdm) and not missing(p_curcdd) and
+354               p_curcdm ne p_curcdd then price_currency_conflict=1;
+355            marker_conflict=0;
+356            if not missing(hiid) then do;
+357                if hiid_primiss='J' or (not missing(hiid_primiss) and hiid_primiss ne 'P') then marker_conflict=1;
+358            end;
+359            else if p_count > 1 then marker_conflict=1;
+360            route_conflict=(marker_conflict or price_currency_conflict);
+361        
+362            /* Reproduce A3's header-IID currency route solely for impact comparison. */
+363            if old_day_quote_gap=0 and not missing(old_day_curcd) then do;
+364                old_price_curcd=old_day_curcd;
+365                old_price_source='D';
+366            end;
+367            else if not missing(old_month_curcd) then do;
+368                old_price_curcd=old_month_curcd;
+369                old_price_source='M';
+370            end;
+371        
+372            if route_conflict=0 and not missing(hiid) then do;
+373                if hiid_primiss='P' then do;
+374                    if hiid_month_ok and not missing(hiid_curcdm) then do;
+375                        price_curcd=hiid_curcdm; price_source='M'; price_route='HIID_P_M'; price_issue=hiid;
+376                        price_date=datadate;
+                                                           The SAS System
+
+377                        price_abs_diff=abs(prcc_f-hiid_prccm);
+378                    end;
+379                    else if hiid_day_ok and not missing(hiid_curcdd) then do;
+380                        price_curcd=hiid_curcdd; price_source='D'; price_route='HIID_P_D';
+381                        price_issue=hiid; price_quote_gap=hiid_quote_gap;
+382                        price_market_sessions_gap=hiid_market_sessions_gap;
+383                        price_date=hiid_quote_date;
+384                        price_abs_diff=abs(prcc_f-hiid_prccd);
+385                    end;
+386                end;
+387                else if missing(hiid_primiss) then do;
+388                    if hiid_month_ok and not missing(hiid_curcdm) then do;
+389                        price_curcd=hiid_curcdm; price_source='M'; price_route='HIID_N_M'; price_issue=hiid;
+390                        price_date=datadate;
+391                        price_abs_diff=abs(prcc_f-hiid_prccm);
+392                    end;
+393                    else if hiid_day_ok and not missing(hiid_curcdd) then do;
+394                        price_curcd=hiid_curcdd; price_source='D'; price_route='HIID_N_D';
+395                        price_issue=hiid; price_quote_gap=hiid_quote_gap;
+396                        price_market_sessions_gap=hiid_market_sessions_gap;
+397                        price_date=hiid_quote_date;
+398                        price_abs_diff=abs(prcc_f-hiid_prccd);
+399                    end;
+400                end;
+401            end;
+402            else if route_conflict=0 and missing(hiid) and p_count=1 then do;
+403                if p_month_ok and not missing(p_curcdm) then do;
+404                    price_curcd=p_curcdm; price_source='M'; price_route='DATEDP_M'; price_issue=p_iid;
+405                    price_date=datadate;
+406                    price_abs_diff=abs(prcc_f-p_prccm);
+407                end;
+408                else if p_day_ok and not missing(p_curcdd) then do;
+409                    price_curcd=p_curcdd; price_source='D'; price_route='DATEDP_D';
+410                    price_issue=p_iid; price_quote_gap=p_quote_gap;
+411                    price_market_sessions_gap=p_market_sessions_gap;
+412                    price_date=p_quote_date;
+413                    price_abs_diff=abs(prcc_f-p_prccd);
+414                end;
+415            end;
+416            if substr(price_route,1,6)='DATEDP' then price_selected_marker='P';
+417            else price_selected_marker=hiid_primiss;
+418        run;
+
+NOTE: There were 185455 observations read from the data set WORK.PRICE_EVIDENCE.
+NOTE: The data set WORK.PRICE_ROUTES has 185455 observations and 46 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.08 seconds
+      
+
+419        
+420        /* Record the observed quote-to-annual-price precision before applying the
+421           source-format tolerances used by the eligibility route. */
+422        data work.price_precision;
+423            set work.price_evidence;
+424            hiid_mth_absdiff=.; hiid_day_absdiff=.; p_mth_absdiff=.; p_day_absdiff=.;
+425            if not missing(prcc_f) and not missing(hiid_prccm) then hiid_mth_absdiff=abs(prcc_f-hiid_prccm);
+426            if not missing(prcc_f) and not missing(hiid_prccd) then hiid_day_absdiff=abs(prcc_f-hiid_prccd);
+                                                           The SAS System
+
+427            if not missing(prcc_f) and not missing(p_prccm) then p_mth_absdiff=abs(prcc_f-p_prccm);
+428            if not missing(prcc_f) and not missing(p_prccd) then p_day_absdiff=abs(prcc_f-p_prccd);
+429            format hiid_mth_absdiff hiid_day_absdiff p_mth_absdiff p_day_absdiff e32.16;
+430        run;
+
+NOTE: There were 185455 observations read from the data set WORK.PRICE_EVIDENCE.
+NOTE: The data set WORK.PRICE_PRECISION has 185455 observations and 31 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.04 seconds
+      
+
+431        proc means data=work.price_precision n min mean median p95 max;
+432            var hiid_mth_absdiff hiid_day_absdiff p_mth_absdiff p_day_absdiff;
+433        run;
+
+NOTE: There were 185455 observations read from the data set WORK.PRICE_PRECISION.
+NOTE: The PROCEDURE MEANS printed page 4.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.05 seconds
+      
+
+434        proc sql;
+435            select sum(not missing(hiid_mth_absdiff)) as hiid_monthly_price_pairs,
+436                   sum(hiid_mth_absdiff=0) as hiid_monthly_exact_numeric,
+437                   sum(not missing(hiid_mth_absdiff) and hiid_mth_absdiff>0 and hiid_mth_absdiff<=0.00005) as
+437      ! hiid_monthly_within_precision,
+438                   sum(not missing(hiid_mth_absdiff) and hiid_mth_absdiff>0.00005) as hiid_monthly_over_precision,
+439                   sum(not missing(hiid_day_absdiff)) as hiid_daily_price_pairs,
+440                   sum(hiid_day_absdiff=0) as hiid_daily_exact_numeric,
+441                   sum(not missing(hiid_day_absdiff) and hiid_day_absdiff>0 and hiid_day_absdiff<=0.000000005) as
+441      ! hiid_daily_within_precision,
+442                   sum(not missing(hiid_day_absdiff) and hiid_day_absdiff>0.000000005) as hiid_daily_over_precision
+443            from work.price_precision
+444            where 1986 <= fyear and fyear <= 2000 and not missing(prcc_f);
+445            select hiid_quote_gap as quote_gap,
+446                   hiid_market_sessions_gap as market_sessions_gap,
+447                   weekday(datadate) as endpoint_weekday,
+448                   count(*) as hiid_candidate_keys,
+449                   sum(not missing(prcc_f) and not missing(hiid_prccd) and
+450                       abs(prcc_f-hiid_prccd)<=0.000000005) as price_agreeing_keys
+451            from work.price_evidence
+452            where 1986 <= fyear and fyear <= 2000 and not missing(hiid_quote_gap)
+453            group by hiid_quote_gap,hiid_market_sessions_gap,weekday(datadate)
+454            order by hiid_quote_gap,hiid_market_sessions_gap,weekday(datadate);
+NOTE: The query as specified involves ordering by an item that doesn't appear in its SELECT clause.
+455        quit;
+NOTE: The PROCEDURE SQL printed pages 5-6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.14 seconds
+      
+
+456        data work.weekend_session_conflicts;
+457            set work.price_evidence;
+458            if fyear>=1986 and fyear<=2000 and weekday(datadate) in (1,7) and
+459               hiid_quote_gap in (1,2) and hiid_market_sessions_gap > 0 then do;
+                                                           The SAS System
+
+460                if not missing(prcc_f) and not missing(hiid_prccd) then do;
+461                    if abs(prcc_f-hiid_prccd)<=0.000000005 then output;
+462                end;
+463            end;
+464        run;
+
+NOTE: There were 185455 observations read from the data set WORK.PRICE_EVIDENCE.
+NOTE: The data set WORK.WEEKEND_SESSION_CONFLICTS has 27 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+465        proc print data=work.weekend_session_conflicts noobs;
+466            var gvkey fyear datadate hiid hiid_primiss hiid_quote_date hiid_quote_gap
+467                hiid_market_sessions_gap prcc_f hiid_prccd hiid_curcdd;
+468            format datadate hiid_quote_date yymmdd10.;
+469            title "Price-agreeing weekend candidate blocked by an intervening CRSP session";
+470        run;
+
+NOTE: There were 27 observations read from the data set WORK.WEEKEND_SESSION_CONFLICTS.
+NOTE: The PROCEDURE PRINT printed page 7.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+471        title;
+472        proc sql;
+473            select r.price_route,r.price_source,count(*) as weekend_candidates,
+474                   sum(not missing(r.price_curcd)) as supported_via_route
+475            from work.weekend_session_conflicts as c
+476            inner join work.price_routes as r
+477              on c.gvkey=r.gvkey and c.datadate=r.datadate and c.fyear=r.fyear
+478            group by r.price_route,r.price_source
+479            order by r.price_route,r.price_source;
+480        quit;
+NOTE: The PROCEDURE SQL printed page 8.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+481        
+482        proc sql;
+483            select count(*) as annual_price_keys,
+484                   sum(not missing(prcc_f)) as observed_prccf,
+485                   sum(not missing(hiid) and strip(hiid) ne strip(iid)) as hiid_header_differences,
+486                   sum(not missing(hiid_primiss) and hiid_primiss='P') as hiid_dated_primary,
+487                   sum(not missing(hiid_primiss) and hiid_primiss='J') as hiid_explicit_secondary,
+488                   sum(p_count > 1) as multiple_dated_primary_markers,
+489                   sum(marker_conflict) as explicit_or_ambiguous_conflicts,
+490                   sum(price_currency_conflict) as same_date_currency_conflicts,
+491                   sum(not missing(price_curcd)) as supported_price_currency,
+492                   sum(price_source='D' and price_quote_gap=0) as exact_daily_price_support,
+493                   sum(price_source='D' and price_quote_gap between 1 and 3) as closure_price_support,
+494                   sum(not missing(old_price_curcd) and missing(price_curcd)) as old_route_lost,
+495                   sum(missing(old_price_curcd) and not missing(price_curcd)) as new_route_recovered,
+                                                           The SAS System
+
+496                   sum(not missing(old_price_curcd) and not missing(price_curcd) and
+497                       old_price_curcd ne price_curcd) as currency_changed
+498            from work.price_routes
+499            where 1986 <= fyear and fyear <= 2000 and not missing(prcc_f);
+500            select price_route,price_source,price_quote_gap,price_market_sessions_gap,
+501                   price_dated_p_count,hiid_primiss,price_curcd,count(*) as source_keys
+502            from work.price_routes
+503            where 1986 <= fyear and fyear <= 2000 and not missing(prcc_f)
+504            group by price_route,price_source,price_quote_gap,price_market_sessions_gap,
+505                     price_dated_p_count,hiid_primiss,price_curcd
+506            order by price_route,price_source,price_quote_gap,price_market_sessions_gap,
+507                     price_dated_p_count,hiid_primiss,price_curcd;
+508            select fyear as endpoint_fyear,count(*) as source_keys,
+509                   sum(not missing(price_curcd)) as supported_keys,
+510                   sum(price_source='D' and price_quote_gap=0) as exact_daily_keys,
+511                   sum(price_source='D' and price_quote_gap between 1 and 3) as closure_close_keys,
+512                   sum(marker_conflict) as conflict_keys,
+513                   sum(price_currency_conflict) as price_currency_conflicts,
+514                   sum(not missing(old_price_curcd) and not missing(price_curcd) and
+515                       old_price_curcd ne price_curcd) as currency_changed
+516            from work.price_routes
+517            where 1986 <= fyear and fyear <= 2000 and not missing(prcc_f)
+518            group by fyear order by fyear;
+519        quit;
+NOTE: The PROCEDURE SQL printed pages 9-11.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.19 seconds
+      cpu time            0.25 seconds
+      
+
+520        
+521        /* Keyed fiscal-year joins preserve gaps. Exchange rates are joined at each
+522           source row's reporting period; currency is never carried across years. */
+523        proc sql;
+524            create table work.panel as
+525            select t.gvkey, t.iid, t.hiid, t.datadate, t.fyear, t.sich, t.curcd,
+526                   t.at, t.oancf, t.sale, t.cogs, t.invt, t.ib, t.prcc_f, t.csho,
+527                   t.ceq, t.xrd, t.xad, t.xsga, t.rect, t.ppent, t.lct, t.dlc, t.dltt,
+528                   t1.iid as iid_lag1, t1.hiid as hiid_lag1,
+529                   t1.datadate as datadate_lag1, t1.curcd as curcd_lag1,
+530                   t1.at as at_lag1, t1.sale as sale_lag1, t1.invt as invt_lag1,
+531                   t1.rect as rect_lag1, t1.prcc_f as prcc_f_lag1,
+532                   t1.csho as csho_lag1, t1.ceq as ceq_lag1,
+533                   t1.ppent as ppent_lag1, t1.lct as lct_lag1,
+534                   t1.dlc as dlc_lag1, t1.dltt as dltt_lag1,
+535                   t2.datadate as datadate_lag2, t2.curcd as curcd_lag2,
+536                   t2.sale as sale_lag2,
+537                   m0.flowfac as flowfac_t, m1.flowfac as flowfac_lag1,
+538                   m2.flowfac as flowfac_lag2,
+539                   d0.bsfac as bsfac_t, d1.bsfac as bsfac_lag1,
+540                   d0.exrattpd_cur as bstype_cur_t, d0.exrattpd_usd as bstype_usd_t,
+541                   d1.exrattpd_cur as bstype_cur_lag1, d1.exrattpd_usd as bstype_usd_lag1,
+542                   pr0.price_curcd, pr1.price_curcd as price_curcd_lag1,
+543                   pr0.price_source as price_currency_source length=1,
+544                   pr1.price_source as price_currency_source_lag1 length=1,
+545                   pr0.price_route, pr1.price_route as price_route_lag1,
+546                   pr0.price_issue, pr1.price_issue as price_issue_lag1,
+547                   pr0.price_date, pr1.price_date as price_date_lag1,
+                                                           The SAS System
+
+548                   pr0.price_quote_gap, pr1.price_quote_gap as price_quote_gap_lag1,
+549                   pr0.price_market_sessions_gap,
+550                   pr1.price_market_sessions_gap as price_market_sessions_gap_lag1,
+551                   pr0.price_dated_p_count,
+552                   pr1.price_dated_p_count as price_dated_p_count_lag1,
+553                   pr0.hiid_primiss as price_marker,
+554                   pr1.hiid_primiss as price_marker_lag1,
+555                   pr0.price_selected_marker,
+556                   pr1.price_selected_marker as price_selected_marker_lag1,
+557                   pr0.marker_conflict, pr1.marker_conflict as marker_conflict_lag1,
+558                   pr0.old_price_curcd, pr1.old_price_curcd as old_price_curcd_lag1,
+559                   pr0.old_price_source, pr1.old_price_source as old_price_source_lag1,
+560                   pf0.bsfac as pricefac_t, pf1.bsfac as pricefac_lag1,
+561                   pf0.exrattpd_cur as price_type_cur_t, pf0.exrattpd_usd as price_type_usd_t,
+562                   pf1.exrattpd_cur as price_type_cur_lag1, pf1.exrattpd_usd as price_type_usd_lag1
+563            from work.raw_unique as t
+564            left join work.raw_unique as t1
+565              on t.gvkey=t1.gvkey and t1.fyear=t.fyear-1
+566            left join work.raw_unique as t2
+567              on t.gvkey=t2.gvkey and t2.fyear=t.fyear-2
+568            left join work.fx_month as m0
+569              on intnx('month',t.datadate,0,'e')=m0.datadate and t.curcd=m0.fxcurr
+570            left join work.fx_month as m1
+571              on intnx('month',t1.datadate,0,'e')=m1.datadate and t1.curcd=m1.fxcurr
+572            left join work.fx_month as m2
+573              on intnx('month',t2.datadate,0,'e')=m2.datadate and t2.curcd=m2.fxcurr
+574            left join work.fx_day_best as d0
+575              on t.datadate=d0.datadate and t.curcd=d0.fxcurr
+576            left join work.fx_day_best as d1
+577              on t1.datadate=d1.datadate and t1.curcd=d1.fxcurr
+578            left join work.price_routes as pr0
+579              on t.gvkey=pr0.gvkey and t.fyear=pr0.fyear
+580            left join work.price_routes as pr1
+581              on t1.gvkey=pr1.gvkey and t1.fyear=pr1.fyear
+582            left join work.fx_day_best as pf0
+583              on pr0.price_date=pf0.datadate and pr0.price_curcd=pf0.fxcurr
+584            left join work.fx_day_best as pf1
+585              on pr1.price_date=pf1.datadate and pr1.price_curcd=pf1.fxcurr;
+NOTE: Invalid (or missing) arguments to the INTNX function have caused the function to return a missing value.
+NOTE: Invalid (or missing) arguments to the INTNX function have caused the function to return a missing value.
+NOTE: Table WORK.PANEL created, with 185455 rows and 83 columns.
+
+586        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.60 seconds
+      cpu time            2.41 seconds
+      
+
+587        
+588        /* Convert amount inputs to USD at their own source rows. The provider formula
+589           is (reported amount / GBP-to-reported rate) * GBP-to-USD rate. Ratios can be
+590           computed natively where exact source currencies cancel. */
+591        data work.constructed;
+592            set work.panel;
+593            length analysis_period excluded_sic appx_complete 8;
+594            if missing(sich) then sic2=.;
+595            else sic2=floor(sich/100);
+596            analysis_period=(1987 <= fyear and fyear <= 2001);
+                                                           The SAS System
+
+597            excluded_sic=(not missing(sich) and
+598                          ((4400 <= sich and sich <= 5000) or
+599                           (6000 <= sich and sich <= 6500)));
+600        
+601            if curcd='USD' then do; flowfac_t=1; bsfac_t=1; end;
+602            if curcd_lag1='USD' then do; flowfac_lag1=1; bsfac_lag1=1; end;
+603            if curcd_lag2='USD' then flowfac_lag2=1;
+604            if price_curcd='USD' then pricefac_t=1;
+605            if price_curcd_lag1='USD' then pricefac_lag1=1;
+606        
+607            if not missing(at) and not missing(bsfac_t) then at_usd=at*bsfac_t;
+608            if not missing(at_lag1) and not missing(bsfac_lag1) then at_lag1_usd=at_lag1*bsfac_lag1;
+609            if not missing(ib) and not missing(flowfac_t) then ib_usd=ib*flowfac_t;
+610            if not missing(oancf) and not missing(flowfac_t) then oancf_usd=oancf*flowfac_t;
+611            if not missing(sale) and not missing(flowfac_t) then sale_usd=sale*flowfac_t;
+612            if not missing(sale_lag1) and not missing(flowfac_lag1) then sale_lag1_usd=sale_lag1*flowfac_lag1;
+613            if not missing(sale_lag2) and not missing(flowfac_lag2) then sale_lag2_usd=sale_lag2*flowfac_lag2;
+614            if not missing(cogs) and not missing(flowfac_t) then cogs_usd=cogs*flowfac_t;
+615            if not missing(invt) and not missing(bsfac_t) then invt_usd=invt*bsfac_t;
+616            if not missing(invt_lag1) and not missing(bsfac_lag1) then invt_lag1_usd=invt_lag1*bsfac_lag1;
+617            if not missing(xrd) and not missing(flowfac_t) then xrd_usd=xrd*flowfac_t;
+618            if not missing(xad) and not missing(flowfac_t) then xad_usd=xad*flowfac_t;
+619            if not missing(xsga) and not missing(flowfac_t) then xsga_usd=xsga*flowfac_t;
+620            if not missing(rect) and not missing(bsfac_t) then rect_usd=rect*bsfac_t;
+621            if not missing(rect_lag1) and not missing(bsfac_lag1) then rect_lag1_usd=rect_lag1*bsfac_lag1;
+622            if not missing(ppent_lag1) and not missing(bsfac_lag1) then ppent_lag1_usd=ppent_lag1*bsfac_lag1;
+623            if not missing(lct_lag1) and not missing(bsfac_lag1) then lct_lag1_usd=lct_lag1*bsfac_lag1;
+624            if not missing(dlc_lag1) and not missing(bsfac_lag1) then dlc_lag1_usd=dlc_lag1*bsfac_lag1;
+625            if not missing(dltt_lag1) and not missing(bsfac_lag1) then dltt_lag1_usd=dltt_lag1*bsfac_lag1;
+626            if not missing(dlc) and not missing(bsfac_t) then dlc_usd=dlc*bsfac_t;
+627            if not missing(dltt) and not missing(bsfac_t) then dltt_usd=dltt*bsfac_t;
+628            if not missing(ceq) and not missing(bsfac_t) then ceq_usd=ceq*bsfac_t;
+629            if not missing(ceq_lag1) and not missing(bsfac_lag1) then ceq_lag1_usd=ceq_lag1*bsfac_lag1;
+630        
+631            if not missing(prcc_f) and not missing(csho) and not missing(price_curcd) then
+632                mve_current_native=prcc_f*csho;
+633            if not missing(mve_current_native) and not missing(pricefac_t) then
+634                mve_current_usd=mve_current_native*pricefac_t;
+635            if not missing(prcc_f_lag1) and not missing(csho_lag1) and not missing(price_curcd_lag1) then
+636                mve_lag_native=prcc_f_lag1*csho_lag1;
+637            if not missing(mve_lag_native) and not missing(pricefac_lag1) then
+638                mve_lag_usd=mve_lag_native*pricefac_lag1;
+639            if mve_lag_usd > 0 then size_raw=log(mve_lag_usd);
+640            if not missing(mve_lag_native) and not missing(ceq_lag1) and ceq_lag1 ne 0 and
+641               not missing(price_curcd_lag1) and not missing(curcd_lag1) and price_curcd_lag1=curcd_lag1 then
+642                mtb_raw=mve_lag_native/ceq_lag1;
+643            else if mve_lag_usd > 0 and not missing(ceq_lag1_usd) and not missing(ceq_lag1) and ceq_lag1 ne 0 then
+644                mtb_raw=mve_lag_usd/ceq_lag1_usd;
+645            if not missing(mve_current_usd) and not missing(ceq) and ceq ne 0 and
+646               not missing(price_curcd) and not missing(curcd) and price_curcd=curcd then
+647                mtb_current=mve_current_native/ceq;
+648            else if mve_current_usd > 0 and not missing(ceq_usd) and not missing(ceq) and ceq ne 0 then
+649                mtb_current=mve_current_usd/ceq_usd;
+650        
+651            if at_lag1_usd > 0 then inv_at=1/at_lag1_usd;
+652            if at_lag1 > 0 and not missing(sale) and not missing(curcd) and not missing(curcd_lag1) and curcd=curcd_lag1 then
+652      ! sale_at=sale/at_lag1;
+653            else if at_lag1_usd > 0 and not missing(sale_usd) then sale_at=sale_usd/at_lag1_usd;
+                                                           The SAS System
+
+654            if at_lag1 > 0 and not missing(sale_lag1) and not missing(curcd_lag1) then sale_lag_at=sale_lag1/at_lag1;
+655            if not missing(sale) and not missing(sale_lag1) then do;
+656                if at_lag1 > 0 and not missing(curcd) and not missing(curcd_lag1) and curcd=curcd_lag1 then
+657                    dsale_at=(sale-sale_lag1)/at_lag1;
+658                else if not missing(sale_usd) and not missing(sale_lag1_usd) and at_lag1_usd > 0 then
+659                    dsale_at=(sale_usd-sale_lag1_usd)/at_lag1_usd;
+660            end;
+661            if not missing(sale_lag1) and not missing(sale_lag2) then do;
+662                if not missing(curcd_lag1) and not missing(curcd_lag2) and curcd_lag1=curcd_lag2 and at_lag1 > 0 then
+663                    dsale_lag1_at=(sale_lag1-sale_lag2)/at_lag1;
+664                else if not missing(sale_lag1_usd) and not missing(sale_lag2_usd) and at_lag1_usd > 0 then
+665                    dsale_lag1_at=(sale_lag1_usd-sale_lag2_usd)/at_lag1_usd;
+666            end;
+667            if at_lag1 > 0 and not missing(oancf) and not missing(curcd) and not missing(curcd_lag1) and curcd=curcd_lag1 then
+667      ! cfo_at=oancf/at_lag1;
+668            else if at_lag1_usd > 0 and not missing(oancf_usd) then cfo_at=oancf_usd/at_lag1_usd;
+669            if at_lag1 > 0 and not missing(ib) and not missing(curcd) and not missing(curcd_lag1) and curcd=curcd_lag1 then
+669      ! ni_raw=ib/at_lag1;
+670            else if at_lag1_usd > 0 and not missing(ib_usd) then ni_raw=ib_usd/at_lag1_usd;
+671            if not missing(ib_usd) and not missing(oancf_usd) then accruals_usd=ib_usd-oancf_usd;
+672            if at_lag1 > 0 and not missing(ib) and not missing(oancf) and not missing(curcd) and not missing(curcd_lag1) and
+672      ! curcd=curcd_lag1 then
+673                accruals_at=(ib-oancf)/at_lag1;
+674            else if at_lag1_usd > 0 and not missing(accruals_usd) then accruals_at=accruals_usd/at_lag1_usd;
+675        
+676            if cmiss(cogs,invt,invt_lag1)=0 then do;
+677                if at_lag1 > 0 and not missing(curcd) and not missing(curcd_lag1) and curcd=curcd_lag1 then
+678                    prod_at=(cogs+invt-invt_lag1)/at_lag1;
+679                else if not missing(cogs_usd) and not missing(invt_usd) and
+680                        not missing(invt_lag1_usd) and at_lag1_usd > 0 then
+681                    prod_at=(cogs_usd+invt_usd-invt_lag1_usd)/at_lag1_usd;
+682            end;
+683            if not missing(xsga) then do;
+684                disexp_raw=xsga+coalesce(xrd,0)+coalesce(xad,0);
+685                if not missing(curcd) and not missing(curcd_lag1) and curcd=curcd_lag1 and at_lag1 > 0 then
+685      ! disexp_at=disexp_raw/at_lag1;
+686                else if not missing(xsga_usd) and at_lag1_usd > 0 and
+687                        (missing(xrd) or not missing(xrd_usd)) and
+688                        (missing(xad) or not missing(xad_usd)) then do;
+689                    disexp_usd=xsga_usd;
+690                    if not missing(xrd) then disexp_usd=disexp_usd+xrd_usd;
+691                    if not missing(xad) then disexp_usd=disexp_usd+xad_usd;
+692                    disexp_at=disexp_usd/at_lag1_usd;
+693                end;
+694            end;
+695        
+696            if not missing(ib) and at_lag1 > 0 and not missing(ni_raw) then
+697                suspect_ni=(0 <= ni_raw and ni_raw < 0.005);
+698        
+699            /* Appendix A ratios use exact same-period currency where it cancels. */
+700            if at_lag1 > 0 and not missing(curcd_lag1) and cmiss(lct_lag1,dlc_lag1)=0 then cl_begin=(lct_lag1-dlc_lag1)/at_lag1;
+701            if at_lag1 > 0 and not missing(curcd_lag1) and cmiss(invt_lag1,rect_lag1)=0 then
+701      ! invrec_begin=(invt_lag1+rect_lag1)/at_lag1;
+702            if not missing(cogs) and not missing(invt) and not missing(invt_lag1) then do;
+703                if not missing(curcd) and not missing(curcd_lag1) and curcd=curcd_lag1 then do;
+704                    if (invt+invt_lag1)/2 ne 0 then invturn=cogs/((invt+invt_lag1)/2);
+705                end;
+706                else if not missing(cogs_usd) and not missing(invt_usd) and not missing(invt_lag1_usd) then do;
+                                                           The SAS System
+
+707                    if (invt_usd+invt_lag1_usd)/2 ne 0 then invturn=cogs_usd/((invt_usd+invt_lag1_usd)/2);
+708                end;
+709            end;
+710            if not missing(sale) and not missing(rect) and not missing(rect_lag1) then do;
+711                if not missing(curcd) and not missing(curcd_lag1) and curcd=curcd_lag1 then do;
+712                    if (rect+rect_lag1)/2 ne 0 then rectturn=sale/((rect+rect_lag1)/2);
+713                end;
+714                else if not missing(sale_usd) and not missing(rect_usd) and not missing(rect_lag1_usd) then do;
+715                    if (rect_usd+rect_lag1_usd)/2 ne 0 then rectturn=sale_usd/((rect_usd+rect_lag1_usd)/2);
+716                end;
+717            end;
+718            if cmiss(dltt,dlc,dltt_lag1,dlc_lag1)=0 then
+719                hasdebt=(dltt>0 or dlc>0 or dltt_lag1>0 or dlc_lag1>0);
+720        
+721            appx_complete=0;
+722            if analysis_period and not missing(sic2) and not excluded_sic and
+723               cmiss(gvkey,at,at_lag1,ib,oancf,cogs,invt,invt_lag1,xsga,sale,
+724                     sale_lag1,sale_lag2,rect,rect_lag1,ppent_lag1,lct_lag1,
+725                     dlc,dlc_lag1,dltt,dltt_lag1,cfo_at,inv_at,accruals_at,prod_at,
+726                     disexp_at,ni_raw,suspect_ni,size_raw,mtb_raw,cl_begin,
+727                     invrec_begin,invturn,rectturn,hasdebt)=0 and
+728               at > 0 and at_lag1_usd > 0 and mve_lag_usd > 0 and ceq_lag1 ne 0 then appx_complete=1;
+729        
+730            /* Diagnostic only: isolate the CFO-related fields and Eq. (4) t-2 window. */
+731            appx_complete_no_cfo=0;
+732            if analysis_period and not missing(sic2) and not excluded_sic and
+733               cmiss(gvkey,at,at_lag1,ib,cogs,invt,invt_lag1,xsga,sale,
+734                     sale_lag1,sale_lag2,rect,rect_lag1,ppent_lag1,lct_lag1,
+735                     dlc,dlc_lag1,dltt,dltt_lag1,inv_at,prod_at,disexp_at,ni_raw,
+736                     suspect_ni,size_raw,mtb_raw,cl_begin,invrec_begin,invturn,
+737                     rectturn,hasdebt)=0 and
+738               at > 0 and at_lag1_usd > 0 and mve_lag_usd > 0 and ceq_lag1 ne 0 then appx_complete_no_cfo=1;
+739        
+740            appx_complete_no_t2=0;
+741            if analysis_period and not missing(sic2) and not excluded_sic and
+742               cmiss(gvkey,at,at_lag1,ib,oancf,cogs,invt,invt_lag1,xsga,sale,
+743                     sale_lag1,rect,rect_lag1,ppent_lag1,lct_lag1,
+744                     dlc,dlc_lag1,dltt,dltt_lag1,cfo_at,inv_at,accruals_at,prod_at,
+745                     disexp_at,ni_raw,suspect_ni,size_raw,mtb_raw,cl_begin,
+746                     invrec_begin,invturn,rectturn,hasdebt)=0 and
+747               at > 0 and at_lag1_usd > 0 and mve_lag_usd > 0 and ceq_lag1 ne 0 then appx_complete_no_t2=1;
+748        run;
+
+NOTE: There were 185455 observations read from the data set WORK.PANEL.
+NOTE: The data set WORK.CONSTRUCTED has 185455 observations and 138 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.27 seconds
+      cpu time            0.27 seconds
+      
+
+749        
+750        proc sql;
+751            select count(*) as source_unique_rows,
+752                   min(datadate) as first_actual_report_date format=yymmdd10.,
+753                   max(datadate) as last_actual_report_date format=yymmdd10.,
+754                   count(at_lag1) as rows_with_lag1_assets,
+755                   count(sale_lag2) as rows_with_lag2_sales
+756            from work.constructed;
+                                                           The SAS System
+
+757            select sum(analysis_period) as main_period_rows,
+758                   sum(analysis_period and not missing(sic2) and not excluded_sic) as after_sic_screen,
+759                   sum(appx_complete) as complete_appendix_rows,
+760                   sum(analysis_period and curcd='CAD') as current_cad_rows,
+761                   sum(analysis_period and not missing(curcd) and not missing(curcd_lag1) and curcd_lag1 ne curcd) as
+761      ! curcd_diff_t_t1,
+762                   sum(analysis_period and not missing(curcd_lag1) and not missing(curcd_lag2) and curcd_lag1 ne curcd_lag2) as
+762      ! curcd_diff_t1_t2,
+763                   sum(analysis_period and missing(price_curcd_lag1) and prcc_f_lag1>0) as missing_lag1_price_currency,
+764                   sum(analysis_period and not missing(price_curcd_lag1) and prcc_f_lag1>0) as supported_lag1_price_currency,
+765                   sum(analysis_period and not missing(old_price_curcd_lag1) and prcc_f_lag1>0) as old_lag1_price_currency,
+766                   sum(analysis_period and not missing(price_curcd_lag1) and not missing(old_price_curcd_lag1) and
+767                       price_curcd_lag1 ne old_price_curcd_lag1) as lag1_currency_changed,
+768                   sum(analysis_period and marker_conflict_lag1) as lag1_price_marker_conflicts,
+769                   sum(analysis_period and price_currency_source_lag1='D') as lag1_daily_price_currency,
+770                   sum(analysis_period and price_currency_source_lag1='M') as lag1_mth_price_fb,
+771                   sum(analysis_period and not missing(price_curcd_lag1) and not missing(curcd_lag1) and price_curcd_lag1 ne
+771      ! curcd_lag1) as pricecurcd_diff_t1,
+772                   sum(analysis_period and curcd='CAD' and missing(bsfac_t)) as cad_no_day_t,
+773                   sum(analysis_period and curcd_lag1='CAD' and missing(bsfac_lag1)) as cad_no_day_t1
+774            from work.constructed;
+775            select fyear as fiscal_year,
+776                   count(*) as format_screen_rows,
+777                   sum(not missing(sic2) and not excluded_sic) as after_sic_rows,
+778                   sum(appx_complete_no_cfo) as complete_no_cfo,
+779                   sum(appx_complete_no_t2) as complete_no_t2,
+780                   sum(appx_complete) as complete_with_t2,
+781                   sum(analysis_period and curcd='CAD') as current_cad_rows,
+782                   sum(analysis_period and curcd='CAD' and missing(flowfac_t)) as current_cad_missing_flow_rate,
+783                   sum(analysis_period and curcd='CAD' and missing(bsfac_t)) as cad_no_day_t,
+784                   sum(analysis_period and missing(price_curcd_lag1) and prcc_f_lag1>0) as missing_lag1_price_currency,
+785                   sum(analysis_period and not missing(price_curcd_lag1) and prcc_f_lag1>0) as supported_lag1_price_currency,
+786                   sum(analysis_period and not missing(old_price_curcd_lag1) and prcc_f_lag1>0) as old_lag1_price_currency,
+787                   sum(analysis_period and not missing(price_curcd_lag1) and not missing(old_price_curcd_lag1) and
+788                       price_curcd_lag1 ne old_price_curcd_lag1) as lag1_currency_changed
+789            from work.constructed
+790            where analysis_period=1
+791            group by fyear
+792            order by fyear;
+793            select price_route_lag1,price_currency_source_lag1,price_marker_lag1,
+794                   old_price_curcd_lag1,price_curcd_lag1,count(*) as rows
+795            from work.constructed
+796            where analysis_period=1 and prcc_f_lag1>0
+797            group by price_route_lag1,price_currency_source_lag1,price_marker_lag1,
+798                     old_price_curcd_lag1,price_curcd_lag1
+799            order by price_route_lag1,price_currency_source_lag1,price_marker_lag1,
+800                     old_price_curcd_lag1,price_curcd_lag1;
+801            select curcd,curcd_lag1,curcd_lag2,count(*) as rows
+802            from work.constructed
+803            where analysis_period=1 and not missing(curcd) and not missing(curcd_lag1) and not missing(curcd_lag2)
+804            group by curcd,curcd_lag1,curcd_lag2
+805            order by curcd,curcd_lag1,curcd_lag2;
+806        quit;
+NOTE: The PROCEDURE SQL printed pages 12-16.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.31 seconds
+      cpu time            0.37 seconds
+      
+                                                           The SAS System
+
+
+807        
+808        /* Supporting industry-year OLS fits use the paper's >=15-observation rule. */
+809        data work.support;
+810            set work.constructed;
+811            if appx_complete;
+812        run;
+
+NOTE: There were 185455 observations read from the data set WORK.CONSTRUCTED.
+NOTE: The data set WORK.SUPPORT has 52535 observations and 138 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+813        
+814        proc sql;
+815            create table work.cfo_groups as
+816            select sic2, fyear, count(*) as fit_n
+817            from work.support
+818            where cmiss(cfo_at,inv_at,sale_at,dsale_at)=0
+819            group by sic2,fyear
+820            having calculated fit_n >= 15;
+NOTE: Table WORK.CFO_GROUPS created, with 544 rows and 3 columns.
+
+821            create table work.disexp_groups as
+822            select sic2, fyear, count(*) as fit_n
+823            from work.support
+824            where cmiss(disexp_at,inv_at,sale_lag_at)=0
+825            group by sic2,fyear
+826            having calculated fit_n >= 15;
+NOTE: Table WORK.DISEXP_GROUPS created, with 544 rows and 3 columns.
+
+827            create table work.prod_groups as
+828            select sic2, fyear, count(*) as fit_n
+829            from work.support
+830            where cmiss(prod_at,inv_at,sale_at,dsale_at,dsale_lag1_at)=0
+831            group by sic2,fyear
+832            having calculated fit_n >= 15;
+NOTE: Table WORK.PROD_GROUPS created, with 544 rows and 3 columns.
+
+833            select 'CFO' as model, count(*) as industry_year_groups, sum(fit_n) as fitted_rows from work.cfo_groups;
+834            select 'DISEXP' as model, count(*) as industry_year_groups, sum(fit_n) as fitted_rows from work.disexp_groups;
+835            select 'PROD' as model, count(*) as industry_year_groups, sum(fit_n) as fitted_rows from work.prod_groups;
+836            select fyear as fiscal_year, count(*) as retained_groups, sum(fit_n) as retained_rows
+837            from work.cfo_groups group by fyear order by fyear;
+838        quit;
+NOTE: The PROCEDURE SQL printed pages 17-20.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.09 seconds
+      
+
+839        proc means data=work.price_routes n min mean median max;
+840            class price_route;
+841            var price_abs_diff;
+842            where fyear>=1986 and fyear<=2000 and not missing(prcc_f) and
+843                  not missing(price_curcd);
+                                                           The SAS System
+
+844        run;
+
+NOTE: There were 127752 observations read from the data set WORK.PRICE_ROUTES.
+      WHERE (fyear>=1986 and fyear<=2000) and (not MISSING(prcc_f)) and (not MISSING(price_curcd));
+NOTE: The PROCEDURE MEANS printed page 21.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.06 seconds
+      
+
+845        proc sql;
+846            select price_route,price_source,count(*) as accepted_routes,
+847                   sum(price_abs_diff=0) as numeric_exact,
+848                   sum(not missing(price_abs_diff) and price_abs_diff>0) as nonzero_difference,
+849                   sum(not missing(price_abs_diff) and price_abs_diff>0 and
+850                       ((price_source='M' and price_abs_diff<=0.00005) or
+851                        (price_source='D' and price_abs_diff<=0.000000005))) as nonzero_within_source_precision,
+852                   sum(not missing(price_abs_diff) and
+853                       ((price_source='M' and price_abs_diff>0.00005) or
+854                        (price_source='D' and price_abs_diff>0.000000005))) as over_source_precision
+855            from work.price_routes
+856            where fyear>=1986 and fyear<=2000 and not missing(prcc_f) and
+857                  not missing(price_curcd)
+858            group by price_route,price_source
+859            order by price_route,price_source;
+860        quit;
+NOTE: The PROCEDURE SQL printed page 22.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.09 seconds
+      
+
+861        
+862        proc sql;
+863            create table work.cfo_reg as
+864            select s.* from work.support as s inner join work.cfo_groups as g
+865              on s.sic2=g.sic2 and s.fyear=g.fyear
+866            where cmiss(s.cfo_at,s.inv_at,s.sale_at,s.dsale_at)=0;
+NOTE: Table WORK.CFO_REG created, with 50520 rows and 138 columns.
+
+867            create table work.disexp_reg as
+868            select s.* from work.support as s inner join work.disexp_groups as g
+869              on s.sic2=g.sic2 and s.fyear=g.fyear
+870            where cmiss(s.disexp_at,s.inv_at,s.sale_lag_at)=0;
+NOTE: Table WORK.DISEXP_REG created, with 50520 rows and 138 columns.
+
+871            create table work.prod_reg as
+872            select s.* from work.support as s inner join work.prod_groups as g
+873              on s.sic2=g.sic2 and s.fyear=g.fyear
+874            where cmiss(s.prod_at,s.inv_at,s.sale_at,s.dsale_at,s.dsale_lag1_at)=0;
+NOTE: Table WORK.PROD_REG created, with 50520 rows and 138 columns.
+
+875        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.17 seconds
+      cpu time            0.17 seconds
+      
+
+                                                           The SAS System
+
+876        
+877        proc sort data=work.cfo_reg; by sic2 fyear; run;
+
+NOTE: There were 50520 observations read from the data set WORK.CFO_REG.
+NOTE: The data set WORK.CFO_REG has 50520 observations and 138 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.09 seconds
+      
+
+878        proc reg data=work.cfo_reg noprint;
+879            by sic2 fyear;
+880            model cfo_at=inv_at sale_at dsale_at;
+881            output out=work.cfo_pred p=pred_cfo;
+882        quit;
+
+NOTE: The data set WORK.CFO_PRED has 50520 observations and 139 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.09 seconds
+      
+
+883        
+884        proc sort data=work.disexp_reg; by sic2 fyear; run;
+
+NOTE: There were 50520 observations read from the data set WORK.DISEXP_REG.
+NOTE: The data set WORK.DISEXP_REG has 50520 observations and 138 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.07 seconds
+      
+
+885        proc reg data=work.disexp_reg noprint;
+886            by sic2 fyear;
+887            model disexp_at=inv_at sale_lag_at;
+888            output out=work.disexp_pred p=pred_disexp;
+889        quit;
+
+NOTE: The data set WORK.DISEXP_PRED has 50520 observations and 139 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+890        
+891        proc sort data=work.prod_reg; by sic2 fyear; run;
+
+NOTE: There were 50520 observations read from the data set WORK.PROD_REG.
+NOTE: The data set WORK.PROD_REG has 50520 observations and 138 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.10 seconds
+      
+
+892        proc reg data=work.prod_reg noprint;
+893            by sic2 fyear;
+894            model prod_at=inv_at sale_at dsale_at dsale_lag1_at;
+895            output out=work.prod_pred p=pred_prod;
+                                                           The SAS System
+
+896        quit;
+
+NOTE: The data set WORK.PROD_PRED has 50520 observations and 139 variables.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.08 seconds
+      
+
+897        
+898        proc sort data=work.support; by gvkey fyear; run;
+
+NOTE: There were 52535 observations read from the data set WORK.SUPPORT.
+NOTE: The data set WORK.SUPPORT has 52535 observations and 138 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.10 seconds
+      
+
+899        proc sort data=work.cfo_pred(keep=gvkey fyear pred_cfo); by gvkey fyear; run;
+
+NOTE: There were 50520 observations read from the data set WORK.CFO_PRED.
+NOTE: The data set WORK.CFO_PRED has 50520 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+900        proc sort data=work.disexp_pred(keep=gvkey fyear pred_disexp); by gvkey fyear; run;
+
+NOTE: There were 50520 observations read from the data set WORK.DISEXP_PRED.
+NOTE: The data set WORK.DISEXP_PRED has 50520 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+901        proc sort data=work.prod_pred(keep=gvkey fyear pred_prod); by gvkey fyear; run;
+
+NOTE: There were 50520 observations read from the data set WORK.PROD_PRED.
+NOTE: The data set WORK.PROD_PRED has 50520 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+902        
+903        data work.final_premean;
+904            merge work.support(in=in_support)
+905                  work.cfo_pred(keep=gvkey fyear pred_cfo)
+906                  work.disexp_pred(keep=gvkey fyear pred_disexp)
+907                  work.prod_pred(keep=gvkey fyear pred_prod);
+908            by gvkey fyear;
+909            if in_support;
+910            if not missing(pred_cfo) then ab_cfo=cfo_at-pred_cfo;
+911            if not missing(pred_disexp) then ab_disexp=disexp_at-pred_disexp;
+912            if not missing(pred_prod) then ab_prod=prod_at-pred_prod;
+913            if missing(ab_cfo) or missing(ab_disexp) or missing(ab_prod) then delete;
+914            if at_lag1_usd > 0 then accruals_at=accruals_usd/at_lag1_usd;
+                                                           The SAS System
+
+915        run;
+
+NOTE: There were 52535 observations read from the data set WORK.SUPPORT.
+NOTE: There were 50520 observations read from the data set WORK.CFO_PRED.
+NOTE: There were 50520 observations read from the data set WORK.DISEXP_PRED.
+NOTE: There were 50520 observations read from the data set WORK.PROD_PRED.
+NOTE: The data set WORK.FINAL_PREMEAN has 50520 observations and 144 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.07 seconds
+      
+
+916        
+917        /* Table 1-style descriptive checks on the actual common Table 4 analysis sample. */
+918        proc means data=work.final_premean n mean median maxdec=4;
+919            class suspect_ni;
+920            var mve_current_usd mtb_current at_usd sale_usd ib_usd oancf_usd accruals_usd
+921                sale_at ni_raw cfo_at accruals_at prod_at disexp_at invturn rectturn;
+922        run;
+
+NOTE: There were 50520 observations read from the data set WORK.FINAL_PREMEAN.
+NOTE: The PROCEDURE MEANS printed page 23.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.19 seconds
+      cpu time            0.21 seconds
+      
+
+923        
+924        /* Appendix A defines these three explanatory variables as industry-year deviations. */
+925        proc summary data=work.final_premean nway;
+926            class sic2 fyear;
+927            var size_raw mtb_raw ni_raw;
+928            output out=work.iy_means(drop=_type_ _freq_)
+929                   mean=size_mean mtb_mean ni_mean;
+930        run;
+
+NOTE: There were 50520 observations read from the data set WORK.FINAL_PREMEAN.
+NOTE: The data set WORK.IY_MEANS has 544 observations and 5 variables.
+NOTE: PROCEDURE SUMMARY used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+931        proc sort data=work.final_premean; by sic2 fyear; run;
+
+NOTE: There were 50520 observations read from the data set WORK.FINAL_PREMEAN.
+NOTE: The data set WORK.FINAL_PREMEAN has 50520 observations and 144 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.09 seconds
+      
+
+932        proc sort data=work.iy_means; by sic2 fyear; run;
+
+NOTE: There were 544 observations read from the data set WORK.IY_MEANS.
+NOTE: The data set WORK.IY_MEANS has 544 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+                                                           The SAS System
+
+      cpu time            0.00 seconds
+      
+
+933        data out.ram_main_firm_years(label="Roychowdhury (2006) Table 4 baseline sample");
+934            merge work.final_premean(in=eligible) work.iy_means;
+935            by sic2 fyear;
+936            if eligible;
+937            size=size_raw-size_mean;
+938            mtb=mtb_raw-mtb_mean;
+939            netincome=ni_raw-ni_mean;
+940            label ab_cfo="Abnormal CFO"
+941                  ab_disexp="Abnormal discretionary expenses"
+942                  ab_prod="Abnormal production costs"
+943                  size="SIZE"
+944                  mtb="MTB"
+945                  netincome="Net income"
+946                  suspect_ni="SUSPECT_NI"
+947                  curcd="Source currency at t"
+948                  curcd_lag1="Source currency at t-1"
+949                  curcd_lag2="Source currency at t-2"
+950                  iid_lag1="Header primary issue at t-1"
+951                  hiid_lag1="Historic primary issue at t-1"
+952                  price_curcd_lag1="Verified PRCC_F currency at t-1"
+953                  price_route_lag1="Price route at t-1"
+954                  price_issue_lag1="Selected price issue at t-1"
+955                  price_date_lag1="Date of matched historical price currency quote at t-1"
+956                  price_marker_lag1="HIID dated primary marker at t-1"
+957                  price_selected_marker_lag1="Selected dated marker at t-1"
+958                  price_quote_gap_lag1="Days from supporting daily quote to t-1 date"
+959                  price_market_sessions_gap_lag1="Intervening CRSP sessions after daily quote"
+960                  price_dated_p_count_lag1="Dated primary issue count at t-1"
+961                  old_price_curcd_lag1="A3 header-IID price currency at t-1";
+962            keep gvkey fyear sic2 ab_cfo ab_disexp ab_prod size mtb netincome suspect_ni
+963                 curcd curcd_lag1 curcd_lag2 iid_lag1 hiid_lag1
+964                 price_curcd_lag1 price_currency_source_lag1 price_route_lag1 price_issue_lag1
+965                 price_date_lag1 price_marker_lag1 price_selected_marker_lag1 price_quote_gap_lag1 old_price_curcd_lag1
+966                 price_market_sessions_gap_lag1 price_dated_p_count_lag1
+967                 bstype_cur_lag1 bstype_usd_lag1 price_type_cur_lag1 price_type_usd_lag1;
+968        run;
+
+NOTE: There were 50520 observations read from the data set WORK.FINAL_PREMEAN.
+NOTE: There were 544 observations read from the data set WORK.IY_MEANS.
+NOTE: The data set OUT.RAM_MAIN_FIRM_YEARS has 50520 observations and 30 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.03 seconds
+      
+
+969        
+970        proc sql;
+971            select count(*) as final_firm_years,
+972                   count(distinct gvkey) as final_firms,
+973                   count(distinct sic2) as final_two_digit_industries,
+974                   min(fyear) as first_year,
+975                   max(fyear) as last_year,
+976                   min(datadate) as first_report_date format=yymmdd10.,
+977                   max(datadate) as last_report_date format=yymmdd10.,
+978                   sum(not missing(curcd) and not missing(curcd_lag1) and curcd ne curcd_lag1) as final_t_t1_currency_changes,
+                                                           The SAS System
+
+979                   sum(not missing(curcd_lag1) and not missing(curcd_lag2) and curcd_lag1 ne curcd_lag2) as
+979      ! final_t1_t2_currency_changes
+980            from work.final_premean;
+981            select price_route_lag1,price_currency_source_lag1,price_marker_lag1,
+982                   price_quote_gap_lag1,price_market_sessions_gap_lag1,
+983                   price_dated_p_count_lag1,old_price_curcd_lag1,price_curcd_lag1,
+984                   count(*) as final_analysis_rows
+985            from out.ram_main_firm_years
+986            group by price_route_lag1,price_currency_source_lag1,price_marker_lag1,
+987                     price_quote_gap_lag1,price_market_sessions_gap_lag1,
+988                     price_dated_p_count_lag1,old_price_curcd_lag1,price_curcd_lag1
+989            order by price_route_lag1,price_quote_gap_lag1,price_market_sessions_gap_lag1,
+990                     price_dated_p_count_lag1,price_marker_lag1,old_price_curcd_lag1,price_curcd_lag1;
+991        quit;
+NOTE: The PROCEDURE SQL printed pages 24-25.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.05 seconds
+      
+
+992        proc freq data=out.ram_main_firm_years;
+993            tables fyear curcd*curcd_lag1 curcd_lag1*curcd_lag2 / nocum nopercent missing;
+994        run;
+
+NOTE: There were 50520 observations read from the data set OUT.RAM_MAIN_FIRM_YEARS.
+NOTE: The PROCEDURE FREQ printed pages 26-27.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           31.07 seconds
+      cpu time            35.87 seconds
+      

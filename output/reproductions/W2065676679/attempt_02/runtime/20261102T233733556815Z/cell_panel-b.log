@@ -1,0 +1,379 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W2065676679/at
+> tempt_02/runtime/20261102T233733556815Z/cell_panel-b.do 
+
+. version 18
+
+. set more off
+
+. global future "roe1 roe2 roe3 roe4 roe5"
+
+. use "data/main/reg.dta", clear
+
+. est clear
+
+. summarize identity_pass, meanonly
+
+. local identityok = (r(min) == 1 & r(max) == 1)
+
+. local h = 1
+
+. foreach y of varlist $future {
+  2.     regress `y' roe0 bc lc timefx eps, vce(robust)
+  3.     lincom bc - lc
+  4.     local cdiff = r(estimate)
+  5.     local cdt = r(t)
+  6.     local cdp = r(p)
+  7.     estadd scalar cdiff = `cdiff'
+  8.     estadd scalar cdt = `cdt'
+  9.     estadd scalar cdp = `cdp'
+ 10.     if `identityok' {
+ 11.         test (bc = lc) (bc = timefx) (bc = eps)
+ 12.         local incrF = r(F)
+ 13.         local incrp = r(p)
+ 14.         estadd scalar incrF = `incrF'
+ 15.         estadd scalar incrp = `incrp'
+ 16.     }
+ 17.     else {
+ 18.         estadd scalar incrF = .
+ 19.         estadd scalar incrp = .
+ 20.     }
+ 21.     est store b`h'
+ 22.     local ++h
+ 23. }
+
+Linear regression                               Number of obs     =      4,409
+                                                F(5, 4403)        =      75.56
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.2200
+                                                Root MSE          =      .1593
+
+------------------------------------------------------------------------------
+             |               Robust
+        roe1 | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        roe0 |   .2962207   .0515069     5.75   0.000     .1952413    .3972001
+          bc |  -.1085829   .0135487    -8.01   0.000    -.1351452   -.0820207
+          lc |  -.2059697   .0247757    -8.31   0.000    -.2545426   -.1573969
+      timefx |   .0052501   .0421453     0.12   0.901    -.0773758    .0878761
+         eps |  -.1347401   .0303184    -4.44   0.000    -.1941795   -.0753008
+       _cons |   .0720616   .0325916     2.21   0.027     .0081657    .1359574
+------------------------------------------------------------------------------
+
+ ( 1)  bc - lc = 0
+
+------------------------------------------------------------------------------
+        roe1 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0973868    .020673     4.71   0.000     .0568573    .1379162
+------------------------------------------------------------------------------
+
+added scalar:
+              e(cdiff) =  .09738679
+
+added scalar:
+                e(cdt) =  4.7108221
+
+added scalar:
+                e(cdp) =  2.543e-06
+
+ ( 1)  bc - lc = 0
+ ( 2)  bc - timefx = 0
+ ( 3)  bc - eps = 0
+
+       F(  3,  4403) =   10.40
+            Prob > F =    0.0000
+
+added scalar:
+              e(incrF) =  10.397425
+
+added scalar:
+              e(incrp) =  8.154e-07
+
+Linear regression                               Number of obs     =      4,409
+                                                F(5, 4403)        =      25.08
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.1018
+                                                Root MSE          =     .17958
+
+------------------------------------------------------------------------------
+             |               Robust
+        roe2 | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        roe0 |   .1270019   .0470884     2.70   0.007     .0346848    .2193189
+          bc |  -.1105096   .0153654    -7.19   0.000    -.1406335   -.0803857
+          lc |   -.202546   .0301286    -6.72   0.000    -.2616132   -.1434788
+      timefx |  -.1520851   .0484169    -3.14   0.002    -.2470065   -.0571636
+         eps |  -.0479715   .0296796    -1.62   0.106    -.1061584    .0102154
+       _cons |   .2089133   .0370017     5.65   0.000     .1363713    .2814552
+------------------------------------------------------------------------------
+
+ ( 1)  bc - lc = 0
+
+------------------------------------------------------------------------------
+        roe2 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0920364   .0229659     4.01   0.000     .0470117    .1370611
+------------------------------------------------------------------------------
+
+added scalar:
+              e(cdiff) =  .09203637
+
+added scalar:
+                e(cdt) =  4.007523
+
+added scalar:
+                e(cdp) =  .00006237
+
+ ( 1)  bc - lc = 0
+ ( 2)  bc - timefx = 0
+ ( 3)  bc - eps = 0
+
+       F(  3,  4403) =    6.89
+            Prob > F =    0.0001
+
+added scalar:
+              e(incrF) =  6.8893744
+
+added scalar:
+              e(incrp) =  .00012612
+
+Linear regression                               Number of obs     =      4,409
+                                                F(5, 4403)        =      24.49
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0717
+                                                Root MSE          =     .19401
+
+------------------------------------------------------------------------------
+             |               Robust
+        roe3 | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        roe0 |   .1865684   .0425412     4.39   0.000     .1031662    .2699705
+          bc |  -.0893568   .0133595    -6.69   0.000    -.1155482   -.0631654
+          lc |  -.0800554   .0305527    -2.62   0.009    -.1399541   -.0201567
+      timefx |  -.0337477   .0525446    -0.64   0.521    -.1367616    .0692661
+         eps |  -.0108366   .0276421    -0.39   0.695    -.0650289    .0433558
+       _cons |   .1087278   .0401344     2.71   0.007     .0300443    .1874114
+------------------------------------------------------------------------------
+
+ ( 1)  bc - lc = 0
+
+------------------------------------------------------------------------------
+        roe3 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0093014   .0238763    -0.39   0.697     -.056111    .0375081
+------------------------------------------------------------------------------
+
+added scalar:
+              e(cdiff) =  -.00930143
+
+added scalar:
+                e(cdt) =  -.38956739
+
+added scalar:
+                e(cdp) =  .69687531
+
+ ( 1)  bc - lc = 0
+ ( 2)  bc - timefx = 0
+ ( 3)  bc - eps = 0
+
+       F(  3,  4403) =    2.43
+            Prob > F =    0.0636
+
+added scalar:
+              e(incrF) =  2.427424
+
+added scalar:
+              e(incrp) =  .06357146
+
+Linear regression                               Number of obs     =      4,409
+                                                F(5, 4403)        =      24.36
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0589
+                                                Root MSE          =     .19893
+
+------------------------------------------------------------------------------
+             |               Robust
+        roe4 | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        roe0 |   .1429116   .0423586     3.37   0.001     .0598675    .2259557
+          bc |  -.0881788   .0133848    -6.59   0.000    -.1144197   -.0619379
+          lc |  -.0939379   .0272902    -3.44   0.001    -.1474404   -.0404355
+      timefx |   .2047557   .0554518     3.69   0.000     .0960424    .3134691
+         eps |   -.009072   .0277107    -0.33   0.743    -.0633989    .0452549
+       _cons |  -.0717442   .0424685    -1.69   0.091    -.1550038    .0115154
+------------------------------------------------------------------------------
+
+ ( 1)  bc - lc = 0
+
+------------------------------------------------------------------------------
+        roe4 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |   .0057591   .0224541     0.26   0.798    -.0382621    .0497804
+------------------------------------------------------------------------------
+
+added scalar:
+              e(cdiff) =  .00575911
+
+added scalar:
+                e(cdt) =  .25648398
+
+added scalar:
+                e(cdp) =  .79758913
+
+ ( 1)  bc - lc = 0
+ ( 2)  bc - timefx = 0
+ ( 3)  bc - eps = 0
+
+       F(  3,  4403) =   10.34
+            Prob > F =    0.0000
+
+added scalar:
+              e(incrF) =  10.335231
+
+added scalar:
+              e(incrp) =  8.920e-07
+
+Linear regression                               Number of obs     =      4,409
+                                                F(5, 4403)        =      23.35
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.0563
+                                                Root MSE          =      .2032
+
+------------------------------------------------------------------------------
+             |               Robust
+        roe5 | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        roe0 |   .1285399   .0361395     3.56   0.000     .0576882    .1993915
+          bc |  -.1014205   .0127521    -7.95   0.000    -.1264211     -.07642
+          lc |  -.0809426   .0259615    -3.12   0.002    -.1318402   -.0300451
+      timefx |   .0555463   .0569754     0.97   0.330    -.0561541    .1672466
+         eps |  -.0379338   .0238193    -1.59   0.111    -.0846316    .0087641
+       _cons |   .0366693   .0437859     0.84   0.402     -.049173    .1225116
+------------------------------------------------------------------------------
+
+ ( 1)  bc - lc = 0
+
+------------------------------------------------------------------------------
+        roe5 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         (1) |  -.0204779   .0225252    -0.91   0.363    -.0646386    .0236827
+------------------------------------------------------------------------------
+
+added scalar:
+              e(cdiff) =  -.02047791
+
+added scalar:
+                e(cdt) =  -.90911253
+
+added scalar:
+                e(cdp) =  .36334049
+
+ ( 1)  bc - lc = 0
+ ( 2)  bc - timefx = 0
+ ( 3)  bc - eps = 0
+
+       F(  3,  4403) =    4.33
+            Prob > F =    0.0047
+
+added scalar:
+              e(incrF) =  4.3270624
+
+added scalar:
+              e(incrp) =  .00471608
+
+. esttab b1 b2 b3 b4 b5 using "tables/table5_panel_b.md", cells(b(star fmt(3)) 
+> p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(cdiff cdt incrF N, fm
+> t(3 2 2 0) labels("c-d" "t(c-d)" "Incremental robust F" "N")) replace label m
+> titles("1 year" "2 years" "3 years" "4 years" "5 years")
+(file tables/table5_panel_b.md not found)
+(output written to tables/table5_panel_b.md)
+
+. esttab b1 b2 b3 b4 b5 using "tables/table5_panel_b.rtf", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(cdiff cdt incrF N, f
+> mt(3 2 2 0) labels("c-d" "t(c-d)" "Incremental robust F" "N")) replace label 
+> mtitles("1 year" "2 years" "3 years" "4 years" "5 years")
+(file tables/table5_panel_b.rtf not found)
+(output written to tables/table5_panel_b.rtf)
+
+. esttab b1 b2 b3 b4 b5 using "tables/table5_panel_b.csv", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(cdiff cdt incrF N, f
+> mt(3 2 2 0) labels("c-d" "t(c-d)" "Incremental robust F" "N")) replace label 
+> mtitles("1 year" "2 years" "3 years" "4 years" "5 years")
+(file tables/table5_panel_b.csv not found)
+(output written to tables/table5_panel_b.csv)
+
+. esttab b1 b2 b3 b4 b5 using "tables/table5_panel_b.tex", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(cdiff cdt incrF N, f
+> mt(3 2 2 0) labels("c-d" "t(c-d)" "Incremental robust F" "N")) replace label 
+> mtitles("1 year" "2 years" "3 years" "4 years" "5 years")
+(file tables/table5_panel_b.tex not found)
+(output written to tables/table5_panel_b.tex)
+
+. esttab b1 b2 b3 b4 b5 using "tables/table5_panel_b_tests.md", cells(b(star fm
+> t(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) stats(cdiff cdt cdp incrF in
+> crp N r2 ar2, fmt(3 2 3 2 3 0 3 3) labels("BC-LC" "t(BC-LC)" "p(BC-LC)" "Incr
+> emental robust F(3,df)" "p(incremental F)" "N" "R-squared" "Adjusted R-square
+> d")) drop(*) replace label mtitles("1 year" "2 years" "3 years" "4 years" "5 
+> years")
+(file tables/table5_panel_b_tests.md not found)
+(output written to tables/table5_panel_b_tests.md)
+
+. esttab b1 b2 b3 b4 b5 using "tables/table5_panel_b_tests.rtf", cells(b(star f
+> mt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) stats(cdiff cdt cdp incrF i
+> ncrp N r2 ar2, fmt(3 2 3 2 3 0 3 3) labels("BC-LC" "t(BC-LC)" "p(BC-LC)" "Inc
+> remental robust F(3,df)" "p(incremental F)" "N" "R-squared" "Adjusted R-squar
+> ed")) drop(*) replace label mtitles("1 year" "2 years" "3 years" "4 years" "5
+>  years")
+(file tables/table5_panel_b_tests.rtf not found)
+(output written to tables/table5_panel_b_tests.rtf)
+
+. esttab b1 b2 b3 b4 b5 using "tables/table5_panel_b_tests.csv", cells(b(star f
+> mt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) stats(cdiff cdt cdp incrF i
+> ncrp N r2 ar2, fmt(3 2 3 2 3 0 3 3) labels("BC-LC" "t(BC-LC)" "p(BC-LC)" "Inc
+> remental robust F(3,df)" "p(incremental F)" "N" "R-squared" "Adjusted R-squar
+> ed")) drop(*) replace label mtitles("1 year" "2 years" "3 years" "4 years" "5
+>  years")
+(file tables/table5_panel_b_tests.csv not found)
+(output written to tables/table5_panel_b_tests.csv)
+
+. esttab b1 b2 b3 b4 b5 using "tables/table5_panel_b_tests.tex", cells(b(star f
+> mt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) stats(cdiff cdt cdp incrF i
+> ncrp N r2 ar2, fmt(3 2 3 2 3 0 3 3) labels("BC-LC" "t(BC-LC)" "p(BC-LC)" "Inc
+> remental robust F(3,df)" "p(incremental F)" "N" "R-squared" "Adjusted R-squar
+> ed")) drop(*) replace label mtitles("1 year" "2 years" "3 years" "4 years" "5
+>  years")
+(file tables/table5_panel_b_tests.tex not found)
+(output written to tables/table5_panel_b_tests.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

@@ -1,0 +1,43 @@
+
+|                      |          (1)    |
+|                      | Number of financial covenant rows in loan package    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| One for uncorrected ICW period |       -0.537    |
+|                      |      (0.141)    |
+| One for three years after explicit correction |       -0.146    |
+|                      |      (0.672)    |
+| Term loan B, C, or D |        0.235    |
+|                      |      (0.356)    |
+| Revolving loan facility |        0.037    |
+|                      |      (0.848)    |
+| All-in-drawn spread in basis points over LIBOR |       -0.001    |
+|                      |      (0.152)    |
+| secured              |        0.320    |
+|                      |      (0.236)    |
+| Log of DealScan amount converted to USD millions |        0.031    |
+|                      |      (0.792)    |
+| Facility maturity in months |        0.008    |
+|                      |      (0.184)    |
+| Four-agency senior debt ordinal rating; 28 only when no agency rating was observ |        0.159**  |
+|                      |      (0.042)    |
+| Distinct lender participant IDs |        0.013**  |
+|                      |      (0.027)    |
+| Performance-pricing contract indicator |        0.507**  |
+|                      |      (0.015)    |
+| Natural log of prior-year USD total assets |       -0.182*   |
+|                      |      (0.064)    |
+| Prior-year EBITDA divided by assets |       -0.731    |
+|                      |      (0.650)    |
+| Prior-year long-term debt divided by assets |       -1.125*   |
+|                      |      (0.092)    |
+| Constant             |        0.558    |
+|                      |      (0.666)    |
+| Observations         |          223    |
+| *R*<sup>2</sup>      |        0.316    |
+| Adjusted *R*<sup>2</sup> |        0.244    |
+| Borrower clusters    |           45    |
+
+Loan-year fixed effects included.<br>
+Standard errors clustered by borrower.
+

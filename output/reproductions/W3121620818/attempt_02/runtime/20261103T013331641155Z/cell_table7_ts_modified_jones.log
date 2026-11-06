@@ -1,0 +1,143 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3121620818/at
+> tempt_02/runtime/20261103T013331641155Z/cell_table7_ts_modified_jones.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/reg.dta", clear
+
+. keep if fit_common == 1
+(0 observations deleted)
+
+. label variable audit "Audit Opinion"
+
+. label variable bp "BP"
+
+. label variable mktcap "MKTCAP"
+
+. label variable de "DE"
+
+. label variable perform "PERFORM"
+
+. label variable abs_tsmj "abs(DA)"
+
+. est clear
+
+. logit audit bp mktcap de perform abs_tsmj
+
+Iteration 0:  Log likelihood = -658.48982  
+Iteration 1:  Log likelihood = -621.30037  
+Iteration 2:  Log likelihood = -621.22895  
+Iteration 3:  Log likelihood = -621.22895  
+
+Logistic regression                                     Number of obs =    950
+                                                        LR chi2(5)    =  74.52
+                                                        Prob > chi2   = 0.0000
+Log likelihood = -621.22895                             Pseudo R2     = 0.0566
+
+------------------------------------------------------------------------------
+       audit | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+          bp |   .3552379   .0979049     3.63   0.000     .1633479    .5471279
+      mktcap |   -.063322   .0836776    -0.76   0.449    -.2273271    .1006832
+          de |   1.322042   .4170637     3.17   0.002     .5046123    2.139472
+     perform |    6.23614   1.065815     5.85   0.000     4.147181    8.325099
+    abs_tsmj |   1.050544   .6908688     1.52   0.128    -.3035343    2.404622
+       _cons |  -1.023871   .2602968    -3.93   0.000    -1.534043   -.5136984
+------------------------------------------------------------------------------
+
+. test abs_tsmj
+
+ ( 1)  [audit]abs_tsmj = 0
+
+           chi2(  1) =    2.31
+         Prob > chi2 =    0.1284
+
+. estadd scalar model_chi2 = e(chi2)
+
+added scalar:
+         e(model_chi2) =  74.521748
+
+. estadd scalar model_p = e(p)
+
+added scalar:
+            e(model_p) =  1.171e-14
+
+. estadd scalar wald_da = r(chi2)
+
+added scalar:
+            e(wald_da) =  2.3122623
+
+. estadd scalar odds_da = exp(_b[abs_tsmj])
+
+added scalar:
+            e(odds_da) =  2.8592055
+
+. est store m1
+
+. esttab m1 using "tables/table7_ts_modified_jones.md", cells(b(star fmt(3)) p(
+> par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 scalars(r2_p model_chi2 model
+> _p wald_da odds_da) replace label
+(file tables/table7_ts_modified_jones.md not found)
+(output written to tables/table7_ts_modified_jones.md)
+
+. esttab m1 using "tables/table7_ts_modified_jones.rtf", cells(b(star fmt(3)) p
+> (par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 scalars(r2_p model_chi2 mode
+> l_p wald_da odds_da) replace label
+(file tables/table7_ts_modified_jones.rtf not found)
+(output written to tables/table7_ts_modified_jones.rtf)
+
+. esttab m1 using "tables/table7_ts_modified_jones.csv", cells(b(star fmt(3)) p
+> (par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 scalars(r2_p model_chi2 mode
+> l_p wald_da odds_da) replace label
+(file tables/table7_ts_modified_jones.csv not found)
+(output written to tables/table7_ts_modified_jones.csv)
+
+. esttab m1 using "tables/table7_ts_modified_jones.tex", cells(b(star fmt(3)) p
+> (par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 scalars(r2_p model_chi2 mode
+> l_p wald_da odds_da) replace label
+(file tables/table7_ts_modified_jones.tex not found)
+(output written to tables/table7_ts_modified_jones.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

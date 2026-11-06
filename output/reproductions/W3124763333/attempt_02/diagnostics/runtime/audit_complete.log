@@ -1,0 +1,669 @@
+1                                                          The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+1          options errorabend;
+2          
+3          libname rep "./data/order_backlog_firm_years" access=readonly;
+NOTE: Libref REP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: 
+      /home/luther/Dropbox/Research/Replication/git/reproductions/W3124763333/attempt_02/data/order_backlog_firm_years
+4          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+5          libname crspstk "/storage/sas/base/crsp/a_stock" access=readonly;
+NOTE: Libref CRSPSTK was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_stock
+6          libname ccm "/storage/sas/base/crsp/a_ccm" access=readonly;
+NOTE: Libref CCM was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/crsp/a_ccm
+7          
+8          /* Audit only the final handoff and the exact source rows needed to check its
+9             fiscal-year support, historical links, and fallback capitalization date. */
+10         data final_events;
+11             set rep.order_backlog_firm_years;
+12             start_month=intnx('month',datadate,4,'b');
+13             window_end=intnx('month',start_month,11,'e');
+14             format start_month window_end date9.;
+15         run;
+
+NOTE: There were 24697 observations read from the data set REP.ORDER_BACKLOG_FIRM_YEARS.
+NOTE: The data set WORK.FINAL_EVENTS has 24697 observations and 27 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+16         
+3                                                          The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+17         proc sql;
+18             select count(*) as final_rows,
+19                    min(datadate) as current_datadate_min format=date9.,
+20                    max(datadate) as current_datadate_max format=date9.,
+21                    min(start_month) as holding_start_min format=date9.,
+22                    max(window_end) as holding_end_max format=date9.,
+23                    sum(case when window_end<='31DEC2001'd then 1 else 0 end)
+24                        as windows_covered_through_2001
+25             from final_events;
+26         quit;
+NOTE: The PROCEDURE SQL printed page 1.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+27         
+28         /* Reapply the production annual-record filters and sort priority to verify
+29            the actual t+1 reporting dates carried by the final sample. */
+30         data funda_raw;
+31             set comp.funda(keep=gvkey datadate fyear indfmt consol popsrc datafmt
+32                                 ib at ob curcd final fdate pdate
+33                            where=(fyear>=1980 and fyear<=2000 and indfmt='INDL' and
+34                                   consol='C' and popsrc='D' and datafmt='STD'));
+35             curcd=upcase(strip(curcd));
+36             final_priority=(upcase(strip(final)) in ('Y','F'));
+37             if missing(gvkey) or missing(datadate) or missing(fyear) then delete;
+38         run;
+
+NOTE: There were 211744 observations read from the data set COMP.FUNDA.
+      WHERE (fyear>=1980 and fyear<=2000) and (indfmt='INDL') and (consol='C') and (popsrc='D') and (datafmt='STD');
+NOTE: The data set WORK.FUNDA_RAW has 211744 observations and 15 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.60 seconds
+      cpu time            0.61 seconds
+      
+
+39         
+40         proc sort data=funda_raw out=funda_sort;
+41             by gvkey fyear descending final_priority descending fdate
+42                descending pdate descending datadate;
+43         run;
+
+NOTE: There were 211744 observations read from the data set WORK.FUNDA_RAW.
+NOTE: The data set WORK.FUNDA_SORT has 211744 observations and 15 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+44         
+45         data funda;
+46             set funda_sort;
+47             by gvkey fyear;
+48             if first.fyear;
+49             keep gvkey datadate fyear;
+50         run;
+
+4                                                          The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+NOTE: There were 211744 observations read from the data set WORK.FUNDA_SORT.
+NOTE: The data set WORK.FUNDA has 211742 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+51         
+52         proc sql;
+53             select e.fyear, count(*) as final_rows,
+54                    count(n.datadate) as tplus1_date_matches,
+55                    min(n.datadate) as tplus1_datadate_min format=date9.,
+56                    max(n.datadate) as tplus1_datadate_max format=date9.,
+57                    max(year(n.datadate)) as tplus1_latest_calendar_year
+58             from final_events as e left join funda as n
+59               on e.gvkey=n.gvkey and n.fyear=e.fyear+1
+60             group by e.fyear;
+61         
+62             select count(*) as fy1999_final_rows,
+63                    count(n.datadate) as fy1999_tplus1_matches,
+64                    min(n.datadate) as fy1999_tplus1_min format=date9.,
+65                    max(n.datadate) as fy1999_tplus1_max format=date9.,
+66                    sum(case when year(n.datadate)=2001 then 1 else 0 end)
+67                        as fy1999_tplus1_dates_in_2001
+68             from final_events as e left join funda as n
+69               on e.gvkey=n.gvkey and n.fyear=e.fyear+1
+70             where e.fyear=1999;
+71         quit;
+NOTE: The PROCEDURE SQL printed pages 2-3.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.11 seconds
+      
+
+72         
+73         /* Recreate the production P-before-C, LC-before-LU, date-valid formation
+74            link choice and compare it with the FYE security used for event returns. */
+75         data ccm_links;
+76             set ccm.ccmxpf_linktable(keep=gvkey linkprim linktype lpermno lpermco
+77                                           linkdt linkenddt
+78                                      where=(linktype in ('LC','LU') and
+79                                             linkprim in ('P','C')));
+80             permno=lpermno;
+81             permco=lpermco;
+82             linkrank=(ifn(linkprim='P',0,10)+ifn(linktype='LC',0,1));
+83             if missing(permno) then delete;
+84             keep gvkey permno permco linkrank linkdt linkenddt;
+85         run;
+
+NOTE: There were 33324 observations read from the data set CCM.CCMXPF_LINKTABLE.
+      WHERE linktype in ('LC', 'LU') and linkprim in ('C', 'P');
+NOTE: The data set WORK.CCM_LINKS has 33324 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+86         
+5                                                          The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+87         proc sql;
+88             create table form_cand as
+89             select distinct e.gvkey, e.form_date, l.permno, l.permco, l.linkrank
+90             from final_events as e inner join ccm_links as l
+91               on e.gvkey=l.gvkey
+92             where e.rank_source=1 and
+93                   (missing(l.linkdt) or l.linkdt<=e.form_date) and
+94                   (missing(l.linkenddt) or e.form_date<=l.linkenddt);
+NOTE: Table WORK.FORM_CAND created, with 24503 rows and 5 columns.
+
+95         
+96             create table form_min as
+97             select gvkey, form_date, min(linkrank) as minrank
+98             from form_cand group by gvkey, form_date;
+NOTE: Table WORK.FORM_MIN created, with 24503 rows and 3 columns.
+
+99         
+100            create table form_best as
+101            select c.*
+102            from form_cand as c inner join form_min as m
+103              on c.gvkey=m.gvkey and c.form_date=m.form_date and c.linkrank=m.minrank;
+NOTE: Table WORK.FORM_BEST created, with 24503 rows and 5 columns.
+
+104        
+105            create table form_n as
+106            select gvkey, form_date, count(distinct permno) as n_permno,
+107                   count(distinct permco) as n_permco
+108            from form_best group by gvkey, form_date;
+NOTE: Table WORK.FORM_N created, with 24503 rows and 4 columns.
+
+109        
+110            create table form_unique as
+111            select b.gvkey, b.form_date, min(b.permno) as permno,
+112                   min(b.permco) as permco
+113            from form_best as b inner join form_n as n
+114              on b.gvkey=n.gvkey and b.form_date=n.form_date
+115            where n.n_permno=1 and n.n_permco=1
+116            group by b.gvkey, b.form_date;
+NOTE: Table WORK.FORM_UNIQUE created, with 24503 rows and 4 columns.
+
+117        
+118            create table rank_assignment as
+119            select e.*,
+120                   case when e.rank_source=1 then f.permno
+121                        when e.rank_source=2 then e.permno_fye else . end as rank_permno,
+122                   case when e.rank_source=1 then f.permco
+123                        when e.rank_source=2 then e.permco_fye else . end as rank_permco
+124            from final_events as e left join form_unique as f
+125              on e.gvkey=f.gvkey and e.form_date=f.form_date;
+NOTE: Table WORK.RANK_ASSIGNMENT created, with 24697 rows and 29 columns.
+
+126        
+127            create table fye_valid_start as
+128            select distinct e.gvkey, e.fyear
+129            from rank_assignment as e inner join ccm_links as l
+130              on e.gvkey=l.gvkey and e.permno_fye=l.permno
+131            where (missing(l.linkdt) or l.linkdt<=e.start_month) and
+132                  (missing(l.linkenddt) or e.start_month<=l.linkenddt);
+6                                                          The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+NOTE: Table WORK.FYE_VALID_START created, with 24689 rows and 2 columns.
+
+133        
+134            create table links_active_start as
+135            select e.gvkey, e.fyear, count(distinct l.permno) as n_active_permno,
+136                   max(case when l.permno=e.permno_fye then 1 else 0 end) as fye_active,
+137                   max(case when not missing(l.permno) and
+138                                 l.permno ne e.permno_fye then 1 else 0 end) as other_active,
+139                   max(case when not missing(l.permno) and
+140                                 l.permno ne e.permno_fye and
+141                                 l.permco=e.permco_fye then 1 else 0 end) as other_same_co,
+142                   max(case when not missing(l.permno) and
+143                                 l.permno ne e.permno_fye and
+144                                 l.permco ne e.permco_fye then 1 else 0 end) as other_diff_co
+145            from rank_assignment as e left join ccm_links as l
+146              on e.gvkey=l.gvkey and
+147                 (missing(l.linkdt) or l.linkdt<=e.start_month) and
+148                 (missing(l.linkenddt) or e.start_month<=l.linkenddt)
+149            group by e.gvkey, e.fyear;
+NOTE: Table WORK.LINKS_ACTIVE_START created, with 24697 rows and 7 columns.
+
+150        
+151            select count(*) as final_rows,
+152                   sum(case when rank_source=1 then 1 else 0 end)
+153                       as formation_link_rank_rows,
+154                   sum(case when rank_source=2 then 1 else 0 end)
+155                       as fye_link_fallback_rows,
+156                   sum(case when rank_source=1 and missing(rank_permno) then 1 else 0 end)
+157                       as missing_formation_rank_link,
+158                   sum(case when not missing(rank_permno) and
+159                                 rank_permno=permno_fye then 1 else 0 end)
+160                       as formation_and_event_permno_same,
+161                   sum(case when not missing(rank_permno) and
+162                                 rank_permno ne permno_fye then 1 else 0 end)
+163                       as permno_rank_event_diff,
+164                   sum(case when rank_permno ne permno_fye and
+165                                 rank_permco=permco_fye then 1 else 0 end)
+166                       as permno_diff_same_permco,
+167                   sum(case when rank_permno ne permno_fye and
+168                                 rank_permco ne permco_fye then 1 else 0 end)
+169                       as permno_diff_other_permco,
+170                   sum(case when v.gvkey is not missing then 1 else 0 end)
+171                       as fye_link_valid_start
+172            from rank_assignment as e left join fye_valid_start as v
+173              on e.gvkey=v.gvkey and e.fyear=v.fyear;
+174        
+175            select count(*) as final_rows,
+176                   sum(case when fye_active=1 then 1 else 0 end) as fye_active_rows,
+177                   sum(case when fye_active=0 and n_active_permno>0 then 1 else 0 end)
+178                       as expired_with_other_link,
+179                   sum(case when fye_active=0 and n_active_permno=0 then 1 else 0 end)
+180                       as no_active_link,
+181                   sum(case when fye_active=0 and other_same_co=1 then 1 else 0 end)
+182                       as expired_same_company_issue,
+183                   sum(case when fye_active=0 and other_diff_co=1 then 1 else 0 end)
+184                       as expired_other_company_link
+185            from links_active_start;
+186        
+7                                                          The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+187            select count(*) as final_best_formation_link_groups,
+188                   sum(case when n_permno ne 1 or n_permco ne 1 then 1 else 0 end)
+189                       as ambig_form_links
+190            from form_n;
+191        quit;
+NOTE: The PROCEDURE SQL printed pages 4-6.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.18 seconds
+      cpu time            0.20 seconds
+      
+
+192        
+193        /* Check whether an annual first-cap fallback is observed before the first
+194           event-return month.  The source guide explicitly uses first-year cap for
+195           midyear entrants; this audit measures its timing relative to these events. */
+196        data mcap_obs;
+197            set crspstk.msf(keep=permno date prc shrout
+198                            where=(date>='01JAN1980'd and date<='31DEC2000'd));
+199            if not missing(prc) and not missing(shrout) and shrout>0 then
+200                mcap=abs(prc)*shrout;
+201            else mcap=.;
+202            if mcap<=0 then mcap=.;
+203            if missing(mcap) then delete;
+204            calyr=year(date);
+205        run;
+
+NOTE: There were 1845822 observations read from the data set CRSPSTK.MSF.
+      WHERE (date>='01JAN1980'D and date<='31DEC2000'D);
+NOTE: The data set WORK.MCAP_OBS has 1784425 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.31 seconds
+      cpu time            0.31 seconds
+      
+
+206        
+207        proc sql;
+208            create table name_match_raw as
+209            select s.permno, s.date, s.calyr, s.mcap, n.shrcd, n.exchcd
+210            from mcap_obs as s inner join crspstk.msenames as n
+211              on s.permno=n.permno and
+212                 (missing(n.namedt) or n.namedt<=s.date) and
+213                 (missing(n.nameendt) or s.date<=n.nameendt);
+NOTE: Table WORK.NAME_MATCH_RAW created, with 1784425 rows and 6 columns.
+
+214        
+215            create table name_match_n as
+216            select permno, date, count(*) as n_names
+217            from name_match_raw group by permno, date;
+NOTE: Table WORK.NAME_MATCH_N created, with 1784425 rows and 3 columns.
+
+218        
+219            create table size_obs as
+220            select r.permno, r.date, r.calyr
+221            from name_match_raw as r inner join name_match_n as n
+222              on r.permno=n.permno and r.date=n.date
+223            where n.n_names=1 and r.exchcd in (1,2,3) and not missing(r.shrcd)
+224                  and floor(r.shrcd/10) ne 3;
+NOTE: Table WORK.SIZE_OBS created, with 1734376 rows and 3 columns.
+8                                                          The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+
+225        
+226            create table cap_keys as
+227            select distinct gvkey, fyear, rank_permno, return_year, start_month
+228            from rank_assignment where cap_source=2 and not missing(rank_permno);
+NOTE: Table WORK.CAP_KEYS created, with 229 rows and 5 columns.
+
+229        
+230            create table cap_obs as
+231            select k.gvkey, k.fyear, k.rank_permno, k.return_year, k.start_month,
+232                   s.date as cap_date
+233            from cap_keys as k inner join size_obs as s
+234              on k.rank_permno=s.permno and k.return_year=s.calyr;
+NOTE: Table WORK.CAP_OBS created, with 2207 rows and 6 columns.
+
+235        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.56 seconds
+      cpu time            2.01 seconds
+      
+
+236        
+237        proc sort data=cap_obs out=cap_obs_sort;
+238            by gvkey fyear cap_date;
+239        run;
+
+NOTE: There were 2207 observations read from the data set WORK.CAP_OBS.
+NOTE: The data set WORK.CAP_OBS_SORT has 2207 observations and 6 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+240        
+241        data first_cap;
+242            set cap_obs_sort;
+243            by gvkey fyear;
+244            if first.fyear;
+245            keep gvkey fyear cap_date;
+246            rename cap_date=first_cap_date;
+247            format cap_date date9.;
+248        run;
+
+NOTE: There were 2207 observations read from the data set WORK.CAP_OBS_SORT.
+NOTE: The data set WORK.FIRST_CAP has 229 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+249        
+250        proc sql;
+251            create table cap_audit as
+252            select e.*, c.first_cap_date
+253            from rank_assignment as e left join first_cap as c
+254              on e.gvkey=c.gvkey and e.fyear=c.fyear;
+NOTE: Table WORK.CAP_AUDIT created, with 24697 rows and 30 columns.
+
+9                                                          The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+255        
+256            select count(*) as final_rows,
+257                   sum(case when cap_source=2 then 1 else 0 end) as first_cap_rows,
+258                   sum(case when cap_source=2 and missing(first_cap_date)
+259                            then 1 else 0 end) as first_cap_date_missing,
+260                   sum(case when cap_source=2 and first_cap_date<start_month
+261                            then 1 else 0 end) as first_cap_known_before_start,
+262                   sum(case when cap_source=2 and first_cap_date>=start_month
+263                            then 1 else 0 end) as first_cap_at_or_after_start,
+264                   sum(case when cap_source=2 and
+265                                 year(first_cap_date)=year(start_month) and
+266                                 month(first_cap_date)=month(start_month)
+267                            then 1 else 0 end) as first_cap_same_start_month
+268            from cap_audit;
+269        quit;
+NOTE: The PROCEDURE SQL printed page 7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+270        
+271        /* Inspect the bounded first-cap edge cases.  Report only aggregate evidence:
+272           prior-December and entry-month prices, shares, returns, and name eligibility,
+273           plus CRSP returns observed before the reconstructed first-cap date. */
+274        proc sql;
+275            create table edge_cases as
+276            select *
+277            from cap_audit
+278            where cap_source=2 and first_cap_date>=start_month;
+NOTE: Table WORK.EDGE_CASES created, with 2 rows and 30 columns.
+
+279        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+280        
+281        data edge_months;
+282            set edge_cases;
+283            length role $8;
+284            step=.;
+285            role='PRIORDEC';
+286            month_begin=mdy(12,1,return_year-1);
+287            output;
+288            do step=0 to 11;
+289                role='WINDOW';
+290                month_begin=intnx('month',start_month,step,'b');
+291                output;
+292            end;
+293            format month_begin date9.;
+294            keep gvkey fyear rank_permno return_year start_month first_cap_date
+295                 role step month_begin;
+296        run;
+
+NOTE: There were 2 observations read from the data set WORK.EDGE_CASES.
+NOTE: The data set WORK.EDGE_MONTHS has 26 observations and 9 variables.
+10                                                         The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+297        
+298        proc sql;
+299            create table edge_msf as
+300            select w.*, m.date as msf_date, m.ret, m.prc, m.shrout
+301            from edge_months as w left join crspstk.msf as m
+302              on w.rank_permno=m.permno and
+303                 year(m.date)=year(w.month_begin) and
+304                 month(m.date)=month(w.month_begin);
+NOTE: Table WORK.EDGE_MSF created, with 26 rows and 13 columns.
+
+305        
+306            create table edge_name_raw as
+307            select m.*, n.permno as name_permno, n.namedt, n.nameendt,
+308                   n.shrcd, n.exchcd
+309            from edge_msf as m left join crspstk.msenames as n
+310              on m.rank_permno=n.permno and not missing(m.msf_date) and
+311                 (missing(n.namedt) or n.namedt<=m.msf_date) and
+312                 (missing(n.nameendt) or m.msf_date<=n.nameendt);
+NOTE: Table WORK.EDGE_NAME_RAW created, with 26 rows and 18 columns.
+
+313        
+314            create table edge_month_summary as
+315            select gvkey, fyear, role, month_begin, start_month, first_cap_date,
+316                   max(msf_date) as msf_date, max(ret) as ret, max(prc) as prc,
+317                   max(shrout) as shrout, count(name_permno) as n_names,
+318                   sum(case when name_permno is not missing and exchcd in (1,2,3) and
+319                                 not missing(shrcd) and floor(shrcd/10) ne 3
+320                            then 1 else 0 end) as eligible_names,
+321                   max(namedt) as name_start
+322            from edge_name_raw
+323            group by gvkey, fyear, role, month_begin, start_month, first_cap_date;
+NOTE: Table WORK.EDGE_MONTH_SUMMARY created, with 26 rows and 13 columns.
+
+324        
+325            create table edge_summary as
+326            select gvkey, fyear,
+327                   max(case when role='PRIORDEC' and not missing(msf_date)
+328                            then 1 else 0 end) as pdec_row,
+329                   max(case when role='PRIORDEC' and not missing(ret)
+330                            then 1 else 0 end) as pdec_ret,
+331                   max(case when role='PRIORDEC' and not missing(prc)
+332                            then 1 else 0 end) as pdec_price,
+333                   max(case when role='PRIORDEC' and not missing(shrout)
+334                            then 1 else 0 end) as pdec_shares,
+335                   max(case when role='PRIORDEC' and n_names=1 and eligible_names=1
+336                            then 1 else 0 end) as pdec_name_eligible,
+337                   max(case when role='WINDOW' and month_begin=start_month and
+338                                 not missing(msf_date) then 1 else 0 end) as entry_row,
+339                   max(case when role='WINDOW' and month_begin=start_month and
+340                                 not missing(ret) then 1 else 0 end) as entry_ret,
+341                   max(case when role='WINDOW' and month_begin=start_month and
+342                                 not missing(prc) then 1 else 0 end) as entry_price,
+343                   max(case when role='WINDOW' and month_begin=start_month and
+11                                                         The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+344                                 not missing(shrout) then 1 else 0 end) as entry_shares,
+345                   max(case when role='WINDOW' and month_begin=start_month and
+346                                 n_names=1 and eligible_names=1 then 1 else 0 end)
+347                       as entry_name_eligible,
+348                   sum(case when role='WINDOW' and
+349                                 month_begin<intnx('month',first_cap_date,0,'b') and
+350                                 not missing(ret) then 1 else 0 end)
+351                       as returns_before_cap,
+352                   sum(case when role='WINDOW' and
+353                                 month_begin<intnx('month',first_cap_date,0,'b') and
+354                                 not missing(ret) and
+355                                 (missing(prc) or missing(shrout))
+356                            then 1 else 0 end) as return_before_cap_no_size,
+357                   sum(case when role='WINDOW' and
+358                                 month_begin<intnx('month',first_cap_date,0,'b') and
+359                                 not missing(ret) and
+360                                 (n_names ne 1 or eligible_names ne 1)
+361                            then 1 else 0 end) as return_before_cap_no_name,
+362                   max(case when role='WINDOW' and
+363                                 month_begin=intnx('month',first_cap_date,0,'b')
+364                            then name_start else . end) as cap_name_start
+365            from edge_month_summary
+366            group by gvkey, fyear;
+NOTE: Table WORK.EDGE_SUMMARY created, with 2 rows and 16 columns.
+
+367        
+368            create table edge_summary_timed as
+369            select e.*, c.start_month, c.first_cap_date,
+370                   case when year(c.first_cap_date)=year(c.start_month) and
+371                                   month(c.first_cap_date)=month(c.start_month)
+372                             then 'same-month' else 'after-month' end as timing length=12
+373            from edge_summary as e inner join edge_cases as c
+374              on e.gvkey=c.gvkey and e.fyear=c.fyear;
+NOTE: Table WORK.EDGE_SUMMARY_TIMED created, with 2 rows and 19 columns.
+
+375        
+376            select timing, count(*) as cases,
+377                   sum(pdec_row) as prior_dec_msf_row,
+378                   sum(pdec_ret) as prior_dec_return,
+379                   sum(pdec_price) as prior_dec_price,
+380                   sum(pdec_shares) as prior_dec_shares,
+381                   sum(pdec_name_eligible) as prior_dec_name_eligible,
+382                   sum(entry_row) as entry_month_msf_row,
+383                   sum(entry_ret) as entry_month_return,
+384                   sum(entry_price) as entry_month_price,
+385                   sum(entry_shares) as entry_month_shares,
+386                   sum(entry_name_eligible) as entry_name_eligible,
+387                   sum(returns_before_cap) as return_months_before_cap,
+388                   sum(return_before_cap_no_size) as returns_before_cap_no_size,
+389                   sum(return_before_cap_no_name) as returns_before_cap_no_name,
+390                   sum(case when cap_name_start>start_month then 1 else 0 end)
+391                       as cap_name_begins_after_start
+392            from edge_summary_timed group by timing;
+393        quit;
+NOTE: The PROCEDURE SQL printed page 8.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+12                                                         The SAS System                   Wednesday, November  4, 2026 08:36:00 PM
+
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           2.92 seconds
+      cpu time            3.42 seconds
+      

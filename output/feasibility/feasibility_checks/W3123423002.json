@@ -1,0 +1,1002 @@
+{
+  "schema_version": "1.2",
+  "paper_id": "W3123423002",
+  "doi": "10.1007/s11142-006-9004-1",
+  "eligibility": "eligible",
+  "provenance": {
+    "models_inventory_sha256": "99fa3538c4600dfe238e16b796b87f0e11534ddb747b8330bc6184d5d4de41c8",
+    "samples_inventory_sha256": "bcb4cb5c897be4e1d19d5eb27f2249171c3b432429b3ca0ca62577d45855662e",
+    "catalog_sha256": "45894893e45d56cb56150252c2ce4e85dfa88f5d891f3e547d3e9ea8003993fb",
+    "catalog_artifact_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "5821845ace490928bbee4ab43e064acc161010641b908d2a65a5a13de7569030",
+    "model_record_sha256": "fdf4bf698dcfeb6b44819b272896d356de2bee531f7ad60c79820002087502b4",
+    "sample_record_sha256": "3cf36e62b1cda5065c7de57dc990f69a4d73283a5c83a086ee8e26d71c0e805a",
+    "reading_sha256": "05c9e77f4bb3752975852bcc70a018da34bfcb1ed33b4317cbf675c43b5d9d86",
+    "pdf_sha256": "13a896a4344eca26e48be628222bc6af31ea2fe32e0ba25e257a1a95fd77329c",
+    "work_item_sha256": "4b20e05f78f75e763dd9344e4ff33ec89d4f3ac25e587697f0c8031c1c88f36a",
+    "review_source_aggregate_sha256": "2c054a78d6515b45b20bd409e84018663c81a2ac3002944ed28baa287078ea88",
+    "review_source_assessment_sha256": "68403c04a414c82a420c0dc22d18b12f5b4048c3724697a0775670e1f433c69d",
+    "review_source_work_item_sha256": "077ca43f57601837d9ef59aaf2a5146a4a1ab174a4e6b2ced0277f6fbd4c5d65",
+    "review_source_converter_sha256": "adc57168632515ab279560dc8138f3093edf12c561dd519aacc0fe9f0c61f590",
+    "review_source_decisions_sha256": "51ca795843b3c5ff732b33b38572f00ecd2ecbabea1393a13540884851125a2d",
+    "temporal_audit_file": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/full_01_reviewed/drafts/W3123423002/temporal_audit.json",
+    "temporal_audit_sha256": "874e0063e7e1ef799a12865ca272b43a2e4deac5caa98b0461d0b0a8a321038a"
+  },
+  "requirements": [
+    {
+      "requirement_id": "r_compustat_financials",
+      "kind": "raw_measure",
+      "description": "Compustat annual financial statement measures for baseline t observations and one-year-ahead earnings: income before extraordinary items, statement-of-cash-flows operating and investing flows, total assets, special items, and historical SIC. Current-vintage fields are mapped by their catalog labels; the original paper’s item numbers are not treated as modern column codes.",
+      "required_coverage": {
+        "begin": null,
+        "end": 2003,
+        "years": [],
+        "frequency": "annual fiscal-year observations",
+        "population": "U.S. nonfinancial firm-years in the paper’s Compustat/CRSP baseline sample, fiscal-year labels 1988–2002, plus t+1 earnings through fiscal year 2003.",
+        "detail": "The paper states 1988–2002 firm-years and t+1 earnings. The start remains null because average-assets scaling is stated but its averaging period and exact asset dates are not specified; the ending year reflects the known one-year outcome lead."
+      },
+      "routes": [
+        {
+          "route_id": "rt_funda_financials",
+          "route_type": "local_sas",
+          "source_name": "Compustat annual fundamentals",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "sich",
+            "ib",
+            "oancf",
+            "ivncf",
+            "at",
+            "spi"
+          ],
+          "mapping_notes": "Catalog labels semantically match the paper descriptions: ib is income before extraordinary items; oancf and ivncf are net cash flows from operating and investing activities; at is total assets; spi is special items; sich is historical SIC. These matches use field labels, not the numeric Compustat item identifiers quoted in the article. The paper does not identify annual format/consolidation flags or define the average-assets dates, which remain implementation details.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "verified"
+          },
+          "coverage_notes": "No coordinator-supplied local coverage confirmation supports the required historical period and exact population; a successful bounded probe verifies access and columns only.",
+          "evidence_ids": [
+            "c_funda",
+            "q_funda"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No frozen local confirmation establishes complete coverage of the paper’s historical nonfinancial Compustat/CRSP population. The start of the required raw asset window is unknown because “average total assets” has no averaging-period definition.",
+      "evidence_ids": [
+        "p_sample",
+        "p_period",
+        "p_cfo",
+        "p_fcf",
+        "p_earnings",
+        "p_scaling_si",
+        "p_missing_spi",
+        "p_trim",
+        "p_table2"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "r_book_equity_substitution",
+      "kind": "supporting_input",
+      "description": "Book value of equity for the t+1 earnings replacement used when earnings are missing after a performance-related delisting; if book equity is negative, the detailed methods state that the future performance metric is set to zero. The particular Compustat equity field and observation date used for this replacement are not explicitly specified.",
+      "required_coverage": {
+        "begin": 1989,
+        "end": 2003,
+        "years": [],
+        "frequency": "annual fiscal-year observations",
+        "population": "Baseline sample firms requiring the t+1 performance-related-delisting outcome adjustment.",
+        "detail": "Baseline anchor years 1988–2002 plus the documented one-year lead give fiscal-year labels 1989–2003 for the substituted outcome/equity value. Exact item and fiscal-date convention remain unresolved."
+      },
+      "routes": [
+        {
+          "route_id": "rt_funda_equity",
+          "route_type": "local_sas",
+          "source_name": "Compustat annual fundamentals",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "ceq",
+            "seq"
+          ],
+          "mapping_notes": "The catalog has ceq (Common/Ordinary Equity - Total) and seq (Stockholders Equity - Parent), both plausible equity measures. The paper explicitly labels item 60 as book value of equity for a separate book-to-market construct (p. 33), but it does not explicitly say which current field, fiscal date, or equity definition is used for the bankruptcy substitution. No numeric item-to-field mapping is assumed.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "No coordinator-supplied local coverage confirmation supports the t+1 delisting-substitution population or dates.",
+          "evidence_ids": [
+            "c_funda",
+            "q_funda"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The local equity columns are present, but the substitution’s exact field, measurement date and population coverage are not confirmed. The related item-60 definition appears in a different construct and does not by itself verify the mapping.",
+      "evidence_ids": [
+        "p_delist_method",
+        "p_delist_table",
+        "p_equity_candidate"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "r_crsp_sample",
+      "kind": "sampling",
+      "description": "CRSP daily stock-return records needed for the paper’s stated intersection with Compustat/CRSP availability and for the linked firm-year sample. The paper does not define the exact daily date rule that makes a Compustat firm-year “available on CRSP.”",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "daily security observations",
+        "population": "CRSP-linked securities corresponding to eligible Compustat firm-years in the 1988–2002 baseline sample.",
+        "detail": "The annual period is explicit, but Compustat firm-years use actual fiscal dates while CRSP is daily/calendar dated; the source gives no exact day window or any-return/nonmissing-return screen, so exact daily calendar bounds remain null."
+      },
+      "routes": [
+        {
+          "route_id": "rt_dsf",
+          "route_type": "local_sas",
+          "source_name": "CRSP daily stock returns",
+          "dataset": "CRSP.DSF",
+          "location": "/storage/sas/base/crsp/a_stock/dsf.sas7bdat",
+          "fields": [
+            "PERMNO",
+            "DATE",
+            "RET"
+          ],
+          "mapping_notes": "The CRSP fields are labeled PERMNO, date of observation and returns, matching the stated CRSP daily stock-return source. The paper does not operationalize the CRSP-availability inclusion test or its calendar-date window, so this does not yet establish an exact sample screen.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "No coordinator-supplied local confirmation establishes complete date coverage for the exact linked study population.",
+          "evidence_ids": [
+            "c_dsf",
+            "q_dsf"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Although the exact DSF resource and fields are readable, the paper does not state the date-window/nonmissing-return rule for CRSP availability, and local coverage is unconfirmed.",
+      "evidence_ids": [
+        "p_sample",
+        "p_period"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "r_crsp_compustat_link",
+      "kind": "identifier_link",
+      "description": "Effective-dated Compustat GVKEY to historical CRSP PERMNO links to form the stated combined sample and identify delisted firms. The article names both databases but does not state its particular link procedure.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "effective-dated company/security link records",
+        "population": "Compustat companies and CRSP securities eligible for the 1988–2002 firm-year sample and related t+1 delisting adjustment.",
+        "detail": "The corresponding accounting fiscal dates and event-date alignment are not reported; exact calendar bounds for link-validity intervals are therefore unknown."
+      },
+      "routes": [
+        {
+          "route_id": "rt_ccmxpf",
+          "route_type": "local_sas",
+          "source_name": "CRSP/Compustat merged link history",
+          "dataset": "CRSP.CCMXPF_LINKTABLE",
+          "location": "/storage/sas/base/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+          "fields": [
+            "gvkey",
+            "lpermno",
+            "linkdt",
+            "linkenddt",
+            "linktype",
+            "linkprim"
+          ],
+          "mapping_notes": "The catalog identifies GVKEY, historical CRSP PERMNO, link type/primary markers and first/last effective dates. This is a plausible effective-dated linkage route for the two named data systems; the article does not specify the source link version or tie-breaking rules, and those remain a construction issue.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "verified"
+          },
+          "coverage_notes": "No coordinator-supplied local confirmation establishes complete historical link coverage for this exact population and fiscal/event date range.",
+          "evidence_ids": [
+            "c_link",
+            "q_link"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Exact source link choices/tie-breaking rules are not reported, and the historical GVKEY/PERMNO link population and validity-date coverage are not confirmed locally.",
+      "evidence_ids": [
+        "p_sample",
+        "p_period"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "r_performance_delisting",
+      "kind": "supporting_input",
+      "description": "CRSP delisting event/date/code information to identify missing t+1 earnings caused by performance-related delisting. The source does not state the exact CRSP code set corresponding to “performance related reasons.”",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "delisting event records with actual calendar dates",
+        "population": "CRSP-linked baseline firms whose t+1 earnings are missing and may qualify for the performance-related-delisting substitution.",
+        "detail": "The event dates are calendar dated while the outcome anchor is a fiscal-year observation. The paper does not give the code set or event-to-fiscal-year rule, so the event-year bounds and alignment remain null."
+      },
+      "routes": [
+        {
+          "route_id": "rt_msedelist",
+          "route_type": "local_sas",
+          "source_name": "CRSP monthly stock delisting events",
+          "dataset": "CRSP.MSEDELIST",
+          "location": "/storage/sas/base/crsp/a_stock/msedelist.sas7bdat",
+          "fields": [
+            "PERMNO",
+            "DLSTDT",
+            "DLSTCD"
+          ],
+          "mapping_notes": "The live fields identify PERMNO, delisting date and delisting code. The paper says “performance related reasons” but does not specify DLSTCD values or the date-to-t+1-fiscal-year link. Field presence is verified; semantic classification is not.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "verified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "No coordinator-supplied local confirmation establishes event-date coverage for the exact sample-linked population.",
+          "evidence_ids": [
+            "c_delist",
+            "q_delist"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The DLSTDT/DLSTCD fields are present, but the paper’s “performance related” code set, fiscal-year alignment and event-year coverage are unresolved.",
+      "evidence_ids": [
+        "p_delist_method",
+        "p_delist_table"
+      ],
+      "data_status": "undetermined"
+    }
+  ],
+  "assessments": [
+    {
+      "model_id": "earnings_persistence_opacc_m6",
+      "result_set_id": "opacc_column6",
+      "required_model_ids": [
+        "earnings_persistence_opacc_m6"
+      ],
+      "requirement_ids": [
+        "r_compustat_financials",
+        "r_crsp_sample",
+        "r_crsp_compustat_link",
+        "r_performance_delisting",
+        "r_book_equity_substitution"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "earnings_persistence_opacc_m6",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_book_equity_substitution",
+            "r_performance_delisting"
+          ],
+          "construction": "Use Compustat annual income before extraordinary items at t+1 scaled by the paper’s average-assets deflator. For a missing t+1 earnings observation caused by performance-related delisting, substitute negative book value of equity; the detailed methods additionally set the future metric to zero when book equity is negative. Exact equity field/date and delisting code mapping remain unresolved.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "earnings_persistence_opacc_m6",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "r_compustat_financials"
+          ],
+          "construction": "Cash from operating activities at fiscal year t (current annual field oancf), divided by average total assets; denominator dates are not stated.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "earnings_persistence_opacc_m6",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "r_compustat_financials"
+          ],
+          "construction": "Operating accruals at t equal income before extraordinary items minus cash from operating activities (ib − oancf), divided by average total assets.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "earnings_persistence_opacc_m6",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_crsp_sample",
+            "r_crsp_compustat_link"
+          ],
+          "construction": "Fiscal-year-t income before extraordinary items divided by average assets, interacted with an annual indicator for the bottom decile of operating (OPACC model) or total accruals (TACC model) among the same annual study sample. The annual ranking population depends on the stated Compustat/CRSP sample and its unresolved linkage rule.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "earnings_persistence_opacc_m6",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_crsp_sample",
+            "r_crsp_compustat_link"
+          ],
+          "construction": "Fiscal-year-t earnings divided by average assets, interacted with the annual bottom-decile accrual indicator and an SI indicator for negative special items at or above 2% of average assets per Table 2. Equation (5) prose instead uses a strict >2% threshold; equality remains source-conflicted.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "Table 2 reports OLS and significance stars but does not identify a standard-error correction or clustering dimension; no cluster input can be specified from the source.",
+          "evidence_ids": [
+            "p_table2"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The frozen baseline uses ordinary least squares with a reported intercept. No weights or additional estimator grouping inputs are reported; covariance inference remains a separate unresolved specification issue.",
+          "evidence_ids": [
+            "p_table2"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "The Table 2 equation/result does not report a fixed-effect dimension or require a separate FE input.",
+          "evidence_ids": [
+            "p_table2"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "r_crsp_compustat_link"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_sample",
+            "c_link",
+            "q_link"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_book_equity_substitution",
+            "r_performance_delisting"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_missing_spi",
+            "p_trim",
+            "p_delist_method",
+            "p_delist_table"
+          ]
+        },
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_crsp_sample",
+            "r_crsp_compustat_link"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_period",
+            "p_screen",
+            "p_sample",
+            "p_table2"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported for the OLS Table 2 baseline fits.",
+          "evidence_ids": [
+            "p_table2"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "Average total assets is the reported deflator, but the averaging period and exact asset dates are not stated; all scaled variables may therefore need an unresolved denominator history.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_scaling_si"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The Table 2 SI note uses a magnitude threshold of at least 2% of average assets, while the equation (5) prose says greater than 2%; the equality case used in the equation (6) interaction remains unresolved.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_scaling_si",
+            "p_si_conflict"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The methods specify a zero floor when book value of equity is negative, while the Table 2 note only summarizes substitution of negative book equity. The exact Compustat equity field/date for the substitution is not explicitly identified; item 60 is named for a separate book-to-market construct only.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_delist_method",
+            "p_delist_table",
+            "p_equity_candidate"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The source does not define the DLSTCD values for “performance related reasons,” or the rule aligning calendar delisting events to t+1 fiscal-year outcomes.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_delist_method",
+            "p_delist_table"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The authors state that the sample requires Compustat and CRSP data, but do not define the exact Compustat-to-CRSP matching procedure or the daily date/nonmissing-return rule for CRSP availability.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_sample",
+            "p_period"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "Table 2 identifies OLS, but does not report a standard-error correction or clustering procedure; this limits exact reconstruction of inferential statistics and significance stars.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_table2"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The article trims the 1% tails of financial-statement variables except special items, but does not state the exact percentile algorithm, reference population, or whether trimming is pooled or year-specific.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_trim"
+          ]
+        },
+        {
+          "kind": "vintage",
+          "description": "Current local Compustat and CRSP fields are available for inspection, but historical population coverage and vintage alignment to the study are unconfirmed; use the original 1988–2002 design with current vintages if later retrieved.",
+          "blocking": false,
+          "evidence_ids": [
+            "p_period",
+            "q_funda",
+            "q_dsf"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "Table 2’s frozen baseline sample is 61,989 firm-years; page 9’s 63,875 count is the broader nonmissing-financial-statement sample before the Table 2 fit selection.",
+        "The detailed footnote on p. 13 adds a zero floor for negative book equity in the delisting adjustment. This detail is absent from the Table 2 note and was not present in the compact extraction."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "earnings_persistence_tacc_m6",
+      "result_set_id": "tacc_column6",
+      "required_model_ids": [
+        "earnings_persistence_tacc_m6"
+      ],
+      "requirement_ids": [
+        "r_compustat_financials",
+        "r_crsp_sample",
+        "r_crsp_compustat_link",
+        "r_performance_delisting",
+        "r_book_equity_substitution"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "earnings_persistence_tacc_m6",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_book_equity_substitution",
+            "r_performance_delisting"
+          ],
+          "construction": "Use Compustat annual income before extraordinary items at t+1 scaled by the paper’s average-assets deflator. For a missing t+1 earnings observation caused by performance-related delisting, substitute negative book value of equity; the detailed methods additionally set the future metric to zero when book equity is negative. Exact equity field/date and delisting code mapping remain unresolved.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "earnings_persistence_tacc_m6",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "r_compustat_financials"
+          ],
+          "construction": "Free cash flow at fiscal year t equals operating plus investing cash flow (oancf + ivncf), divided by average total assets; denominator dates are not stated.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "earnings_persistence_tacc_m6",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "r_compustat_financials"
+          ],
+          "construction": "Total accruals at t equal income before extraordinary items minus free cash flow (ib − (oancf + ivncf)), divided by average total assets.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "earnings_persistence_tacc_m6",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_crsp_sample",
+            "r_crsp_compustat_link"
+          ],
+          "construction": "Fiscal-year-t income before extraordinary items divided by average assets, interacted with an annual indicator for the bottom decile of operating (OPACC model) or total accruals (TACC model) among the same annual study sample. The annual ranking population depends on the stated Compustat/CRSP sample and its unresolved linkage rule.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "earnings_persistence_tacc_m6",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_crsp_sample",
+            "r_crsp_compustat_link"
+          ],
+          "construction": "Fiscal-year-t earnings divided by average assets, interacted with the annual bottom-decile accrual indicator and an SI indicator for negative special items at or above 2% of average assets per Table 2. Equation (5) prose instead uses a strict >2% threshold; equality remains source-conflicted.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "Table 2 reports OLS and significance stars but does not identify a standard-error correction or clustering dimension; no cluster input can be specified from the source.",
+          "evidence_ids": [
+            "p_table2"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [],
+          "reason": "The frozen baseline uses ordinary least squares with a reported intercept. No weights or additional estimator grouping inputs are reported; covariance inference remains a separate unresolved specification issue.",
+          "evidence_ids": [
+            "p_table2"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "The Table 2 equation/result does not report a fixed-effect dimension or require a separate FE input.",
+          "evidence_ids": [
+            "p_table2"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "r_crsp_compustat_link"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_sample",
+            "c_link",
+            "q_link"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_book_equity_substitution",
+            "r_performance_delisting"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_missing_spi",
+            "p_trim",
+            "p_delist_method",
+            "p_delist_table"
+          ]
+        },
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "r_compustat_financials",
+            "r_crsp_sample",
+            "r_crsp_compustat_link"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "p_period",
+            "p_screen",
+            "p_sample",
+            "p_table2"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported for the OLS Table 2 baseline fits.",
+          "evidence_ids": [
+            "p_table2"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "Average total assets is the reported deflator, but the averaging period and exact asset dates are not stated; all scaled variables may therefore need an unresolved denominator history.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_scaling_si"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The Table 2 SI note uses a magnitude threshold of at least 2% of average assets, while the equation (5) prose says greater than 2%; the equality case used in the equation (6) interaction remains unresolved.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_scaling_si",
+            "p_si_conflict"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The methods specify a zero floor when book value of equity is negative, while the Table 2 note only summarizes substitution of negative book equity. The exact Compustat equity field/date for the substitution is not explicitly identified; item 60 is named for a separate book-to-market construct only.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_delist_method",
+            "p_delist_table",
+            "p_equity_candidate"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The source does not define the DLSTCD values for “performance related reasons,” or the rule aligning calendar delisting events to t+1 fiscal-year outcomes.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_delist_method",
+            "p_delist_table"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The authors state that the sample requires Compustat and CRSP data, but do not define the exact Compustat-to-CRSP matching procedure or the daily date/nonmissing-return rule for CRSP availability.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_sample",
+            "p_period"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "Table 2 identifies OLS, but does not report a standard-error correction or clustering procedure; this limits exact reconstruction of inferential statistics and significance stars.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_table2"
+          ]
+        },
+        {
+          "kind": "construction",
+          "description": "The article trims the 1% tails of financial-statement variables except special items, but does not state the exact percentile algorithm, reference population, or whether trimming is pooled or year-specific.",
+          "blocking": true,
+          "evidence_ids": [
+            "p_trim"
+          ]
+        },
+        {
+          "kind": "vintage",
+          "description": "Current local Compustat and CRSP fields are available for inspection, but historical population coverage and vintage alignment to the study are unconfirmed; use the original 1988–2002 design with current vintages if later retrieved.",
+          "blocking": false,
+          "evidence_ids": [
+            "p_period",
+            "q_funda",
+            "q_dsf"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "Table 2’s frozen baseline sample is 61,989 firm-years; page 9’s 63,875 count is the broader nonmissing-financial-statement sample before the Table 2 fit selection.",
+        "The detailed footnote on p. 13 adds a zero floor for negative book equity in the delisting adjustment. This detail is absent from the Table 2 note and was not present in the compact extraction."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "p_sample",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 7,
+      "quote": "We obtain financial data from the Compustat annual database. Stock return data are obtained from the CRSP daily stock returns files.",
+      "description": "Study data sources and annual/daily frequencies.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_period",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 7,
+      "quote": "The resulting sample covers all firm-years with available data on Compustat and CRSP for the period 1988–2002.",
+      "description": "Sample population and baseline period.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_screen",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 7,
+      "quote": "We exclude financial institutions from our analysis (SIC codes between 6000 and 6999)",
+      "description": "Industry screen applied to the firm-year sample.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_cfo",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 8,
+      "quote": "CFO is cash from operating activities (Compustat item #308), as reported on the statement of cash flows.",
+      "description": "Paper definition of cash from operations.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_fcf",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 8,
+      "quote": "We define FCF as equal to CFO + CFI. CFI is cash flows from investing activities (Compustat Item #311), as reported on the statement of cash flows.",
+      "description": "Paper definition of free cash flow used in the total-accrual model.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_opacc",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 8,
+      "quote": "Operating accruals 1⁄4 ðNet income � CFOÞ=Average assets",
+      "description": "Operating-accrual construction, as rendered in the assigned reading.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_earnings",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 8,
+      "quote": "Net income is earnings before extraordinary items (Compustat item #123)",
+      "description": "Earnings component definition.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_missing_spi",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 8,
+      "quote": "We use Compustat special items (Item #17) and replace missing values of special items with zero.",
+      "description": "Missing special-item preprocessing.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_trim",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 9,
+      "quote": "We trim the 1% tails of all our financial statement variables except special items in order to remove extreme outliers.",
+      "description": "Outlier trimming rule.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_decile",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 14,
+      "quote": "Firms-year observations are ranked annually and assigned in ascending order to decile portfolios based on operating accruals or total accruals. Decile 1 consists of firms with the most negative accruals.",
+      "description": "Annual decile assignment and lowest-decile definition.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_table2",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 19,
+      "quote": "Table 2 Results from ordinary least squares regressions of future earnings on cash flows, accruals, and special items for 61,989 firm-year observations for the period 1988–2002",
+      "description": "Baseline estimation method, observation count and period.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_scaling_si",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 19,
+      "quote": "All above variables are scaled by average total assets (Compustat item 6). SI is an indicator variable, taking value of 1 when the magnitude of negative special items is greater than or equal to 2% average total assets.",
+      "description": "Average-assets scaling and Table 2 SI threshold.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_delist_table",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 19,
+      "quote": "The negative of the book value of equity is substituted for earnings at t+1 for firms that are missing earnings at t+1 because they were delisted for performance related reasons (i.e., went bankrupt).",
+      "description": "Table 2 missing-outcome substitution note.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_delist_method",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 13,
+      "quote": "When earnings and cash flows at t+1 are missing because the firm has been delisted for performance related reasons we make the following adjustment: we assume that firm has liquidated and so investors lose all their invested capital (i.e., the book value of equity). Therefore, we substitute the negative of the book value of equity as the future performance metric. When the book value is negative, we substitute zero as the future performance metric.",
+      "description": "Methodological detail for delisting substitution, including the zero floor when book equity is negative.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_equity_candidate",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 33,
+      "quote": "Book to market is the ratio of the book value of equity (Compustat item 60) to the market value at the end of year t",
+      "description": "The article identifies item 60 for book-to-market elsewhere; it does not explicitly tie that item or timing to the delisting substitution.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "p_si_conflict",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W3123423002.json",
+      "page": 20,
+      "quote": "where Low accruals is an indicator equal to one for firms in the bottom decile of accruals, and SI is an indicator equal to one when the magnitude of negative special items is greater than 2% assets.",
+      "description": "Equation (5) prose gives a strict SI threshold that conflicts with Table 2 note.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "c_funda",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "Catalog entry COMP.FUNDA, catalog line 27500, path /storage/sas/base/comp/d_na/funda.sas7bdat (Merged Fundamental Annual File); labels include gvkey, datadate, fyear, sich, ib, oancf, ivncf, at and spi.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "q_funda",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/COMP.FUNDA.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource probe for COMP.FUNDA; all requested fields are present in the live 949-column annual fundamentals resource. No coverage confirmation is recorded.",
+      "sha256": "dd9d66ff1debeea55773cd795f95af5f6cee0c45dc5cab8992f2eb6289e92ea5",
+      "verified_at": "2026-10-27T14:46:58.418486+00:00"
+    },
+    {
+      "evidence_id": "c_dsf",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "Catalog entry CRSP.DSF, catalog line 81918, path /storage/sas/base/crsp/a_stock/dsf.sas7bdat (Daily Stock - Securities); PERMNO, DATE and RET are labeled.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "q_dsf",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.DSF.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource CRSP.DSF probe; PERMNO, DATE and RET are live columns. The bounded row does not establish 1988–2002 population coverage.",
+      "sha256": "2471907ef2308bc19dbb8cda3bfd155a4ae534de93ed28e6b94c55b63a19b725",
+      "verified_at": "2026-10-27T14:46:59.536580+00:00"
+    },
+    {
+      "evidence_id": "c_link",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "Catalog entry CRSP.CCMXPF_LINKTABLE, catalog line 81454, path /storage/sas/base/crsp/a_ccm/ccmxpf_linktable.sas7bdat; labels identify GVKEY, historical PERMNO, link type/primary markers and effective dates.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "q_link",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.CCMXPF_LINKTABLE.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource link-table probe; requested GVKEY/PERMNO and link-validity fields are present. No identifier-population or period coverage confirmation is recorded.",
+      "sha256": "e76dbf4af338be97f1c61c9fe3126cd2ebf709899d993a32f89ef51416769a1a",
+      "verified_at": "2026-10-27T14:47:02.545572+00:00"
+    },
+    {
+      "evidence_id": "c_delist",
+      "kind": "catalog",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/catalog.json",
+      "page": null,
+      "quote": null,
+      "description": "Catalog entry CRSP.MSEDELIST, catalog line 83749, path /storage/sas/base/crsp/a_stock/msedelist.sas7bdat (CRSP Monthly Stock Event - Delisting); PERMNO, DLSTDT and DLSTCD are labeled.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "q_delist",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/crsp_msedelist.json",
+      "page": null,
+      "quote": null,
+      "description": "Successful exact-resource CRSP.MSEDELIST probe; PERMNO, DLSTDT and DLSTCD are present. The probe does not define performance-related codes or establish historical event coverage.",
+      "sha256": "611d25a64c99af1173ed596d97aae59adf494029309f6233ef0a9c049202a15f",
+      "verified_at": "2026-10-27T21:03:02.160581+00:00"
+    }
+  ],
+  "author_alternatives": [],
+  "review_notes": [
+    "All retained baseline definitions are anchored to the assigned article and the exact selected Table 2 fits. No optional analyst, 13F or later robustness inputs are included.",
+    "Shared local proofs are exact-resource probes for COMP.FUNDA, CRSP.DSF, CRSP.CCMXPF_LINKTABLE and CRSP.MSEDELIST. They establish access/field presence only; no local historical/population coverage confirmations were supplied.",
+    "A current-vintage semantic match for Compustat fields is based on catalog field labels; no historical item number was directly equated to a current column by number or resemblance."
+  ],
+  "summary": {
+    "outcome": "undetermined",
+    "assessment_counts": {
+      "local_ready": 0,
+      "public_acquisition_required": 0,
+      "access_blocked": 0,
+      "undetermined": 2,
+      "no_observed_data_required": 0
+    },
+    "baseline_models": 2,
+    "baseline_fits": 2,
+    "any_data_feasible": false,
+    "all_data_feasible": false,
+    "partially_data_feasible": false,
+    "attempt_ready_count": 0
+  }
+}

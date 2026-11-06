@@ -1,0 +1,222 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W2015142764/at
+> tempt_03/runtime/20261103T001337245912Z/cell_baseline-abacc2.do 
+
+. version 18
+
+. set more off
+
+. use "data/abacc_firm_years/reg.dta", clear
+
+. global rhs "time t_eq t_frev2a t_ret2 t_nanal t_inst t_cfo_tp1 t_cfo_tm1 t_vc
+> fo eq_lag frev2a_lag ret2_lag nanal_lag inst_lag cfo_tp1 cfo_tm1 vcfo_lag bm 
+> size lev ret"
+
+. egen long firmid = group(gvkey)
+
+. xtset firmid fyear
+
+Panel variable: firmid (unbalanced)
+ Time variable: fyear, 1969 to 2001, but with gaps
+         Delta: 1 unit
+
+. misstable summarize var_ffadj $rhs
+                                                               Obs<.
+                                                +------------------------------
+               |                                | Unique
+      Variable |     Obs=.     Obs>.     Obs<.  | values        Min         Max
+  -------------+--------------------------------+------------------------------
+      t_frev2a |    37,686              62,461  |   >500          0    2.01e+17
+        t_ret2 |     1,447              98,700  |   >500          0    30651.35
+       t_nanal |    43,812              56,335  |   >500         14        1900
+        t_inst |    29,393              70,754  |   >500   5.16e-06     145.826
+     t_cfo_tp1 |     7,238              92,909  |   >500  -68.58089    17.25944
+        t_vcfo |    27,721              72,426  |   >500   .0004586    51.38251
+    frev2a_lag |    37,686              62,461  |   >500          0    5.29e+15
+      ret2_lag |     1,447              98,700  |   >500          0    988.7532
+     nanal_lag |    43,812              56,335  |     50          1          50
+      inst_lag |    29,393              70,754  |   >500   1.32e-07    4.050867
+       cfo_tp1 |     7,238              92,909  |   >500  -1.714522    .4314859
+      vcfo_lag |    27,721              72,426  |   >500   .0000573    1.284563
+            bm |       473              99,674  |   >500   -.179089    3.988674
+          size |       384              99,763  |   >500    .158605    9.309729
+           lev |       115             100,032  |   >500          0    1.421865
+  -----------------------------------------------------------------------------
+
+. ivreg2 var_ffadj $rhs, robust bw(4) kernel(bartlett)
+Warning: time variable fyear has 903 gap(s) in relevant range
+
+OLS estimation
+--------------
+
+Estimates efficient for homoskedasticity only
+Statistics robust to heteroskedasticity and autocorrelation
+  kernel=Bartlett; bandwidth=4
+  time variable (t):  fyear
+  group variable (i): firmid
+
+                                                      Number of obs =    30594
+                                                      F( 21, 30572) =   187.29
+                                                      Prob > F      =   0.0000
+Total (centered) SS     =  51.96087131                Centered R2   =   0.1939
+Total (uncentered) SS   =  65.69519779                Uncentered R2 =   0.3624
+Residual SS             =   41.8873162                Root MSE      =     .037
+
+------------------------------------------------------------------------------
+             |               Robust
+   var_ffadj | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        time |   .0020735   .0000864    24.00   0.000     .0019042    .0022428
+        t_eq |   .0095975   .0036081     2.66   0.008     .0025258    .0166692
+    t_frev2a |  -2.73e-14   2.60e-14    -1.05   0.294    -7.83e-14    2.36e-14
+      t_ret2 |  -.0000492   .0000634    -0.78   0.438    -.0001735    .0000751
+     t_nanal |  -.0000339   3.38e-06   -10.03   0.000    -.0000405   -.0000273
+      t_inst |   .0009119   .0001378     6.62   0.000     .0006419     .001182
+   t_cfo_tp1 |  -.0025912   .0005437    -4.77   0.000    -.0036568   -.0015255
+   t_cfo_tm1 |  -.0014999   .0006812    -2.20   0.028    -.0028349   -.0001649
+      t_vcfo |  -.0014721    .002161    -0.68   0.496    -.0057076    .0027634
+      eq_lag |   -.137147   .1134829    -1.21   0.227    -.3595694    .0852755
+  frev2a_lag |   9.63e-13   9.83e-13     0.98   0.327    -9.63e-13    2.89e-12
+    ret2_lag |   .0021791   .0024569     0.89   0.375    -.0026363    .0069944
+   nanal_lag |   .0020009   .0001105    18.11   0.000     .0017843    .0022174
+    inst_lag |  -.0386273   .0040432    -9.55   0.000    -.0465517   -.0307028
+     cfo_tp1 |   .0610863   .0158172     3.86   0.000     .0300851    .0920875
+     cfo_tm1 |    .027587   .0203903     1.35   0.176    -.0123772    .0675512
+    vcfo_lag |   .0875488   .0769758     1.14   0.255     -.063321    .2384186
+          bm |   .0003445   .0007592     0.45   0.650    -.0011435    .0018326
+        size |  -.0097119   .0003973   -24.44   0.000    -.0104907   -.0089332
+         lev |  -.0002721   .0025396    -0.11   0.915    -.0052497    .0047054
+         ret |  -.0016812   .0005819    -2.89   0.004    -.0028217   -.0005408
+       _cons |   .0096248   .0029223     3.29   0.001     .0038973    .0153524
+------------------------------------------------------------------------------
+Included instruments: time t_eq t_frev2a t_ret2 t_nanal t_inst t_cfo_tp1
+                      t_cfo_tm1 t_vcfo eq_lag frev2a_lag ret2_lag nanal_lag
+                      inst_lag cfo_tp1 cfo_tm1 vcfo_lag bm size lev ret
+------------------------------------------------------------------------------
+
+. estadd local inference "Linear exact-ID GMM-equivalent; panel Bartlett HAC, 3
+>  lags"
+
+added macro:
+          e(inference) : "Linear exact-ID GMM-equivalent; panel Bartlett HAC, 3
+>  lags"
+
+. est store m1
+
+. summarize var_ffadj $rhs if e(sample)
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+   var_ffadj |     30,594    .0211878    .0412123   .0004039   4.310316
+        time |     30,594    30.80022    6.195364         18         40
+        t_eq |     30,594    .1726615    .4491366   9.36e-06   5.714224
+    t_frev2a |     30,594    1.22e+09    8.79e+10          0   1.05e+13
+      t_ret2 |     30,594    19.33867    234.2825   1.33e-20   22270.76
+-------------+---------------------------------------------------------
+     t_nanal |     30,594     258.454    252.4614         18       1900
+      t_inst |     30,594    12.35215    8.291748   .0013793    145.826
+   t_cfo_tp1 |     30,594    2.111054    4.829518  -68.58089   17.25944
+   t_cfo_tm1 |     30,594    2.253421    4.383392  -53.50071   16.61121
+      t_vcfo |     30,594    .3618319    1.805331   .0010319   51.38251
+-------------+---------------------------------------------------------
+      eq_lag |     30,594    .0054937    .0137708   5.20e-07   .1428556
+  frev2a_lag |     30,594    3.26e+07    2.35e+09          0   2.92e+11
+    ret2_lag |     30,594     .567003    6.214483   3.81e-22   571.0451
+   nanal_lag |     30,594    8.466137    8.004737          1         50
+    inst_lag |     30,594    .3824573    .2227569   .0000766   3.645649
+-------------+---------------------------------------------------------
+     cfo_tp1 |     30,594    .0712845    .1415902  -1.714522   .4314859
+     cfo_tm1 |     30,594    .0753773    .1287364  -1.337518   .4152802
+    vcfo_lag |     30,594    .0108174    .0499626   .0000573   1.284563
+          bm |     30,594    .6800944    .5243101   -.179089   3.988674
+        size |     30,594    5.770258    1.697635    .158605   9.309729
+-------------+---------------------------------------------------------
+         lev |     30,594    .2369835    .1801322          0   1.421865
+         ret |     30,594    .1699236    .6438815  -.9819839   23.89655
+
+. tabulate fyear if e(sample)
+
+Data Year - |
+     Fiscal |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       1979 |         44        0.14        0.14
+       1980 |        634        2.07        2.22
+       1981 |      1,070        3.50        5.71
+       1982 |      1,114        3.64        9.35
+       1983 |      1,123        3.67       13.03
+       1984 |      1,176        3.84       16.87
+       1985 |      1,190        3.89       20.76
+       1986 |      1,205        3.94       24.70
+       1987 |      1,170        3.82       28.52
+       1988 |      1,164        3.80       32.33
+       1989 |      1,230        4.02       36.35
+       1990 |      1,311        4.29       40.63
+       1991 |      1,415        4.63       45.26
+       1992 |      1,515        4.95       50.21
+       1993 |      1,538        5.03       55.24
+       1994 |      1,548        5.06       60.30
+       1995 |      1,608        5.26       65.55
+       1996 |      1,663        5.44       70.99
+       1997 |      1,769        5.78       76.77
+       1998 |      1,822        5.96       82.73
+       1999 |      1,723        5.63       88.36
+       2000 |      1,720        5.62       93.98
+       2001 |      1,842        6.02      100.00
+------------+-----------------------------------
+      Total |     30,594      100.00
+
+. esttab m1 using "tables/table3_abacc2.md", cells(b(star fmt(3)) p(par)) starl
+> evels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label stats(N r2 r2_a inference,
+>  labels("Observations" "R-squared" "Adjusted R-squared" "Inference"))
+(file tables/table3_abacc2.md not found)
+(output written to tables/table3_abacc2.md)
+
+. esttab m1 using "tables/table3_abacc2.rtf", cells(b(star fmt(3)) p(par)) star
+> levels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label stats(N r2 r2_a inference
+> , labels("Observations" "R-squared" "Adjusted R-squared" "Inference"))
+(file tables/table3_abacc2.rtf not found)
+(output written to tables/table3_abacc2.rtf)
+
+. esttab m1 using "tables/table3_abacc2.csv", cells(b(star fmt(3)) p(par)) star
+> levels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label stats(N r2 r2_a inference
+> , labels("Observations" "R-squared" "Adjusted R-squared" "Inference"))
+(file tables/table3_abacc2.csv not found)
+(output written to tables/table3_abacc2.csv)
+
+. esttab m1 using "tables/table3_abacc2.tex", cells(b(star fmt(3)) p(par)) star
+> levels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label stats(N r2 r2_a inference
+> , labels("Observations" "R-squared" "Adjusted R-squared" "Inference"))
+(file tables/table3_abacc2.tex not found)
+(output written to tables/table3_abacc2.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

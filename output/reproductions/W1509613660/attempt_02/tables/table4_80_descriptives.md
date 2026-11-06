@@ -1,0 +1,15 @@
+
+|                      |          (1) |              |              |              |              |
+|                      |              |              |              |              |              |
+|                      |        count |         mean |           sd |          min |          max |
+| -------------------- | :----------: | :----------: | :----------: | :----------: | :----------: |
+| Three-day market-adjusted return |         4223 |        0.000 |        0.029 |       -0.066 |        0.079 |
+| Winsorized forecast revision scaled by price |         4223 |       -0.003 |        0.011 |       -0.047 |        0.021 |
+| Forecast revision × superior |         4223 |       -0.001 |        0.007 |       -0.047 |        0.021 |
+| Forecast revision × normal |         4223 |       -0.002 |        0.009 |       -0.047 |        0.021 |
+| Forecast revision × inferior |         4223 |       -0.000 |        0.003 |       -0.047 |        0.021 |
+| Superior analyst (80% threshold) |         4223 |        0.257 |        0.437 |        0.000 |        1.000 |
+| Normal analyst (80% threshold) |         4223 |        0.651 |        0.477 |        0.000 |        1.000 |
+| Inferior analyst (80% threshold) |         4223 |        0.091 |        0.288 |        0.000 |        1.000 |
+| Observations         |         4223 |              |              |              |              |
+

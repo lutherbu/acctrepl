@@ -1,0 +1,174 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3123899283/at
+> tempt_03/runtime/20261103T003721727466Z/cell_auxiliary_tests.do 
+
+. version 18
+
+. set more off
+
+. adopath ++ "../../../output/reproduction_runs/ado"
+  [1]              "../../../output/reproduction_runs/ado"
+  [2]  (BASE)      "/usr/local/stata18/ado/base/"
+  [3]  (SITE)      "/usr/local/ado/"
+  [4]              "."
+  [5]  (PERSONAL)  "~/ado/personal/"
+  [6]  (PLUS)      "~/ado/plus/"
+  [7]  (OLDPLACE)  "~/ado/"
+
+. use "data/reg.dta", clear
+
+. est clear
+
+. reg future_earn1 c.earn_t##ib1.vol_q if inlist(vol_q,1,5)
+
+      Source |       SS           df       MS      Number of obs   =     4,426
+-------------+----------------------------------   F(3, 4422)      =    431.39
+       Model |  15.6861241         3  5.22870803   Prob > F        =    0.0000
+    Residual |  53.5970536     4,422  .012120546   R-squared       =    0.2264
+-------------+----------------------------------   Adj R-squared   =    0.2259
+       Total |  69.2831777     4,425  .015657215   Root MSE        =    .11009
+
+------------------------------------------------------------------------------
+future_earn1 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      earn_t |   .9274585   .0780982    11.88   0.000     .7743469     1.08057
+     5.vol_q |   -.005106   .0044616    -1.14   0.253     -.013853    .0036411
+             |
+       vol_q#|
+    c.earn_t |
+          5  |  -.2958684   .0809227    -3.66   0.000    -.4545173   -.1372195
+             |
+       _cons |   .0005863   .0037299     0.16   0.875    -.0067261    .0078986
+------------------------------------------------------------------------------
+
+. test 5.vol_q#c.earn_t = 0
+
+ ( 1)  5.vol_q#c.earn_t = 0
+
+       F(  1,  4422) =   13.37
+            Prob > F =    0.0003
+
+. local t2_p = r(p)
+
+. local t2_diff = -_b[5.vol_q#c.earn_t]
+
+. estadd scalar beta_diff = `t2_diff'
+
+added scalar:
+          e(beta_diff) =  .29586842
+
+. estadd scalar p_diff = `t2_p'
+
+added scalar:
+             e(p_diff) =  .00025897
+
+. est store diff_t2
+
+. reg sum_earn5 c.earn_t##ib1.vol_q if inlist(vol_q,1,5)
+
+      Source |       SS           df       MS      Number of obs   =     2,032
+-------------+----------------------------------   F(3, 2028)      =    239.38
+       Model |  52.1979891         3  17.3993297   Prob > F        =    0.0000
+    Residual |  147.406274     2,028  .072685539   R-squared       =    0.2615
+-------------+----------------------------------   Adj R-squared   =    0.2604
+       Total |  199.604263     2,031   .09827881   Root MSE        =     .2696
+
+------------------------------------------------------------------------------
+   sum_earn5 | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      earn_t |   4.306417   .2692926    15.99   0.000     3.778298    4.834536
+     5.vol_q |   .0088188   .0165498     0.53   0.594    -.0236375    .0412752
+             |
+       vol_q#|
+    c.earn_t |
+          5  |    -2.7077   .2850356    -9.50   0.000    -3.266693   -2.148707
+             |
+       _cons |   .0063722   .0131817     0.48   0.629    -.0194788    .0322233
+------------------------------------------------------------------------------
+
+. test 5.vol_q#c.earn_t = 0
+
+ ( 1)  5.vol_q#c.earn_t = 0
+
+       F(  1,  2028) =   90.24
+            Prob > F =    0.0000
+
+. local t4_p = r(p)
+
+. local t4_diff = -_b[5.vol_q#c.earn_t]
+
+. estadd scalar beta_diff = `t4_diff'
+
+added scalar:
+          e(beta_diff) =  2.7077001
+
+. estadd scalar p_diff = `t4_p'
+
+added scalar:
+             e(p_diff) =  5.713e-21
+
+. est store diff_t4
+
+. esttab diff_t2 diff_t4 using "tables/persistence_contrasts.md", cells(b(star 
+> fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 r2_a bet
+> a_diff p_diff, fmt(0 3 3 3 3) labels("N" "R-squared" "Adjusted R-squared" "Q1
+>  minus Q5 beta" "Two-sided p-value")) replace label mtitles("Table 2 h=1" "Ta
+> ble 4 five-year sum")
+(file tables/persistence_contrasts.md not found)
+(output written to tables/persistence_contrasts.md)
+
+. esttab diff_t2 diff_t4 using "tables/persistence_contrasts.rtf", cells(b(star
+>  fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 r2_a be
+> ta_diff p_diff, fmt(0 3 3 3 3) labels("N" "R-squared" "Adjusted R-squared" "Q
+> 1 minus Q5 beta" "Two-sided p-value")) replace label mtitles("Table 2 h=1" "T
+> able 4 five-year sum")
+(file tables/persistence_contrasts.rtf not found)
+(output written to tables/persistence_contrasts.rtf)
+
+. esttab diff_t2 diff_t4 using "tables/persistence_contrasts.csv", cells(b(star
+>  fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 r2_a be
+> ta_diff p_diff, fmt(0 3 3 3 3) labels("N" "R-squared" "Adjusted R-squared" "Q
+> 1 minus Q5 beta" "Two-sided p-value")) replace label mtitles("Table 2 h=1" "T
+> able 4 five-year sum")
+(file tables/persistence_contrasts.csv not found)
+(output written to tables/persistence_contrasts.csv)
+
+. esttab diff_t2 diff_t4 using "tables/persistence_contrasts.tex", cells(b(star
+>  fmt(3)) p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 stats(N r2 r2_a be
+> ta_diff p_diff, fmt(0 3 3 3 3) labels("N" "R-squared" "Adjusted R-squared" "Q
+> 1 minus Q5 beta" "Two-sided p-value")) replace label mtitles("Table 2 h=1" "T
+> able 4 five-year sum")
+(file tables/persistence_contrasts.tex not found)
+(output written to tables/persistence_contrasts.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

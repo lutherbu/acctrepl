@@ -1,0 +1,144 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3126000559/at
+> tempt_02/runtime/20261102T230155869453Z/cell_w312_t6.do 
+
+. version 18
+
+. set more off
+
+. use "data/icw_pp_ratio_eligible/reg.dta", clear
+
+. 
+. global fe "i.loan_year"
+
+. global cl "firmid"
+
+. est clear
+
+. probit pp_ratio uncorrected corrected inst_investor revolver secured loan_siz
+> e maturity credit_rating num_lenders firm_size profitability leverage $fe, vc
+> e(cluster $cl)
+
+note: 2001.loan_year != 0 predicts failure perfectly;
+      2001.loan_year omitted and 1 obs not used.
+
+note: 2008.loan_year omitted because of collinearity.
+Iteration 0:  Log pseudolikelihood = -60.974223  
+Iteration 1:  Log pseudolikelihood = -23.943888  
+Iteration 2:  Log pseudolikelihood = -19.231069  
+Iteration 3:  Log pseudolikelihood = -17.521621  
+Iteration 4:  Log pseudolikelihood = -17.367635  
+Iteration 5:  Log pseudolikelihood =   -17.3664  
+Iteration 6:  Log pseudolikelihood =   -17.3664  
+
+Probit regression                                      Number of obs =      88
+                                                       Wald chi2(18) = 4711.17
+                                                       Prob > chi2   =  0.0000
+Log pseudolikelihood = -17.3664                        Pseudo R2     =  0.7152
+
+                                (Std. err. adjusted for 27 clusters in firmid)
+------------------------------------------------------------------------------
+             |               Robust
+    pp_ratio | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ uncorrected |  -9.127304   3.123571    -2.92   0.003    -15.24939   -3.005217
+   corrected |   -4.21653   2.167982    -1.94   0.052    -8.465697    .0326377
+inst_inves~r |  -1.455236   .8174817    -1.78   0.075     -3.05747    .1469988
+    revolver |   1.228747   .5668162     2.17   0.030     .1178078    2.339687
+     secured |   1.767206   .7048971     2.51   0.012      .385633    3.148779
+   loan_size |   1.469034   .3580285     4.10   0.000     .7673114    2.170757
+    maturity |  -.0088636   .0138269    -0.64   0.521    -.0359638    .0182365
+credit_rat~g |    1.65272   .5116943     3.23   0.001     .6498176    2.655622
+ num_lenders |   .0474017   .0173505     2.73   0.006     .0133954    .0814079
+   firm_size |  -1.086092   .2723111    -3.99   0.000    -1.619812    -.552372
+profitabil~y |   39.90888   11.83628     3.37   0.001     16.71021    63.10756
+    leverage |  -6.809848   2.352877    -2.89   0.004     -11.4214   -2.198295
+             |
+   loan_year |
+       2001  |          0  (empty)
+       2002  |  -.9003968   2.197563    -0.41   0.682    -5.207542    3.406748
+       2003  |   -.130256   2.278032    -0.06   0.954    -4.595117    4.334605
+       2004  |  -.3017391   2.171421    -0.14   0.889    -4.557646    3.954168
+       2005  |   5.932365   1.903724     3.12   0.002     2.201135    9.663596
+       2006  |   .9556294   1.755395     0.54   0.586    -2.484881     4.39614
+       2007  |   3.049148   1.806454     1.69   0.091     -.491436    6.589732
+       2008  |          0  (omitted)
+             |
+       _cons |  -24.18214   7.640552    -3.16   0.002    -39.15735   -9.206933
+------------------------------------------------------------------------------
+Note: 15 failures and 6 successes completely determined.
+
+. tempvar clustertag
+
+. egen byte `clustertag'=tag($cl) if e(sample)
+
+. quietly count if `clustertag'==1
+
+. local nclusters=r(N)
+
+. estadd scalar nclusters=`nclusters'
+
+added scalar:
+          e(nclusters) =  27
+
+. est store m1
+
+. esttab m1 using "tables/table6_pp_ratio.md", cells(b(star fmt(3)) p(par)) sta
+> rlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_year) scalar
+> s("r2_p Pseudo R-squared" "nclusters Borrower clusters") addnotes("Loan-year 
+> fixed effects included." "Standard errors clustered by borrower.")
+(file tables/table6_pp_ratio.md not found)
+(output written to tables/table6_pp_ratio.md)
+
+. esttab m1 using "tables/table6_pp_ratio.rtf", cells(b(star fmt(3)) p(par)) st
+> arlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_year) scala
+> rs("r2_p Pseudo R-squared" "nclusters Borrower clusters") addnotes("Loan-year
+>  fixed effects included." "Standard errors clustered by borrower.")
+(file tables/table6_pp_ratio.rtf not found)
+(output written to tables/table6_pp_ratio.rtf)
+
+. esttab m1 using "tables/table6_pp_ratio.csv", cells(b(star fmt(3)) p(par)) st
+> arlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_year) scala
+> rs("r2_p Pseudo R-squared" "nclusters Borrower clusters") addnotes("Loan-year
+>  fixed effects included." "Standard errors clustered by borrower.")
+(file tables/table6_pp_ratio.csv not found)
+(output written to tables/table6_pp_ratio.csv)
+
+. esttab m1 using "tables/table6_pp_ratio.tex", cells(b(star fmt(3)) p(par)) st
+> arlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_year) scala
+> rs("r2_p Pseudo R-squared" "nclusters Borrower clusters") addnotes("Loan-year
+>  fixed effects included." "Standard errors clustered by borrower.")
+(file tables/table6_pp_ratio.tex not found)
+(output written to tables/table6_pp_ratio.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

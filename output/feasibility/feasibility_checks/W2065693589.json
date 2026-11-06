@@ -1,0 +1,988 @@
+{
+  "schema_version": "1.2",
+  "paper_id": "W2065693589",
+  "doi": "10.1111/1475-679x.00087",
+  "eligibility": "eligible",
+  "provenance": {
+    "models_inventory_sha256": "99fa3538c4600dfe238e16b796b87f0e11534ddb747b8330bc6184d5d4de41c8",
+    "samples_inventory_sha256": "bcb4cb5c897be4e1d19d5eb27f2249171c3b432429b3ca0ca62577d45855662e",
+    "catalog_sha256": "45894893e45d56cb56150252c2ce4e85dfa88f5d891f3e547d3e9ea8003993fb",
+    "catalog_artifact_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "5821845ace490928bbee4ab43e064acc161010641b908d2a65a5a13de7569030",
+    "model_record_sha256": "af0b79b80e7666e08e3a6c5bc7750816101e756b3d1ef13c0e6a17d6e7704ade",
+    "sample_record_sha256": "13d3f10e1f340b967f3dfab616c06a5c74ae5504da8bd6bb22958b466134e691",
+    "reading_sha256": "ade35c540ff65530dd1c742342f085eab14be88186d9adbecb73d89de5d37807",
+    "pdf_sha256": "c8e26606b7eb31c372c6508508f4d52512ad5c0d5e711060bd0864015a7c6484",
+    "work_item_sha256": "621731c39777d1c434eaeb7dd0d5149127b16968d020aa6093105159a4e8327c",
+    "review_source_aggregate_sha256": "2c054a78d6515b45b20bd409e84018663c81a2ac3002944ed28baa287078ea88",
+    "review_source_assessment_sha256": "c26ae6c5fb3b1ca1663c7396e9aa34f18f3205b559e3f88111c4cd19db660f24",
+    "review_source_work_item_sha256": "eb9080a17491a032b40eec0efb90c4ba3a8800767c9344b40403161c135a581b",
+    "review_source_converter_sha256": "adc57168632515ab279560dc8138f3093edf12c561dd519aacc0fe9f0c61f590",
+    "review_source_decisions_sha256": "51ca795843b3c5ff732b33b38572f00ecd2ecbabea1393a13540884851125a2d",
+    "temporal_audit_file": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/full_01_reviewed/drafts/W2065693589/temporal_audit.json",
+    "temporal_audit_sha256": "e8c15c1e4bf93227bce136dd65e31a5e289a586758a7fd464aa4403e4a10f95f"
+  },
+  "requirements": [
+    {
+      "requirement_id": "event_daily_returns",
+      "kind": "raw_measure",
+      "description": "Daily client-stock and Russell 3000 returns to estimate each client market model and construct the Jan 10 CARs; Datastream daily rows are the closest cataloged local route, but the Russell index code and identity link are not confirmed.",
+      "required_coverage": {
+        "begin": null,
+        "end": 2002,
+        "years": [],
+        "frequency": "Daily trading observations",
+        "population": "The 284 Andersen S&P 1500 client firms plus value-weighted Russell 3000 benchmark",
+        "detail": "Jan 10 2002 anchors the event CAR; market-model estimation start/end and daily N are unreported, so the raw beginning is unknown. CAR endpoints include day +1 and day +2 in 2002."
+      },
+      "routes": [
+        {
+          "route_id": "ROUTE_DS",
+          "route_type": "local_sas",
+          "source_name": "WRDS Datastream daily equity dataset",
+          "dataset": "TR_DS.WRDS_DS2DSF",
+          "location": "/storage/sas/base/tfn/ds_eq/pricing/wrds_ds2dsf.sas7bdat",
+          "fields": [
+            "InfoCode",
+            "MarketDate",
+            "ret"
+          ],
+          "mapping_notes": "This exact local dataset has live daily return and security-code/date fields. The source specifies Datastream and a Russell 3000 daily index series, but neither the historic Andersen client InfoCodes nor the index-code mapping is established by the probe; semantic mapping remains unverified.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "No frozen coordinator confirmation supports the estimation interval or all 284 firms; a successful probe establishes live fields/access only.",
+          "evidence_ids": [
+            "CAT_DS",
+            "PROBE_DS",
+            "P12_MKT",
+            "P12_MODEL"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "Local Datastream fields are present, but the exact 284 historical firm codes, Russell 3000 index series, estimation window, and required-period coverage are unverified.",
+      "evidence_ids": [
+        "P12_MKT",
+        "P12_MODEL",
+        "P23_CAR",
+        "CAT_DS",
+        "PROBE_DS"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "annual_financial_controls",
+      "kind": "raw_measure",
+      "description": "Annual Compustat financial statement items for sales growth, leverage and total-assets scaling: sales, long-term debt and assets; sales uses fiscal 1999 and 2000 and leverage/assets use fiscal 2000.",
+      "required_coverage": {
+        "begin": 1999,
+        "end": 2000,
+        "years": [
+          1999,
+          2000
+        ],
+        "frequency": "Annual firm fiscal-year observations",
+        "population": "208 Andersen client firms with fiscal-2000 fee observations, nested within the 284-client event sample",
+        "detail": "Sales growth compares fiscal 1999 to fiscal 2000; the other firm controls are fiscal-year 2000 inputs. The item uses fiscal-year labels; actual fiscal year-end dates are not reported."
+      },
+      "routes": [
+        {
+          "route_id": "ROUTE_COMP",
+          "route_type": "local_sas",
+          "source_name": "Compustat North America annual fundamentals",
+          "dataset": "COMP.FUNDA",
+          "location": "/storage/sas/base/comp/d_na/funda.sas7bdat",
+          "fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "at",
+            "sale",
+            "dltt"
+          ],
+          "mapping_notes": "Live current fields support candidate mapping to annual Compustat data. The paper names Compustat and defines sales, assets, and long-term debt; current-vintage field semantics and company-level historical coverage remain unconfirmed.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "No frozen coordinator coverage confirmation was supplied; observed rows or a successful header probe do not establish required historical coverage.",
+          "evidence_ids": [
+            "CAT_COMP",
+            "PROBE_COMP"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The exact historical firm population and fiscal-period coverage are unverified; the sales-growth formula denominator is not stated in the paper.",
+      "evidence_ids": [
+        "P10_FEES",
+        "P14_SALES",
+        "P14_LEV",
+        "CAT_COMP",
+        "PROBE_COMP"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "fiscal_2000_audit_fees",
+      "kind": "raw_measure",
+      "description": "Fiscal-2000 audit and non-audit fee amounts and assets for the 208-firm fee subset; non-audit fees combine IS plus other fees, while the Afee numerator is inconsistent across the paper.",
+      "required_coverage": {
+        "begin": 2000,
+        "end": 2000,
+        "years": [
+          2000
+        ],
+        "frequency": "Annual firm fiscal-year observations",
+        "population": "208 Andersen S&P 1500 clients with fiscal-2000 fee data",
+        "detail": "Fiscal-year label 2000; actual fiscal year ends and whether the current fee product preserves the paper’s Compustat fields/components are not verified."
+      },
+      "routes": [
+        {
+          "route_id": "ROUTE_FEES",
+          "route_type": "local_sas",
+          "source_name": "Audit Analytics Compustat audit-fee feed",
+          "dataset": "AUDIT.FEED03_AUDIT_FEES",
+          "location": "/storage/sas/base/audit/audit_comp/feed03_audit_fees.sas7bdat",
+          "fields": [
+            "COMPANY_FKEY",
+            "FISCAL_YEAR",
+            "FISCAL_YEAR_ENDED",
+            "AUDIT_FEES",
+            "NON_AUDIT_FEES",
+            "TOTAL_FEES"
+          ],
+          "mapping_notes": "The live feed exposes AUDIT_FEES, NON_AUDIT_FEES and TOTAL_FEES by fiscal year/company. It does not establish that the source Afee uses the same numerator, nor whether non-audit components map exactly to the paper’s IS-plus-other definition.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "No frozen coordinator coverage confirmation was supplied; observed rows or a successful header probe do not establish required historical coverage.",
+          "evidence_ids": [
+            "CAT_AUDITFEES",
+            "PROBE_AUDITFEES",
+            "P10_FEES",
+            "P14_AUDITFEE",
+            "P14_NAFEE"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "The Afee numerator is not resolved; required 208-client fiscal-2000 coverage has no coordinator confirmation.",
+      "evidence_ids": [
+        "P10_FEES",
+        "P14_AUDITFEE",
+        "P14_NAFEE",
+        "CAT_AUDITFEES",
+        "PROBE_AUDITFEES"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "sample_and_classification",
+      "kind": "sampling",
+      "description": "Historical client roster and event-date sample membership, Andersen Houston-office status, S&P 500 membership, and GICS industry categories used to create the Table 9 sample and indicators.",
+      "required_coverage": {
+        "begin": null,
+        "end": null,
+        "years": [],
+        "frequency": "Firm-event cross section",
+        "population": "284 Andersen S&P 1500 clients in 2002; Table 9 narrows to 208 with fiscal-2000 fees",
+        "detail": "The paper gives sample counts and categories but does not provide a frozen roster, exact membership reference dates or exact local historical office/industry indicator source."
+      },
+      "routes": [],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "No exact historical roster or verified route was identified for Andersen-client membership, Houston office, S&P 500 status and GICS classifications; catalog absence is not treated as proof of no access.",
+      "evidence_ids": [
+        "P10_SAMPLE",
+        "P10_FEES",
+        "P14_SALES",
+        "P23_TABLE"
+      ],
+      "data_status": "undetermined"
+    },
+    {
+      "requirement_id": "firm_identifier_linkage",
+      "kind": "identifier_link",
+      "description": "Historical linkages from Andersen client identifiers to Compustat GVKEY, Datastream InfoCode, and audit-fee COMPANY_FKEY for the source-period firms.",
+      "required_coverage": {
+        "begin": 1999,
+        "end": 2002,
+        "years": [
+          1999,
+          2000,
+          2001,
+          2002
+        ],
+        "frequency": "Firm identifier relationships with validity intervals",
+        "population": "Andersen client firms with financial, market-return and audit-fee records",
+        "detail": "Mappings must be valid for annual 1999–2000 fields and event-date daily returns in 2002; the local CCM link table links Compustat to CRSP but not directly to Datastream or Audit Analytics IDs."
+      },
+      "routes": [
+        {
+          "route_id": "ROUTE_CCM",
+          "route_type": "local_sas",
+          "source_name": "CRSP/Compustat Merged link table",
+          "dataset": "CRSP.CCMXPF_LINKTABLE",
+          "location": "/storage/sas/base/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+          "fields": [
+            "gvkey",
+            "lpermno",
+            "linkdt",
+            "linkenddt",
+            "linktype",
+            "linkprim"
+          ],
+          "mapping_notes": "This exact local table provides candidate GVKEY–PERMNO links with validity dates. It does not link the paper’s Andersen roster, Datastream InfoCodes or audit-feed company key.",
+          "verification": {
+            "access": "verified",
+            "fields": "verified",
+            "coverage": "unverified",
+            "identifiers": "unverified",
+            "mapping": "unverified"
+          },
+          "coverage_notes": "No frozen coordinator coverage confirmation was supplied; observed rows or a successful header probe do not establish required historical coverage.",
+          "evidence_ids": [
+            "CAT_CCM",
+            "PROBE_CCM"
+          ]
+        }
+      ],
+      "blocked_reason": null,
+      "blocked_evidence_ids": [],
+      "unresolved_reason": "A direct historical crosswalk among all required firm identifiers is not verified; the CCM table is only a partial Compustat–CRSP link.",
+      "evidence_ids": [
+        "P10_SAMPLE",
+        "P10_FEES",
+        "CAT_CCM",
+        "PROBE_CCM"
+      ],
+      "data_status": "undetermined"
+    }
+  ],
+  "assessments": [
+    {
+      "model_id": "jan10_car_0_1",
+      "result_set_id": "jan10_car_0_1_table9",
+      "required_model_ids": [
+        "firm_market_model",
+        "jan10_car_0_1"
+      ],
+      "requirement_ids": [
+        "event_daily_returns",
+        "annual_financial_controls",
+        "fiscal_2000_audit_fees",
+        "sample_and_classification",
+        "firm_identifier_linkage"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "firm_market_model",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "event_daily_returns"
+          ],
+          "construction": "Raw daily client return R_it and value-weighted Russell 3000 return R_mt feed the separately estimated firm market model; the paper leaves the estimation-window bounds and estimator unspecified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "firm_market_model",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "event_daily_returns"
+          ],
+          "construction": "Raw daily client return R_it and value-weighted Russell 3000 return R_mt feed the separately estimated firm market model; the paper leaves the estimation-window bounds and estimator unspecified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "event_daily_returns"
+          ],
+          "construction": "Sum daily abnormal returns over the event window: actual client return less fitted market-model return (intercept plus slope times value-weighted Russell 3000 return). This fit uses event-day 0 through +1 trading days.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Indicator for Andersen Houston-office audit; historic client-office classification is not locally verified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "annual_financial_controls"
+          ],
+          "construction": "Percent sales growth between fiscal 1999 and fiscal 2000; exact denominator convention is not reported.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "fiscal_2000_audit_fees"
+          ],
+          "construction": "Paper labels Afee total audit fee/assets, but its numerator conflicts with the described three-component total fee; keep the numerator unresolved.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "fiscal_2000_audit_fees"
+          ],
+          "construction": "Combine IS fee and other fee, then divide by fiscal-2000 total assets.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_005",
+          "requirement_ids": [
+            "annual_financial_controls"
+          ],
+          "construction": "Fiscal-2000 long-term debt divided by fiscal-2000 total assets.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_006",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical S&P 500 membership indicator for the event-date client firm; reference date and membership source are unverified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_007",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical GICS-industry indicator for Commercial Services & Supplies; paper’s sample indicator source is unverified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_008",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical GICS-industry indicator for Oil & Gas; paper’s sample indicator source is unverified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_009",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical GICS-industry indicator for Electrical Utilities; paper’s sample indicator source is unverified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_1",
+          "variable_id": "iv_010",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical GICS-industry indicator for Machinery; paper’s sample indicator source is unverified.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The paper reports t-values for Table 9 but does not identify a clustering or standard-error correction.",
+          "evidence_ids": [
+            "P23_TABLE"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [
+            "event_daily_returns"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "P12_MODEL",
+            "P12_MKT",
+            "P23_CAR"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "Table 9 is a cross-sectional regression; its four industry indicators are regressors, and no fixed-effect family is reported.",
+          "evidence_ids": [
+            "P14_SALES",
+            "P23_TABLE"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "firm_identifier_linkage"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "P10_SAMPLE",
+            "P10_FEES"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "annual_financial_controls",
+            "fiscal_2000_audit_fees"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "P14_SALES",
+            "P14_AUDITFEE",
+            "P14_NAFEE"
+          ]
+        },
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "P10_SAMPLE",
+            "P23_TABLE"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported for the Table 9 firm-level cross sections.",
+          "evidence_ids": [
+            "P23_TABLE"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The firm-level market model’s estimation-period dates and coefficient estimator are not reported, so its history window and expected-return fit are not fully specified.",
+          "blocking": true,
+          "evidence_ids": [
+            "P12_MODEL",
+            "P12_MKT"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The Table 9 cross-sectional estimator and standard-error correction are not named; only t-values and model fit statistics are reported.",
+          "blocking": true,
+          "evidence_ids": [
+            "P23_TABLE"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "Afee is defined as “total audit fee,” but the source says total audit fee consists of audit, IS and other fees, while Table 9 also distinguishes non-audit fees as IS plus other; the exact Afee numerator cannot be resolved.",
+          "blocking": true,
+          "evidence_ids": [
+            "P10_FEES",
+            "P14_AUDITFEE",
+            "P14_NAFEE"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The exact percentage-growth calculation for sales from fiscal 1999 to 2000 is not stated.",
+          "blocking": true,
+          "evidence_ids": [
+            "P14_SALES"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The Jan 10-only Table 9 columns are treated as the selected baselines; the pooled event indicator applies only to combined-date columns. The reported Jan 10 windows are event day 0 through +1 or +2."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    },
+    {
+      "model_id": "jan10_car_0_2",
+      "result_set_id": "jan10_car_0_2_table9",
+      "required_model_ids": [
+        "firm_market_model",
+        "jan10_car_0_2"
+      ],
+      "requirement_ids": [
+        "event_daily_returns",
+        "annual_financial_controls",
+        "fiscal_2000_audit_fees",
+        "sample_and_classification",
+        "firm_identifier_linkage"
+      ],
+      "variable_coverage": [
+        {
+          "model_id": "firm_market_model",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "event_daily_returns"
+          ],
+          "construction": "Raw daily client return R_it and value-weighted Russell 3000 return R_mt feed the separately estimated firm market model; the paper leaves the estimation-window bounds and estimator unspecified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "firm_market_model",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "event_daily_returns"
+          ],
+          "construction": "Raw daily client return R_it and value-weighted Russell 3000 return R_mt feed the separately estimated firm market model; the paper leaves the estimation-window bounds and estimator unspecified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "dv",
+          "requirement_ids": [
+            "event_daily_returns"
+          ],
+          "construction": "Sum daily abnormal returns over event day 0 through +2 trading days using the firm-specific market-model estimates.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_001",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Indicator for Andersen Houston-office audit; historic client-office classification is not locally verified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_002",
+          "requirement_ids": [
+            "annual_financial_controls"
+          ],
+          "construction": "Percent sales growth between fiscal 1999 and fiscal 2000; exact denominator convention is not reported.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_003",
+          "requirement_ids": [
+            "fiscal_2000_audit_fees"
+          ],
+          "construction": "Paper labels Afee total audit fee/assets, but its numerator conflicts with the described three-component total fee; keep the numerator unresolved.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_004",
+          "requirement_ids": [
+            "fiscal_2000_audit_fees"
+          ],
+          "construction": "Combine IS fee and other fee, then divide by fiscal-2000 total assets.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_005",
+          "requirement_ids": [
+            "annual_financial_controls"
+          ],
+          "construction": "Fiscal-2000 long-term debt divided by fiscal-2000 total assets.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_006",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical S&P 500 membership indicator for the event-date client firm; reference date and membership source are unverified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_007",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical GICS-industry indicator for Commercial Services & Supplies; paper’s sample indicator source is unverified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_008",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical GICS-industry indicator for Oil & Gas; paper’s sample indicator source is unverified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_009",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical GICS-industry indicator for Electrical Utilities; paper’s sample indicator source is unverified.",
+          "non_data_reason": null
+        },
+        {
+          "model_id": "jan10_car_0_2",
+          "variable_id": "iv_010",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "construction": "Historical GICS-industry indicator for Machinery; paper’s sample indicator source is unverified.",
+          "non_data_reason": null
+        }
+      ],
+      "design_coverage": [
+        {
+          "aspect": "clusters",
+          "requirement_ids": [],
+          "reason": "The paper reports t-values for Table 9 but does not identify a clustering or standard-error correction.",
+          "evidence_ids": [
+            "P23_TABLE"
+          ]
+        },
+        {
+          "aspect": "estimation",
+          "requirement_ids": [
+            "event_daily_returns"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "P12_MODEL",
+            "P12_MKT",
+            "P23_CAR"
+          ]
+        },
+        {
+          "aspect": "fixed_effects",
+          "requirement_ids": [],
+          "reason": "Table 9 is a cross-sectional regression; its four industry indicators are regressors, and no fixed-effect family is reported.",
+          "evidence_ids": [
+            "P14_SALES",
+            "P23_TABLE"
+          ]
+        },
+        {
+          "aspect": "identifiers",
+          "requirement_ids": [
+            "firm_identifier_linkage"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "P10_SAMPLE",
+            "P10_FEES"
+          ]
+        },
+        {
+          "aspect": "preprocessing",
+          "requirement_ids": [
+            "annual_financial_controls",
+            "fiscal_2000_audit_fees"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "P14_SALES",
+            "P14_AUDITFEE",
+            "P14_NAFEE"
+          ]
+        },
+        {
+          "aspect": "sampling",
+          "requirement_ids": [
+            "sample_and_classification"
+          ],
+          "reason": null,
+          "evidence_ids": [
+            "P10_SAMPLE",
+            "P23_TABLE"
+          ]
+        },
+        {
+          "aspect": "weights",
+          "requirement_ids": [],
+          "reason": "No regression weights are reported for the Table 9 firm-level cross sections.",
+          "evidence_ids": [
+            "P23_TABLE"
+          ]
+        }
+      ],
+      "implementation_issues": [
+        {
+          "kind": "specification",
+          "description": "The firm-level market model’s estimation-period dates and coefficient estimator are not reported, so its history window and expected-return fit are not fully specified.",
+          "blocking": true,
+          "evidence_ids": [
+            "P12_MODEL",
+            "P12_MKT"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The Table 9 cross-sectional estimator and standard-error correction are not named; only t-values and model fit statistics are reported.",
+          "blocking": true,
+          "evidence_ids": [
+            "P23_TABLE"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "Afee is defined as “total audit fee,” but the source says total audit fee consists of audit, IS and other fees, while Table 9 also distinguishes non-audit fees as IS plus other; the exact Afee numerator cannot be resolved.",
+          "blocking": true,
+          "evidence_ids": [
+            "P10_FEES",
+            "P14_AUDITFEE",
+            "P14_NAFEE"
+          ]
+        },
+        {
+          "kind": "specification",
+          "description": "The exact percentage-growth calculation for sales from fiscal 1999 to 2000 is not stated.",
+          "blocking": true,
+          "evidence_ids": [
+            "P14_SALES"
+          ]
+        }
+      ],
+      "data_status": "undetermined",
+      "attempt_ready": false,
+      "review_notes": [
+        "The Jan 10-only Table 9 columns are treated as the selected baselines; the pooled event indicator applies only to combined-date columns. The reported Jan 10 windows are event day 0 through +1 or +2."
+      ],
+      "data_mode": "observed",
+      "data_mode_reason": null,
+      "data_mode_evidence_ids": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "P10_SAMPLE",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 10,
+      "quote": "Our sample consists of 284 of the 287 Andersen clients included in th",
+      "description": "Defines the Andersen-client sample frame.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "P10_FEES",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 10,
+      "quote": "Audit and non audit fees, for 208 of the 284 firms, were obtained from Compustat for the year 2000.",
+      "description": "Defines the fee-data subset and fiscal-year label.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "P12_MKT",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 12,
+      "quote": "Rmt = return on the value-weighted Russell 3000 index on day t",
+      "description": "Defines the market-return benchmark for the market model.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "P12_MODEL",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 12,
+      "quote": "At = a0 + di Rmt + uit",
+      "description": "Reports the individual-client market-model equation; OCR symbols are retained with source caveat.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "P14_SALES",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 14,
+      "quote": "Salesgrowit = the percentage growth in sales from 1999 to 2000",
+      "description": "Defines the sales-growth control and its annual interval.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "P14_AUDITFEE",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 14,
+      "quote": "Afeeit = total audit fee deflated by assets",
+      "description": "Table 9 definition of Afee; its numerator conflicts with fee descriptions elsewhere.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "P14_NAFEE",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 14,
+      "quote": "NAfeeit = total non-audit fees (IS fee + other fee) deflated by assets",
+      "description": "Defines non-audit fees and denominator.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "P14_LEV",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 14,
+      "quote": "Levit = long-term debt divided by total assets",
+      "description": "Defines leverage control.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "P23_CAR",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 23,
+      "quote": "CAR(0, +1)",
+      "description": "Table 9 identifies the Jan 10 event CAR window.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "P23_TABLE",
+      "kind": "paper",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/papers/parsed/W2065693589.json",
+      "page": 23,
+      "quote": "Obs. 416 416 208 208 208 208",
+      "description": "Reports the Table 9 baseline observation counts.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "CAT_DS",
+      "kind": "catalog",
+      "locator": "output/feasibility_runs/resources/catalog.json: lines 129766-129878",
+      "page": null,
+      "quote": null,
+      "description": "Catalog row for TR_DS.WRDS_DS2DSF: Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64; exact catalog path /storage/sas/base/tfn/ds_eq/pricing/wrds_ds2dsf.sas7bdat; 35 declared fields.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "PROBE_DS",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/full_01/drafts/W2004501113/probes/datastream_daily_result.json",
+      "page": null,
+      "quote": null,
+      "description": "Preferred successful exact-resource probe for TR_DS.WRDS_DS2DSF; status=ok, location=/storage/sas/base/tfn/ds_eq/pricing/wrds_ds2dsf.sas7bdat, readable=True.",
+      "sha256": "efccc682f87442fa0d91a8fa896e7333be5ee0615160753021e9476289ea192f",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "CAT_COMP",
+      "kind": "catalog",
+      "locator": "output/feasibility_runs/resources/catalog.json: lines 27500-28729",
+      "page": null,
+      "quote": null,
+      "description": "Catalog row for COMP.FUNDA: Merged Fundamental Annual File; exact catalog path /storage/sas/base/comp/d_na/funda.sas7bdat; 949 declared fields.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "PROBE_COMP",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/COMP.FUNDA.json",
+      "page": null,
+      "quote": null,
+      "description": "Preferred successful exact-resource probe for COMP.FUNDA; status=ok, location=/storage/sas/base/comp/d_na/funda.sas7bdat, readable=True.",
+      "sha256": "dd9d66ff1debeea55773cd795f95af5f6cee0c45dc5cab8992f2eb6289e92ea5",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "CAT_AUDITFEES",
+      "kind": "catalog",
+      "locator": "output/feasibility_runs/resources/catalog.json: lines 661-984",
+      "page": null,
+      "quote": null,
+      "description": "Catalog row for AUDIT.FEED03_AUDIT_FEES: feed03_audit_fees                                                                 Point to Observations  YES; exact catalog path /storage/sas/base/audit/audit_comp/feed03_audit_fees.sas7bdat; 215 declared fields.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "PROBE_AUDITFEES",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/full_01/drafts/W3122458461/probes/audit_fees.result.json",
+      "page": null,
+      "quote": null,
+      "description": "Preferred successful exact-resource probe for AUDIT.FEED03_AUDIT_FEES; status=ok, location=/storage/sas/base/audit/audit_comp/feed03_audit_fees.sas7bdat, readable=True.",
+      "sha256": "03d7e28cfecf2a78b0d520737aff2988b783194d62d243ed8a1580b145473792",
+      "verified_at": null
+    },
+    {
+      "evidence_id": "CAT_CCM",
+      "kind": "catalog",
+      "locator": "output/feasibility_runs/resources/catalog.json: lines 81454-81534",
+      "page": null,
+      "quote": null,
+      "description": "Catalog row for CRSP.CCMXPF_LINKTABLE: CRSP/COMPUSTAT Merged - Link History w/ Used Flag; exact catalog path /storage/sas/base/crsp/a_ccm/ccmxpf_linktable.sas7bdat; 9 declared fields.",
+      "sha256": null,
+      "verified_at": null
+    },
+    {
+      "evidence_id": "PROBE_CCM",
+      "kind": "probe",
+      "locator": "/home/luther/Dropbox/Research/Replication/git/output/feasibility_runs/resources/probes/CRSP.CCMXPF_LINKTABLE.json",
+      "page": null,
+      "quote": null,
+      "description": "Preferred successful exact-resource probe for CRSP.CCMXPF_LINKTABLE; status=ok, location=/storage/sas/base/crsp/a_ccm/ccmxpf_linktable.sas7bdat, readable=True.",
+      "sha256": "e76dbf4af338be97f1c61c9fe3126cd2ebf709899d993a32f89ef51416769a1a",
+      "verified_at": null
+    }
+  ],
+  "author_alternatives": [],
+  "review_notes": [
+    "Current local probes establish exact-resource accessibility and live columns only. No coordinator local coverage confirmations were supplied. The Table 9 Afee definition and the market-model return benchmark/timing remain unresolved."
+  ],
+  "summary": {
+    "outcome": "undetermined",
+    "assessment_counts": {
+      "local_ready": 0,
+      "public_acquisition_required": 0,
+      "access_blocked": 0,
+      "undetermined": 2,
+      "no_observed_data_required": 0
+    },
+    "baseline_models": 2,
+    "baseline_fits": 2,
+    "any_data_feasible": false,
+    "all_data_feasible": false,
+    "partially_data_feasible": false,
+    "attempt_ready_count": 0
+  }
+}

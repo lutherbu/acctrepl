@@ -1,0 +1,663 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.01 seconds
+      cpu time            0.00 seconds
+      
+1          options errorabend;
+2          
+3          libname src "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref SRC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname out "data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W2067475882/attempt_03/data
+5          
+6          data work.candidate;
+7              set src.funda(keep=gvkey datadate fyear indfmt consol popsrc datafmt sich xsga sale curcd currtr
+8                  where=(fyear >= 1978 and fyear <= 1998 and upcase(strip(indfmt)) = "INDL"));
+9          run;
+
+NOTE: There were 291402 observations read from the data set SRC.FUNDA.
+      WHERE (fyear>=1978 and fyear<=1998) and (UPCASE(STRIP(indfmt))='INDL');
+NOTE: The data set WORK.CANDIDATE has 291402 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.55 seconds
+      cpu time            0.55 seconds
+      
+
+10         
+11         title "COMP.FUNDA candidate population: industrial annual rows, 1978-1998";
+12         proc freq data=work.candidate;
+13             tables datafmt*consol*popsrc / list missing;
+14         run;
+
+NOTE: There were 291402 observations read from the data set WORK.CANDIDATE.
+NOTE: The PROCEDURE FREQ printed page 1.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+3                                                          The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+15         
+16         data work.annual;
+17             set work.candidate;
+18             where upcase(strip(consol)) = "C" and upcase(strip(datafmt)) = "STD"
+19                 and upcase(strip(popsrc)) = "D";
+20             curcd = upcase(strip(curcd));
+21         run;
+
+NOTE: There were 200781 observations read from the data set WORK.CANDIDATE.
+      WHERE (UPCASE(STRIP(consol))='C') and (UPCASE(STRIP(datafmt))='STD') and (UPCASE(STRIP(popsrc))='D');
+NOTE: The data set WORK.ANNUAL has 200781 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.11 seconds
+      cpu time            0.11 seconds
+      
+
+22         
+23         title "Filtered COMP.FUNDA coverage and key checks";
+24         proc means data=work.annual n mean min max;
+25             class curcd;
+26             var currtr;
+27         run;
+
+NOTE: There were 200781 observations read from the data set WORK.ANNUAL.
+NOTE: The PROCEDURE MEANS printed page 2.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+28         proc sql;
+29             select count(*) as SourceRows, count(distinct gvkey) as Firms,
+30                    min(fyear) as FirstFiscalYear, max(fyear) as LastFiscalYear,
+31                    sum(missing(xsga)) as MissingSGA, sum(missing(sale)) as MissingSales,
+32                    sum(missing(curcd)) as MissingCurrency, sum(missing(currtr)) as MissingCURRTR
+33             from work.annual;
+34             select fyear, count(*) as Rows
+35             from work.annual
+36             group by fyear
+37             order by fyear;
+38             create table work.duplicate_detail as
+39             select gvkey, fyear, count(*) as n, count(distinct datadate) as distinct_dates
+40             from work.annual
+41             group by gvkey, fyear;
+NOTE: Table WORK.DUPLICATE_DETAIL created, with 200779 rows and 4 columns.
+
+42             select count(*) as DuplicateGVKEYFiscalYearKeys,
+43                    sum(n - 1) as ExcessRowsFromDuplicates,
+44                    sum(distinct_dates = 1) as KeysDuplicatedAtTheSameDate,
+45                    sum(distinct_dates > 1) as MultipleDateKeys
+46             from work.duplicate_detail
+47             where n > 1;
+48         quit;
+NOTE: The PROCEDURE SQL printed pages 3-5.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.19 seconds
+      cpu time            0.24 seconds
+      
+4                                                          The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+
+49         
+50         proc sql noprint;
+51             select count(*) into :same_date_duplicates trimmed
+52             from work.duplicate_detail
+53             where n > 1 and distinct_dates = 1;
+54         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+55         data _null_;
+56             if &same_date_duplicates > 0 then do;
+57                 put "ERROR: Duplicate gvkey-fyear-datadate keys remain after the selected population filters.";
+58                 abort abend;
+59             end;
+60         run;
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+61         
+62         proc sort data=work.annual out=work.annual_sorted;
+63             by gvkey fyear datadate;
+64         run;
+
+NOTE: There were 200781 observations read from the data set WORK.ANNUAL.
+NOTE: The data set WORK.ANNUAL_SORTED has 200781 observations and 12 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.06 seconds
+      
+
+65         data work.annual_selected;
+66             set work.annual_sorted;
+67             by gvkey fyear;
+68             if last.fyear;
+69         run;
+
+NOTE: There were 200781 observations read from the data set WORK.ANNUAL_SORTED.
+NOTE: The data set WORK.ANNUAL_SELECTED has 200779 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.02 seconds
+      
+
+70         
+71         title "Unique firm-fiscal-year rows after latest-datadate rule";
+72         proc sql;
+73             select count(*) as SelectedRows, count(distinct gvkey) as Firms,
+74                    min(fyear) as FirstFiscalYear, max(fyear) as LastFiscalYear,
+75                    sum(missing(curcd)) as MissingCurrency, sum(missing(currtr)) as MissingCURRTR
+76             from work.annual_selected;
+77         quit;
+NOTE: The PROCEDURE SQL printed page 6.
+5                                                          The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+78         
+79         proc sql;
+80             create table work.pairs as
+81             select a.gvkey, a.fyear, a.datadate, a.sich,
+82                    a.xsga as sga_t, a.sale as sales_t, a.curcd as curcd_t, a.currtr as currtr_t,
+83                    b.xsga as sga_lag, b.sale as sales_lag,
+84                    b.curcd as curcd_lag, b.currtr as currtr_lag
+85             from work.annual_selected as a
+86             left join work.annual_selected as b
+87               on a.gvkey = b.gvkey and b.fyear = a.fyear - 1
+88             where a.fyear between 1979 and 1998;
+NOTE: Table WORK.PAIRS created, with 194018 rows and 12 columns.
+
+89         quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.12 seconds
+      cpu time            0.19 seconds
+      
+
+90         
+91         title "Currency alignment checks across all adjacent-year source pairs";
+92         proc sql;
+93             select count(*) as CurrentRows,
+94                    sum(case when missing(curcd_t) or missing(curcd_lag) then 1 else 0 end) as MissingCodePair,
+95                    sum(case when not missing(curcd_t) and not missing(curcd_lag) and curcd_t ne curcd_lag
+96                             then 1 else 0 end) as DifferentCodePair,
+97                    sum(case when not missing(curcd_t) and not missing(curcd_lag) and curcd_t ne curcd_lag
+98                                  and (missing(currtr_t) or currtr_t <= 0 or missing(currtr_lag) or currtr_lag <= 0)
+99                             then 1 else 0 end) as DifferentCodeNoRate
+100            from work.pairs;
+101        quit;
+NOTE: The PROCEDURE SQL printed page 7.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+102        
+103        title "One-year firm-year source-screen attrition";
+104        proc sql;
+105            select count(*) as CurrentRows,
+106                   sum(case when missing(sga_t) or missing(sales_t) or
+107                                 missing(sga_lag) or missing(sales_lag)
+108                            then 1 else 0 end) as AnyMissingCurrentOrPrior,
+109                   sum(case when not missing(sga_t) and not missing(sales_t) and
+110                                 not missing(sga_lag) and not missing(sales_lag) and
+111                                 sga_t > sales_t
+112                            then 1 else 0 end) as CurrentSGAExceedsSales,
+113                   sum(case when not missing(sga_t) and not missing(sales_t) and
+114                                 not missing(sga_lag) and not missing(sales_lag) and
+115                                 sga_t <= sales_t and
+116                                 (sga_t <= 0 or sales_t <= 0 or sga_lag <= 0 or sales_lag <= 0)
+117                            then 1 else 0 end) as NonposLogInputs
+6                                                          The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+118            from work.pairs;
+119        quit;
+NOTE: The PROCEDURE SQL printed page 8.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+120        
+121        data work.eligible;
+122            length currency_status $20;
+123            set work.pairs;
+124            if missing(sga_t) or missing(sales_t) or missing(sga_lag) or missing(sales_lag) then delete;
+125            if sga_t > sales_t then delete;
+126            if sga_t <= 0 or sales_t <= 0 or sga_lag <= 0 or sales_lag <= 0 then delete;
+127        
+128            legacy_dy = log(sga_t / sga_lag);
+129            legacy_dx = log(sales_t / sales_lag);
+130            legacy_decrease = (sales_t < sales_lag);
+131            legacy_interaction = legacy_decrease * legacy_dx;
+132        
+133            same_currency = .;
+134            cross_currency = .;
+135            currency_status = "NO-CURCD";
+136            sga_t_fitunit = .;
+137            sales_t_fitunit = .;
+138            sga_lag_fitunit = .;
+139            sales_lag_fitunit = .;
+140        
+141            if not missing(curcd_t) and not missing(curcd_lag) then do;
+142                same_currency = (curcd_t = curcd_lag);
+143                cross_currency = (curcd_t ne curcd_lag);
+144                if same_currency then do;
+145                    currency_status = "SAME-CURRENCY";
+146                    sga_t_fitunit = sga_t;
+147                    sales_t_fitunit = sales_t;
+148                    sga_lag_fitunit = sga_lag;
+149                    sales_lag_fitunit = sales_lag;
+150                end;
+151                else if currtr_t > 0 and currtr_lag > 0 then currency_status = "CROSS-UNAVAILABLE";
+152                else currency_status = "CROSS-NO-RATE";
+153            end;
+154        
+155            dy = .;
+156            dx = .;
+157            decrease = .;
+158            interaction = .;
+159            if not missing(sga_t_fitunit) and not missing(sales_t_fitunit) and
+160               not missing(sga_lag_fitunit) and not missing(sales_lag_fitunit) then do;
+161                dy = log(sga_t_fitunit / sga_lag_fitunit);
+162                dx = log(sales_t_fitunit / sales_lag_fitunit);
+163                decrease = (sales_t_fitunit < sales_lag_fitunit);
+164                interaction = decrease * dx;
+165            end;
+166            changed_formula = .;
+167            decrease_changed = .;
+168            if not missing(dx) and not missing(dy) then do;
+169                changed_formula = (abs(dy - legacy_dy) > 1e-12 or abs(dx - legacy_dx) > 1e-12);
+7                                                          The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+170                decrease_changed = (decrease ne legacy_decrease);
+171            end;
+172        run;
+
+NOTE: There were 194018 observations read from the data set WORK.PAIRS.
+NOTE: The data set WORK.ELIGIBLE has 109388 observations and 29 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+173        
+174        title "Currency-code transitions and CURRTR summaries";
+175        proc freq data=work.eligible;
+176            where cross_currency = 1;
+177            tables curcd_lag*curcd_t / list missing;
+178        run;
+
+NOTE: There were 58 observations read from the data set WORK.ELIGIBLE.
+      WHERE cross_currency=1;
+NOTE: The PROCEDURE FREQ printed page 9.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+179        proc means data=work.eligible n mean min max;
+180            where cross_currency = 1;
+181            class curcd_lag curcd_t;
+182            var currtr_lag currtr_t;
+183        run;
+
+NOTE: There were 58 observations read from the data set WORK.ELIGIBLE.
+      WHERE cross_currency=1;
+NOTE: The PROCEDURE MEANS printed page 10.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+184        
+185        title "Legacy and unit-consistent pooled percentile cutoffs";
+186        proc univariate data=work.eligible noprint;
+187            var legacy_dy;
+188            output out=work.cut_old_dy pctlpts=0.5 99.5 pctlpre=dy_ pctlname=lo hi;
+189        run;
+
+NOTE: The data set WORK.CUT_OLD_DY has 1 observations and 2 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.05 seconds
+      
+
+190        proc univariate data=work.eligible noprint;
+191            var legacy_dx;
+192            output out=work.cut_old_dx pctlpts=0.5 99.5 pctlpre=dx_ pctlname=lo hi;
+193        run;
+
+8                                                          The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+NOTE: The data set WORK.CUT_OLD_DX has 1 observations and 2 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+194        proc univariate data=work.eligible noprint;
+195            var legacy_interaction;
+196            output out=work.cut_old_int pctlpts=0.5 99.5 pctlpre=int_ pctlname=lo hi;
+197        run;
+
+NOTE: The data set WORK.CUT_OLD_INT has 1 observations and 2 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+198        proc univariate data=work.eligible noprint;
+199            var dy;
+200            output out=work.cut_new_dy pctlpts=0.5 99.5 pctlpre=dy_ pctlname=lo hi;
+201        run;
+
+NOTE: The data set WORK.CUT_NEW_DY has 1 observations and 2 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+202        proc univariate data=work.eligible noprint;
+203            var dx;
+204            output out=work.cut_new_dx pctlpts=0.5 99.5 pctlpre=dx_ pctlname=lo hi;
+205        run;
+
+NOTE: The data set WORK.CUT_NEW_DX has 1 observations and 2 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+206        proc univariate data=work.eligible noprint;
+207            var interaction;
+208            output out=work.cut_new_int pctlpts=0.5 99.5 pctlpre=int_ pctlname=lo hi;
+209        run;
+
+NOTE: The data set WORK.CUT_NEW_INT has 1 observations and 2 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+210        
+211        data _null_;
+212            set work.cut_old_dy;
+213            call symputx("old_dy_lo", dy_lo, "G");
+214            call symputx("old_dy_hi", dy_hi, "G");
+215        run;
+
+NOTE: There were 1 observations read from the data set WORK.CUT_OLD_DY.
+9                                                          The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+216        data _null_;
+217            set work.cut_old_dx;
+218            call symputx("old_dx_lo", dx_lo, "G");
+219            call symputx("old_dx_hi", dx_hi, "G");
+220        run;
+
+NOTE: There were 1 observations read from the data set WORK.CUT_OLD_DX.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+221        data _null_;
+222            set work.cut_old_int;
+223            call symputx("old_int_lo", int_lo, "G");
+224            call symputx("old_int_hi", int_hi, "G");
+225        run;
+
+NOTE: There were 1 observations read from the data set WORK.CUT_OLD_INT.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+226        data _null_;
+227            set work.cut_new_dy;
+228            call symputx("new_dy_lo", dy_lo, "G");
+229            call symputx("new_dy_hi", dy_hi, "G");
+230        run;
+
+NOTE: There were 1 observations read from the data set WORK.CUT_NEW_DY.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+231        data _null_;
+232            set work.cut_new_dx;
+233            call symputx("new_dx_lo", dx_lo, "G");
+234            call symputx("new_dx_hi", dx_hi, "G");
+235        run;
+
+NOTE: There were 1 observations read from the data set WORK.CUT_NEW_DX.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+236        data _null_;
+237            set work.cut_new_int;
+238            call symputx("new_int_lo", int_lo, "G");
+239            call symputx("new_int_hi", int_hi, "G");
+240        run;
+10                                                         The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+
+NOTE: There were 1 observations read from the data set WORK.CUT_NEW_INT.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+241        
+242        %put NOTE: Legacy pooled 0.5th/99.5th cutoffs: dy=&old_dy_lo to &old_dy_hi.;
+NOTE: Legacy pooled 0.5th/99.5th cutoffs: dy=-1.11379632714648 to 1.5104266245
+243        %put NOTE: Legacy pooled 0.5th/99.5th cutoffs: dx=&old_dx_lo to &old_dx_hi.;
+NOTE: Legacy pooled 0.5th/99.5th cutoffs: dx=-1.17095613623412 to 2.0970229448
+244        %put NOTE: Legacy pooled 0.5th/99.5th cutoffs: interaction=&old_int_lo to &old_int_hi.;
+NOTE: Legacy pooled 0.5th/99.5th cutoffs: interaction=-1.17095613623412 to 0
+245        %put NOTE: Currency-aligned pooled 0.5th/99.5th cutoffs: dy=&new_dy_lo to &new_dy_hi.;
+NOTE: Currency-aligned pooled 0.5th/99.5th cutoffs: dy=-1.11217822179372 to 1.5067069013
+246        %put NOTE: Currency-aligned pooled 0.5th/99.5th cutoffs: dx=&new_dx_lo to &new_dx_hi.;
+NOTE: Currency-aligned pooled 0.5th/99.5th cutoffs: dx=-1.16962703383345 to 2.0876233483
+247        %put NOTE: Currency-aligned pooled 0.5th/99.5th cutoffs: interaction=&new_int_lo to &new_int_hi.;
+NOTE: Currency-aligned pooled 0.5th/99.5th cutoffs: interaction=-1.16962703383345 to 0
+248        
+249        data work.final;
+250            set work.eligible;
+251            legacy_trimflag = (legacy_dy >= &old_dy_lo and legacy_dy <= &old_dy_hi and
+252                               legacy_dx >= &old_dx_lo and legacy_dx <= &old_dx_hi and
+253                               legacy_interaction >= &old_int_lo and legacy_interaction <= &old_int_hi);
+254            trimflag = 0;
+255            if not missing(dy) and not missing(dx) and not missing(interaction) then
+256                trimflag = (dy >= &new_dy_lo and dy <= &new_dy_hi and
+257                            dx >= &new_dx_lo and dx <= &new_dx_hi and
+258                            interaction >= &new_int_lo and interaction <= &new_int_hi);
+259            label dy = "Currency-consistent log change in SGA"
+260                  dx = "Currency-consistent log change in net sales"
+261                  decrease = "Currency-consistent sales decrease indicator"
+262                  interaction = "Sales decrease x currency-consistent log sales change"
+263                  trimflag = "Within currency-consistent pooled 0.5/99.5 cutoffs"
+264                  curcd_t = "Current-period source currency"
+265                  curcd_lag = "Prior-period source currency"
+266                  currtr_t = "Current-period USD currency translation rate"
+267                  currtr_lag = "Prior-period USD currency translation rate"
+268                  currency_status = "Currency alignment for adjacent-year ratios"
+269                  sga_t_fitunit = "Current-period SGA in ratio-comparable unit"
+270                  sales_t_fitunit = "Current-period sales in ratio-comparable unit"
+271                  sga_lag_fitunit = "Prior-period SGA in ratio-comparable unit"
+272                  sales_lag_fitunit = "Prior-period sales in ratio-comparable unit";
+273        run;
+
+NOTE: There were 109388 observations read from the data set WORK.ELIGIBLE.
+NOTE: The data set WORK.FINAL has 109388 observations and 31 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+274        
+275        title "Source-screened population and actual currency-repair impact";
+276        proc sql;
+277            select count(*) as ScreenedRows,
+11                                                         The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+278                   count(distinct gvkey) as Firms,
+279                   sum(same_currency = 1) as SameCurrencyPairs,
+280                   sum(cross_currency = 1) as CrossCurrencyPairs,
+281                   sum(currency_status = "NO-CURCD") as MissingCurrencyPairs,
+282                   sum(currency_status = "CROSS-UNAVAILABLE") as UnlikeCurrencyRatiosUnavailable,
+283                   sum(currency_status = "CROSS-NO-RATE") as UnlikeCurrencyPairsNoRate,
+284                   sum(decrease_changed = 1) as DecreaseClassificationsChanged,
+285                   sum(legacy_trimflag = 1) as LegacyFitN,
+286                   sum(trimflag = 1) as CurrencyAlignedFitN,
+287                   sum(cross_currency = 1 and legacy_trimflag = 1) as CrossCurrencyRowsInLegacyFit,
+288                   sum(cross_currency = 1 and trimflag = 1) as CrossCurrencyRowsInAlignedFit,
+289                   sum(legacy_trimflag = 1 and trimflag = 0) as LegacyFitRowsNotAlignedFit,
+290                   sum(legacy_trimflag = 0 and trimflag = 1) as AlignedFitRowsNotLegacyFit,
+291                   sum(same_currency = 1 and decrease_changed = 1) as SameCurrencyDecreaseErrors
+292            from work.final;
+293        quit;
+NOTE: The PROCEDURE SQL printed page 11.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+294        
+295        proc means data=work.final n mean min max;
+296            class currency_status;
+297            var dy dx interaction legacy_dy legacy_dx legacy_interaction;
+298        run;
+
+NOTE: There were 109388 observations read from the data set WORK.FINAL.
+NOTE: The PROCEDURE MEANS printed page 12.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+299        
+300        data out.main_sample;
+301            set work.final;
+302            keep gvkey fyear datadate sich sga_t sales_t sga_lag sales_lag
+303                 curcd_t curcd_lag currtr_t currtr_lag currency_status
+304                 sga_t_fitunit sales_t_fitunit sga_lag_fitunit sales_lag_fitunit
+305                 dy dx decrease interaction trimflag;
+306        run;
+
+NOTE: There were 109388 observations read from the data set WORK.FINAL.
+NOTE: The data set OUT.MAIN_SAMPLE has 109388 observations and 22 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+307        
+308        title;
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           1.57 seconds
+      cpu time            1.68 seconds
+12                                                         The SAS System                     Tuesday, November  3, 2026 12:20:00 AM
+
+      

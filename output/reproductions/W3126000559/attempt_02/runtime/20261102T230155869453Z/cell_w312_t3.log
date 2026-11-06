@@ -1,0 +1,133 @@
+
+  ___  ____  ____  ____  ____ ®
+ /__    /   ____/   /   ____/      Stata 18.0
+___/   /   /___/   /   /___/       MP—Parallel Edition
+
+ Statistics and Data Science       Copyright 1985-2023 StataCorp LLC
+                                   StataCorp
+                                   4905 Lakeway Drive
+                                   College Station, Texas 77845 USA
+                                   800-782-8272        https://www.stata.com
+                                   979-696-4600        service@stata.com
+
+Stata license: Unlimited-user 16-core network, expiring 15 Dec 2024
+Serial number: 501809303220
+  Licensed to: Luther
+               Users
+
+Notes:
+      1. Stata is running in batch mode.
+      2. Unicode is supported; see help unicode_advice.
+      3. More than 2 billion observations are allowed; see help obs_advice.
+      4. Maximum number of variables is set to 5,000 but can be increased;
+          see help set_maxvar.
+
+
+Running /usr/local/stata18/sysprofile.do ...
+
+. do /home/luther/Dropbox/Research/Replication/git/reproductions/W3126000559/at
+> tempt_02/runtime/20261102T230155869453Z/cell_w312_t3.do 
+
+. version 18
+
+. set more off
+
+. use "data/icw_loan_facilities/reg.dta", clear
+
+. 
+. global rhs "uncorrected corrected inst_investor revolver interest_rate secure
+> d loan_size maturity credit_rating num_lenders pp_indicator firm_size profita
+> bility leverage"
+
+. global fe "i.loan_year"
+
+. est clear
+
+. regress financial_covenants $rhs $fe, vce(cluster firmid)
+
+Linear regression                               Number of obs     =        223
+                                                F(21, 44)         =      49.49
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.3157
+                                                Root MSE          =     1.1766
+
+                                (Std. err. adjusted for 45 clusters in firmid)
+------------------------------------------------------------------------------
+             |               Robust
+financial_~s | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ uncorrected |  -.5370057    .358349    -1.50   0.141    -1.259211    .1851992
+   corrected |  -.1456939   .3416128    -0.43   0.672    -.8341692    .5427814
+inst_inves~r |   .2350003   .2520902     0.93   0.356    -.2730541    .7430546
+    revolver |   .0368563    .190957     0.19   0.848    -.3479923     .421705
+interest_r~e |  -.0013825   .0009473    -1.46   0.152    -.0032916    .0005266
+     secured |   .3199959   .2666161     1.20   0.236    -.2173336    .8573254
+   loan_size |   .0307598   .1158497     0.27   0.792      -.20272    .2642396
+    maturity |   .0079151   .0058597     1.35   0.184    -.0038943    .0197245
+credit_rat~g |   .1591391   .0757951     2.10   0.042     .0063841    .3118941
+ num_lenders |   .0130693   .0057257     2.28   0.027     .0015298    .0246087
+pp_indicator |   .5073365   .2006159     2.53   0.015     .1030217    .9116513
+   firm_size |  -.1823766   .0958014    -1.90   0.064    -.3754516    .0106983
+profitabil~y |  -.7305173    1.59913    -0.46   0.650    -3.953352    2.492317
+    leverage |   -1.12485   .6534083    -1.72   0.092    -2.441707    .1920083
+             |
+   loan_year |
+       2002  |   .5209342   .5795648     0.90   0.374    -.6471019     1.68897
+       2003  |   1.180444   .5359339     2.20   0.033       .10034    2.260548
+       2004  |    .279719   .5023806     0.56   0.580    -.7327626      1.2922
+       2005  |   .4854529   .5187344     0.94   0.354    -.5599875    1.530893
+       2006  |   .3021773   .5560761     0.54   0.590    -.8185204    1.422875
+       2007  |  -.8554813   .6092008    -1.40   0.167    -2.083245    .3722822
+       2008  |   .8750258   .8071395     1.08   0.284     -.751657    2.501708
+             |
+       _cons |   .5581027   1.285447     0.43   0.666    -2.032545    3.148751
+------------------------------------------------------------------------------
+
+. tempvar clustertag
+
+. egen byte `clustertag'=tag(firmid) if e(sample)
+
+. quietly count if `clustertag'==1
+
+. local nclusters=r(N)
+
+. estadd scalar nclusters=`nclusters'
+
+added scalar:
+          e(nclusters) =  45
+
+. est store m1
+
+. esttab m1 using "tables/table3_financial_covenants.md", cells(b(star fmt(3)) 
+> p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_y
+> ear) scalars("nclusters Borrower clusters") addnotes("Loan-year fixed effects
+>  included." "Standard errors clustered by borrower.")
+(file tables/table3_financial_covenants.md not found)
+(output written to tables/table3_financial_covenants.md)
+
+. esttab m1 using "tables/table3_financial_covenants.rtf", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_
+> year) scalars("nclusters Borrower clusters") addnotes("Loan-year fixed effect
+> s included." "Standard errors clustered by borrower.")
+(file tables/table3_financial_covenants.rtf not found)
+(output written to tables/table3_financial_covenants.rtf)
+
+. esttab m1 using "tables/table3_financial_covenants.csv", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_
+> year) scalars("nclusters Borrower clusters") addnotes("Loan-year fixed effect
+> s included." "Standard errors clustered by borrower.")
+(file tables/table3_financial_covenants.csv not found)
+(output written to tables/table3_financial_covenants.csv)
+
+. esttab m1 using "tables/table3_financial_covenants.tex", cells(b(star fmt(3))
+>  p(par)) starlevels(* 0.1 ** 0.05 *** 0.01) r2 ar2 replace label drop(*.loan_
+> year) scalars("nclusters Borrower clusters") addnotes("Loan-year fixed effect
+> s included." "Standard errors clustered by borrower.")
+(file tables/table3_financial_covenants.tex not found)
+(output written to tables/table3_financial_covenants.tex)
+
+. est clear
+
+. exit, clear
+
+end of do-file

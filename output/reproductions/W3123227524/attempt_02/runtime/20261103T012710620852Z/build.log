@@ -1,0 +1,1599 @@
+1                                                          The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+NOTE: Copyright (c) 2023 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M8 MBCS3170) 
+      Licensed to UNIVERSITY OF PENNSYLVANIA - SFA T&R, Site 70055201.
+NOTE: This session is executing on the Linux 6.12.107+deb13-amd64 (LIN X64) platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.3
+      SAS/ETS 15.3
+      SAS/OR 15.3
+      SAS/IML 15.3
+      SAS/QC 15.3
+
+NOTE: Additional host information:
+
+ Linux LIN X64 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 Debian GNU/Linux 13 (trixie) 
+
+      *** Welcome to Wharton Research Data Services (WRDS) ***
+
+WRDS is developed and run by the Wharton School at the University of
+Pennsylvania. We provide access to the databases that define empirical,
+seminal research in the fields of accounting, banking, economics,
+finance, insurance, management, marketing, public policy, risk
+management, and statistics.
+
+If you are not an authorized user of this system, disconnect now.
+All activity is strictly monitored. There may be severe criminal and
+civil penalties for unauthorized access or use of computing resources.
+
+Please report any problems to wrds-support@wharton.upenn.edu.
+
+------------------------------------------------------------------------------
+
+             *** Wharton Research Data Services (WRDS) on SSRN ***
+
+Submit to the WRDS Research Paper Series (RPS) on SSRN – a searchable repository of all papers submitted to SSRN that cite WRDS 
+in their work. This RPS will elevate researchers’ visibility, increase your Eigenfactor® score, and build a specialized research 
+base for others to explore easily.
+
+  View Abstracts:            http://bit.ly/2qOrt9f
+  Submit to the WRDS RPS:    http://bit.ly/2rjrENk
+
+------------------------------------------------------------------------------
+
+  *** NEW Learning Resources for Researchers, Instructors, and Librarians ***
+
+Curated, guided, self-paced, competency-based access to our data, analytics, research, and technology solutions. In the classroom 
+or at home, for 25+ years Wharton Research Data Services (WRDS) has supported users with targeted solutions that underpin research, 
+reinforce learning, and enable discovery. Visit the WRDS website www.whartonwrds.com to view the full suite of Learning Pathways.  
+
+------------------------------------------------------------------------------
+
+                 *** Upcoming WRDS Maintenance Announcement ***
+
+      The WRDS servers will be undergoing regularly scheduled
+      maintenance from 8:00am - 11:00am ET on Wednesday, August 26, 2026.
+2                                                          The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+      This will affect the WRDS Cloud system and PC-SAS access. We will
+      be patching the systems to provide the most up-to-date
+      computing environment for your research programming needs.
+
+      You will not be able to access the servers while the
+      maintenance is in progress. WRDS Cloud jobs WILL BE
+      TERMINATED, and access to the WRDS Cloud head nodes
+      will be disabled for the duration of the maintenance window.
+      PC-SAS/CONNECT sessions and WRDS SAS/STUDIO sessions will be
+      interrupted, and will need to be restarted following the
+      completion of the maintenance window.
+
+      Please contact wrds-support@wharton.upenn.edu if you have any
+      questions or concerns. Thank you.
+
+
+
+NOTE: SAS initialization used:
+      real time           0.15 seconds
+      cpu time            0.01 seconds
+      
+1          options errorabend;
+2          
+3          libname comp "/storage/sas/base/comp/d_na" access=readonly;
+NOTE: Libref COMP was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na
+4          libname compsec "/storage/sas/base/comp/d_na/security" access=readonly;
+NOTE: Libref COMPSEC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/comp/d_na/security
+5          libname sdc "/storage/sas/base/tfn/sdc_ni" access=readonly;
+NOTE: Libref SDC was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /storage/sas/base/tfn/sdc_ni
+6          libname out "./data";
+NOTE: Libref OUT was successfully assigned as follows: 
+      Engine:        V9 
+      Physical Name: /home/luther/Dropbox/Research/Replication/git/reproductions/W3123227524/attempt_02/data
+7          
+8          /* Read the event universe and derive only observed, source-based SDC flags. */
+9          data sdc_raw;
+10             set sdc.wrds_ni_details(
+11                 keep=master_deal_no master_deal_date year filingdate postponed_date
+12                      withdrawn_date withdrawn_date2 registration_status
+13                      registration_status_long security ipo nation currency listmain
+14                      offerpric lowfileprice midfileprice highfileprice description
+15                      businesss regrights spinninames spinafter spinbefore simoffcus
+16                      package_id tranche_id main_tranche sicp cusip cusip9
+17             );
+18             if '01JAN1987'd <= master_deal_date and master_deal_date <= '31DEC2006'd;
+19             length offer_price_num 8 sdc_offer_year issue_year price_parse_fail 8
+20                    offer_cusip $20 sdc_cusip6 $6 sdc_cusip9 $9;
+21             offer_price_num = input(compress(strip(offerpric), '$, '), ?? best32.);
+22             sdc_offer_year = input(strip(year), ?? 4.);
+23             issue_year = year(master_deal_date);
+24             price_parse_fail = (not missing(offerpric) and missing(offer_price_num));
+25             offer_cusip = compress(strip(cusip), ' -');
+3                                                          The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+26             if lengthn(offer_cusip) >= 6 then sdc_cusip6 = substr(offer_cusip, 1, 6);
+27             else call missing(sdc_cusip6);
+28             offer_cusip = compress(strip(cusip9), ' -');
+29             if lengthn(offer_cusip) = 9 then sdc_cusip9 = offer_cusip;
+30             else call missing(sdc_cusip9);
+31             format master_deal_date filingdate postponed_date withdrawn_date withdrawn_date2 date9.;
+32         run;
+
+NOTE: There were 1456190 observations read from the data set SDC.WRDS_NI_DETAILS.
+NOTE: The data set WORK.SDC_RAW has 608783 observations and 38 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.86 seconds
+      cpu time            0.86 seconds
+      
+
+33         
+34         data sdc_events;
+35             set sdc_raw;
+36             length issue_status 8 has_spin has_simul has_rights has_reverse_lbo 8;
+37             issue_status = (not missing(master_deal_date)
+38                              and missing(postponed_date)
+39                              and missing(withdrawn_date)
+40                              and missing(withdrawn_date2));
+41             has_spin = (not missing(spinninames) or not missing(spinafter)
+42                         or not missing(spinbefore));
+43             has_simul = not missing(simoffcus);
+44             has_rights = (index(upcase(description), 'RIGHT') > 0
+45                           or index(upcase(description), 'STANDBY') > 0
+46                           or index(upcase(description), 'UNIT') > 0);
+47             has_reverse_lbo = (index(upcase(description), 'REVERSE LBO') > 0
+48                                or index(upcase(description), 'REVERSE LEVERAGED') > 0
+49                                or index(upcase(businesss), 'REVERSE LBO') > 0);
+50             is_fund_text = (index(upcase(description), 'CLOSED-END') > 0
+51                             or index(upcase(description), 'CLOSED END') > 0
+52                             or index(upcase(description), 'UNIT TRUST') > 0
+53                             or index(upcase(description), 'LIMITED PARTNERSHIP') > 0
+54                             or index(upcase(description), 'REIT') > 0
+55                             or index(upcase(businesss), 'UNIT TRUST') > 0
+56                             or index(upcase(businesss), 'LIMITED PARTNERSHIP') > 0
+57                             or index(upcase(businesss), 'REAL ESTATE INVESTMENT TRUST') > 0);
+58             sdc_offer_year_missing = missing(sdc_offer_year);
+59             sdc_offer_year_mismatch = (not missing(sdc_offer_year)
+60                                        and sdc_offer_year ne issue_year);
+61             target_base = (security = 'Common Shares'
+62                            and ipo = 'No'
+63                            and nation = 'United States');
+64             target_market = (currency = 'US'
+65                              and listmain in ('NYSE','NASDQ','AMEX'));
+66             target_price = (offer_price_num >= 5);
+67             target_exclusion_free = (issue_status and not has_spin and not has_simul
+68                                      and not has_rights and not has_reverse_lbo
+69                                      and not is_fund_text
+70                                      and not missing(filingdate)
+71                                      and not missing(sdc_cusip6));
+72             target_event = (target_base and target_market and target_price
+73                             and target_exclusion_free);
+74             any_equity_issue = (security = 'Common Shares'
+75                                 and nation = 'United States'
+4                                                          The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+76                                 and ipo in ('Yes','No')
+77                                 and issue_status
+78                                 and not missing(master_deal_no)
+79                                 and not missing(sdc_cusip6));
+80         run;
+
+NOTE: There were 608783 observations read from the data set WORK.SDC_RAW.
+NOTE: The data set WORK.SDC_EVENTS has 608783 observations and 52 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.94 seconds
+      cpu time            0.95 seconds
+      
+
+81         
+82         /* Audits preserve the observed values; REGISTRATION_STATUS is not used as completion status. */
+83         title "Observed SDC values for 1987-2006 common-share issues";
+84         proc freq data=sdc_events;
+85             tables security ipo nation currency listmain registration_status
+86                    registration_status_long regrights / missing;
+87         run;
+
+NOTE: There were 608783 observations read from the data set WORK.SDC_EVENTS.
+NOTE: The PROCEDURE FREQ printed pages 1-41.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.17 seconds
+      
+
+88         proc sql;
+89             select count(*) as issue_period_rows,
+90                    sum(target_base) as us_nonipo_common,
+91                    sum(target_base and target_market) as exchange_currency_candidates,
+92                    sum(target_base and target_market and issue_status) as completed_candidates,
+93                    sum(target_base and target_market and target_price) as price_ge_5,
+94                    sum(target_event) as sdc_screened_offers,
+95                    sum(price_parse_fail) as price_parse_failures,
+96                    sum(sdc_offer_year_missing) as missing_sdc_year,
+97                    sum(sdc_offer_year_mismatch) as year_mismatch,
+98                    sum(missing(filingdate)) as missing_filing_date,
+99                    sum(missing(sdc_cusip6)) as missing_sdc_cusip6,
+100                   sum(missing(sdc_cusip9)) as nonexact_sdc_cusip9,
+101                   sum(has_spin) as spin_flags,
+102                   sum(has_simul) as simultaneous_flags,
+103                   sum(has_rights) as rights_standby_unit_flags,
+104                   sum(has_reverse_lbo) as reverse_lbo_text_flags,
+105                   sum(is_fund_text) as fund_text_flags
+106            from sdc_events;
+107            select master_deal_no, count(*) as n_rows
+108            from sdc_events
+109            where target_event
+110            group by master_deal_no
+111            having count(*) > 1;
+NOTE: No rows were selected.
+112        quit;
+NOTE: The PROCEDURE SQL printed page 42.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.23 seconds
+5                                                          The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+      
+
+113        
+114        /* Read full annual support and keep a date-valid raw Compustat crosswalk. */
+115        data comp_std_raw;
+116            set comp.funda(
+117                keep=gvkey datadate fyear indfmt consol datafmt popsrc fic scf curcd
+118                     sich at ib ibc oancf xidoc cogs invt xad xrd xsga capx ppegt
+119                     sale pddur fyr fdate final upd
+120            );
+121            if fyear >= 1981 and fyear <= 2007;
+122            if strip(upcase(indfmt)) ne 'INDL'
+123               or strip(upcase(consol)) ne 'C'
+124               or strip(upcase(datafmt)) ne 'STD'
+125               or strip(upcase(popsrc)) ne 'D'
+126               or strip(upcase(fic)) ne 'USA' then delete;
+127            format datadate fdate date9.;
+128        run;
+
+NOTE: There were 941340 observations read from the data set COMP.FUNDA.
+NOTE: The data set WORK.COMP_STD_RAW has 239096 observations and 29 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.56 seconds
+      cpu time            0.57 seconds
+      
+
+129        
+130        /* Select the latest dated observation within rare duplicate firm-year keys. */
+131        proc sql;
+132            select count(*) as duplicate_gvkey_fyear_groups,
+133                   sum(n_rows - 1) as duplicate_extra_rows
+134            from (select gvkey, fyear, count(*) as n_rows
+135                  from comp_std_raw group by gvkey, fyear having count(*) > 1);
+136            select gvkey, fyear, count(*) as n_rows,
+137                   min(datadate) format=date9. as first_date,
+138                   max(datadate) format=date9. as selected_date
+139            from comp_std_raw
+140            group by gvkey, fyear
+141            having count(*) > 1;
+142        quit;
+NOTE: The PROCEDURE SQL printed pages 43-44.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.13 seconds
+      
+
+143        proc sort data=comp_std_raw out=comp_std_sorted;
+144            by gvkey fyear datadate;
+145        run;
+
+NOTE: There were 239096 observations read from the data set WORK.COMP_STD_RAW.
+NOTE: The data set WORK.COMP_STD_SORTED has 239096 observations and 29 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.08 seconds
+      cpu time            0.08 seconds
+      
+
+146        data comp_statements;
+6                                                          The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+147            set comp_std_sorted;
+148            by gvkey fyear datadate;
+149            if last.fyear;
+150        run;
+
+NOTE: There were 239096 observations read from the data set WORK.COMP_STD_SORTED.
+NOTE: The data set WORK.COMP_STATEMENTS has 239094 observations and 29 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+151        
+152        /* Statement history for the filing-date screen does not require usable SIC. */
+153        data comp_annual;
+154            set comp_statements;
+155            length sic2 8;
+156            if not missing(sich) and sich >= 100 and sich <= 9999
+157               and not (sich >= 6000 and sich <= 6999);
+158            sic2 = int(sich / 100);
+159        run;
+
+NOTE: There were 239094 observations read from the data set WORK.COMP_STATEMENTS.
+NOTE: The data set WORK.COMP_ANNUAL has 135561 observations and 30 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.04 seconds
+      
+
+160        
+161        title "Compustat annual period and currency coverage";
+162        proc sql;
+163            select count(*) as rows_81_07,
+164                   count(distinct gvkey) as gvkeys_81_07,
+165                   min(fyear) as min_fyear, max(fyear) as max_fyear,
+166                   min(datadate) format=date9. as min_datadate,
+167                   max(datadate) format=date9. as max_datadate
+168            from comp_annual;
+169        quit;
+NOTE: The PROCEDURE SQL printed page 45.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+170        proc freq data=comp_annual;
+171            tables curcd scf / missing;
+172        run;
+
+NOTE: There were 135561 observations read from the data set WORK.COMP_ANNUAL.
+NOTE: The PROCEDURE FREQ printed page 46.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+173        
+174        /* Build annual lags from explicit fiscal-year joins, never row-position LAG queues. */
+7                                                          The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+175        proc sql;
+176            create table comp_lags as
+177            select t.*,
+178                   p.at as at_lag, p.sale as sale_lag, p.invt as invt_lag,
+179                   p.capx as capx_lag, p.ib as ib_lag, p.curcd as curcd_lag,
+180                   p.datadate as datadate_lag,
+181                   q.sale as sale_lag2, q.curcd as curcd_lag2,
+182                   q.datadate as datadate_lag2
+183            from comp_annual as t
+184            left join comp_statements as p
+185              on p.gvkey=t.gvkey and p.fyear=t.fyear-1
+186            left join comp_statements as q
+187              on q.gvkey=t.gvkey and q.fyear=t.fyear-2;
+NOTE: Table WORK.COMP_LAGS created, with 135561 rows and 40 columns.
+
+188        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.27 seconds
+      cpu time            0.39 seconds
+      
+
+189        
+190        data aux_inputs;
+191            set comp_lags;
+192            length inv_at dsale dsale_lag cfo ta prod disx 8;
+193            if curcd = curcd_lag and not missing(curcd)
+194               and not missing(at_lag) and at_lag > 0;
+195            inv_at = 1 / at_lag;
+196            if not missing(sale) and not missing(sale_lag) then dsale = sale - sale_lag;
+197            if curcd_lag = curcd_lag2 and not missing(curcd_lag2)
+198               and not missing(sale_lag) and not missing(sale_lag2)
+199               then dsale_lag = sale_lag - sale_lag2;
+200            if not missing(oancf) and not missing(xidoc) then cfo = oancf - xidoc;
+201            if not missing(ibc) and not missing(cfo) then ta = ibc - cfo;
+202            if not missing(cogs) and not missing(invt) and not missing(invt_lag)
+203               then prod = cogs + (invt - invt_lag);
+204            if not missing(xsga) then do;
+205                if missing(xad) then xad_use = 0; else xad_use = xad;
+206                if missing(xrd) then xrd_use = 0; else xrd_use = xrd;
+207                disx = xad_use + xrd_use + xsga;
+208            end;
+209            if not missing(ta) and not missing(dsale) and not missing(ppegt) then do;
+210                da_y = ta / at_lag;
+211                da_x1 = inv_at;
+212                da_x2 = dsale / at_lag;
+213                da_x3 = ppegt / at_lag;
+214            end;
+215            if not missing(cfo) and not missing(sale) and not missing(dsale) then do;
+216                cfo_y = cfo / at_lag;
+217                cfo_x1 = inv_at;
+218                cfo_x2 = sale / at_lag;
+219                cfo_x3 = dsale / at_lag;
+220            end;
+221            if not missing(prod) and not missing(sale) and not missing(dsale)
+222               and not missing(dsale_lag) then do;
+223                prod_y = prod / at_lag;
+224                prod_x1 = inv_at;
+225                prod_x2 = sale / at_lag;
+8                                                          The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+226                prod_x3 = dsale / at_lag;
+227                prod_x4 = dsale_lag / at_lag;
+228            end;
+229            if not missing(disx) and not missing(sale_lag) then do;
+230                disx_y = disx / at_lag;
+231                disx_x1 = inv_at;
+232                disx_x2 = sale_lag / at_lag;
+233            end;
+234        run;
+
+NOTE: There were 135561 observations read from the data set WORK.COMP_LAGS.
+NOTE: The data set WORK.AUX_INPUTS has 125582 observations and 65 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+235        
+236        /* Estimate four no-intercept support equations on the full nonfinancial pool. */
+237        proc sql;
+238            create table n_da as select sic2, fyear, count(*) as n
+239            from aux_inputs where nmiss(da_y, da_x1, da_x2, da_x3)=0
+240            group by sic2, fyear;
+NOTE: Table WORK.N_DA created, with 1347 rows and 3 columns.
+
+241            create table n_cfo as select sic2, fyear, count(*) as n
+242            from aux_inputs where nmiss(cfo_y, cfo_x1, cfo_x2, cfo_x3)=0
+243            group by sic2, fyear;
+NOTE: Table WORK.N_CFO created, with 1347 rows and 3 columns.
+
+244            create table n_prod as select sic2, fyear, count(*) as n
+245            from aux_inputs where nmiss(prod_y, prod_x1, prod_x2, prod_x3, prod_x4)=0
+246            group by sic2, fyear;
+NOTE: Table WORK.N_PROD created, with 1363 rows and 3 columns.
+
+247            create table n_disx as select sic2, fyear, count(*) as n
+248            from aux_inputs where nmiss(disx_y, disx_x1, disx_x2)=0
+249            group by sic2, fyear;
+NOTE: Table WORK.N_DISX created, with 1359 rows and 3 columns.
+
+250        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.16 seconds
+      cpu time            0.25 seconds
+      
+
+251        
+252        proc sort data=aux_inputs out=aux_sorted; by sic2 fyear; run;
+
+NOTE: There were 125582 observations read from the data set WORK.AUX_INPUTS.
+NOTE: The data set WORK.AUX_SORTED has 125582 observations and 65 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.10 seconds
+      cpu time            0.10 seconds
+      
+
+253        proc sort data=n_da; by sic2 fyear; run;
+
+9                                                          The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+254        proc sort data=n_cfo; by sic2 fyear; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+255        proc sort data=n_prod; by sic2 fyear; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+256        proc sort data=n_disx; by sic2 fyear; run;
+
+NOTE: Input data set is already sorted, no sorting done.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+257        data da_fit_input; merge aux_sorted(in=a) n_da(in=b); by sic2 fyear; if a and b and n >= 8 and nmiss(da_y, da_x1, da_x2,
+257      ! da_x3)=0; run;
+
+NOTE: There were 125582 observations read from the data set WORK.AUX_SORTED.
+NOTE: There were 1347 observations read from the data set WORK.N_DA.
+NOTE: The data set WORK.DA_FIT_INPUT has 117109 observations and 66 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.04 seconds
+      
+
+258        data cfo_fit_input; merge aux_sorted(in=a) n_cfo(in=b); by sic2 fyear; if a and b and n >= 8 and nmiss(cfo_y, cfo_x1,
+258      ! cfo_x2, cfo_x3)=0; run;
+
+NOTE: There were 125582 observations read from the data set WORK.AUX_SORTED.
+NOTE: There were 1347 observations read from the data set WORK.N_CFO.
+NOTE: The data set WORK.CFO_FIT_INPUT has 117894 observations and 66 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+259        data prod_fit_input; merge aux_sorted(in=a) n_prod(in=b); by sic2 fyear; if a and b and n >= 8 and nmiss(prod_y, prod_x1,
+259      !  prod_x2, prod_x3, prod_x4)=0; run;
+
+NOTE: There were 125582 observations read from the data set WORK.AUX_SORTED.
+NOTE: There were 1363 observations read from the data set WORK.N_PROD.
+NOTE: The data set WORK.PROD_FIT_INPUT has 112811 observations and 66 variables.
+10                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.07 seconds
+      
+
+260        data disx_fit_input; merge aux_sorted(in=a) n_disx(in=b); by sic2 fyear; if a and b and n >= 8 and nmiss(disx_y, disx_x1,
+260      !  disx_x2)=0; run;
+
+NOTE: There were 125582 observations read from the data set WORK.AUX_SORTED.
+NOTE: There were 1359 observations read from the data set WORK.N_DISX.
+NOTE: The data set WORK.DISX_FIT_INPUT has 106940 observations and 66 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+261        
+262        ods listing close;
+263        ods output ANOVA=anova_da;
+264        proc reg data=da_fit_input;
+265            by sic2 fyear;
+266            model da_y = da_x1 da_x2 da_x3 / noint;
+267            output out=res_da r=da_res;
+268        run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.27 seconds
+      
+NOTE: The data set WORK.ANOVA_DA has 3384 observations and 10 variables.
+NOTE: The data set WORK.RES_DA has 117109 observations and 67 variables.
+
+269        quit;
+270        
+271        ods output ANOVA=anova_cfo;
+272        proc reg data=cfo_fit_input;
+273            by sic2 fyear;
+274            model cfo_y = cfo_x1 cfo_x2 cfo_x3 / noint;
+275            output out=res_cfo r=cfo_res;
+276        run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.25 seconds
+      cpu time            0.26 seconds
+      
+NOTE: The data set WORK.ANOVA_CFO has 3387 observations and 10 variables.
+NOTE: The data set WORK.RES_CFO has 117894 observations and 67 variables.
+
+277        quit;
+278        
+279        ods output ANOVA=anova_prod;
+280        proc reg data=prod_fit_input;
+281            by sic2 fyear;
+282            model prod_y = prod_x1 prod_x2 prod_x3 prod_x4 / noint;
+283            output out=res_prod r=prod_res;
+284        run;
+11                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.26 seconds
+      cpu time            0.26 seconds
+      
+NOTE: The data set WORK.ANOVA_PROD has 3414 observations and 10 variables.
+NOTE: The data set WORK.RES_PROD has 112811 observations and 67 variables.
+
+285        quit;
+286        
+287        ods output ANOVA=anova_disx;
+288        proc reg data=disx_fit_input;
+289            by sic2 fyear;
+290            model disx_y = disx_x1 disx_x2 / noint;
+291            output out=res_disx r=disx_res;
+292        run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.24 seconds
+      cpu time            0.25 seconds
+      
+NOTE: The data set WORK.ANOVA_DISX has 3408 observations and 10 variables.
+NOTE: The data set WORK.RES_DISX has 106940 observations and 67 variables.
+
+293        quit;
+294        ods listing;
+295        
+296        data rank_da; set anova_da; if Source='Model'; rank_da=DF; keep sic2 fyear rank_da; run;
+
+NOTE: There were 3384 observations read from the data set WORK.ANOVA_DA.
+NOTE: The data set WORK.RANK_DA has 1128 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+297        data rank_cfo; set anova_cfo; if Source='Model'; rank_cfo=DF; keep sic2 fyear rank_cfo; run;
+
+NOTE: There were 3387 observations read from the data set WORK.ANOVA_CFO.
+NOTE: The data set WORK.RANK_CFO has 1129 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+298        data rank_prod; set anova_prod; if Source='Model'; rank_prod=DF; keep sic2 fyear rank_prod; run;
+
+NOTE: There were 3414 observations read from the data set WORK.ANOVA_PROD.
+NOTE: The data set WORK.RANK_PROD has 1138 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+299        data rank_disx; set anova_disx; if Source='Model'; rank_disx=DF; keep sic2 fyear rank_disx; run;
+
+12                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+NOTE: There were 3408 observations read from the data set WORK.ANOVA_DISX.
+NOTE: The data set WORK.RANK_DISX has 1136 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+300        proc sql;
+301            create table valid_da as
+302            select n.sic2, n.fyear, n.n, r.rank_da
+303            from n_da as n left join rank_da as r on n.sic2=r.sic2 and n.fyear=r.fyear;
+NOTE: Table WORK.VALID_DA created, with 1347 rows and 4 columns.
+
+304            create table valid_cfo as
+305            select n.sic2, n.fyear, n.n, r.rank_cfo
+306            from n_cfo as n left join rank_cfo as r on n.sic2=r.sic2 and n.fyear=r.fyear;
+NOTE: Table WORK.VALID_CFO created, with 1347 rows and 4 columns.
+
+307            create table valid_prod as
+308            select n.sic2, n.fyear, n.n, r.rank_prod
+309            from n_prod as n left join rank_prod as r on n.sic2=r.sic2 and n.fyear=r.fyear;
+NOTE: Table WORK.VALID_PROD created, with 1363 rows and 4 columns.
+
+310            create table valid_disx as
+311            select n.sic2, n.fyear, n.n, r.rank_disx
+312            from n_disx as n left join rank_disx as r on n.sic2=r.sic2 and n.fyear=r.fyear;
+NOTE: Table WORK.VALID_DISX created, with 1359 rows and 4 columns.
+
+313            select 'DA' as equation length=4, count(*) as groups_n8,
+314                   sum(rank_da=3) as full_rank_groups, sum(rank_da ne 3 or missing(rank_da)) as dropped_rank_groups
+315            from valid_da where n >= 8;
+316            select 'CFO' as equation length=4, count(*) as groups_n8,
+317                   sum(rank_cfo=3) as full_rank_groups, sum(rank_cfo ne 3 or missing(rank_cfo)) as dropped_rank_groups
+318            from valid_cfo where n >= 8;
+319            select 'PROD' as equation length=4, count(*) as groups_n8,
+320                   sum(rank_prod=4) as full_rank_groups, sum(rank_prod ne 4 or missing(rank_prod)) as dropped_rank_groups
+321            from valid_prod where n >= 8;
+322            select 'DISX' as equation length=4, count(*) as groups_n8,
+323                   sum(rank_disx=2) as full_rank_groups, sum(rank_disx ne 2 or missing(rank_disx)) as dropped_rank_groups
+324            from valid_disx where n >= 8;
+325        quit;
+NOTE: The PROCEDURE SQL printed pages 47-50.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+326        
+327        proc sql;
+328            create table da_resid as select r.gvkey, r.fyear, r.da_res
+329            from res_da as r inner join valid_da as v
+330              on r.sic2=v.sic2 and r.fyear=v.fyear
+331            where v.n >= 8 and v.rank_da=3;
+NOTE: Table WORK.DA_RESID created, with 117109 rows and 3 columns.
+
+332            create table cfo_resid as select r.gvkey, r.fyear, r.cfo_res
+333            from res_cfo as r inner join valid_cfo as v
+334              on r.sic2=v.sic2 and r.fyear=v.fyear
+13                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+335            where v.n >= 8 and v.rank_cfo=3;
+NOTE: Table WORK.CFO_RESID created, with 117851 rows and 3 columns.
+
+336            create table prod_resid as select r.gvkey, r.fyear, r.prod_res
+337            from res_prod as r inner join valid_prod as v
+338              on r.sic2=v.sic2 and r.fyear=v.fyear
+339            where v.n >= 8 and v.rank_prod=4;
+NOTE: Table WORK.PROD_RESID created, with 112768 rows and 3 columns.
+
+340            create table disx_resid as select r.gvkey, r.fyear, r.disx_res
+341            from res_disx as r inner join valid_disx as v
+342              on r.sic2=v.sic2 and r.fyear=v.fyear
+343            where v.n >= 8 and v.rank_disx=2;
+NOTE: Table WORK.DISX_RESID created, with 106940 rows and 3 columns.
+
+344        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.07 seconds
+      
+
+345        proc sort data=comp_lags; by gvkey fyear; run;
+
+NOTE: There were 135561 observations read from the data set WORK.COMP_LAGS.
+NOTE: The data set WORK.COMP_LAGS has 135561 observations and 40 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.07 seconds
+      cpu time            0.06 seconds
+      
+
+346        proc sort data=da_resid; by gvkey fyear; run;
+
+NOTE: There were 117109 observations read from the data set WORK.DA_RESID.
+NOTE: The data set WORK.DA_RESID has 117109 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.03 seconds
+      
+
+347        proc sort data=cfo_resid; by gvkey fyear; run;
+
+NOTE: There were 117851 observations read from the data set WORK.CFO_RESID.
+NOTE: The data set WORK.CFO_RESID has 117851 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+348        proc sort data=prod_resid; by gvkey fyear; run;
+
+NOTE: There were 112768 observations read from the data set WORK.PROD_RESID.
+NOTE: The data set WORK.PROD_RESID has 112768 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+349        proc sort data=disx_resid; by gvkey fyear; run;
+14                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+
+NOTE: There were 106940 observations read from the data set WORK.DISX_RESID.
+NOTE: The data set WORK.DISX_RESID has 106940 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.02 seconds
+      
+
+350        data comp_proxy;
+351            merge comp_lags(in=a) da_resid cfo_resid prod_resid disx_resid;
+352            by gvkey fyear;
+353            if a;
+354            r_cfo = cfo_res;
+355            r_prod = prod_res;
+356            r_disx = disx_res;
+357            if not missing(r_prod) and not missing(r_disx) then rm1 = r_prod - r_disx;
+358            if not missing(r_cfo) and not missing(r_disx) then rm2 = -r_cfo - r_disx;
+359        run;
+
+NOTE: There were 135561 observations read from the data set WORK.COMP_LAGS.
+NOTE: There were 117109 observations read from the data set WORK.DA_RESID.
+NOTE: There were 117851 observations read from the data set WORK.CFO_RESID.
+NOTE: There were 112768 observations read from the data set WORK.PROD_RESID.
+NOTE: There were 106940 observations read from the data set WORK.DISX_RESID.
+NOTE: The data set WORK.COMP_PROXY has 135561 observations and 49 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.09 seconds
+      cpu time            0.10 seconds
+      
+
+360        
+361        /* Use dated Compustat security-ID history; FUNDA.CUSIP has no effective dates. */
+362        data secid_period;
+363            set compsec.sec_idhist(keep=gvkey iid item itemvalue efffrom effthru);
+364            if (missing(efffrom) or efffrom <= '31DEC2006'd)
+365               and (missing(effthru) or effthru >= '01JAN1987'd);
+366            format efffrom effthru date9.;
+367        run;
+
+NOTE: There were 861868 observations read from the data set COMPSEC.SEC_IDHIST.
+NOTE: The data set WORK.SECID_PERIOD has 333456 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.03 seconds
+      cpu time            0.03 seconds
+      
+
+368        title "Dated Compustat security identifier items, 1987-2006";
+369        proc freq data=secid_period;
+370            tables item / missing;
+371        run;
+
+NOTE: There were 333456 observations read from the data set WORK.SECID_PERIOD.
+NOTE: The PROCEDURE FREQ printed page 51.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+15                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+372        proc sql;
+373            select sum(efffrom=.B) as begin_open_b,
+374                   sum(effthru=.E) as end_open_e,
+375                   sum(missing(efffrom) and efffrom ne .B) as other_missing_begin,
+376                   sum(missing(effthru) and effthru ne .E) as other_missing_end
+377            from secid_period;
+378        quit;
+NOTE: The PROCEDURE SQL printed page 52.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+379        data sec_id_hist;
+380            length hist_cusip $20 hist_cusip6 $6;
+381            set secid_period;
+382            if strip(upcase(item)) = 'CUSIP';
+383            hist_cusip = compress(strip(itemvalue), ' -');
+384            if lengthn(hist_cusip) >= 6 then hist_cusip6 = substr(hist_cusip,1,6);
+385            else call missing(hist_cusip6);
+386        run;
+
+NOTE: There were 333456 observations read from the data set WORK.SECID_PERIOD.
+NOTE: The data set WORK.SEC_ID_HIST has 63419 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.02 seconds
+      
+
+387        
+388        /* All completed U.S. common IPOs and SEOs define the nonissuer exclusion pool. */
+389        proc sql;
+390            create table issue_events as
+391            select master_deal_no, master_deal_date, issue_year, sdc_cusip6, sdc_cusip9, ipo
+392            from sdc_events where any_equity_issue;
+NOTE: Table WORK.ISSUE_EVENTS created, with 15571 rows and 6 columns.
+
+393            select count(*) as issue_events, count(distinct master_deal_no) as unique_deal_ids
+394            from issue_events;
+395        quit;
+NOTE: The PROCEDURE SQL printed page 53.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.06 seconds
+      
+
+396        proc sql;
+397            create table link_pairs as
+398            select e.master_deal_no, e.master_deal_date, e.issue_year,
+399                   e.sdc_cusip6, e.sdc_cusip9,
+400                   c.gvkey, c.iid, c.efffrom, c.effthru,
+401                   (not missing(e.sdc_cusip9)
+402                    and e.sdc_cusip9=substr(c.hist_cusip,1,9)) as exact9
+403            from issue_events as e inner join sec_id_hist as c
+404              on c.hist_cusip6=e.sdc_cusip6
+405             and (c.efffrom <= e.master_deal_date or c.efffrom=.B or c.efffrom=.)
+406             and (c.effthru >= e.master_deal_date or c.effthru=.E or c.effthru=.)
+407            where not missing(e.sdc_cusip6);
+16                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+NOTE: Table WORK.LINK_PAIRS created, with 14731 rows and 10 columns.
+
+408            create table link_exact as
+409            select master_deal_no, max(exact9) as has_exact9
+410            from link_pairs group by master_deal_no;
+NOTE: Table WORK.LINK_EXACT created, with 13679 rows and 2 columns.
+
+411            create table issue_link as
+412            select p.master_deal_no,
+413                   count(distinct p.gvkey) as n_gvkeys,
+414                   min(p.gvkey) as gvkey,
+415                   max(p.exact9) as exact9,
+416                   min(p.efffrom) as link_efffrom format=date9.
+417            from link_pairs as p inner join link_exact as q
+418              on p.master_deal_no=q.master_deal_no
+419             and (q.has_exact9=0 or p.exact9=1)
+420            group by p.master_deal_no;
+NOTE: Table WORK.ISSUE_LINK created, with 13679 rows and 5 columns.
+
+421            create table issue_link_audit as
+422            select e.master_deal_no, l.n_gvkeys, l.exact9
+423            from issue_events as e left join issue_link as l
+424              on e.master_deal_no=l.master_deal_no;
+NOTE: Table WORK.ISSUE_LINK_AUDIT created, with 15571 rows and 3 columns.
+
+425            select count(*) as issue_events,
+426                   count(distinct master_deal_no) as unique_deal_ids,
+427                   sum(missing(n_gvkeys)) as no_dated_gvkey,
+428                   sum(n_gvkeys=1) as unique_gvkey,
+429                   sum(n_gvkeys>1) as ambiguous,
+430                   sum(exact9) as selected_exact9
+431            from issue_link_audit;
+432        quit;
+NOTE: The PROCEDURE SQL printed page 54.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.05 seconds
+      cpu time            0.05 seconds
+      
+
+433        
+434        proc sql;
+435            create table issuer_ids as
+436            select distinct l.gvkey
+437            from issue_link as l inner join issue_events as e
+438              on l.master_deal_no=e.master_deal_no
+439            where l.n_gvkeys=1;
+NOTE: Table WORK.ISSUER_IDS created, with 8202 rows and 1 columns.
+
+440            create table target_events as
+441            select * from sdc_events where target_event;
+NOTE: Table WORK.TARGET_EVENTS created, with 5249 rows and 52 columns.
+
+442            create table target_link as
+443            select t.*, l.gvkey as issuer_gvkey, l.n_gvkeys as n_link_gvkeys,
+444                   l.exact9 as link_exact9, l.link_efffrom
+445            from target_events as t left join issue_link as l
+446              on t.master_deal_no=l.master_deal_no;
+NOTE: Table WORK.TARGET_LINK created, with 5249 rows and 56 columns.
+17                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+
+447            create table target_precount_base as
+448            select t.master_deal_no,
+449                   count(distinct c.fyear) as n_pre_filing_years,
+450                   max(c.fyear) as latest_pre_fyear,
+451                   max(c.datadate) as latest_pre_datadate format=date9.
+452            from target_link as t left join comp_statements as c
+453              on c.gvkey=t.issuer_gvkey and c.datadate < t.filingdate
+454            group by t.master_deal_no;
+NOTE: Table WORK.TARGET_PRECOUNT_BASE created, with 5249 rows and 4 columns.
+
+455            create table target_precount as
+456            select b.master_deal_no, b.n_pre_filing_years, b.latest_pre_fyear,
+457                   b.latest_pre_datadate,
+458                   count(distinct case
+459                     when c.fyear >= b.latest_pre_fyear - 3
+460                      and c.fyear <= b.latest_pre_fyear then c.fyear else . end)
+461                     as n_latest_4_prior_fyears,
+462                   min(case
+463                     when c.fyear >= b.latest_pre_fyear - 3
+464                      and c.fyear <= b.latest_pre_fyear then c.datadate else . end)
+465                     as oldest_latest4_datadate format=date9.
+466            from target_precount_base as b
+467              inner join target_link as t on t.master_deal_no=b.master_deal_no
+468              left join comp_statements as c
+469                on c.gvkey=t.issuer_gvkey and c.datadate < t.filingdate
+470            group by b.master_deal_no, b.n_pre_filing_years, b.latest_pre_fyear,
+471                     b.latest_pre_datadate;
+NOTE: Table WORK.TARGET_PRECOUNT created, with 5249 rows and 6 columns.
+
+472            title "Filing-date history counts versus four latest consecutive fiscal years";
+473            select t.issue_year, count(*) as unique_linked_offers,
+474                   sum(h.n_pre_filing_years >= 4) as any_four_prior_fy,
+475                   sum(h.n_latest_4_prior_fyears = 4) as four_latest_consecutive_fy,
+476                   sum(h.n_pre_filing_years >= 4 and h.n_latest_4_prior_fyears < 4)
+477                     as any_four_but_gap_in_latest_four,
+478                   sum(h.n_pre_filing_years >= 4
+479                       and h.latest_pre_fyear < year(t.filingdate)-1)
+480                     as any4_oldlatest,
+481                   sum(h.n_latest_4_prior_fyears=4
+482                       and t.filingdate-h.oldest_latest4_datadate > 5*365)
+483                     as latest4_more_than_five_years_old,
+484                   min(h.latest_pre_fyear) as min_latest_pre_fyear,
+485                   max(h.latest_pre_fyear) as max_latest_pre_fyear,
+486                   min(h.latest_pre_datadate) format=date9. as earliest_latest_pre_date,
+487                   max(h.latest_pre_datadate) format=date9. as latest_pre_date,
+488                   min(h.oldest_latest4_datadate) format=date9. as earliest_fourth_latest_date,
+489                   max(h.oldest_latest4_datadate) format=date9. as latest_fourth_latest_date
+490            from target_link as t left join target_precount as h
+491              on t.master_deal_no=h.master_deal_no
+492            where t.n_link_gvkeys=1
+493            group by t.issue_year order by t.issue_year;
+494        quit;
+NOTE: The PROCEDURE SQL printed pages 55-56.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.18 seconds
+      cpu time            0.26 seconds
+      
+18                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+
+495        proc sql;
+496            create table pre_history_age as
+497            select t.issue_year, t.master_deal_no, t.filingdate,
+498                   h.oldest_latest4_datadate,
+499                   t.filingdate-h.oldest_latest4_datadate as oldest_of_four_age_days
+500            from target_link as t inner join target_precount as h
+501              on t.master_deal_no=h.master_deal_no
+502            where t.n_link_gvkeys=1 and h.n_latest_4_prior_fyears=4;
+NOTE: Table WORK.PRE_HISTORY_AGE created, with 3858 rows and 5 columns.
+
+503        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+504        proc sort data=pre_history_age; by issue_year; run;
+
+NOTE: There were 3858 observations read from the data set WORK.PRE_HISTORY_AGE.
+NOTE: The data set WORK.PRE_HISTORY_AGE has 3858 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+505        title "Age of fourth-latest consecutive annual statement before filing date";
+506        proc means data=pre_history_age n mean min p25 median p75 p95 max;
+507            by issue_year;
+508            var oldest_of_four_age_days;
+509        run;
+
+NOTE: There were 3858 observations read from the data set WORK.PRE_HISTORY_AGE.
+NOTE: The PROCEDURE MEANS printed pages 57-60.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+510        
+511        /* Construct year-zero and year-one ROA, plus the source-unspecified growth rates. */
+512        proc sql;
+513            create table comp_panel as
+514            select t.gvkey, t.fyear, t.curcd, t.datadate, t.sich,
+515                   t.at_lag, t.at, t.ib, n.ib as ib_next,
+516                   t.sale, t.sale_lag, t.capx, t.capx_lag,
+517                   t.da_res, t.r_cfo, t.r_prod, t.r_disx, t.rm1, t.rm2,
+518                   case when t.at_lag > 0 and not missing(t.ib) then t.ib/t.at_lag else . end as roa0,
+519                   case when t.at > 0 and not missing(n.ib) then n.ib/t.at else . end as roa1,
+520                   case when t.sale_lag > 0 and not missing(t.sale) and not missing(t.sale_lag)
+521                        then (t.sale-t.sale_lag)/t.sale_lag else . end as sale_growth,
+522                   case when t.capx_lag > 0 and not missing(t.capx) and not missing(t.capx_lag)
+523                        then (t.capx-t.capx_lag)/t.capx_lag else . end as capex_growth
+524            from comp_proxy as t inner join comp_statements as n
+525              on n.gvkey=t.gvkey and n.fyear=t.fyear+1
+526            where t.fyear >= 1987 and t.fyear <= 2006
+527              and t.curcd='USD' and t.curcd_lag='USD' and n.curcd='USD'
+528              and not missing(t.sich) and t.sich >= 100 and t.sich <= 9999
+19                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+529              and not (t.sich >= 6000 and t.sich <= 6999);
+NOTE: Table WORK.COMP_PANEL created, with 115636 rows and 23 columns.
+
+530            title "Early and later cohort Compustat coverage at year 0 and year 1";
+531            select t.issue_year, count(*) as unique_linked_offers,
+532                   sum(not missing(c.gvkey)) as has_y0_standard,
+533                   sum(not missing(n.gvkey)) as has_y1_standard,
+534                   sum(not missing(f.gvkey)) as has_y0_nonfinancial,
+535                   sum(c.curcd='USD') as y0_usd,
+536                   sum(n.curcd='USD') as y1_usd,
+537                   sum(l.curcd_lag='USD') as y0_lag_usd,
+538                   sum(l.at_lag>0) as positive_lag_assets,
+539                   sum(not missing(p0.gvkey)) as has_y0_proxy_row,
+540                   sum(not missing(p1.gvkey)) as has_y1_proxy_row,
+541                   sum(not missing(p.gvkey)) as y0_y1_panel_row,
+542                   sum(not missing(p.roa0)) as observed_roa0,
+543                   sum(not missing(p.roa1)) as observed_roa1,
+544                   sum(nmiss(p.da_res,p.r_cfo,p.r_prod,p.r_disx,p.rm1,p.rm2)=0)
+545                     as all_year0_metrics
+546            from target_link as t
+547              left join comp_statements as c
+548                on c.gvkey=t.issuer_gvkey and c.fyear=t.issue_year
+549              left join comp_statements as n
+550                on n.gvkey=t.issuer_gvkey and n.fyear=t.issue_year+1
+551              left join comp_annual as f
+552                on f.gvkey=t.issuer_gvkey and f.fyear=t.issue_year
+553              left join comp_lags as l
+554                on l.gvkey=t.issuer_gvkey and l.fyear=t.issue_year
+555              left join comp_proxy as p0
+556                on p0.gvkey=t.issuer_gvkey and p0.fyear=t.issue_year
+557              left join comp_proxy as p1
+558                on p1.gvkey=t.issuer_gvkey and p1.fyear=t.issue_year+1
+559              left join comp_panel as p
+560                on p.gvkey=t.issuer_gvkey and p.fyear=t.issue_year
+561            where t.n_link_gvkeys=1
+562            group by t.issue_year order by t.issue_year;
+563            create table issuer_year as
+564            select t.master_deal_no, t.issue_year as offer_year, t.master_deal_date,
+565                   t.filingdate, t.issuer_gvkey, t.sdc_cusip6, t.sdc_cusip9,
+566                   t.link_efffrom, t.link_exact9, h.n_pre_filing_years,
+567                   h.latest_pre_fyear, h.n_latest_4_prior_fyears,
+568                   p.at_lag as issuer_at_lag, p.roa0 as issuer_roa0,
+569                   p.roa1 as issuer_roa1, p.da_res as da, p.r_cfo, p.r_prod,
+570                   p.r_disx, p.rm1, p.rm2, p.sale_growth, p.capex_growth,
+571                   p.datadate as issuer_datadate
+572            from target_link as t inner join comp_panel as p
+573              on p.gvkey=t.issuer_gvkey and p.fyear=t.issue_year
+574            inner join target_precount as h
+575              on h.master_deal_no=t.master_deal_no
+576            where t.n_link_gvkeys=1 and h.n_latest_4_prior_fyears = 4
+577              and not missing(p.at_lag) and p.at_lag > 0
+578              and not missing(p.roa0) and not missing(p.roa1)
+579              and nmiss(p.da_res,p.r_cfo,p.r_prod,p.r_disx,p.rm1,p.rm2)=0;
+NOTE: Table WORK.ISSUER_YEAR created, with 2071 rows and 24 columns.
+
+580            select t.issue_year, count(*) as screened_offers,
+581                   sum(t.n_link_gvkeys=1) as unique_dated_links,
+582                   sum(t.n_link_gvkeys>1) as ambiguous_links,
+20                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+583                   sum(h.n_pre_filing_years >= 4) as four_pre_filing_years,
+584                   sum(h.n_latest_4_prior_fyears=4) as four_consecutive_pre_fyears,
+585                   sum(not missing(p.gvkey)) as year0_year1_rows,
+586                   sum(not missing(p.gvkey) and h.n_latest_4_prior_fyears=4) as issuer_year_rows,
+587                   sum(not missing(p.gvkey) and h.n_latest_4_prior_fyears=4
+588                       and nmiss(p.da_res,p.r_cfo,p.r_prod,p.r_disx,p.rm1,p.rm2)=0)
+589                     as issuer_year_all_metrics
+590            from target_link as t
+591            left join target_precount as h on t.master_deal_no=h.master_deal_no
+592            left join comp_panel as p on p.gvkey=t.issuer_gvkey and p.fyear=t.issue_year
+593            group by t.issue_year order by t.issue_year;
+594        quit;
+NOTE: The PROCEDURE SQL printed pages 61-63.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           1.31 seconds
+      cpu time            1.45 seconds
+      
+
+595        
+596        /* Match the nearest year-zero ROA among nonissuers with prior assets +/- 10%. */
+597        proc sql;
+598            create table match_pairs as
+599            select i.master_deal_no, i.issuer_gvkey, i.offer_year,
+600                   i.issuer_at_lag,
+601                   c.gvkey as control_gvkey, c.roa0 as control_roa0,
+602                   c.roa1 as control_roa1, c.at_lag as control_at_lag,
+603                   abs(c.roa0-i.issuer_roa0) as roa_gap
+604            from issuer_year as i, comp_panel as c
+605            where c.fyear=i.offer_year
+606              and c.gvkey ne i.issuer_gvkey
+607              and c.gvkey not in (select gvkey from issuer_ids)
+608              and c.at_lag >= 0.90*i.issuer_at_lag
+609              and c.at_lag <= 1.10*i.issuer_at_lag
+610              and not missing(c.roa0) and not missing(c.roa1);
+NOTE: Table WORK.MATCH_PAIRS created, with 129603 rows and 9 columns.
+
+611            create table match_counts as
+612            select master_deal_no, count(*) as candidate_controls,
+613                   min(roa_gap) as closest_roa_gap
+614            from match_pairs group by master_deal_no;
+NOTE: Table WORK.MATCH_COUNTS created, with 2070 rows and 3 columns.
+
+615        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.20 seconds
+      cpu time            0.22 seconds
+      
+
+616        proc sort data=match_pairs out=match_pairs_sorted;
+617            by master_deal_no roa_gap control_gvkey;
+618        run;
+
+NOTE: There were 129603 observations read from the data set WORK.MATCH_PAIRS.
+NOTE: The data set WORK.MATCH_PAIRS_SORTED has 129603 observations and 9 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.04 seconds
+      cpu time            0.05 seconds
+      
+21                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+
+619        data match_one;
+620            set match_pairs_sorted;
+621            by master_deal_no;
+622            if first.master_deal_no;
+623        run;
+
+NOTE: There were 129603 observations read from the data set WORK.MATCH_PAIRS_SORTED.
+NOTE: The data set WORK.MATCH_ONE has 2070 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+624        title "Year-zero prior assets for selected issuer-control matches, USD millions";
+625        proc means data=match_one n mean min p1 p25 median p75 p99 max;
+626            var issuer_at_lag control_at_lag;
+627        run;
+
+NOTE: There were 2070 observations read from the data set WORK.MATCH_ONE.
+NOTE: The PROCEDURE MEANS printed page 64.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+628        
+629        proc sql;
+630            create table final_events as
+631            select i.master_deal_no, i.offer_year, i.master_deal_date,
+632                   i.filingdate, i.issuer_gvkey, m.control_gvkey,
+633                   i.sdc_cusip6, i.link_exact9, i.link_efffrom,
+634                   i.n_pre_filing_years, m.roa_gap as match_roa_gap,
+635                   i.da, i.r_cfo, i.r_prod, i.r_disx, i.rm1, i.rm2,
+636                   i.sale_growth, i.capex_growth,
+637                   (i.issuer_roa1-i.issuer_roa0)-(m.control_roa1-m.control_roa0) as droa1
+638            from issuer_year as i inner join match_one as m
+639              on i.master_deal_no=m.master_deal_no;
+NOTE: Table WORK.FINAL_EVENTS created, with 2070 rows and 20 columns.
+
+640        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+641        
+642        data out.seo_earnings_mgmt;
+643            set final_events;
+644            label droa1='Adjusted change in ROA in year 1'
+645                  da='Discretionary accruals'
+646                  r_cfo='Abnormal CFO'
+647                  r_prod='Abnormal production costs'
+648                  r_disx='Abnormal discretionary expenses'
+649                  rm1='RM_1'
+650                  rm2='RM_2'
+651                  sale_growth='Sales growth'
+652                  capex_growth='Capex growth';
+22                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+653        run;
+
+NOTE: There were 2070 observations read from the data set WORK.FINAL_EVENTS.
+NOTE: The data set OUT.SEO_EARNINGS_MGMT has 2070 observations and 20 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+654        
+655        /* Count target-stage attrition, model complete cases, and annual rank support. */
+656        proc sql;
+657            select count(*) as sdc_offers,
+658                   sum(n_link_gvkeys=0 or missing(n_link_gvkeys)) as no_dated_comp_link,
+659                   sum(n_link_gvkeys=1) as unique_dated_comp_link,
+660                   sum(n_link_gvkeys>1) as ambiguous_dated_comp_link,
+661                   sum(n_pre_filing_years>=4) as four_prior_statements,
+662                   count(*) as events_before_comp_screen
+663            from target_link as t left join target_precount as h
+664              on t.master_deal_no=h.master_deal_no;
+665            select count(*) as final_events,
+666                   count(distinct master_deal_no) as unique_event_keys,
+667                   count(distinct issuer_gvkey) as issuer_gvkeys,
+668                   count(distinct control_gvkey) as control_gvkeys,
+669                   min(offer_year) as first_offer_year,
+670                   max(offer_year) as last_offer_year,
+671                   sum(not missing(da)) as da_observed,
+672                   sum(not missing(r_cfo)) as cfo_observed,
+673                   sum(not missing(r_prod)) as prod_observed,
+674                   sum(not missing(r_disx)) as disx_observed,
+675                   sum(not missing(rm1)) as rm1_observed,
+676                   sum(not missing(rm2)) as rm2_observed,
+677                   sum(not missing(sale_growth)) as sales_growth_observed,
+678                   sum(not missing(capex_growth)) as capex_growth_observed
+679            from out.seo_earnings_mgmt;
+680            create table t6_counts as
+681            select offer_year, count(*) as n_events,
+682                   sum(nmiss(droa1,da,sale_growth,capex_growth)=0) as n_da,
+683                   sum(nmiss(droa1,r_cfo,da,sale_growth,capex_growth)=0) as n_cfo,
+684                   sum(nmiss(droa1,r_prod,da,sale_growth,capex_growth)=0) as n_prod,
+685                   sum(nmiss(droa1,r_disx,da,sale_growth,capex_growth)=0) as n_disx,
+686                   sum(nmiss(droa1,rm1,da,sale_growth,capex_growth)=0) as n_rm1,
+687                   sum(nmiss(droa1,rm2,da,sale_growth,capex_growth)=0) as n_rm2
+688            from out.seo_earnings_mgmt group by offer_year order by offer_year;
+NOTE: Table WORK.T6_COUNTS created, with 20 rows and 8 columns.
+
+689        quit;
+NOTE: The PROCEDURE SQL printed pages 65-66.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+
+690        title "Table 6 analysis-sample complete cases by offer year";
+691        proc print data=t6_counts noobs; run;
+
+NOTE: There were 20 observations read from the data set WORK.T6_COUNTS.
+NOTE: The PROCEDURE PRINT printed page 67.
+23                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+692        title "Table 6 analysis-variable distributions";
+693        proc means data=out.seo_earnings_mgmt n mean std min p25 median p75 max;
+694            var droa1 da r_cfo r_prod r_disx rm1 rm2 sale_growth capex_growth match_roa_gap;
+695        run;
+
+NOTE: There were 2070 observations read from the data set OUT.SEO_EARNINGS_MGMT.
+NOTE: The PROCEDURE MEANS printed page 68.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+696        
+697        proc sql;
+698            create table t6_da_input as select * from out.seo_earnings_mgmt
+699            where nmiss(droa1,da,sale_growth,capex_growth)=0;
+NOTE: Table WORK.T6_DA_INPUT created, with 2030 rows and 20 columns.
+
+700            create table t6_cfo_input as select * from out.seo_earnings_mgmt
+701            where nmiss(droa1,r_cfo,da,sale_growth,capex_growth)=0;
+NOTE: Table WORK.T6_CFO_INPUT created, with 2030 rows and 20 columns.
+
+702            create table t6_prod_input as select * from out.seo_earnings_mgmt
+703            where nmiss(droa1,r_prod,da,sale_growth,capex_growth)=0;
+NOTE: Table WORK.T6_PROD_INPUT created, with 2030 rows and 20 columns.
+
+704            create table t6_disx_input as select * from out.seo_earnings_mgmt
+705            where nmiss(droa1,r_disx,da,sale_growth,capex_growth)=0;
+NOTE: Table WORK.T6_DISX_INPUT created, with 2030 rows and 20 columns.
+
+706            create table t6_rm1_input as select * from out.seo_earnings_mgmt
+707            where nmiss(droa1,rm1,da,sale_growth,capex_growth)=0;
+NOTE: Table WORK.T6_RM1_INPUT created, with 2030 rows and 20 columns.
+
+708            create table t6_rm2_input as select * from out.seo_earnings_mgmt
+709            where nmiss(droa1,rm2,da,sale_growth,capex_growth)=0;
+NOTE: Table WORK.T6_RM2_INPUT created, with 2030 rows and 20 columns.
+
+710        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      cpu time            0.01 seconds
+      
+
+711        proc sort data=t6_da_input; by offer_year; run;
+
+NOTE: There were 2030 observations read from the data set WORK.T6_DA_INPUT.
+NOTE: The data set WORK.T6_DA_INPUT has 2030 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+24                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+712        proc sort data=t6_cfo_input; by offer_year; run;
+
+NOTE: There were 2030 observations read from the data set WORK.T6_CFO_INPUT.
+NOTE: The data set WORK.T6_CFO_INPUT has 2030 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+713        proc sort data=t6_prod_input; by offer_year; run;
+
+NOTE: There were 2030 observations read from the data set WORK.T6_PROD_INPUT.
+NOTE: The data set WORK.T6_PROD_INPUT has 2030 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+714        proc sort data=t6_disx_input; by offer_year; run;
+
+NOTE: There were 2030 observations read from the data set WORK.T6_DISX_INPUT.
+NOTE: The data set WORK.T6_DISX_INPUT has 2030 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+715        proc sort data=t6_rm1_input; by offer_year; run;
+
+NOTE: There were 2030 observations read from the data set WORK.T6_RM1_INPUT.
+NOTE: The data set WORK.T6_RM1_INPUT has 2030 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+716        proc sort data=t6_rm2_input; by offer_year; run;
+
+NOTE: There were 2030 observations read from the data set WORK.T6_RM2_INPUT.
+NOTE: The data set WORK.T6_RM2_INPUT has 2030 observations and 20 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+717        
+718        ods listing close;
+719        ods output ANOVA=t6_anova_da;
+720        proc reg data=t6_da_input; by offer_year; model droa1=da sale_growth capex_growth; run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+NOTE: The data set WORK.T6_ANOVA_DA has 60 observations and 9 variables.
+
+720      !                                                                                         quit;
+25                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+721        ods output ANOVA=t6_anova_cfo;
+722        proc reg data=t6_cfo_input; by offer_year; model droa1=r_cfo da sale_growth capex_growth; run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+NOTE: The data set WORK.T6_ANOVA_CFO has 60 observations and 9 variables.
+
+722      !                                                                                                quit;
+723        ods output ANOVA=t6_anova_prod;
+724        proc reg data=t6_prod_input; by offer_year; model droa1=r_prod da sale_growth capex_growth; run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.02 seconds
+      
+NOTE: The data set WORK.T6_ANOVA_PROD has 60 observations and 9 variables.
+
+724      !                                                                                                  quit;
+725        ods output ANOVA=t6_anova_disx;
+726        proc reg data=t6_disx_input; by offer_year; model droa1=r_disx da sale_growth capex_growth; run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+NOTE: The data set WORK.T6_ANOVA_DISX has 60 observations and 9 variables.
+
+726      !                                                                                                  quit;
+727        ods output ANOVA=t6_anova_rm1;
+728        proc reg data=t6_rm1_input; by offer_year; model droa1=rm1 da sale_growth capex_growth; run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+NOTE: The data set WORK.T6_ANOVA_RM1 has 60 observations and 9 variables.
+
+728      !                                                                                              quit;
+729        ods output ANOVA=t6_anova_rm2;
+730        proc reg data=t6_rm2_input; by offer_year; model droa1=rm2 da sale_growth capex_growth; run;
+
+NOTE: Interactivity disabled with BY processing.
+NOTE: PROCEDURE REG used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+NOTE: The data set WORK.T6_ANOVA_RM2 has 60 observations and 9 variables.
+
+730      !                                                                                              quit;
+731        ods listing;
+732        
+733        data t6_rank_da; length fit $4; set t6_anova_da; if Source='Model'; rank=DF; fit='DA'; keep offer_year rank fit; run;
+26                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+
+NOTE: There were 60 observations read from the data set WORK.T6_ANOVA_DA.
+NOTE: The data set WORK.T6_RANK_DA has 20 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+734        data t6_rank_cfo; length fit $4; set t6_anova_cfo; if Source='Model'; rank=DF; fit='CFO'; keep offer_year rank fit; run;
+
+NOTE: There were 60 observations read from the data set WORK.T6_ANOVA_CFO.
+NOTE: The data set WORK.T6_RANK_CFO has 20 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+735        data t6_rank_prod; length fit $4; set t6_anova_prod; if Source='Model'; rank=DF; fit='PROD'; keep offer_year rank fit;
+735      ! run;
+
+NOTE: There were 60 observations read from the data set WORK.T6_ANOVA_PROD.
+NOTE: The data set WORK.T6_RANK_PROD has 20 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+736        data t6_rank_disx; length fit $4; set t6_anova_disx; if Source='Model'; rank=DF; fit='DISX'; keep offer_year rank fit;
+736      ! run;
+
+NOTE: There were 60 observations read from the data set WORK.T6_ANOVA_DISX.
+NOTE: The data set WORK.T6_RANK_DISX has 20 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+737        data t6_rank_rm1; length fit $4; set t6_anova_rm1; if Source='Model'; rank=DF; fit='RM1'; keep offer_year rank fit; run;
+
+NOTE: There were 60 observations read from the data set WORK.T6_ANOVA_RM1.
+NOTE: The data set WORK.T6_RANK_RM1 has 20 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+738        data t6_rank_rm2; length fit $4; set t6_anova_rm2; if Source='Model'; rank=DF; fit='RM2'; keep offer_year rank fit; run;
+
+NOTE: There were 60 observations read from the data set WORK.T6_ANOVA_RM2.
+NOTE: The data set WORK.T6_RANK_RM2 has 20 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+739        data t6_rank_all; set t6_rank_da t6_rank_cfo t6_rank_prod t6_rank_disx t6_rank_rm1 t6_rank_rm2; run;
+
+NOTE: There were 20 observations read from the data set WORK.T6_RANK_DA.
+27                                                         The SAS System                     Tuesday, November  3, 2026 09:27:00 AM
+
+NOTE: There were 20 observations read from the data set WORK.T6_RANK_CFO.
+NOTE: There were 20 observations read from the data set WORK.T6_RANK_PROD.
+NOTE: There were 20 observations read from the data set WORK.T6_RANK_DISX.
+NOTE: There were 20 observations read from the data set WORK.T6_RANK_RM1.
+NOTE: There were 20 observations read from the data set WORK.T6_RANK_RM2.
+NOTE: The data set WORK.T6_RANK_ALL has 120 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+740        title "Table 6 annual regressor rank; full rank requires rank equal to slope count";
+741        proc print data=t6_rank_all noobs; run;
+
+NOTE: There were 120 observations read from the data set WORK.T6_RANK_ALL.
+NOTE: The PROCEDURE PRINT printed pages 69-71.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.00 seconds
+      
+
+742        proc sql;
+743            select fit, count(*) as annual_models,
+744                   sum((fit='DA' and rank=3) or (fit ne 'DA' and rank=4)) as full_rank_years
+745            from t6_rank_all group by fit;
+746        quit;
+NOTE: The PROCEDURE SQL printed page 72.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           7.58 seconds
+      cpu time            7.89 seconds
+      
