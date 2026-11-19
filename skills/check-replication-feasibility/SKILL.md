@@ -17,6 +17,8 @@ synthetic-only fits have `no_observed_data_required`. The independent
 
 ## Prepare one paper
 
+Build a resource catalog for the current installation before preparing the paper. [Catalog setup](../../README.md#build-a-local-resource-catalog)
+
 From the repository root, freeze the two matching paper records and their pinned PDF and reading. Use the printed item for the temporal audit, probes and finalization. A new paper can use explicitly supplied records and an optional source manifest.
 
 ```sh

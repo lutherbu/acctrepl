@@ -162,6 +162,9 @@ def assign(paper_id, role):
                 raise ValueError("Frozen campaign input changed: " + relative)
         if (n == 1) != (role == "build"):
             raise ValueError("First assignment must build; subsequent assignments review or repair")
+        catalog = layout.active_path('catalog', PROJECT)
+        if not catalog.is_file():
+            raise ValueError(f"Build your local resource catalog before assigning a paper: {catalog}. See the README section on building a resource catalog.")
         attempt_root = RUNS / 'papers' if layout.manifest(PROJECT) else PAPERS
         attempt = attempt_root / paper_id / f"attempt_{n:02d}"
         attempt.mkdir(parents=True, exist_ok=False)
@@ -180,7 +183,6 @@ def assign(paper_id, role):
             if sha(path) != refs[key]['sha256']:
                 raise ValueError('Changed paper source: ' + str(path))
             sources.append(path)
-        catalog = layout.active_path('catalog', PROJECT)
         sources.append(catalog)
         old = dict(title=p['title'], journal=p['journal'], doi=model.get('doi'), models=model['models'],
                    sample_extraction=read(sample), reading_json=refs['reading']['path'], pdf_path=refs['pdf']['path'],

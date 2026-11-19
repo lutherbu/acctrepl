@@ -17,7 +17,7 @@ execution-readiness result.
 
 ## Prepare an author package
 
-Use the supplied paper identity and an authorized author ZIP. The helper prepares a local study directory, its source inventory and its work item.
+Use the supplied paper identity, an authorized author ZIP and your installation’s resource catalog. The helper prepares a local study directory, its source inventory and its work item. It reads `output/feasibility_reproduction/resources/catalog.json` by default. Use `--catalog FILE` to select another snapshot. [Catalog setup](../../README.md#build-a-local-resource-catalog)
 
 ```sh
 python3 skills/check-execution-feasibility/scripts/feasibility.py prepare --package-id PACKAGE_ID --archive papers/packages/AUTHOR.zip --title "Paper title" --doi DOI --output .local/assessments/PACKAGE_ID

@@ -173,9 +173,12 @@ def build_catalog(common, aliases_path):
     for dataset in result["datasets"]:
         bypath.setdefault(dataset["path"], []).append(dataset["dataset"])
     result["physical_files"] = [{"path": p, "datasets": names} for p, names in sorted(bypath.items())]
+    qualified_librefs = {d["libref"] for d in result["datasets"]}
+    # Standard PROC CONTENTS listings can omit site-specific library banners.
+    research_librefs = qualified_librefs.union(name.upper() for name in result["report_libraries"]) - {"SASHELP"}
     result["counts"] = {"datasets": len(result["datasets"]), "physical_files": len(bypath),
-                        "research_libraries": len(result["report_libraries"]),
-                        "qualified_librefs": len({d["libref"] for d in result["datasets"]})}
+                        "research_libraries": len(research_librefs),
+                        "qualified_librefs": len(qualified_librefs)}
     return result
 
 

@@ -432,17 +432,38 @@ class ResourceTests(unittest.TestCase):
         self.assertEqual(result["rows_read"], 1)
         self.assertFalse(result["coverage_verified"])
 
-    def test_real_catalog_wrapped_names_aliases_and_declared_counts(self):
-        catalog = json.loads((ROOT/'output/feasibility_reproduction/resources/catalog.json').read_bytes())
-        datasets = {d["dataset"]: d for d in catalog["datasets"]}
-        for d in datasets.values():
-            self.assertEqual(len(d["variables"]), d["declared_variables"])
-            self.assertEqual(len({v["name"].casefold() for v in d["variables"]}), d["declared_variables"])
-        self.assertIn("benchmarkSpreadHighValue", [v["name"] for v in datasets["CIQ.WRDS_DEBT"]["variables"]])
-        self.assertIn("ALLOCATED_OFFERING_PRICE_OTHER", [v["name"] for v in datasets["FISD.FISD_MERGEDISSUE"]["variables"]])
-        self.assertTrue(any(h["dataset"].startswith("TRWS.") for h in lookup(catalog, "Worldscope")))
-        self.assertTrue(any(len(x["datasets"]) > 1 for x in catalog["physical_files"]))
-        self.assertEqual(catalog["counts"]["qualified_librefs"], catalog["counts"]["research_libraries"] + 1)
+    def test_build_local_catalog_with_wrapped_names_aliases_and_shared_files(self):
+        with tempfile.TemporaryDirectory() as temp:
+            common = Path(temp)
+            library = common / "local SAS"
+            physical = library / "bonds.sas7bdat"
+            rows = []
+            for libref in ("SITE", "MIRROR"):
+                rows += [
+                    f"Data Set Name {libref}.BONDS   Observations 20",
+                    "Variables 2", f"Filename {physical}",
+                    "  # Variable     Type Len   Label",
+                    "  1 benchmarkSpr Num    8   Benchmark spread",
+                    "    eadHighValue",
+                    "  2 ALLOCATED_   Num    8   Offering price",
+                    "    OFFERING_",
+                    "    PRICE_OTHER",
+                ]
+            (common / "data_description.txt").write_text("\n".join(rows) + "\n")
+            (common / "README.md").write_text("Local bond data.\n")
+            aliases = common / "aliases.json"
+            save(aliases, {"sources": [{"name": "Site bonds", "aliases": ["Fixed income"], "librefs": ["SITE"]}]})
+            with patch.dict("os.environ", {"ACCTREPL_SAS_ROOT": str(library)}):
+                catalog = build_catalog(common, aliases)
+        for dataset in catalog["datasets"]:
+            self.assertEqual(dataset["declared_variables"], 2)
+            self.assertEqual([v["name"] for v in dataset["variables"]],
+                             ["benchmarkSpreadHighValue", "ALLOCATED_OFFERING_PRICE_OTHER"])
+        self.assertEqual(catalog["counts"], {"datasets": 2, "physical_files": 1,
+                                             "research_libraries": 2, "qualified_librefs": 2})
+        self.assertEqual(catalog["physical_files"], [{"path": "${ACCTREPL_SAS_ROOT}/bonds.sas7bdat",
+                                                     "datasets": ["SITE.BONDS", "MIRROR.BONDS"]}])
+        self.assertEqual([h["dataset"] for h in lookup(catalog, "Fixed income")], ["SITE.BONDS"])
 
     def test_bounds_and_unknown_resources_fail_without_scan(self):
         for request in ({"kind": "sas", "row_limit": 1001}, {"kind": "sas", "row_offset": -1},

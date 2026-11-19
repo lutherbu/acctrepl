@@ -77,6 +77,8 @@ def prepare(args):
         run = root / runid
         if run.exists():
             raise ValueError("Run directory already exists; never overwrite a round")
+        if not catalog_path.is_file():
+            raise ValueError(f"Supply an existing --catalog or build your local resource catalog first: {catalog_path}")
         models_path, samples_path = Path(args.models).resolve(), Path(args.samples).resolve()
         if _layout and _layout.separate_exports(PROJECT):
             if models_path == DEFAULT_MODELS:
@@ -269,9 +271,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     p = sub.add_parser("catalog", help="Index common's PROC CONTENTS report, aliases and documented resources")
-    p.add_argument("--common", required=True)
-    p.add_argument("--aliases", default=str(SKILL_ROOT / "references/resource_aliases.json"))
-    p.add_argument("--output", required=True)
+    p.add_argument("--common", required=True, help="Directory containing your SAS PROC CONTENTS report (data_description.txt) and resource README.md")
+    p.add_argument("--aliases", default=str(SKILL_ROOT / "references/resource_aliases.json"), help="Provider names, aliases and SAS librefs in JSON (default: the skill's resource_aliases.json)")
+    p.add_argument("--output", required=True, help="Destination for the generated resource catalog")
     p = sub.add_parser("lookup", help="Search qualified datasets, aliases, field names and labels")
     p.add_argument("--catalog", required=True); p.add_argument("--query", required=True)
     p.add_argument("--limit", type=int, default=10)

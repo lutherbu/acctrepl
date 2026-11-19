@@ -8,7 +8,7 @@ This repository pairs accounting papers with their extracted samples and reporte
 | --- | --- | ---: |
 | [Samples](output/samples/records/) | Baseline sample sizes, units, periods, data sources and supporting text | 517 |
 | [Models](output/models/records/) | Specifications, variable definitions, reported estimates, inference and descriptive statistics | 184 |
-| [Reproduction feasibility](output/feasibility_reproduction/records/) | Assessment of independently reconstructing each baseline fit. The accompanying resource catalog identifies datasets and fields | 167 |
+| [Reproduction feasibility](output/feasibility_reproduction/records/) | Assessment of independently reconstructing each baseline fit with the resources available when it was assessed | 167 |
 | [Execution feasibility](output/feasibility_execution/packages/) | An assessment, proposed patch and review for each author package | 407 |
 | [Reproductions](output/reproductions/packages/) | An accepted attempt, SAS construction code, Stata notebook, and native results | 47 |
 | [Executions](output/executions/packages/) | A reviewed author analysis, code, available results and a recipe for its minimal inputs | 17 |
@@ -33,7 +33,7 @@ The export helper writes one JSONL each for samples, models, both feasibility wo
 
 ## Paper inputs and licensed resources
 
-Place authorized PDFs under `papers/pdf/`, parsed readings under `papers/parsed/`, and author archives under `papers/packages/`. These directories and the working data directories are Git-ignored. Published tables, descriptive statistics, code and the catalog are versioned. Install the relevant Python dependencies from [docs/requirements.txt](docs/requirements.txt).
+Place authorized PDFs under `papers/pdf/`, parsed readings under `papers/parsed/`, and author archives under `papers/packages/`. These directories and the working data directories are Git-ignored. Published tables, descriptive statistics, code and the bibliographic paper catalog are versioned. Install the relevant Python dependencies from [docs/requirements.txt](docs/requirements.txt).
 
 ```sh
 python3 scripts/pdf_to_json.py --help
@@ -42,7 +42,21 @@ python3 scripts/model_sources.py W2015142764 --verify-inputs
 
 Each model record binds the exact reading and PDF used for extraction. These can differ from the bibliographic catalog copy. The model-source helper regenerates the model’s original specification structure under `.local/model_bases/`. With `--crops` it regenerates and verifies the cited page regions from the pinned PDF. Historical evidence retained only as a checksum uses a `urn:sha256:` identifier. Published checksums bind the files in this checkout. Fields marked historical or executed preserve earlier byte identities where path changes altered a file.
 
-Set `ACCTREPL_SAS_ROOT` to your authorized research library root. For `SASHELP.ZIPCODE`, set `ACCTREPL_SASHELP_ROOT` to the directory containing `zipcode.sas7bdat`. Optional filing resources use `ACCTREPL_SEC_RAW`, `ACCTREPL_SEC_PARSED` and `ACCTREPL_LM10X`. PostgreSQL probes use your libpq connection settings. A catalog entry records a dataset and its fields. The verification for a new attempt must establish access, dates and field coverage on the current installation. The catalog and the Stata notebook template are included. [Resource catalog](output/feasibility_reproduction/resources/catalog.json) · [Stata template](skills/reproduce-accounting-models/references/stata.template.ipynb)
+### Build a local resource catalog
+
+Build this catalog before starting a feasibility assessment or assigning a reproduction. Supply a directory containing your SAS `PROC CONTENTS` text listing named `data_description.txt` and a `README.md` describing your other resources. For SAS holdings, set `ACCTREPL_SAS_ROOT` to the absolute research-library root used in the listing. Sites using only the supported file or PostgreSQL resources can supply an empty `data_description.txt`. From the repository root, replace `../common` with your metadata directory.
+
+```sh
+python3 skills/check-replication-feasibility/scripts/feasibility.py catalog \
+  --common ../common \
+  --output output/feasibility_reproduction/resources/catalog.json
+```
+
+Git ignores the generated catalog. For local provider names or SAS librefs, pass `--aliases FILE.json` using the same structure as the [bundled aliases](skills/check-replication-feasibility/references/resource_aliases.json).
+
+SASHELP probes use `ACCTREPL_SASHELP_ROOT`. For optional filing resources, declare `ACCTREPL_SEC_RAW`, `ACCTREPL_SEC_PARSED` or `ACCTREPL_LM10X` in the resource README or environment. The builder recognizes the PostgreSQL database names `wrds` and `data_store_api` in that README. Probes use the operator’s libpq settings. Run a new feasibility assessment to establish access, dates and field coverage at your site.
+
+Published runs record the checksum of the catalog they used. Keep a copy if you need to verify those exact inputs later. Each rebuild records its generation time and can produce different bytes even from the same metadata. The standard public-output check runs with or without a local catalog.
 
 ## Run a skill for one paper
 
@@ -51,8 +65,8 @@ Set `ACCTREPL_SAS_ROOT` to your authorized research library root. For `SASHELP.Z
 | [Extract accounting samples](skills/extract-accounting-samples/SKILL.md) | A parsed paper. The skill directory holds the editable list of standardized databases |
 | [Extract accounting models](skills/extract-accounting-models/SKILL.md) | The paper PDF, matching reading and its sample record |
 | [Check reproduction feasibility](skills/check-replication-feasibility/SKILL.md) | A sample record, model record and resource catalog |
-| [Check execution feasibility](skills/check-execution-feasibility/SKILL.md) | The author archive and its bibliographic identity |
-| [Reproduce accounting models](skills/reproduce-accounting-models/SKILL.md) | The baseline model, sample, assessment and operator-authorized source data |
+| [Check execution feasibility](skills/check-execution-feasibility/SKILL.md) | The author archive, its bibliographic identity and a local resource catalog |
+| [Reproduce accounting models](skills/reproduce-accounting-models/SKILL.md) | The baseline model, sample, assessment, local resource catalog, authorized source data and [Stata notebook template](skills/reproduce-accounting-models/references/stata.template.ipynb) |
 | [Execute author analysis](skills/execute-author-analysis/SKILL.md) | A reviewed analysis scope and its author package |
 | [Replicate on an extended sample](skills/replicate-extended-samples/SKILL.md) | A completed predecessor, sample period and sources supporting additional observations |
 
@@ -76,4 +90,4 @@ To install a reviewed author execution, keep the replay recipe and its sibling `
 
 A `[redacted-path-…]` marker in saved evidence represents a filesystem location. A package’s `publication_receipt.json` binds edited files to their original and distributed SHA-256 digests. For edited source quotations it also records the source digest, line range and both quote digests. The controller retains the working evidence privately. Executable paths needed for replay use repository-relative paths, configuration or template substitution.
 
-To check a holdings-complete local checkout, run `python3 scripts/verify_current_outputs.py --with-data`. This also verifies pinned PDFs, readings and retained study data without launching a regression.
+To verify the original inputs, run `python3 scripts/verify_current_outputs.py --with-data` with the recorded PDFs, readings and retained datasets in place. It checks the catalog against each paper’s recorded hash. If your active catalog has changed, pass `--catalog-snapshot FILE` for the original copy. Repeat this option for papers assessed with different catalogs.

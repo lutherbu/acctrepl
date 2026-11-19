@@ -35,6 +35,10 @@ def resource_module():
 
 
 def prepare(args):
+    catalog=Path(args.catalog).resolve()
+    if not catalog.is_file():
+        raise ValueError(f"Supply an existing --catalog or build your local resource catalog first: {catalog}")
+    catalog_sha=sha(catalog)
     classification_source=SKILL.parent/'check-replication-feasibility/references/feasibility_classification.schema.json'
     if not classification_source.is_file() or any(p.is_symlink() for p in (classification_source,*classification_source.parents)):
         raise ValueError('Missing or non-plain shared classification schema')
@@ -158,12 +162,11 @@ def prepare(args):
     if args.environment:
         (out/'probes').mkdir(exist_ok=True)
         dst=out/'probes/environment.json';shutil.copy2(args.environment,dst);probes.append({'path':str(dst),'sha256':sha(dst),'location':'environment'})
-    catalog=Path(args.catalog).resolve()
-    provenance={'import_manifest_sha256':sha(manifest_path),'package_files':source_files,'resource_catalog_sha256':sha(catalog),'skill_sha256':sha(snapshot/'SKILL.md')}
+    provenance={'import_manifest_sha256':sha(manifest_path),'package_files':source_files,'resource_catalog_sha256':catalog_sha,'skill_sha256':sha(snapshot/'SKILL.md')}
     if unit.get('identity_notes'):
         provenance['identity_notes']=unit['identity_notes']
     item={'output_header':{'schema_version':'1.0','package_id':unit['package_id'],'provenance':provenance},'package':unit,'project_root':str(ROOT),'workspace_root':str(WORKSPACE),'package_root':str(root),'work_dir':str(out),'catalog_path':str(catalog),'sources':sources,'inventory':inventory,'dependencies':dependencies,'probe_artifacts':probes,'limitations':limitations,'static_audit_path':str(report) if report else None,'skill_path':str(snapshot/'SKILL.md'),'tool_path':str(Path(__file__).resolve()),'output_dir':str(out/'output'),'allowed_external_checks':'Use current operator authorization for catalog-listed file metadata and bounded PostgreSQL checks.'}
-    item['frozen_files']=[{'path':str(manifest_path),'sha256':sha(manifest_path)},{'path':str(catalog),'sha256':sha(catalog)}]+[{'path':str(safe(package_base,f['path'])),'sha256':f['sha256']} for f in source_files]+[{'path':str(f),'sha256':sha(f)} for f in sorted(snapshot.rglob('*')) if f.is_file()]
+    item['frozen_files']=[{'path':str(manifest_path),'sha256':sha(manifest_path)},{'path':str(catalog),'sha256':catalog_sha}]+[{'path':str(safe(package_base,f['path'])),'sha256':f['sha256']} for f in source_files]+[{'path':str(f),'sha256':sha(f)} for f in sorted(snapshot.rglob('*')) if f.is_file()]
     item['resource_helper']=resource_record
     item['frozen_files'].append(resource_record)
     item['classification_contract']=classification_contract

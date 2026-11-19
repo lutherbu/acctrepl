@@ -46,6 +46,12 @@ def test_new_campaign_adds_papers_and_publishes_only_the_accepted_attempt(tmp_pa
     with ThreadPoolExecutor(2) as pool:
         list(pool.map(runs.prepare,['W2','W2']))
     assert [r['paper_id'] for r in json.loads(runs.CAMPAIGN.read_bytes())['papers']]==['W1','W2']
+    resource_catalog = root/'output/feasibility_reproduction/resources/catalog.json'
+    resource_catalog.unlink()
+    with pytest.raises(ValueError,match='local resource catalog'):
+        runs.assign('W2','build')
+    assert not (private/'papers/W2/attempt_01').exists()
+    write(resource_catalog,{})
     first=Path(runs.assign('W2','build')['path'])
     attempt=Path(runs.assign('W2','review')['path'])
     assert (first/'work_item.json').is_file()
@@ -80,7 +86,10 @@ def test_verify_a_blocked_paper_before_any_native_data_exist(tmp_path):
     from scripts.verify_current_outputs import verify
     package=tmp_path/'output/reproductions/packages/W1'
     attempt=package/'attempt_02'
-    write(attempt/'work_item.json',{'source_hashes':{}})
+    locator = 'output/feasibility_reproduction/resources/catalog.json'
+    (tmp_path/'output/feasibility_reproduction/records').mkdir(parents=True)
+    snapshot = write(tmp_path/locator, {'site':'original'})
+    write(attempt/'work_item.json',{'catalog_path':locator,'source_hashes':{locator:pub.sha(snapshot)}})
     write(attempt/'stata.ipynb',{'cells':[]})
     write(attempt/'runtime/latest.json',{'cells':{}})
     write(attempt/'submission.json',{'samples':[{'dta_file':'data/unbuilt.dta'}]})
@@ -90,6 +99,19 @@ def test_verify_a_blocked_paper_before_any_native_data_exist(tmp_path):
     jsonl,csv=catalog.serialize_catalog([])
     (docs/'papers.jsonl').write_bytes(jsonl);(docs/'papers.csv').write_bytes(csv)
     assert verify(tmp_path,with_data=True)['reproduction_blocked']==1
+    retained = tmp_path/'original catalog.json'
+    snapshot.rename(retained)
+    assert verify(tmp_path)['reproduction_blocked']==1
+    with pytest.raises(ValueError,match='original resource catalog'):
+        verify(tmp_path,with_data=True)
+    assert verify(tmp_path,with_data=True,catalog_snapshots=[retained])['reproduction_blocked']==1
+    with pytest.raises(ValueError,match='requires --with-data'):
+        verify(tmp_path,catalog_snapshots=[retained])
+    write(snapshot,{'site':'another installation','path':'/local-library/holdings'})
+    assert verify(tmp_path)['reproduction_blocked']==1
+    with pytest.raises(ValueError,match='original resource catalog'):
+        verify(tmp_path,with_data=True,catalog_snapshots=[snapshot])
+    assert verify(tmp_path,with_data=True,catalog_snapshots=[snapshot,retained])['reproduction_blocked']==1
 
 
 def test_failed_replacement_keeps_previous_package(tmp_path, monkeypatch):

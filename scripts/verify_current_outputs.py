@@ -6,6 +6,7 @@ from collections import Counter
 from functools import lru_cache
 import json
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,13 +14,14 @@ sys.path.insert(0, str(ROOT))
 from scripts import rebuild_indexes as ix
 from scripts import update_paper_catalog as catalog
 from scripts import publication as pub
+from project_layout import PATHS
 
 
 def read(p):
     return json.loads(p.read_bytes())
 
 
-def verify(project=ROOT, *, with_data=False):
+def verify(project=ROOT, *, with_data=False, catalog_snapshots=()):
     root = Path(project).resolve()
     docs = ix.scan(root)
     counts = Counter()
@@ -48,9 +50,10 @@ def verify(project=ROOT, *, with_data=False):
                         pending.append(p)
                 else:
                     portable_file(p, pid)
-    catalog_path = root/'output/feasibility_reproduction/resources/catalog.json'
-    if catalog_path.exists():
-        portable_file(catalog_path, 'catalog')
+    resource_catalog = PATHS['catalog']
+    if catalog_snapshots and not with_data:
+        raise ValueError('--catalog-snapshot requires --with-data')
+    supplied_hashes = {digest(Path(p)) for p in catalog_snapshots}
     for wf in ix.WORKFLOWS:
         for item in docs.get(f'output/{wf}/index.json', {}).get('records', []):
             f = root / item['path']
@@ -75,11 +78,25 @@ def verify(project=ROOT, *, with_data=False):
             elif wf == 'reproductions':
                 work = read(parent/'work_item.json')
                 for name, expected in work['source_hashes'].items():
+                    if name == resource_catalog:
+                        if not isinstance(expected, str) or not re.fullmatch(r'[0-9a-f]{64}', expected):
+                            raise ValueError(f"Invalid resource catalog checksum for {item['id']}")
+                        if with_data and expected not in supplied_hashes:
+                            snapshot = pub.inside(root, name)
+                            if not snapshot.is_file() or digest(snapshot) != expected:
+                                raise ValueError(
+                                    f"{item['id']}: --with-data requires the original resource catalog "
+                                    f"with SHA-256 {expected}. Supply it at {name} or via --catalog-snapshot."
+                                )
+                        continue
                     path = pub.inside(root,name)
                     if with_data or not name.startswith('papers/'):
                         check(path,expected)
                 for key in ('template_path','skill_path','catalog_path','feasibility_path','ado_path','pdf_path','reading_json'):
-                    if work.get(key):
+                    if key == 'catalog_path' and work.get(key) == resource_catalog:
+                        if resource_catalog not in work['source_hashes']:
+                            raise ValueError(f"Missing resource catalog checksum for {item['id']}")
+                    elif work.get(key):
                         pub.inside(root,work[key])
                 for name, expected in d['files'].items():
                     check(pub.inside(parent,name), expected)
@@ -141,9 +158,11 @@ def verify(project=ROOT, *, with_data=False):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--with-data', action='store_true', help='Also check locally supplied paper sources and retained datasets.')
+    ap.add_argument('--with-data', action='store_true', help='Also verify the original resource catalog, paper sources and retained datasets against their recorded hashes.')
+    ap.add_argument('--catalog-snapshot', type=Path, action='append', default=[], metavar='FILE',
+                    help='Historical resource catalog for --with-data. Repeat to supply several snapshots.')
     args = ap.parse_args()
     try:
-        print(json.dumps(verify(with_data=args.with_data), indent=2))
+        print(json.dumps(verify(with_data=args.with_data, catalog_snapshots=args.catalog_snapshot), indent=2))
     except (ValueError,OSError) as error:
         ap.exit(1,str(error)+'\n')
