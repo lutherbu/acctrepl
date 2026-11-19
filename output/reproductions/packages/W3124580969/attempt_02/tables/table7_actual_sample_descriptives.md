@@ -1,0 +1,14 @@
+
+|                      |          (1) |              |              |              |              |              |
+|                      |              |              |              |              |              |              |
+|                      |        count |         mean |           sd |          p25 |          p50 |          p75 |
+| -------------------- | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: |
+| One-year size-adjusted buy-and-hold return |         3782 |       -0.032 |        0.685 |       -0.414 |       -0.111 |        0.192 |
+| Growth-fundamental score (sum of eight signals) |         3782 |        3.838 |        1.781 |        2.000 |        4.000 |        5.000 |
+| Log of company market capitalization, $ millions |         3782 |        5.446 |        2.316 |        3.744 |        5.230 |        6.915 |
+| Raw book-to-market ratio at formation |         3782 |        0.195 |        0.105 |        0.119 |        0.187 |        0.254 |
+| Raw six-month buy-and-hold return before formation |         3782 |        0.251 |        0.656 |       -0.121 |        0.128 |        0.441 |
+| One if income before extraordinary items exceeds CFO |         3782 |        0.387 |        0.487 |        0.000 |        0.000 |        1.000 |
+| One if prior-year equity issuance is reported |         3782 |        0.843 |        0.364 |        1.000 |        1.000 |        1.000 |
+| Observations         |         3782 |              |              |              |              |              |
+

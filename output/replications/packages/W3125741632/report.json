@@ -1,0 +1,527 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Asymmetric timeliness of earnings, market-to-book and conservatism in financial reporting",
+  "doi": "10.1016/j.jacceco.2006.12.003",
+  "route": "reconstruction",
+  "paper_id": "W3125741632",
+  "years": 5,
+  "sources_checked": [
+    "Resource catalog resolved from work/work_item.json; catalog snapshot generated 2026-10-27T14:45:09.629688Z. Controller launch receipt binds exact local input paths, sizes, and mtimes; catalog row counts matched physical files.",
+    "COMP.FUNDA — ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; catalog 941,340 rows/949 variables. Standard INDL/C/D/STD records exist in each fyear 2000–2007; latest DATADATE in that horizon is 2008-05-31. Fields checked: GVKEY, FYEAR, DATADATE, PDATE, CURCD, IB, CEQ, HIID, IID.",
+    "COMP.SEC_MTH — ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mth.sas7bdat; catalog 8,453,514 rows/10 variables; DATADATE 1962-01-31–2026-07-31; 1,777,987 dated 2000–2008 rows have GVKEY and IID.",
+    "COMP.G_EXRT_MTH — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat; catalog 75,838 rows/22 variables; DATADATE 1982-01-31–2026-07-31; positive GBP-to-USD EXRAT12M records cover all 108 months in 2000–2008.",
+    "COMP.G_EXRT_DLY — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat; catalog 2,221,564 rows/5 variables; DATADATE 1982-02-01–2026-07-19; positive GBP-to-USD EXRATD records cover all 3,288 source dates in 2000–2008.",
+    "CRSP.MSF — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat; catalog 5,153,763 rows/21 variables; DATE 1925-12-31–2024-12-31; 796,084 monthly rows in 2000–2008 with returns and price/share fields present.",
+    "CRSP.MSENAMES — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat; catalog 117,830 rows/21 variables; NAMEDT 1925–2024; 36,156 validity intervals overlap 2000–2008, including 25,764 share-code 10/11 rows.",
+    "CRSP.MSEDELIST — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msedelist.sas7bdat; catalog 38,843 rows/19 variables; DLSTDT 1926–2024; 5,849 events occur in 2000–2008.",
+    "CRSP.CCMXPF_LINKTABLE — ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat; catalog 92,711 rows/9 variables; LINKDT 1946–2025 and LINKENDDT 1950–2026; 25,912 link intervals overlap 2000–2008."
+  ],
+  "changes": [
+    "Observation time remains Compustat FYEAR formation year t. The accepted 1972–1999 start is unchanged and the endpoint extends five calendar years to 2004. Source construction bounds now include Compustat fyear through 2007 and source dates through 2008-12-31; the latest checked FY2007 DATADATE is 2008-05-31, whose required +3-month CRSP window ends by 2008-08-31.",
+    "Rebuilt the original common firm-year sample with the existing filters, currency and link logic, return windows, tail treatment, rank formation, and horizon definitions. Added only native full-rank and e(sample)-based period-count diagnostics; the original OLS-within-Fama–MacBeth estimator and model terms are unchanged.",
+    "Verified the job-local Stata ado path after relocation and retained it. The accepted handoff field FYEAR is numeric (Stata int16, %10.0g); GVKEY is string. The fresh 60,503-row handoff has 60,503 unique GVKEY–FYEAR keys."
+  ],
+  "limitations": [
+    "Equation (2) and the Table 4A variable note conflict about the forward return start and the price-denominator year. The accepted implementation keeps Equation (2) P_t and adjacent complete annual return windows; this conflict remains unresolved.",
+    "Equation (3) prose says j=0–2 while Table 5A displays j=0–4. The five Table 5A columns are retained; this source conflict remains unresolved.",
+    "The paper reports Fama–MacBeth annual coefficients but does not identify the annual cross-sectional estimator; ordinary OLS within xtfmb remains the accepted best-effort implementation, without added fixed effects, clustering, or HAC adjustment.",
+    "The paper does not specify the population or exact tie handling for its 0.5% truncation. The accepted per-year 200-group two-tail trimming of the common union of annual and long-horizon earnings/returns is retained.",
+    "Xpressfeed monthly and daily GBP-primary rate tables begin in 1982. Earlier non-USD accounting records without a dated conversion leg remain unavailable and are not imputed.",
+    "The paper reports 45,664 firm-years for 1972–1999, while the accepted reconstruction’s fresh original-period panel is 49,354. This sample-count discrepancy is preserved; the published count is not used as a selection target. Current local vendor snapshots may also differ from the article’s vintages.",
+    "The current standard Funda source has two duplicate firm-year groups, both in 1982–1983, and none in the extended 2000–2007 source years. The frozen PDATE-then-DATADATE ordering resolves those historical source duplicates; no firm-year key duplicates appear in the fresh final handoff."
+  ],
+  "analyses": [
+    {
+      "scope_id": "beginning_mtb_future_timeliness / forward_k1",
+      "key": "s1",
+      "label": "Table 4A forward horizon k=1",
+      "sample_ids": [
+        "basu_mtb_panel"
+      ],
+      "status": "extended_full",
+      "reason": "The fresh forward_k1 Fama–MacBeth fit includes 49,354 firm-years in the original 1972–1999 period and 11,149 in 2000–2004. All 33 annual OLS cross-sections are full rank, total e(sample) is 60,503, and the final contributing formation year is 2004.",
+      "source_evidence": [
+        "Paper: papers/parsed/W3125741632.json, physical PDF p.14 (sample-period description) and physical PDF p.19, Table 4A column k=1; Eq. (2), pp.17–18; this row is the named Table 4A/5A result set.",
+        "Accepted reconstruction: output/reproductions/packages/W3125741632/attempt_02/build.sas lines 542–582 (annual horizon construction and common sample), with staged working period bound at work/build.sas line 565; assigned fit is work/stata.ipynb cell w312_forward.",
+        "Fresh native evidence: work/runtime/20261118T110717365478Z/cell_w312_forward.log, lines 1058 (forward_k1 full-rank annual fits), 1079 (computed EXT_SAMPLE marker), and 1080 (xtfmb total_N=60,503, years=33). Aggregate table: work/tables/table4a_forward.csv."
+      ],
+      "original_begin": "1972",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "Firm-year observations in this horizon-specific xtfmb estimation sample (actual e(sample)), pooled across annual Fama–MacBeth first-stage cross-sections.",
+      "original_n": 49354,
+      "added_n": 11149,
+      "artifacts": [
+        "results/tables/table4a_forward.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless coefficients; the dependent variable is cumulative earnings scaled by company market equity.",
+        "g1_mtb_rank_x_return_x_negative_return": {
+          "original": -0.0627823,
+          "extended": -0.0617846,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_forward.log, lincom mrdr; predecessor tables/table4a_forward.csv result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_forward.log, lincom mrdr; work/tables/table4a_forward.csv."
+        },
+        "b1_plus_g1": {
+          "original": -0.0770251,
+          "extended": -0.0751218,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_forward.log, lincom mr + mrdr; predecessor result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_forward.log, lincom mr + mrdr; work/tables/table4a_forward.csv."
+        }
+      },
+      "native_evidence": {
+        "path": "urn:sha256:21308a9a53a960d68947317fc806ca262abe2c1e79fdc8d3cd0b853208a92969",
+        "sha256": "21308a9a53a960d68947317fc806ca262abe2c1e79fdc8d3cd0b853208a92969",
+        "marker": "EXT_SAMPLE s1 49354 11149 2004"
+      }
+    },
+    {
+      "scope_id": "beginning_mtb_future_timeliness / forward_k2",
+      "key": "s2",
+      "label": "Table 4A forward horizon k=2",
+      "sample_ids": [
+        "basu_mtb_panel"
+      ],
+      "status": "extended_full",
+      "reason": "The fresh forward_k2 Fama–MacBeth fit includes 49,354 firm-years in the original 1972–1999 period and 11,149 in 2000–2004. All 33 annual OLS cross-sections are full rank, total e(sample) is 60,503, and the final contributing formation year is 2004.",
+      "source_evidence": [
+        "Paper: papers/parsed/W3125741632.json, physical PDF p.14 (sample-period description) and physical PDF p.19, Table 4A column k=2; Eq. (2), pp.17–18; this row is the named Table 4A/5A result set.",
+        "Accepted reconstruction: output/reproductions/packages/W3125741632/attempt_02/build.sas lines 542–582 (annual horizon construction and common sample), with staged working period bound at work/build.sas line 565; assigned fit is work/stata.ipynb cell w312_forward.",
+        "Fresh native evidence: work/runtime/20261118T110717365478Z/cell_w312_forward.log, lines 1790 (forward_k2 full-rank annual fits), 1811 (computed EXT_SAMPLE marker), and 1812 (xtfmb total_N=60,503, years=33). Aggregate table: work/tables/table4a_forward.csv."
+      ],
+      "original_begin": "1972",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "Firm-year observations in this horizon-specific xtfmb estimation sample (actual e(sample)), pooled across annual Fama–MacBeth first-stage cross-sections.",
+      "original_n": 49354,
+      "added_n": 11149,
+      "artifacts": [
+        "results/tables/table4a_forward.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless coefficients; the dependent variable is cumulative earnings scaled by company market equity.",
+        "g1_mtb_rank_x_return_x_negative_return": {
+          "original": -0.1018838,
+          "extended": -0.0977756,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_forward.log, lincom mrdr; predecessor tables/table4a_forward.csv result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_forward.log, lincom mrdr; work/tables/table4a_forward.csv."
+        },
+        "b1_plus_g1": {
+          "original": -0.1233755,
+          "extended": -0.118466,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_forward.log, lincom mr + mrdr; predecessor result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_forward.log, lincom mr + mrdr; work/tables/table4a_forward.csv."
+        }
+      },
+      "native_evidence": {
+        "path": "urn:sha256:21308a9a53a960d68947317fc806ca262abe2c1e79fdc8d3cd0b853208a92969",
+        "sha256": "21308a9a53a960d68947317fc806ca262abe2c1e79fdc8d3cd0b853208a92969",
+        "marker": "EXT_SAMPLE s2 49354 11149 2004"
+      }
+    },
+    {
+      "scope_id": "beginning_mtb_future_timeliness / forward_k3",
+      "key": "s3",
+      "label": "Table 4A forward horizon k=3",
+      "sample_ids": [
+        "basu_mtb_panel"
+      ],
+      "status": "extended_full",
+      "reason": "The fresh forward_k3 Fama–MacBeth fit includes 49,354 firm-years in the original 1972–1999 period and 11,149 in 2000–2004. All 33 annual OLS cross-sections are full rank, total e(sample) is 60,503, and the final contributing formation year is 2004.",
+      "source_evidence": [
+        "Paper: papers/parsed/W3125741632.json, physical PDF p.14 (sample-period description) and physical PDF p.19, Table 4A column k=3; Eq. (2), pp.17–18; this row is the named Table 4A/5A result set.",
+        "Accepted reconstruction: output/reproductions/packages/W3125741632/attempt_02/build.sas lines 542–582 (annual horizon construction and common sample), with staged working period bound at work/build.sas line 565; assigned fit is work/stata.ipynb cell w312_forward.",
+        "Fresh native evidence: work/runtime/20261118T110717365478Z/cell_w312_forward.log, lines 2522 (forward_k3 full-rank annual fits), 2543 (computed EXT_SAMPLE marker), and 2544 (xtfmb total_N=60,503, years=33). Aggregate table: work/tables/table4a_forward.csv."
+      ],
+      "original_begin": "1972",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "Firm-year observations in this horizon-specific xtfmb estimation sample (actual e(sample)), pooled across annual Fama–MacBeth first-stage cross-sections.",
+      "original_n": 49354,
+      "added_n": 11149,
+      "artifacts": [
+        "results/tables/table4a_forward.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless coefficients; the dependent variable is cumulative earnings scaled by company market equity.",
+        "g1_mtb_rank_x_return_x_negative_return": {
+          "original": -0.113264,
+          "extended": -0.1052472,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_forward.log, lincom mrdr; predecessor tables/table4a_forward.csv result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_forward.log, lincom mrdr; work/tables/table4a_forward.csv."
+        },
+        "b1_plus_g1": {
+          "original": -0.1407305,
+          "extended": -0.1310698,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_forward.log, lincom mr + mrdr; predecessor result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_forward.log, lincom mr + mrdr; work/tables/table4a_forward.csv."
+        }
+      },
+      "native_evidence": {
+        "path": "urn:sha256:21308a9a53a960d68947317fc806ca262abe2c1e79fdc8d3cd0b853208a92969",
+        "sha256": "21308a9a53a960d68947317fc806ca262abe2c1e79fdc8d3cd0b853208a92969",
+        "marker": "EXT_SAMPLE s3 49354 11149 2004"
+      }
+    },
+    {
+      "scope_id": "ending_mtb_historical_timeliness / historical_j0",
+      "key": "s4",
+      "label": "Table 5A backward horizon j=0",
+      "sample_ids": [
+        "basu_mtb_panel"
+      ],
+      "status": "extended_full",
+      "reason": "The fresh historical_j0 Fama–MacBeth fit includes 49,354 firm-years in the original 1972–1999 period and 11,149 in 2000–2004. All 33 annual OLS cross-sections are full rank, total e(sample) is 60,503, and the final contributing formation year is 2004.",
+      "source_evidence": [
+        "Paper: papers/parsed/W3125741632.json, physical PDF p.14 (sample-period description) and physical PDF p.22, Table 5A column j=0; Eq. (3), p.21; this row is the named Table 4A/5A result set.",
+        "Accepted reconstruction: output/reproductions/packages/W3125741632/attempt_02/build.sas lines 542–582 (annual horizon construction and common sample), with staged working period bound at work/build.sas line 565; assigned fit is work/stata.ipynb cell w312_backward.",
+        "Fresh native evidence: work/runtime/20261118T110717365478Z/cell_w312_backward.log, lines 802 (historical_j0 full-rank annual fits), 823 (computed EXT_SAMPLE marker), and 824 (xtfmb total_N=60,503, years=33). Aggregate table: work/tables/table5a_backward.csv."
+      ],
+      "original_begin": "1972",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "Firm-year observations in this horizon-specific xtfmb estimation sample (actual e(sample)), pooled across annual Fama–MacBeth first-stage cross-sections.",
+      "original_n": 49354,
+      "added_n": 11149,
+      "artifacts": [
+        "results/tables/table5a_backward.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless coefficients; the dependent variable is cumulative earnings scaled by company market equity.",
+        "g1_mtb_rank_x_return_x_negative_return": {
+          "original": -0.0210394,
+          "extended": -0.018213,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mrdr; predecessor tables/table5a_backward.csv result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mrdr; work/tables/table5a_backward.csv."
+        },
+        "b1_plus_g1": {
+          "original": -0.0323612,
+          "extended": -0.0293101,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mr + mrdr; predecessor result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mr + mrdr; work/tables/table5a_backward.csv."
+        }
+      },
+      "native_evidence": {
+        "path": "urn:sha256:63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "sha256": "63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "marker": "EXT_SAMPLE s4 49354 11149 2004"
+      }
+    },
+    {
+      "scope_id": "ending_mtb_historical_timeliness / historical_j1",
+      "key": "s5",
+      "label": "Table 5A backward horizon j=1",
+      "sample_ids": [
+        "basu_mtb_panel"
+      ],
+      "status": "extended_full",
+      "reason": "The fresh historical_j1 Fama–MacBeth fit includes 49,354 firm-years in the original 1972–1999 period and 11,149 in 2000–2004. All 33 annual OLS cross-sections are full rank, total e(sample) is 60,503, and the final contributing formation year is 2004.",
+      "source_evidence": [
+        "Paper: papers/parsed/W3125741632.json, physical PDF p.14 (sample-period description) and physical PDF p.22, Table 5A column j=1; Eq. (3), p.21; this row is the named Table 4A/5A result set.",
+        "Accepted reconstruction: output/reproductions/packages/W3125741632/attempt_02/build.sas lines 542–582 (annual horizon construction and common sample), with staged working period bound at work/build.sas line 565; assigned fit is work/stata.ipynb cell w312_backward.",
+        "Fresh native evidence: work/runtime/20261118T110717365478Z/cell_w312_backward.log, lines 1534 (historical_j1 full-rank annual fits), 1555 (computed EXT_SAMPLE marker), and 1556 (xtfmb total_N=60,503, years=33). Aggregate table: work/tables/table5a_backward.csv."
+      ],
+      "original_begin": "1972",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "Firm-year observations in this horizon-specific xtfmb estimation sample (actual e(sample)), pooled across annual Fama–MacBeth first-stage cross-sections.",
+      "original_n": 49354,
+      "added_n": 11149,
+      "artifacts": [
+        "results/tables/table5a_backward.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless coefficients; the dependent variable is cumulative earnings scaled by company market equity.",
+        "g1_mtb_rank_x_return_x_negative_return": {
+          "original": 0.0046294,
+          "extended": 0.0094517,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mrdr; predecessor tables/table5a_backward.csv result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mrdr; work/tables/table5a_backward.csv."
+        },
+        "b1_plus_g1": {
+          "original": -0.0307694,
+          "extended": -0.0252458,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mr + mrdr; predecessor result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mr + mrdr; work/tables/table5a_backward.csv."
+        }
+      },
+      "native_evidence": {
+        "path": "urn:sha256:63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "sha256": "63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "marker": "EXT_SAMPLE s5 49354 11149 2004"
+      }
+    },
+    {
+      "scope_id": "ending_mtb_historical_timeliness / historical_j2",
+      "key": "s6",
+      "label": "Table 5A backward horizon j=2",
+      "sample_ids": [
+        "basu_mtb_panel"
+      ],
+      "status": "extended_full",
+      "reason": "The fresh historical_j2 Fama–MacBeth fit includes 49,354 firm-years in the original 1972–1999 period and 11,149 in 2000–2004. All 33 annual OLS cross-sections are full rank, total e(sample) is 60,503, and the final contributing formation year is 2004.",
+      "source_evidence": [
+        "Paper: papers/parsed/W3125741632.json, physical PDF p.14 (sample-period description) and physical PDF p.22, Table 5A column j=2; Eq. (3), p.21; this row is the named Table 4A/5A result set.",
+        "Accepted reconstruction: output/reproductions/packages/W3125741632/attempt_02/build.sas lines 542–582 (annual horizon construction and common sample), with staged working period bound at work/build.sas line 565; assigned fit is work/stata.ipynb cell w312_backward.",
+        "Fresh native evidence: work/runtime/20261118T110717365478Z/cell_w312_backward.log, lines 2266 (historical_j2 full-rank annual fits), 2287 (computed EXT_SAMPLE marker), and 2288 (xtfmb total_N=60,503, years=33). Aggregate table: work/tables/table5a_backward.csv."
+      ],
+      "original_begin": "1972",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "Firm-year observations in this horizon-specific xtfmb estimation sample (actual e(sample)), pooled across annual Fama–MacBeth first-stage cross-sections.",
+      "original_n": 49354,
+      "added_n": 11149,
+      "artifacts": [
+        "results/tables/table5a_backward.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless coefficients; the dependent variable is cumulative earnings scaled by company market equity.",
+        "g1_mtb_rank_x_return_x_negative_return": {
+          "original": 0.0412645,
+          "extended": 0.0388245,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mrdr; predecessor tables/table5a_backward.csv result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mrdr; work/tables/table5a_backward.csv."
+        },
+        "b1_plus_g1": {
+          "original": -0.0086599,
+          "extended": -0.0082721,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mr + mrdr; predecessor result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mr + mrdr; work/tables/table5a_backward.csv."
+        }
+      },
+      "native_evidence": {
+        "path": "urn:sha256:63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "sha256": "63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "marker": "EXT_SAMPLE s6 49354 11149 2004"
+      }
+    },
+    {
+      "scope_id": "ending_mtb_historical_timeliness / historical_j3",
+      "key": "s7",
+      "label": "Table 5A backward horizon j=3",
+      "sample_ids": [
+        "basu_mtb_panel"
+      ],
+      "status": "extended_full",
+      "reason": "The fresh historical_j3 Fama–MacBeth fit includes 49,354 firm-years in the original 1972–1999 period and 11,149 in 2000–2004. All 33 annual OLS cross-sections are full rank, total e(sample) is 60,503, and the final contributing formation year is 2004.",
+      "source_evidence": [
+        "Paper: papers/parsed/W3125741632.json, physical PDF p.14 (sample-period description) and physical PDF p.22, Table 5A column j=3; Eq. (3), p.21; this row is the named Table 4A/5A result set.",
+        "Accepted reconstruction: output/reproductions/packages/W3125741632/attempt_02/build.sas lines 542–582 (annual horizon construction and common sample), with staged working period bound at work/build.sas line 565; assigned fit is work/stata.ipynb cell w312_backward.",
+        "Fresh native evidence: work/runtime/20261118T110717365478Z/cell_w312_backward.log, lines 2998 (historical_j3 full-rank annual fits), 3019 (computed EXT_SAMPLE marker), and 3020 (xtfmb total_N=60,503, years=33). Aggregate table: work/tables/table5a_backward.csv."
+      ],
+      "original_begin": "1972",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "Firm-year observations in this horizon-specific xtfmb estimation sample (actual e(sample)), pooled across annual Fama–MacBeth first-stage cross-sections.",
+      "original_n": 49354,
+      "added_n": 11149,
+      "artifacts": [
+        "results/tables/table5a_backward.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless coefficients; the dependent variable is cumulative earnings scaled by company market equity.",
+        "g1_mtb_rank_x_return_x_negative_return": {
+          "original": 0.066136,
+          "extended": 0.0645679,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mrdr; predecessor tables/table5a_backward.csv result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mrdr; work/tables/table5a_backward.csv."
+        },
+        "b1_plus_g1": {
+          "original": -0.0045085,
+          "extended": -0.002772,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mr + mrdr; predecessor result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mr + mrdr; work/tables/table5a_backward.csv."
+        }
+      },
+      "native_evidence": {
+        "path": "urn:sha256:63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "sha256": "63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "marker": "EXT_SAMPLE s7 49354 11149 2004"
+      }
+    },
+    {
+      "scope_id": "ending_mtb_historical_timeliness / historical_j4",
+      "key": "s8",
+      "label": "Table 5A backward horizon j=4",
+      "sample_ids": [
+        "basu_mtb_panel"
+      ],
+      "status": "extended_full",
+      "reason": "The fresh historical_j4 Fama–MacBeth fit includes 49,354 firm-years in the original 1972–1999 period and 11,149 in 2000–2004. All 33 annual OLS cross-sections are full rank, total e(sample) is 60,503, and the final contributing formation year is 2004.",
+      "source_evidence": [
+        "Paper: papers/parsed/W3125741632.json, physical PDF p.14 (sample-period description) and physical PDF p.22, Table 5A column j=4; Eq. (3), p.21; this row is the named Table 4A/5A result set.",
+        "Accepted reconstruction: output/reproductions/packages/W3125741632/attempt_02/build.sas lines 542–582 (annual horizon construction and common sample), with staged working period bound at work/build.sas line 565; assigned fit is work/stata.ipynb cell w312_backward.",
+        "Fresh native evidence: work/runtime/20261118T110717365478Z/cell_w312_backward.log, lines 3730 (historical_j4 full-rank annual fits), 3751 (computed EXT_SAMPLE marker), and 3752 (xtfmb total_N=60,503, years=33). Aggregate table: work/tables/table5a_backward.csv."
+      ],
+      "original_begin": "1972",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "Firm-year observations in this horizon-specific xtfmb estimation sample (actual e(sample)), pooled across annual Fama–MacBeth first-stage cross-sections.",
+      "original_n": 49354,
+      "added_n": 11149,
+      "artifacts": [
+        "results/tables/table5a_backward.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless coefficients; the dependent variable is cumulative earnings scaled by company market equity.",
+        "g1_mtb_rank_x_return_x_negative_return": {
+          "original": 0.042557,
+          "extended": 0.0470446,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mrdr; predecessor tables/table5a_backward.csv result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mrdr; work/tables/table5a_backward.csv."
+        },
+        "b1_plus_g1": {
+          "original": -0.0434492,
+          "extended": -0.0333224,
+          "original_location": "repository/output/reproduction/W3125741632/attempt_02/runtime/20261103T022052708091Z/cell_w312_backward.log, lincom mr + mrdr; predecessor result table.",
+          "extended_location": "work/runtime/20261118T110717365478Z/cell_w312_backward.log, lincom mr + mrdr; work/tables/table5a_backward.csv."
+        }
+      },
+      "native_evidence": {
+        "path": "urn:sha256:63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "sha256": "63e66c76bea2c150235a266464e4b16a7c3b3932dce0d2fc54731d5304b325d8",
+        "marker": "EXT_SAMPLE s8 49354 11149 2004"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 8
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ee47-f7dd-7ea0-9935-7c4014eb71fd",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3125741632.json",
+    "models": "output/models/records/W3125741632.json",
+    "predecessor": "output/reproductions/packages/W3125741632/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3125741632.json"
+  },
+  "input_hashes": {
+    "sample": "443a85f1825be50e8672ac13270d3a37c2439b6941b1be74891d694cd91cd6aa",
+    "models": "0454f48dbc2e49c8a188296f4e8c28eefe5a57def54da4d6fc2a5125031c4f53",
+    "predecessor": "8dcd391f70827c53bda8f72984866235894b83ee27c293ea63638d8105bb7300",
+    "feasibility": "7dd51676f62ab5083033c086eb1f97b8a04e3f7595343f542a59c9876f226429"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:08ee10194b9e89061878d711b73b382e3f9d4d3f08a4d4d4cdab095f74f7585f",
+    "sha256": "08ee10194b9e89061878d711b73b382e3f9d4d3f08a4d4d4cdab095f74f7585f",
+    "ok": true,
+    "state_sha256": "9ddf9bc45a89cc692e97563fef4350d898ae2993cf7037a274cbc5f0c7f504d5",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "COMP.SEC_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mth.sas7bdat",
+        "bytes": 678297600,
+        "mtime_ns": 1786704748974369987
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.MSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+        "bytes": 868417536,
+        "mtime_ns": 1764951132644186578
+      },
+      {
+        "dataset": "CRSP.MSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764951124879997292
+      },
+      {
+        "dataset": "CRSP.MSEDELIST",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msedelist.sas7bdat",
+        "bytes": 6094848,
+        "mtime_ns": 1764951124659991929
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "ff5c8935ceb52ace704091b00e54f8915b2f19fe3ccd0982fc72e0847a4f323a",
+      "work/stata.ipynb": "82b891ebb2a60cd5b5ef336ac910c0dd37805bb6500739fd9577ea00a2ff59ce",
+      "work/submission.json": "2a76c6b3e0fc66428644887cf2af4fe83663eeb455460023577a870285148466"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "4d68885c2b3e7a1c787691055ca0079fe8d1c483100e91bd2f79a5f1ac6a28bf",
+      "predecessor": "output/reproductions/packages/W3125741632/attempt_02/build.sas",
+      "predecessor_sha256": "5049a951d2a57a880ca2fb7a2c8644a0b96e50f71d9854772517f8564dfd8587",
+      "executed_sha256": "ff5c8935ceb52ace704091b00e54f8915b2f19fe3ccd0982fc72e0847a4f323a",
+      "historical_predecessor_sha256": "30b8818e93169488ab2a829a905a1bc81bd55670920beb70bef1b95a3ea53789"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "707837629c2cb5e2e7a3d32aafe097cb0c5a3ee209d39f3b537400c0a70c4477",
+      "predecessor": "output/reproductions/packages/W3125741632/attempt_02/stata.ipynb",
+      "predecessor_sha256": "55485f0476b36b70415516aa65344a4bbaf003756a468b171b503dc0e97a35d9",
+      "executed_sha256": "82b891ebb2a60cd5b5ef336ac910c0dd37805bb6500739fd9577ea00a2ff59ce",
+      "historical_predecessor_sha256": "dd32cbfa015889a97c90fad69da01a73f0a24465a4316bb029b42fcd1f4d5af7"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "2a76c6b3e0fc66428644887cf2af4fe83663eeb455460023577a870285148466",
+      "predecessor": "output/reproductions/packages/W3125741632/attempt_02/submission.json",
+      "predecessor_sha256": "0a31c3555775724654217d88701aab022eb8fca741993f6909690b0403bd60ff"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "940c18776a380ef5ca11b498d942bea77a97c438814a0b89a832612b095f363f",
+    "predecessor": "0109490250dbd1242480ad770f4839a726220e197d73a806c6a04f2157af2666",
+    "feasibility": "09995ba43418fe679339f837491e93da18a2d956279393f8c12626f8872e10fe"
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Using Asset Turnover and Profit Margin to Forecast Changes in Profitability",
+  "doi": "10.1023/a:1012430513430",
+  "route": "reconstruction",
+  "paper_id": "W1559083449",
+  "years": 5,
+  "sources_checked": [
+    "COMP.FUNDA at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; current local SAS source metadata: 941,340 rows, 949 fields, modified 2026-07-22. Aggregate scan of standard, consolidated domestic annual rows found 140,832 source rows across FY1976–FY1992, including 10,705 rows in FY1992; its actual DATADATE coverage for FY1992 is 1992-06-30 through 1993-05-31. Required fields were present. The existing completeness rule found 2 duplicate GVKEY/FYEAR keys and no tied maximum scores across this source window.",
+    "CRSP.CCMXPF_LINKTABLE at ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat; 92,711 rows, modified 2026-08-14. Eligible LC/LU, P/C, positive-LPERMNO link intervals overlap each calendar year 1987–1993, covering the required actual source dates for t=1987–1991 and FY1992.",
+    "CRSP.MSENAMES at ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat; 117,830 rows, modified 2025-12-06. Positive dated SIC intervals overlap each calendar year 1987–1993; source date range reaches 2024-12-31. The existing code uses effective NAMEDT/NAMEENDT matches and SICCD, not HSICCD.",
+    "Local SAS PROC CONTENTS catalog PROC CONTENTS source catalog: COMP.FUNDA lines 27500–27507; CRSP.CCMXPF_LINKTABLE lines 81454–81461; CRSP.MSENAMES lines 83834–83841. Exact paths and current local source vintages were also checked directly with pyreadstat metadata and aggregate date/count scans.",
+    "Assigned accepted reconstruction: output/reproductions/packages/W1559083449/attempt_02/outcome.json (attempt 2, Table 2 Model 3, executed, best_effort); assigned paper/sample/model records identify Table 2 Model 3, prose period 1978–1986, Compustat Industrial Annual, and paper N=9,147.",
+    "Fresh handoff work/data/main/reg.dta: 40,705 rows and 18 variables; metadata confirms lowercase t_year is numeric int16 fiscal-year labels and lowercase datadate_t is numeric int16 SAS day counts (1960-01-01 origin), retained through the SAS KEEP and Stata import. Aggregate dates in the final FY1991 observations are 1991-06-30 to 1992-05-31; the fit's count diagnostic uses t_year."
+  ],
+  "changes": [
+    "Rebuilt the original and extension together from the named current local sources. Expanded source FYEAR bounds to 1976–1992 and the pooled t-period to FY1978–FY1991; retained the accepted exact FY(t−2), FY(t−1), FY(t), FY(t+1) joins, actual DATADATE ordering, source screens, constructions, sample exclusions, and pooled OLS specification.",
+    "Retained DATADATE_t in the SAS-to-Stata handoff and added an inline Stata e(sample) diagnostic for the original and added fiscal-year periods. The computed aggregate line is saved at work/artifacts/s1_sample_counts.txt."
+  ],
+  "limitations": [
+    "The paper's discussion describes Table 2 observations as 1978–1986, while the Table 2 caption prints 1976–1986. The assigned accepted code implements the body period; this extension starts from 1978 and preserves the discrepancy.",
+    "The paper reports pooled regressions but does not specify the underlying estimator or covariance procedure. The accepted reconstruction's ordinary pooled OLS with conventional standard errors remains a best-effort interpretation.",
+    "The paper reports N=9,147 for estimation, while the accepted original-period run has N=23,425 under its documented source construction and screens. The extended pooled run has N=40,705; the discrepancy is reported, not tuned away.",
+    "The inherited historical-industry screen excludes firm-years with no resolved dated SIC after the accepted Compustat SICH and CCM/CRSP MSENAMES fallback, because their financial-industry status cannot be established."
+  ],
+  "analyses": [
+    {
+      "scope_id": "rnoa_change_model3 / model3_in_sample",
+      "key": "s1",
+      "label": "rnoa_change_model3 / model3_in_sample",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "The named local Compustat source has compatible standardized annual data through FY1992, and the named current CCM link and MSENAMES sources have dated coverage over the required 1987–1992 observations. The controller's single SAS build and Stata fit completed successfully. Actual pooled OLS e(sample) contains 23425 firm-years in the original FY1978–FY1986 period and 17280 added firm-years in FY1987–FY1991, with last contributing t-year 1991.",
+      "source_evidence": [
+        "output/samples/records/W1559083449.json: main sample evidence, pp. 5–6 (Compustat Industrial Annual t−1/t/t+1 unit and N=9,147).",
+        "output/models/records/W1559083449.json: rnoa_change_model3, Table 2 Model 3 column, p. 8; pooled-regression description and Table 2 period evidence, pp. 6 and 8.",
+        "output/reproductions/packages/W1559083449/attempt_02/outcome.json: assigned attempt 2 fit rnoa_change_model3/model3_in_sample, execution_status=executed and the inherited best-effort assumptions/limitations.",
+        "work/build.sas lines 9–13 and 104–134: Compustat row filters, source FY bounds, and keyed fiscal-year joins; line 134 uses t=1978–1991. Lines 375–376 retain t_year and actual datadate_t in the handoff.",
+        "work/stata.ipynb cell model3_table2: the accepted pooled regression and inline counts from its active Stata e(sample). Fresh native output is work/runtime/20261118T052415516460Z/cell_model3_table2.log; aggregate-only extract is work/artifacts/s1_sample_counts.txt.",
+        "PROC CONTENTS source catalog lines 27500–27507, 81454–81461, and 83834–83841; direct aggregate metadata/date scans of the exact three named SAS datasets are summarized in sources_checked.",
+        "work/data/main/reg.dta metadata-only inspection: lowercase t_year and datadate_t are present as numeric variables; aggregate FY1991 observation dates decode to 1991-06-30 through 1992-05-31. The handoff has 40,705 rows, matching the pooled fit's N."
+      ],
+      "original_begin": 1978,
+      "original_end": 1986,
+      "requested_end": 1991,
+      "supported_end": 1991,
+      "last_added": 1991,
+      "count_unit": "firm-year observations in the pooled OLS estimation sample (Stata e(sample))",
+      "original_n": 23425,
+      "added_n": 17280,
+      "artifacts": [
+        "results/tables/table2_model3.md"
+      ],
+      "comparison": "For the same weighted ΔATO_t slope, the saved accepted original-period fit (output/reproductions/packages/W1559083449/attempt_02/tables/table2_model3.md) reports β=0.280 with N=23,425; the fresh pooled extension (work/tables/table2_model3.md) reports β=0.285 with N=40,705. Both are ratio-on-ratio coefficients (dimensionless), shown to 3 decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:4fd00f6cacec15ef0d9645becf2094c159a618157c1a90bdc0fddbf62bcbe345",
+        "sha256": "4fd00f6cacec15ef0d9645becf2094c159a618157c1a90bdc0fddbf62bcbe345",
+        "marker": "EXT_SAMPLE s1 23425 17280 1991"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 1
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed15-959f-7c53-b193-3e4919c676ba",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W1559083449.json",
+    "models": "output/models/records/W1559083449.json",
+    "predecessor": "output/reproductions/packages/W1559083449/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W1559083449.json"
+  },
+  "input_hashes": {
+    "sample": "87e9fdc56bc2d3414e40c643830656ddde24f10b2c90d490634794963fb3dd3c",
+    "models": "7d6a544b5ef9e873b3ce0409d7d737ed72146e0bb08401a03ecc0780c285a546",
+    "predecessor": "75cdbc1d6290a78db16fec8d17b4677c091524feda0ea773e662d673917d8d25",
+    "feasibility": "299da0dc417dbd5802f2855532b2de2ca4905110e47e35d0412899c9399ade33"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:fbb72775ad67d80b677022c8b1cf6132ab63ee54d9af42e9bd2ec2edaf5518e5",
+    "sha256": "fbb72775ad67d80b677022c8b1cf6132ab63ee54d9af42e9bd2ec2edaf5518e5",
+    "ok": true,
+    "state_sha256": "50dceed1496405a359a8b541e8640a5ef69e1ef8e0a10f5b529dac135d72b3f6",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.MSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764951124879997292
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "b31279527bf40fd35d1f947579d0e05ee37f25a52d9dcb717e2593d489ed9429",
+      "work/stata.ipynb": "f7a4a3f2aa12bed042fb1d54706fb730738b2ff2d9d5a9083f522bfb63fa84dc",
+      "work/submission.json": "fd3f5f53e17ac519e9e33dfbdf8535e4d80b35407391e785a56de7e5f96c8f13"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "0ae8d7e31028652000edb9c09923c390bbce4dc0a2aa9fdc08c606445bb7d66e",
+      "predecessor": "output/reproductions/packages/W1559083449/attempt_02/build.sas",
+      "predecessor_sha256": "2c95dbdc15b3fce85ae6f66031712c0a2cd8e3b3d5ed5960b1dd11c5d9ae189f",
+      "executed_sha256": "b31279527bf40fd35d1f947579d0e05ee37f25a52d9dcb717e2593d489ed9429",
+      "historical_predecessor_sha256": "ec68c8179c608364f08675f72ef23eb93348c984bf9eee9f5cee5cefb6333f29"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "f7a4a3f2aa12bed042fb1d54706fb730738b2ff2d9d5a9083f522bfb63fa84dc",
+      "predecessor": "output/reproductions/packages/W1559083449/attempt_02/stata.ipynb",
+      "predecessor_sha256": "599ad3e53b856ce1c4f22b247d1804032b0fd5d75eee24cbd017f7eb9a975a74",
+      "historical_predecessor_sha256": "18d17afd69273fa02dc0c51c10a5ff3f1e7bf6f999b81434915d047560fd88e1"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "fd3f5f53e17ac519e9e33dfbdf8535e4d80b35407391e785a56de7e5f96c8f13",
+      "predecessor": "output/reproductions/packages/W1559083449/attempt_02/submission.json",
+      "predecessor_sha256": "80a23bc0919eebcf6c83b87f80e1452fe839ea10aafba260f242d520cd8cca6b"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "181ab81ed8b4a5441f6941f6fd309a06d2156c1d780f023baf1fa52f978b949b",
+    "predecessor": "8444279c97fb0a8ff7aee9bfd9bb9e3487cb9e7352c8232d40c8be45ae139c14",
+    "feasibility": "24ea17b9eeb860f65d8409e4924f11bbe300f086d5379deca8e321977a20fb88"
+  }
+}

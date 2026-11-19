@@ -1,0 +1,386 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "The Impact of Financial Reporting Quality on Debt Contracting: Evidence from Internal Control Weakness Reports",
+  "doi": "10.1111/j.1475-679x.2010.00388.x",
+  "route": "reconstruction",
+  "paper_id": "W3126000559",
+  "years": 5,
+  "sources_checked": [
+    "AUDIT.FEED10_SOX_302_DISCLOSURE_CONTRO (current local ${ACCTREPL_SAS_ROOT}/audit/audit_comp/feed10_sox_302_disclosure_contro.sas7bdat): FILE_DATE coverage 2002-09-05–2013-12-31; 174,816 rows after the original 2008 endpoint within the bounded 2002–2013 query (work/runtime/20261118T111403582692Z/build.lst, p. 1).",
+    "DEALSCAN.FACILITY (current local ${ACCTREPL_SAS_ROOT}/tfn/dealscan/facility.sas7bdat): FACILITYSTARTDATE 1999-09-01–2013-12-31; 68,572 rows after 2008 among 201,881 rows in the assigned facility window (build.lst, p. 2).",
+    "COMP.FUNDA (current local ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat): accepted INDL/STD/C/D, USD, positive-assets control rows cover 1998-01-31–2012-12-31; 34,191 eligible observations after the prior construction cutoff (2007) in the bounded date audit (build.lst, p. 3).",
+    "COMP.ADSPRATE (current local ${ACCTREPL_SAS_ROOT}/comp/d_na/rating/adsprate.sas7bdat): nonmissing SPLTICRM dates cover 1981-01-31–2013-12-31; 117,158 rows after 2008 in the bounded query (build.lst, p. 4).",
+    "FISD.FISD_RATINGS and FISD.FISD_MERGEDISSUE (current local ${ACCTREPL_SAS_ROOT}/mergent/fisd/fisd_ratings.sas7bdat and fisd_mergedissue.sas7bdat): accepted-agency RATING_DATE spans 2002-01-01–2013-12-31 with 677,282 post-2008 rows; senior issue records include 150,048 intervals intersecting 2009–2013, latest issue maturity 2203-07-02 (build.lst, pp. 5 and 9).",
+    "CRSPA.STOCKNAMES_V2 and CRSPA.CCMXPF_LINKTABLE (current local ${ACCTREPL_SAS_ROOT}/crsp/a_stock_v2/stocknames_v2.sas7bdat and ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat): date intervals overlap 2009–2013 (11,704 name intervals; 7,386 eligible LC/LU P/C links); observed name ends through 2025-12-31 and finite CCM link ends through 2026-01-30 (build.lst, pp. 6–7).",
+    "WRDSAPPS.BONDCRSP_LINK (current local ${ACCTREPL_SAS_ROOT}/wrdsapps/linking/bclink/bondcrsp_link.sas7bdat): date-valid intervals overlap 2009–2013; trace dates span through 2026-02-13 and CRSP/link dates through 2025-12-31 (build.lst, p. 8).",
+    "DEALSCAN.PACKAGE, CURRFACPRICING, FINANCIALCOVENANT, PERFORMANCEPRICING, LENDERSHARES, WRDS_LOANCONNECTOR_IDS, and DEALSCAN.DEALSCAN: current catalog-listed local files in ${ACCTREPL_SAS_ROOT}/tfn/dealscan; rebuilt with the accepted package/facility/tranche joins. These are keyed contract terms or current converted tranche bridges, not separate observation clocks.",
+    "COMP.NAMES and REVELIO.COMPANY_MAPPING: current catalog-listed local identity sources; used only under the accepted CIK/GVKEY and exact LEI/name/CIK route. Their mapping snapshot does not define the facility observation clock.",
+    "Local catalog: output/feasibility_reproduction/resources/catalog.json; the native builder read the current listed source libraries read-only. The current source versions are not certified as the authors’ historical vintage."
+  ],
+  "changes": [
+    "Kept the initial Section 302 material-weakness cohort fixed at 2002-09-01 through 2008-07-31 and the facility observation clock at FacilityStartDate/calendar loan_year; extended the facility boundary from 2008-12-31 to the requested 2013-12-31.",
+    "Extended explicit-clean-report, prior-year Compustat controls (through 2012 DATADATE), Compustat and FISD rating dates, and date-valid link bounds to 2013 as needed by the existing construction. Retained the same three-year pre-report and three-year post-clean rules, model terms, fixed effects, clustering, and estimators.",
+    "Added aggregate-only source date coverage summaries in the job-local SAS build and e(sample)-based period markers in the existing Stata cells. The SAS builder produced current-vintage handoffs, but the controller did not proceed to Stata."
+  ],
+  "limitations": [
+    "Inherited: the frozen feasibility route names SOX 404, but the paper requires SOX 302; the accepted construction uses the catalog-listed SOX 302 disclosure-controls table and checks local flag frequencies.",
+    "Inherited: facility borrower coverage is conservative. The dated CRSP/CCM route requires exact contemporaneous borrower-name agreement, and the independent LEI route requires direct-company name and CIK confirmation; conflicting or unmatched routes remain excluded.",
+    "Inherited: the current local vintage and DealScan historical revisions are not certified as the authors’ vintage; only unique tranche amounts and borrower matches are retained.",
+    "Inherited: the Bond-CRSP link file begins in July 2002, so earlier FISD issue ratings cannot be verified through that bridge; missing rating history or mapping conflicts remain unavailable.",
+    "Inherited: the paper does not publish the exact cross-agency 1–27 rating crosswalk. The explicit raw-grade notch conversion is best effort and unrecognized grades remain unavailable.",
+    "Inherited: local coverage was much narrower than the paper in the accepted run: 11,356 of 133,309 dated DealScan facilities passed the conservative borrower routes; only 414 passed the shared-control completeness requirements, and the prior/post screen retained 223 facilities across 45 firms. The accepted rating and sample reductions remain material.",
+    "Inherited: the accepted Table 6 restricted PP file contained 89 classifiable facilities and its probit used 88 after one perfect-prediction exclusion. The paper does not specify whether rated-PP pre/post eligibility precedes other complete-case restrictions; the accepted order is retained.",
+    "Inherited: annual borrower controls use the latest eligible DATADATE in the preceding calendar year. The paper does not resolve calendar year versus latest fiscal report; the accepted selected-source ages were 6–697 days (median 213).",
+    "Current-vintage source date fields reach the requested 2013 boundary, but the constructed eligible handoffs contain no loan-year observations after 2011. The main handoff has 246 unique facilities, including 10 in 2009–2011; the restricted PP handoff has 96 unique facilities, including 2 in 2009–2011. These are constructed handoff rows, not regression e(sample) counts. The 2012–2013 endpoint is therefore unsupported by the sample actually constructed.",
+    "The one controller launch returned SAS code 1. The SAS log contains WARNING: Apparent symbolic reference P not resolved at the added COMP.ADSPRATE coverage label (“S&P”); runtime/latest.json records sas.ok=false, returncode=1, and no Stata cells. No model or e(sample) diagnostics completed, so all six assigned results are failed and no extension coefficients or native comparison are available. The failed launch was not retried.",
+    "The current-vintage handoff differs from the accepted historical handoff (246 versus 223 main rows; 96 versus 89 restricted PP rows before estimation). No updated coefficients exist, so estimates cannot be compared with the saved original results.",
+    "Task metadata discrepancy: task.json registers only the icw_loan_facilities extracted sample, while the accepted Table 6 cell reads the separate icw_pp_ratio_eligible restricted handoff. The report uses the registered base sample ID for controller schema compatibility and identifies the actual restricted handoff in the Table 6 row; task.json was left unchanged."
+  ],
+  "analyses": [
+    {
+      "scope_id": "icw_financial_covenants / icw_financial_covenants_primary_col_1",
+      "key": "s1",
+      "label": "Table 3 col. 1 — financial covenants",
+      "sample_ids": [
+        "icw_loan_facilities"
+      ],
+      "status": "failed",
+      "reason": "The single controller launch ran the extended SAS construction but returned SAS code 1 before Stata. The coverage label at work/build.sas:53 contains “S&P”; the SAS log reports “WARNING: Apparent symbolic reference P not resolved.” The controller receipt has sas.ok=false and cells={}. No regression result or actual e(sample) count/last period was produced. The generated handoff has 246 rows with 246 unique facility IDs (236 rows in 2008 or earlier and 10 in 2009–2011), no handoff rows after 2011. These are construction counts, not estimation counts. No second launch was made.",
+      "source_evidence": [
+        "work/design.md, §Paper evidence and target samples (Table 3 col. 1, printed p. 110; sample window, physical pp. 9–10).",
+        "work/stata.ipynb, cell w312_t3; work/build.sas:16–20, 1253–1263.",
+        "work/runtime/20261118T111403582692Z/build.lst, pp. 1–9",
+        "work/runtime/20261118T111403582692Z/build.log:170; work/runtime/latest.json (SAS returncode=1; no Stata cells completed)"
+      ],
+      "original_begin": "1999-09-01",
+      "original_end": "2008-12-31",
+      "requested_end": "2013-12-31",
+      "supported_end": "2011",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Financial-covenant package count; saved original uncorrected/corrected coefficients −0.537/−0.146 in output/reproductions/packages/W3126000559/attempt_02/tables/table3_financial_covenants.md. Extended coefficients unavailable because Stata did not run."
+    },
+    {
+      "scope_id": "icw_interest_rate / icw_interest_rate_primary_col_1",
+      "key": "s2",
+      "label": "Table 4 col. 1 — interest rate",
+      "sample_ids": [
+        "icw_loan_facilities"
+      ],
+      "status": "failed",
+      "reason": "The single controller launch ran the extended SAS construction but returned SAS code 1 before Stata. The coverage label at work/build.sas:53 contains “S&P”; the SAS log reports “WARNING: Apparent symbolic reference P not resolved.” The controller receipt has sas.ok=false and cells={}. No regression result or actual e(sample) count/last period was produced. The generated handoff has 246 rows with 246 unique facility IDs (236 rows in 2008 or earlier and 10 in 2009–2011), no handoff rows after 2011. These are construction counts, not estimation counts. No second launch was made.",
+      "source_evidence": [
+        "work/design.md, §Paper evidence and target samples (Table 4 col. 1, printed p. 112; sample window, physical pp. 9–10).",
+        "work/stata.ipynb, cell w312_t4; work/build.sas:16–20, 1253–1263.",
+        "work/runtime/20261118T111403582692Z/build.lst, pp. 1–9",
+        "work/runtime/20261118T111403582692Z/build.log:170; work/runtime/latest.json (SAS returncode=1; no Stata cells completed)"
+      ],
+      "original_begin": "1999-09-01",
+      "original_end": "2008-12-31",
+      "requested_end": "2013-12-31",
+      "supported_end": "2011",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Interest-rate spread in basis points over LIBOR; saved original uncorrected/corrected coefficients −5.732/+8.629 in output/reproductions/packages/W3126000559/attempt_02/tables/table4_interest_rate.md. Extended coefficients unavailable because Stata did not run."
+    },
+    {
+      "scope_id": "icw_secured / icw_secured_primary_col_1",
+      "key": "s3",
+      "label": "Table 5 col. 1 — secured probit",
+      "sample_ids": [
+        "icw_loan_facilities"
+      ],
+      "status": "failed",
+      "reason": "The single controller launch ran the extended SAS construction but returned SAS code 1 before Stata. The coverage label at work/build.sas:53 contains “S&P”; the SAS log reports “WARNING: Apparent symbolic reference P not resolved.” The controller receipt has sas.ok=false and cells={}. No regression result or actual e(sample) count/last period was produced. The generated handoff has 246 rows with 246 unique facility IDs (236 rows in 2008 or earlier and 10 in 2009–2011), no handoff rows after 2011. These are construction counts, not estimation counts. No second launch was made.",
+      "source_evidence": [
+        "work/design.md, §Paper evidence and target samples (Table 5 col. 1, printed p. 113; sample window, physical pp. 9–10).",
+        "work/stata.ipynb, secured fit in cell w312_t5; work/build.sas:16–20, 1253–1263.",
+        "work/runtime/20261118T111403582692Z/build.lst, pp. 1–9",
+        "work/runtime/20261118T111403582692Z/build.log:170; work/runtime/latest.json (SAS returncode=1; no Stata cells completed)"
+      ],
+      "original_begin": "1999-09-01",
+      "original_end": "2008-12-31",
+      "requested_end": "2013-12-31",
+      "supported_end": "2011",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Probit index coefficients; saved original uncorrected/corrected coefficients −1.170/−1.767 in output/reproductions/packages/W3126000559/attempt_02/tables/table5_loan_mechanisms.md. Extended coefficients unavailable because Stata did not run."
+    },
+    {
+      "scope_id": "icw_general_covenants / icw_general_covenants_primary_col_2",
+      "key": "s4",
+      "label": "Table 5 col. 2 — general covenants",
+      "sample_ids": [
+        "icw_loan_facilities"
+      ],
+      "status": "failed",
+      "reason": "The single controller launch ran the extended SAS construction but returned SAS code 1 before Stata. The coverage label at work/build.sas:53 contains “S&P”; the SAS log reports “WARNING: Apparent symbolic reference P not resolved.” The controller receipt has sas.ok=false and cells={}. No regression result or actual e(sample) count/last period was produced. The generated handoff has 246 rows with 246 unique facility IDs (236 rows in 2008 or earlier and 10 in 2009–2011), no handoff rows after 2011. These are construction counts, not estimation counts. No second launch was made.",
+      "source_evidence": [
+        "work/design.md, §Paper evidence and target samples (Table 5 col. 2, printed p. 113; general-covenant observed-outcome sample).",
+        "work/stata.ipynb, general-covenant fit in cell w312_t5; work/build.sas:16–20, 1253–1263.",
+        "work/runtime/20261118T111403582692Z/build.lst, pp. 1–9",
+        "work/runtime/20261118T111403582692Z/build.log:170; work/runtime/latest.json (SAS returncode=1; no Stata cells completed)"
+      ],
+      "original_begin": "1999-09-01",
+      "original_end": "2008-12-31",
+      "requested_end": "2013-12-31",
+      "supported_end": "2011",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "General-covenant provision count; saved original uncorrected/corrected coefficients −0.946/−0.811 in output/reproductions/packages/W3126000559/attempt_02/tables/table5_loan_mechanisms.md. Extended coefficients unavailable because Stata did not run."
+    },
+    {
+      "scope_id": "icw_maturity / icw_maturity_primary_col_3",
+      "key": "s5",
+      "label": "Table 5 col. 3 — log maturity",
+      "sample_ids": [
+        "icw_loan_facilities"
+      ],
+      "status": "failed",
+      "reason": "The single controller launch ran the extended SAS construction but returned SAS code 1 before Stata. The coverage label at work/build.sas:53 contains “S&P”; the SAS log reports “WARNING: Apparent symbolic reference P not resolved.” The controller receipt has sas.ok=false and cells={}. No regression result or actual e(sample) count/last period was produced. The generated handoff has 246 rows with 246 unique facility IDs (236 rows in 2008 or earlier and 10 in 2009–2011), no handoff rows after 2011. These are construction counts, not estimation counts. No second launch was made.",
+      "source_evidence": [
+        "work/design.md, §Paper evidence and target samples (Table 5 col. 3, printed p. 113; sample window, physical pp. 9–10).",
+        "work/stata.ipynb, log-maturity fit in cell w312_t5; work/build.sas:16–20, 1253–1263.",
+        "work/runtime/20261118T111403582692Z/build.lst, pp. 1–9",
+        "work/runtime/20261118T111403582692Z/build.log:170; work/runtime/latest.json (SAS returncode=1; no Stata cells completed)"
+      ],
+      "original_begin": "1999-09-01",
+      "original_end": "2008-12-31",
+      "requested_end": "2013-12-31",
+      "supported_end": "2011",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Log facility maturity in months; saved original uncorrected/corrected coefficients +0.186/+0.148 in output/reproductions/packages/W3126000559/attempt_02/tables/table5_loan_mechanisms.md. Extended coefficients unavailable because Stata did not run."
+    },
+    {
+      "scope_id": "icw_pp_ratio / icw_pp_ratio_primary_col_1",
+      "key": "s6",
+      "label": "Table 6 col. 1 — PP-ratio probit",
+      "sample_ids": [
+        "icw_loan_facilities"
+      ],
+      "status": "failed",
+      "reason": "The assigned task inventory registers only icw_loan_facilities; the accepted Table 6 code actually reads the restricted icw_pp_ratio_eligible handoff specified in work/submission.json. The single controller launch ran the extended SAS construction but returned SAS code 1 before Stata. The coverage label at work/build.sas:53 contains “S&P”; the SAS log reports “WARNING: Apparent symbolic reference P not resolved.” The controller receipt has sas.ok=false and cells={}. No regression result or actual e(sample) count/last period was produced. The generated restricted handoff has 96 rows with 96 unique facility IDs (94 rows with loan_year<=2008 and 2 in 2009–2011), no handoff rows after 2011. These are construction counts, not estimation counts. No second launch was made.",
+      "source_evidence": [
+        "work/design.md, §Paper evidence and target samples (Table 6 col. 1, printed p. 115; restriction on physical p. 18 and Appendix A, printed pp. 131–132).",
+        "work/stata.ipynb, cell w312_t6; work/build.sas:16–20, 1253–1263.",
+        "work/runtime/20261118T111403582692Z/build.lst, pp. 1–9",
+        "work/runtime/20261118T111403582692Z/build.log:170; work/runtime/latest.json (SAS returncode=1; no Stata cells completed)"
+      ],
+      "original_begin": "1999-09-01",
+      "original_end": "2008-12-31",
+      "requested_end": "2013-12-31",
+      "supported_end": "2011",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Probit index coefficients; saved original uncorrected/corrected coefficients −9.127/−4.217 in output/reproductions/packages/W3126000559/attempt_02/tables/table6_pp_ratio.md. Extended coefficients unavailable because Stata did not run."
+    }
+  ],
+  "outcome": "failed",
+  "counts": {
+    "failed": 6
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ee54-1a01-7d83-b1f0-c6c57a6ba365",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3126000559.json",
+    "models": "output/models/records/W3126000559.json",
+    "predecessor": "output/reproductions/packages/W3126000559/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3126000559.json"
+  },
+  "input_hashes": {
+    "sample": "ce4901ac175f1cbdc947f63d97caa8fda765d29207542f649a4624ca2153657e",
+    "models": "50762a4673045c538fe227cc19f58ea77b614098d28f07612d892b2cfbb2a18f",
+    "predecessor": "ddbf114145529f9a320b24fe4bed2a2eeb0988add574ff6ad02796b30645dc53",
+    "feasibility": "4dc8ec73b0d825d4c6296128a4bc28164eb2653751dbf697c279291296d77347"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:054cc14be4fa7cd98dd33a1db82201509efd5abf98ab68a0572d29d90f990bf8",
+    "sha256": "054cc14be4fa7cd98dd33a1db82201509efd5abf98ab68a0572d29d90f990bf8",
+    "ok": false,
+    "state_sha256": "59fb3f6e5fea311f0964887fa5c291939aa129f589e08536a27c1510e29e8d10",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "AUDIT.FEED10_SOX_302_DISCLOSURE_CONTRO",
+        "path": "${ACCTREPL_SAS_ROOT}/audit/audit_comp/feed10_sox_302_disclosure_contro.sas7bdat",
+        "bytes": 3049914368,
+        "mtime_ns": 1786695990687819619
+      },
+      {
+        "dataset": "DEALSCAN.FACILITY",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/dealscan/facility.sas7bdat",
+        "bytes": 633339904,
+        "mtime_ns": 1764950758079055738
+      },
+      {
+        "dataset": "DEALSCAN.PACKAGE",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/dealscan/package.sas7bdat",
+        "bytes": 408330240,
+        "mtime_ns": 1764950761463138225
+      },
+      {
+        "dataset": "DEALSCAN.CURRFACPRICING",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/dealscan/currfacpricing.sas7bdat",
+        "bytes": 80674816,
+        "mtime_ns": 1610548204524103000
+      },
+      {
+        "dataset": "DEALSCAN.FINANCIALCOVENANT",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/dealscan/financialcovenant.sas7bdat",
+        "bytes": 86368256,
+        "mtime_ns": 1610548204633100000
+      },
+      {
+        "dataset": "DEALSCAN.PERFORMANCEPRICING",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/dealscan/performancepricing.sas7bdat",
+        "bytes": 24313856,
+        "mtime_ns": 1610548204742102000
+      },
+      {
+        "dataset": "DEALSCAN.LENDERSHARES",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/dealscan/lendershares.sas7bdat",
+        "bytes": 293142528,
+        "mtime_ns": 1764950760331110632
+      },
+      {
+        "dataset": "DEALSCAN.WRDS_LOANCONNECTOR_IDS",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/dealscan/wrds_loanconnector_ids.sas7bdat",
+        "bytes": 14680064,
+        "mtime_ns": 1631059597000000000
+      },
+      {
+        "dataset": "DEALSCAN.DEALSCAN",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/dealscan/dealscan.sas7bdat",
+        "bytes": 8791261184,
+        "mtime_ns": 1790529368487701343
+      },
+      {
+        "dataset": "CRSPA.STOCKNAMES_V2",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock_v2/stocknames_v2.sas7bdat",
+        "bytes": 14942208,
+        "mtime_ns": 1786705279593618693
+      },
+      {
+        "dataset": "CRSPA.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.NAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/names.sas7bdat",
+        "bytes": 8060928,
+        "mtime_ns": 1784527707030688368
+      },
+      {
+        "dataset": "COMP.ADSPRATE",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/rating/adsprate.sas7bdat",
+        "bytes": 145883136,
+        "mtime_ns": 1786702478486554102
+      },
+      {
+        "dataset": "REVELIO.COMPANY_MAPPING",
+        "path": "${ACCTREPL_SAS_ROOT}/revelio/common/company_mapping.sas7bdat",
+        "bytes": 25994067968,
+        "mtime_ns": 1786722394483001824
+      },
+      {
+        "dataset": "FISD.FISD_RATINGS",
+        "path": "${ACCTREPL_SAS_ROOT}/mergent/fisd/fisd_ratings.sas7bdat",
+        "bytes": 200343552,
+        "mtime_ns": 1724683489000000000
+      },
+      {
+        "dataset": "FISD.FISD_MERGEDISSUE",
+        "path": "${ACCTREPL_SAS_ROOT}/mergent/fisd/fisd_mergedissue.sas7bdat",
+        "bytes": 1303511040,
+        "mtime_ns": 1724683450000000000
+      },
+      {
+        "dataset": "WRDSAPPS.BONDCRSP_LINK",
+        "path": "${ACCTREPL_SAS_ROOT}/wrdsapps/linking/bclink/bondcrsp_link.sas7bdat",
+        "bytes": 28901376,
+        "mtime_ns": 1786794214972154390
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "e3a76c09b3fa2c12267437721ad39e1bdd4b8fde006ac9980fc08049b82fc09d",
+      "work/stata.ipynb": "6f811f53be275f2b26bb283b876615dca7a3c54752a431d02f618b6541267140",
+      "work/submission.json": "c2c847c14dbf953b4233992284c80e296dc3b3a0e5211c90355341bff2612648"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "c8530c90073186f4c818cd8347479a15467e00a39b1864439bdf588952080bc4",
+      "predecessor": "output/reproductions/packages/W3126000559/attempt_02/build.sas",
+      "predecessor_sha256": "fde77684a5c1e1afe2a89c826f322955e38ec0f33d53818e79cecbce2fac989a",
+      "executed_sha256": "e3a76c09b3fa2c12267437721ad39e1bdd4b8fde006ac9980fc08049b82fc09d",
+      "historical_predecessor_sha256": "a60a95f45cb053c3776534ccfdff9521393abe7607d976ff293901ada9046fac"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "6f811f53be275f2b26bb283b876615dca7a3c54752a431d02f618b6541267140",
+      "predecessor": "output/reproductions/packages/W3126000559/attempt_02/stata.ipynb",
+      "predecessor_sha256": "b46f1f79dcaceda22de9db89df7c67b6b71e543e1ec16a0c2c71c879af7ee8cf",
+      "historical_predecessor_sha256": "50ddbbe47242064bfbad26b8839ef5a24c95f2f49d36c8990f09f78ccf7be80d"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "c2c847c14dbf953b4233992284c80e296dc3b3a0e5211c90355341bff2612648",
+      "predecessor": "output/reproductions/packages/W3126000559/attempt_02/submission.json",
+      "predecessor_sha256": "7788e2824910afcc8170b3e29aef51c6420497dcd92e332ee2086b6e4220c4b2"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "8cdeba8a6187f9bc59eabc2ae7fc663d38cc1dbd7a622f6de7b9e870479c2299",
+    "predecessor": "6076d9ff3878e283ec2afc37e3182e19a903a30a497a672c8ea1bfd4138f5491",
+    "feasibility": "834ec364d2f03848f58a837122974c5d401a8e3c9c893c01d5306bbc5fde42be"
+  }
+}

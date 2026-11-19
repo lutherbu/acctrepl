@@ -1,0 +1,862 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-fc2b281c185c",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 58/Issue 4/12328 - Asymmetric-Cost-Behavior-and-Dividend-Policy/htyz-datasheet-and-code.zip",
+        "sha256": "7a1497ed2d2eaa9954437986cfe672b96b665ae21755253bc6a6a32b335812db"
+      },
+      {
+        "path": "JAR-Volume 58/Issue 4/12328 - Asymmetric-Cost-Behavior-and-Dividend-Policy/htyz-online-appendix.pdf",
+        "sha256": "76cd4b25da10b3bddb9c9052e0ea31cd12027d5c43b14608dba279e418a609da"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "25cb037ed990627ae0937a86996bb1cdb9061bee96e64fb83daf60c376fabc54"
+  },
+  "title": "Asymmetric Cost Behavior and Dividend Policy",
+  "doi": "10.1111/1475-679X.12328",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Supplied mixed Stata/SAS workflow that prepares annual Compustat variables, estimates quarterly cost stickiness and runs baseline Table 3 with two reghdfe specifications, then writes the final firm identifier list.",
+      "entry_points": [
+        "Codes for JAR.do"
+      ],
+      "requirement_ids": [
+        "R_ANNUAL",
+        "R_QUARTERLY"
+      ],
+      "software_ids": [
+        "SW_STATA",
+        "SW_ASREG",
+        "SW_WINSOR",
+        "SW_REGHDFE",
+        "SW_FTOOLS",
+        "SW_SAS",
+        "SW_SASSTAT"
+      ],
+      "issue_ids": [
+        "I_ANNUAL_FIELDS",
+        "I_HISTORY",
+        "I_FORMAT_HANDOFFS",
+        "I_SAS_SORT",
+        "I_SAS_RUNTIME"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_SRC_TARGET",
+        "E_SRC_ANNUAL_READ",
+        "E_SRC_ANNUAL_FIELDS",
+        "E_SRC_SAS_STEP1",
+        "E_SRC_STATA_Q_KEYS",
+        "E_SRC_SAS_REG",
+        "E_SRC_FINAL_MERGE",
+        "E_SRC_FINAL_MODELS",
+        "E_DOC_COMP",
+        "E_DOC_TABLE3",
+        "E_ID_DTA",
+        "E_ID_TXT",
+        "E_COMP_CATALOG",
+        "E_FUNDA_PROBE",
+        "E_FUNDQ_PROBE",
+        "E_COMPANY_PROBE",
+        "E_ENV",
+        "E_WINSOR",
+        "E_WORKFLOW_TRACE"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_ANNUAL",
+      "kind": "data",
+      "description": "Compustat annual input used both as compa_all.dta in Stata and COMP.COMPA_ALL in SAS. Actual source fields include gvkey/datadate/sich/sic plus fyear, at, mkvalt, csho, prcc_f, xrd, dvc, oibdp, ppegt, ppent, dltt, dlc, capx, txdb, ceq, pstkrv, prstkc, ib, dp, seq, dvp, che, invt, emp, aqc, aqs, rect, sale, state, ibcom, xint, txt, act, lct, idit, dvpsx_f, ajex, spi and curcd. The readable COMP.FUNDA candidate covers the financial/fiscal fields and sich but not sic/state; author export mapping and annual-history coverage remain unresolved. The datasheet-reported download dates are provenance context only; a compatible current product can be used.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_ANNUAL_FUNDA",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "Readable common North America annual fundamentals candidate. Its native schema omits sic and state required by the source import; COMP.COMPANY has current gvkey/sic/state fields but no supplied historical join. The one-row read establishes field/readability evidence only; author export mapping and annual-history coverage remain unverified. Matching the datasheet download dates is not a run prerequisite.",
+          "evidence_ids": [
+            "E_COMP_CATALOG",
+            "E_FUNDA_PROBE",
+            "E_COMPANY_PROBE",
+            "E_DOC_COMP"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "ajex",
+            "curcd",
+            "act",
+            "aqc",
+            "aqs",
+            "at",
+            "capx",
+            "ceq",
+            "che",
+            "csho",
+            "dlc",
+            "dltt",
+            "dp",
+            "dvc",
+            "dvp",
+            "emp",
+            "ib",
+            "ibcom",
+            "idit",
+            "invt",
+            "lct",
+            "oibdp",
+            "ppegt",
+            "ppent",
+            "prstkc",
+            "pstkrv",
+            "rect",
+            "sale",
+            "seq",
+            "spi",
+            "txdb",
+            "txt",
+            "xint",
+            "xrd",
+            "sich",
+            "dvpsx_f",
+            "mkvalt",
+            "prcc_f"
+          ],
+          "expected_period": "Table 3 fyear 1978–2016 plus annual t+1 for f_DPS (through 2017), ROAVol history through at least CoreEarn fyear 1975 and prior assets fyear 1974, an asreg 16-year rolling fyear window with lagged CoreEarn (earliest range about 1963, possibly one prior year at the boundary), and up to 60 subsequent annual rows per GVKEY for the pre-filter SICH fill; complete candidate coverage and exact usable history remain unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_QUARTERLY",
+      "kind": "data",
+      "description": "Compustat quarterly input read as compq in SAS WORK. It must include gvkey, datadate, fyearq, fqtr, fyr, datacqtr, datafqtr, saleq, xsgaq, atq, cogsq, oiadpq and xrdq. The readable COMP.FUNDQ candidate has these fields, but complete history and per-firm quarter coverage remain unverified. The datasheet-reported download dates are provenance context only; a compatible current product can be used.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_QUARTER_FUNDQ",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+          "description": "Readable common North America quarterly fundamentals candidate with all native columns selected in SAS Step 1. The one-row read establishes field/readability evidence only; complete firm-level history is not established. The supplied SAS call uses WORK.COMPQ, so an explicit alias/staging step is required. Matching the datasheet download dates is not a run prerequisite.",
+          "evidence_ids": [
+            "E_COMP_CATALOG",
+            "E_FUNDQ_PROBE",
+            "E_DOC_COMP"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyearq",
+            "fqtr",
+            "fyr",
+            "datacqtr",
+            "datafqtr",
+            "atq",
+            "cogsq",
+            "oiadpq",
+            "saleq",
+            "xrdq",
+            "xsgaq"
+          ],
+          "expected_period": "For each annual datadate, input quarterly rows with num_qtr distance 0–20; Stata log-change variables require preceding-quarter values, and SAS Step 3 retains order_q_dist 0–15 (16 quarters, consistent with t−3 through t). Table 3 final sample uses fyear 1978–2016; actual per-firm first quarter, date alignment and complete history unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW_STATA",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 was verified by the provided runtime probe. The author release is unspecified, but no incompatibility is established.",
+      "evidence_ids": [
+        "E_ENV"
+      ]
+    },
+    {
+      "id": "SW_ASREG",
+      "name": "asreg",
+      "status": "preparation_required",
+      "description": "The actual invoked rolling-regression command is available only after Stata adds the existing project reproductions ado directory; it is not found on the default adopath. From the shared job execution directory output/reproductions/jar-fc2b281c185c, configure the relative path ../ado before the annual Stata stage.",
+      "evidence_ids": [
+        "E_ENV",
+        "E_ASREG_DOC"
+      ]
+    },
+    {
+      "id": "SW_WINSOR",
+      "name": "winsor",
+      "status": "available",
+      "description": "The exact command used by the source is available in Stata 18 on the default adopath.",
+      "evidence_ids": [
+        "E_WINSOR"
+      ]
+    },
+    {
+      "id": "SW_REGHDFE",
+      "name": "reghdfe",
+      "status": "available",
+      "description": "reghdfe 6.12.3 was verified in Stata 18.",
+      "evidence_ids": [
+        "E_ENV"
+      ]
+    },
+    {
+      "id": "SW_FTOOLS",
+      "name": "ftools",
+      "status": "available",
+      "description": "ftools 2.49.1, required by the available reghdfe setup, was verified.",
+      "evidence_ids": [
+        "E_ENV"
+      ]
+    },
+    {
+      "id": "SW_SAS",
+      "name": "SAS",
+      "status": "unverified",
+      "description": "The supplied SAS stages use DATA steps, PROC SQL, PROC SORT and PROC REG. The environment startup probe failed while initializing TKELS; runtime availability and version therefore remain unverified, with no license conclusion.",
+      "evidence_ids": [
+        "E_ENV",
+        "E_SRC_SAS_STEP1",
+        "E_SRC_SAS_REG"
+      ]
+    },
+    {
+      "id": "SW_SASSTAT",
+      "name": "SAS/STAT",
+      "status": "unverified",
+      "description": "The supplied PROC REG stage requires SAS/STAT capability; the local SAS startup failure prevents verification of the component.",
+      "evidence_ids": [
+        "E_ENV",
+        "E_SAS_STAT_DOC",
+        "E_SRC_SAS_REG"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "I_ANNUAL_FIELDS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "annual_input_field_mapping",
+      "description": "The author code requires sic as a fallback when sich is missing and keeps state in its annual import. The local readable COMP.FUNDA table lacks both fields. COMP.COMPANY has gvkey/sic/state columns but is a current company dimension without datadate/fyear, and no join or temporal field-mapping rule is supplied. Do not remove source fields or silently assume the company-table join.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_SRC_ANNUAL_READ",
+        "E_SRC_ANNUAL_FIELDS",
+        "E_COMP_CATALOG",
+        "E_FUNDA_PROBE",
+        "E_COMPANY_PROBE"
+      ]
+    },
+    {
+      "id": "I_HISTORY",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "input_history_coverage",
+      "description": "The bounded probes verify candidate readability and columns, not complete annual/quarterly coverage. The target’s annual construction needs a t+1 DPS lead, ROAVol lags and prior assets, a 16-year asreg rolling window on CoreEarn/lag_earn, and the pre-filter 60-row future SICH fill; quarterly construction joins through 20 quarters earlier and uses lagged quarterly fields for a 16-quarter regression window. Full history and per-firm coverage remain unresolved. The datasheet reports May 2017 and April 2020 downloads as provenance context, but current compatible products may be used and matching those pulls is not a prerequisite.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_SRC_SICH_FIRST",
+        "E_SRC_SICH_LAST",
+        "E_SRC_ANNUAL_HISTORY",
+        "E_SRC_SAS_STEP1",
+        "E_SRC_STATA_Q_LAGS",
+        "E_SRC_SAS_REG",
+        "E_SRC_FINAL_MERGE",
+        "E_DOC_COMP",
+        "E_APP_WINDOW",
+        "E_ASREG_DOC",
+        "E_FUNDA_PROBE",
+        "E_FUNDQ_PROBE",
+        "E_WORKFLOW_TRACE"
+      ]
+    },
+    {
+      "id": "I_FORMAT_HANDOFFS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "cross_language_format_handoff",
+      "description": "The single .do file interleaves Stata and SAS. SAS WORK.COMPA_Q must be exported/imported as compa_q.dta before Stata Step 2; Stata compa_q1.dta must be imported as SAS WORK.COMPA_Q1; SAS WORK.B_DEC_16 must be exported/imported as b_dec_16.dta before the final Stata merge. The source contains no directory/library setup or bridge commands. These are known workflow-preparation steps; the result table itself is not explicitly written to a table file, so capture both regressions in the batch log.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_SRC_SAS_STEP1",
+        "E_SRC_STATA_Q_KEYS",
+        "E_SRC_STATA_Q_LAGS",
+        "E_SRC_SAS_REG",
+        "E_SRC_FINAL_MERGE",
+        "E_SRC_FINAL_MODELS",
+        "E_SAS_CSV_DOC",
+        "E_STATA_CSV_DOC",
+        "E_WORKFLOW_TRACE"
+      ]
+    },
+    {
+      "id": "I_SAS_SORT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "sas_by_sort_spelling",
+      "description": "SAS PROC SORT line 207 uses `desending`, which is not the documented DESCENDING keyword. The preceding SAS/Stata stage creates compa_q1 from the listed fields and does not create a desending variable. Correct this spelling in the working copy to preserve the intended order_q_dist sort.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_SRC_SAS_SORT",
+        "E_SRC_SAS_STEP1",
+        "E_SRC_STATA_Q_LAGS",
+        "E_SAS_SORT_DOC"
+      ]
+    },
+    {
+      "id": "I_SAS_RUNTIME",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "sas_runtime_capability",
+      "description": "The provided SAS startup probe fails with a TKELS initialization error, so Base SAS and SAS/STAT PROC REG capability could not be verified in this environment. This is an unresolved initialization/runtime state, not evidence of a missing license.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_ENV",
+        "E_SAS_STAT_DOC",
+        "E_SRC_SAS_REG"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_SRC_TARGET",
+      "kind": "source",
+      "description": "The author identifies this supplied program as the raw-data preparation for baseline Table 3.",
+      "file": "Codes for JAR.do",
+      "line_begin": 2,
+      "line_end": 2,
+      "quote": "/* code from raw data to generate the baseline Table 3 */"
+    },
+    {
+      "id": "E_SRC_ANNUAL_READ",
+      "kind": "source",
+      "description": "The Stata preparation reads the annual Compustat DTA and requires SIC/SICH industry fields.",
+      "file": "Codes for JAR.do",
+      "line_begin": 9,
+      "line_end": 10,
+      "quote": "use compa_all.dta, clear /* raw compustat annual data */\nkeep gvkey datadate sich sic"
+    },
+    {
+      "id": "E_SRC_ANNUAL_FIELDS",
+      "kind": "source",
+      "description": "The second annual Stata stage rereads compa_all.dta with its field list; later constructions use annual leads/lags and predictors.",
+      "file": "Codes for JAR.do",
+      "line_begin": 80,
+      "line_end": 83,
+      "quote": "use compa_all.dta, clear /* raw compustat annual data */\nkeep gvkey datadate fyear at mkvalt csho prcc_f xrd dvc oibdp ppegt ppent dltt dlc capx txdb ceq pstkrv prstkc ib dp seq dvp che invt ppegt emp aqc aqs rect sale state ibcom oibdp xint txt act lct idit dvpsx_f ajex spi curcd\ndrop if datadate==.     \nreplace fyear=year(datadate) if fyear==.     "
+    },
+    {
+      "id": "E_SRC_SICH_FIRST",
+      "kind": "source",
+      "description": "The annual industry preparation fills missing SICH from the next sorted row within GVKEY.",
+      "file": "Codes for JAR.do",
+      "line_begin": 12,
+      "line_end": 12,
+      "quote": "by gvkey: replace sich=sich[_n+1] if missing(sich) & !missing(sich[_n+1])"
+    },
+    {
+      "id": "E_SRC_SICH_LAST",
+      "kind": "source",
+      "description": "The repeated SICH-fill block ends at line 71; lines 12–71 contain 60 passes.",
+      "file": "Codes for JAR.do",
+      "line_begin": 71,
+      "line_end": 71,
+      "quote": "by gvkey: replace sich=sich[_n+1] if missing(sich) & !missing(sich[_n+1])"
+    },
+    {
+      "id": "E_SRC_ANNUAL_HISTORY",
+      "kind": "source",
+      "description": "Annual variables include lagged assets/earnings, a t+1 DPS lead, ROA lags through l3ROA, and rolling asreg persistence.",
+      "file": "Codes for JAR.do",
+      "line_begin": 95,
+      "line_end": 114,
+      "quote": "gen CoreEarn=ib+0.6*xint-0.6*idit\nsort num_gvkey fyear\nby num_gvkey: gen lag_at=l.at\nby num_gvkey: gen lag_earn = l.CoreEarn\ngen DPS=dvpsx_f/ajex \nby num_gvkey: gen f_DPS=f.DPS\ngen ROA=CoreEarn/lag_at\ngen l1ROA=l.ROA\ngen l2ROA=l2.ROA\ngen l3ROA=l3.ROA\negen n=rownonmiss(ROA l1ROA l2ROA l3ROA)\negen ROAVol=rowsd(ROA l1ROA l2ROA l3ROA) if n==4\ngen SI=spi/lag_at\ngenerate LOSS=.\nreplace LOSS=1 if CoreEarn<0\nreplace LOSS=0 if CoreEarn>=0\nreplace LOSS=. if CoreEarn==.\nbys num_gvkey: asreg CoreEarn lag_earn, wind(fyear 16) min(4)\nrename _b_lag_earn Persist\ndrop _Nobs _R2 _adjR2 _b_cons n"
+    },
+    {
+      "id": "E_SRC_ANNUAL_FILTER",
+      "kind": "source",
+      "description": "The annual block merges its generated industry file, filters financial utilities and USD, then saves the Table 3 annual intermediate.",
+      "file": "Codes for JAR.do",
+      "line_begin": 124,
+      "line_end": 135,
+      "quote": "merge 1:1 gvkey datadate using compa_sich, keepusing(sich_num sich_string) /* compustat industry info, generated above */\ndrop if _merge==2\ndrop _merge\ngen sic3=substr(sich_string,1,3)\ngen flag_fu=1 if 4900<=sich_num & sich_num<=4949      \nreplace flag_fu=1 if 6000<=sich_num & sich_num<=6999 \nreplace flag_fu=0 if missing(flag_fu)\nkeep if flag_fu==0\nkeep if curcd==\"USD\"\nrename num_gvkey gvkey_n\nsort gvkey_n datadate\nsave compa_from_Huan_final_JAR.dta, replace"
+    },
+    {
+      "id": "E_SRC_SAS_STEP1",
+      "kind": "source",
+      "description": "The supplied file embeds SAS Step 1: annual and quarterly inputs are joined by GVKEY over the stated num_qtr distance.",
+      "file": "Codes for JAR.do",
+      "line_begin": 139,
+      "line_end": 157,
+      "quote": "/* 3-step SAS/Stata codes that generate cost stickiness measure (b_dec), written by Huan */\n\n/* Step 1: SAS */\ndata compa;\nset comp.compa_all(keep=gvkey datadate); /* raw compustat annual data */\nnum_qtr=(year(datadate)-1980)*4+qtr(datadate);\nrun;\n\ndata compq1;\nset compq; /* raw compustat quarterly data */\nnum_qtr=(year(datadate)-1980)*4+qtr(datadate);\nrun;\n\nproc sql;\ncreate table compa_q as select\na.*,b.datadate as datadateq,b.fyearq,b.fqtr,b.fyr,b.datacqtr,b.datafqtr,b.num_qtr as num_qtrq,b.saleq,b.xsgaq,b.atq,b.cogsq,b.oiadpq,b.xrdq\nfrom compa as  a left join compq1 as b\non a.gvkey=b.gvkey and a.num_qtr-b.num_qtr>=0 and a.num_qtr-b.num_qtr<=20;\nquit;"
+    },
+    {
+      "id": "E_SRC_SAS_SORT1",
+      "kind": "source",
+      "description": "The SAS annual-quarterly join output is sorted before the Stata handoff.",
+      "file": "Codes for JAR.do",
+      "line_begin": 159,
+      "line_end": 161,
+      "quote": "proc sort data=compa_q;\nby gvkey datadate datadateq;\nquit;"
+    },
+    {
+      "id": "E_SRC_STATA_Q_KEYS",
+      "kind": "source",
+      "description": "Stata Step 2 consumes compa_q.dta, constructs the quarterly distance and date keys, and groups annual firm dates.",
+      "file": "Codes for JAR.do",
+      "line_begin": 165,
+      "line_end": 171,
+      "quote": "use compa_q.dta, clear\ngen order_q_dist= num_qtr - num_qtrq\ndrop if missing( order_q_dist)\ngen datadate_qdate=quarterly( datacqtr ,\"YQ\")\nreplace datadate_qdate=qofd(datadateq) if missing(datacqtr)\nformat datadate_qdate %tq\negen gvkey_datadate=group(gvkey datadate)"
+    },
+    {
+      "id": "E_SRC_STATA_Q_DUP",
+      "kind": "source",
+      "description": "Stata Step 2 preserves the author’s duplicate screening and hardcoded gvkey_datadate/fyr rule.",
+      "file": "Codes for JAR.do",
+      "line_begin": 176,
+      "line_end": 183,
+      "quote": "drop if missing(datacqtr)\ndrop tag\nduplicates tag gvkey_datadate datadate_qdate, gen(tag)\ntab tag\nbrowse if tag==1\nbrowse if gvkey_datadate==392684\ndrop if gvkey_datadate==392684 & tag==1 & fyr==12\ndrop tag"
+    },
+    {
+      "id": "E_SRC_STATA_Q_LAGS",
+      "kind": "source",
+      "description": "Stata constructs quarterly log changes and saves compa_q1.dta for the next SAS stage.",
+      "file": "Codes for JAR.do",
+      "line_begin": 184,
+      "line_end": 195,
+      "quote": "xtset gvkey_datadate datadate_qdate ,quarterly\ngen ch_lg_xsgaq=ln(xsgaq)-ln(l.xsgaq)\ngen ch_lg_cogsq=ln(cogsq)-ln(l.cogsq)\ngen ch_lg_oc=ln(saleq-oiadpq)-ln(l.saleq-l.oiadpq)\ngen ch_lg_cost=ln(cogsq+xsgaq)-ln(l.cogsq+l.xsgaq)\ngen ch_lg_saleq=ln(saleq)-ln(l.saleq)\ngen dec=1 if saleq-l.saleq<0\nreplace dec=0 if saleq-l.saleq>=0\ngen dec_ch_lg_saleq=dec*ch_lg_saleq\ngen dec1=1 if saleq-l.saleq<0\nreplace dec1=0 if saleq-l.saleq>0\nsaveold compa_q1.dta ,replace"
+    },
+    {
+      "id": "E_SRC_SAS_REG",
+      "kind": "source",
+      "description": "The embedded SAS Step 3 filters the 16-quarter window, runs PROC REG, and creates b_dec_16.",
+      "file": "Codes for JAR.do",
+      "line_begin": 197,
+      "line_end": 221,
+      "quote": "/* Step 3: SAS */\n\ndata compa_q1_16;\nset compa_q1;\ndrop gvkey_datadate;\nif order_q_dist>=0 & order_q_dist<=15;\nif missing(ch_lg_xsgaq) or missing(ch_lg_saleq) then delete;\nrun;\n\nproc sort data=compa_q1_16;\nby gvkey datadate desending order_q_dist;\nquit;\n\nproc reg data=compa_q1_16 noprint outest=b_dec_16 edf;\nby gvkey datadate;\nmodel ch_lg_xsgaq=ch_lg_saleq dec_ch_lg_saleq;\nquit;\n\ndata b_dec_16(drop=_p_ _edf_);\nset b_dec_16(keep=gvkey datadate ch_lg_saleq dec_ch_lg_saleq _p_ _edf_ _rsq_);\nn=_p_+_edf_;\nrename dec_ch_lg_saleq=b_dec;\nrename ch_lg_saleq=b;\nrename _rsq_=r_square;\nrun;"
+    },
+    {
+      "id": "E_SRC_SAS_SORT",
+      "kind": "source",
+      "description": "The PROC SORT statement contains the token `desending` before order_q_dist.",
+      "file": "Codes for JAR.do",
+      "line_begin": 206,
+      "line_end": 208,
+      "quote": "proc sort data=compa_q1_16;\nby gvkey datadate desending order_q_dist;\nquit;"
+    },
+    {
+      "id": "E_SRC_FINAL_MERGE",
+      "kind": "source",
+      "description": "The final Stata section merges the annual intermediate with b_dec_16 and applies the authored fyear window.",
+      "file": "Codes for JAR.do",
+      "line_begin": 226,
+      "line_end": 239,
+      "quote": "use compa_from_Huan_final_JAR, clear\ngen year=year(datadate)\nmerge 1:1 gvkey datadate using b_dec_16,keepusing(b b_dec n)\ndrop if _m==2\ndrop _merge\nreplace b_dec=b_dec*(-1)\nreplace b_dec=. if n<16\ndrop n\ndrop year\nrename fyear year\nsort gvkey_n year\nxtset gvkey_n year, yearly\negen sic3_year=group(sic3 year)\nkeep if year>=1978 & year<=2016 "
+    },
+    {
+      "id": "E_SRC_FINAL_MODELS",
+      "kind": "source",
+      "description": "The baseline Table 3 section winsorizes specified controls and runs two reghdfe models.",
+      "file": "Codes for JAR.do",
+      "line_begin": 240,
+      "line_end": 250,
+      "quote": "foreach var in f_DPS b_dec lnsize_at lev q cashholding ppeta ROA ROAVol SI Persist {\nwinsor `var', gen(w`var') p(0.01)\n}\ngen neg_wSI=-wSI\n\nset more off\nunab control: wlnsize_at wlev wq wcashholding wppeta wROA wROAVol LOSS neg_wSI wPersist\n\nreghdfe wf_DPS wb_dec `control', noabsorb cluster(gvkey_n)\nkeep if e(sample)\nreghdfe wf_DPS wb_dec `control', a(sic3_year) cluster(gvkey_n) "
+    },
+    {
+      "id": "E_SRC_IDENTIFIER_OUTPUT",
+      "kind": "source",
+      "description": "The final supplied lines keep distinct firm identifiers and save identifier_gvkey.",
+      "file": "Codes for JAR.do",
+      "line_begin": 252,
+      "line_end": 256,
+      "quote": "/* generating identifiers */\n\nkeep gvkey \nduplicates drop\nsave identifier_gvkey"
+    },
+    {
+      "id": "E_DOC_COMP",
+      "kind": "source",
+      "description": "The datasheet identifies Compustat Annual and Quarterly as the financial sources and reports May 2017 and April 2020 downloads.",
+      "file": "HTYZ Data Description Sheet.pdf",
+      "line_begin": 43,
+      "line_end": 45,
+      "quote": "Financial data: Compustat Annual/Quarterly Data Files (downloaded twice from WRDS platform,\nMay 2017 and April 2020, respectively).\n"
+    },
+    {
+      "id": "E_DOC_TABLE3",
+      "kind": "source",
+      "description": "The datasheet says the Stata/SAS file uses Compustat and produces main analysis Table 3; identifier_gvkey is a firm list.",
+      "file": "HTYZ Data Description Sheet.pdf",
+      "line_begin": 80,
+      "line_end": 83,
+      "quote": "We use Stata/SAS to convert the raw data and perform all analyses. The Stata do-file “Codes for\nJAR” uses the dataset obtained from Compustat as input and yields the content of the main\nanalysis (i.e., Table 3 in the paper) as output. The text file “identifier_gvkey” provides the\ncompany identifiers of the firms in the final dataset."
+    },
+    {
+      "id": "E_APP_WINDOW",
+      "kind": "source",
+      "description": "Appendix Table A1 describes the cost-stickiness measure as the latest 16 quarters from t−3 through t.",
+      "file": "_audit_supplements/htyz-online-appendix.pdf",
+      "line_begin": 49,
+      "line_end": 51,
+      "quote": "holdings and retained earnings, respectively. The dependent variable, dividends per share (DPS),\nis measured at year t+1. Cost stickiness in year t is estimated using the most recent 16 quarterly\nobservations from year t–3 to year t. All other variables, measured at year t, are defined in the"
+    },
+    {
+      "id": "E_ID_DTA",
+      "kind": "probe",
+      "description": "Bounded packaged DTA probe: identifier_gvkey.dta is readable with only gvkey; file metadata reports 9,937 observations, not an analysis panel.",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "cdc64a320d249bf0265dbb6b2a741f46394ef26f5d2193ec73f0ae93f1a27543"
+    },
+    {
+      "id": "E_ID_TXT",
+      "kind": "probe",
+      "description": "Streaming text-file inventory: identifier_gvkey.txt has a gvkey header and 9,937 data identifiers; only first/last eight lines retained.",
+      "artifact_path": "probes/identifier_summary.json",
+      "sha256": "8473c1bb4f3e508913acade1c300cfc7f84f203fae92fa647c0b3d20112f6a9d"
+    },
+    {
+      "id": "E_COMP_CATALOG",
+      "kind": "catalog",
+      "description": "Frozen resource catalog (catalog JSON SHA-256 4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27; embedded PROC CONTENTS SHA-256 45894893e45d56cb56150252c2ce4e85dfa88f5d891f3e547d3e9ea8003993fb) lists COMP.FUNDA as Merged Fundamental Annual File, COMP.FUNDQ as Merged Fundamental Quarterly File, and COMP.COMPANY as a Company dimension. COMP.FUNDA has 949 declared variables and lacks native sic/state; COMP.FUNDQ has all fields selected by the supplied quarterly join; COMP.COMPANY has gvkey/sic/state but no datadate/fyear. Catalog metadata is discovery evidence, not coverage/access proof."
+    },
+    {
+      "id": "E_FUNDA_PROBE",
+      "kind": "probe",
+      "description": "Successful bounded read of COMP.FUNDA at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; row_limit=1 and 41 requested fields; all returned native columns are recorded in the JSON, with coverage unverified.",
+      "artifact_path": "probes/comp_funda_probe.json",
+      "sha256": "4603b1b414ade0462d286ec1f0244e34c5037a88f0cd27b3b151df25d4bd7052"
+    },
+    {
+      "id": "E_FUNDQ_PROBE",
+      "kind": "probe",
+      "description": "Successful bounded read of COMP.FUNDQ at ${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat; row_limit=1 and 13 requested fields; all source-selected quarterly fields are present, with coverage unverified.",
+      "artifact_path": "probes/comp_fundq_probe.json",
+      "sha256": "4c0a75ced40e3ed9349ede717c8ef3d0310cb587a68d524bbdbd5b0b1a9e7997"
+    },
+    {
+      "id": "E_COMPANY_PROBE",
+      "kind": "probe",
+      "description": "Successful bounded read of COMP.COMPANY at ${ACCTREPL_SAS_ROOT}/comp/d_na/company/company.sas7bdat; row_limit=1 confirms gvkey/sic/state columns, but not annual history or an author-specified join.",
+      "artifact_path": "probes/comp_company_probe.json",
+      "sha256": "4838882eafc59becea80f5dedf159d650b34058b790a79fe60c0d291c4161462"
+    },
+    {
+      "id": "E_ENV",
+      "kind": "probe",
+      "description": "Provided bounded runtime/add-on probe: Stata 18, reghdfe 6.12.3 and ftools 2.49.1 available; asreg is available with configured adopath; SAS startup failed at TKELS initialization, which does not establish a license barrier.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "E_WINSOR",
+      "kind": "probe",
+      "description": "Self-written Stata version/which probe confirms exact command winsor is available in Stata 18; no author code/data were loaded.",
+      "artifact_path": "probes/stata_winsor.json",
+      "sha256": "58b82ac74136d9e2ac403477cc37b451335bd0bd5b998a410b86580ee9ae3048"
+    },
+    {
+      "id": "E_WORKFLOW_TRACE",
+      "kind": "probe",
+      "description": "Structured stage-by-stage workflow trace names raw inputs, generated datasets, consumers, the shared job CWD, typed format-preserving handoffs, history and scope limits.",
+      "artifact_path": "probes/workflow_trace.json",
+      "sha256": "b2a8ca0b68b42d970463939dbde9f33589bec87a537fadfe333dc24ddb00a23c"
+    },
+    {
+      "id": "E_SAS_SORT_DOC",
+      "kind": "public",
+      "description": "Official Base SAS 9.4 PROC SORT documentation specifies DESCENDING as the BY-key modifier.",
+      "url": "https://documentation.sas.com/api/docsets/proc/9.4/content/proc.pdf?locale=en",
+      "checked_at": "2026-11-09",
+      "quote": "In a PROC SORT BY statement, the DESCENDING keyword modifies the variable that follows it.",
+      "authority": "official"
+    },
+    {
+      "id": "E_SAS_STAT_DOC",
+      "kind": "public",
+      "description": "Official SAS/STAT User’s Guide documents the REG procedure used by the supplied stage; it does not establish local SAS/STAT availability.",
+      "url": "https://documentation.sas.com/api/docsets/statug/15.3/content/introreg.pdf?locale=en",
+      "checked_at": "2026-11-09",
+      "quote": "REG performs linear regression with many diagnostic capabilities.",
+      "authority": "official"
+    },
+    {
+      "id": "E_SAS_CSV_DOC",
+      "kind": "public",
+      "description": "Official Base SAS 9.4 EXPORT documentation lists a CSV delimited-file export route for staged format bridges.",
+      "url": "https://documentation.sas.com/api/docsets/proc/9.4/content/proc.pdf?locale=en",
+      "checked_at": "2026-11-09",
+      "quote": "CSV | Delimited file (comma-separated values) | .csv",
+      "authority": "official"
+    },
+    {
+      "id": "E_STATA_CSV_DOC",
+      "kind": "public",
+      "description": "Official Stata delimited-data manual documents the Stata side of the proposed CSV interstage.",
+      "url": "https://www.stata.com/manuals/dimportdelimited.pdf",
+      "checked_at": "2026-11-09",
+      "quote": "import delimited reads into memory a text file; export delimited writes Stata’s data to a text file.",
+      "authority": "official"
+    },
+    {
+      "id": "E_ASREG_DOC",
+      "kind": "public",
+      "description": "The asreg author describes the rolling-window length syntax used by wind(fyear 16); the exact installed version/gap behavior remains a validation item.",
+      "url": "https://www.statalist.org/forums/forum/general-stata-discussion/general/1390199-asreg-rolling-window-regressions-and-by-groups-regressions-rolling-betas",
+      "checked_at": "2026-11-09",
+      "quote": "Option window(rangevar #) specifies length of the rolling window.",
+      "authority": "author"
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_ANNUAL"
+      ],
+      "evidence_ids": [
+        "E_SRC_ANNUAL_READ",
+        "E_SRC_ANNUAL_FIELDS",
+        "E_DOC_COMP"
+      ],
+      "description": "Mandatory annual Compustat input. It is read as compa_all.dta in Stata (twice) and as COMP.COMPA_ALL in SAS; both format/name variants must be staged from the same compatible annual product."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_SRC_SAS_STEP1",
+        "E_SRC_STATA_Q_KEYS"
+      ],
+      "description": "compa_q.dta is a generated Stata-format handoff from the preceding SAS WORK.COMPA_Q annual-quarterly join; the cross-format export/import is preparation and is traced in the linked workflow action."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_SRC_ANNUAL_FILTER",
+        "E_SRC_FINAL_MERGE"
+      ],
+      "description": "compa_from_Huan_final_JAR.dta is produced by the annual Stata stage before the final Table 3 merge; it is not an external raw-data requirement."
+    }
+  ],
+  "actions": [
+    {
+      "id": "A_DATA_ROUTE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_ANNUAL",
+        "R_QUARTERLY",
+        "I_HISTORY"
+      ],
+      "kind": "data_preparation",
+      "description": "Use the readable local COMP.FUNDA and COMP.FUNDQ candidates as starting routes, then verify the source field mapping and complete history needed by the supplied workflow. Record the actual product vintage for later output-comparison context; do not require matching the datasheet-reported 2017/2020 downloads.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_COMP",
+        "E_COMP_CATALOG",
+        "E_FUNDA_PROBE",
+        "E_FUNDQ_PROBE",
+        "E_APP_WINDOW",
+        "E_ASREG_DOC",
+        "E_WORKFLOW_TRACE"
+      ],
+      "edits": [],
+      "steps": [
+        "Assign SAS input libraries to the existing ${ACCTREPL_SAS_ROOT}/comp/d_na product paths and keep generated datasets in a writable task execution library; do not add a separate entitlement or author-approval gate for the already-readable local candidates.",
+        "Confirm COMP.FUNDA and COMP.FUNDQ coverage for the actual annual and quarterly construction history; one-row samples and catalog observation counts do not establish full history. The May 2017/April 2020 datasheet dates are context only: any current product that satisfies the source fields and history may be used, without matching those snapshots.",
+        "Stage the same compatible annual product under the Stata input name compa_all.dta and as a SAS COMP.COMPA_ALL input alias. Preserve the supplied field names/case, gvkey as a 7-character string including leading zeros, numeric daily datadate, numeric fyear, missing values and every source field required by the code. Resolve sic/state separately through A_FIELD_MAPPING before treating the annual route as compatible.",
+        "Stage COMP.FUNDQ as the SAS WORK.COMPQ input expected by the supplied join, preserving the supplied field names/case, gvkey as a 7-character string including leading zeros, numeric daily datadate, character datacqtr/datafqtr, numeric fiscal-quarter fields, missing values and all selected quarterly fields.",
+        "Retain the exact author filters and construction windows: USD and industry exclusions, final fyear 1978–2016, t+1 DPS, annual ROA lags, the 16-year persistence window, 60-row next-observation SICH fill, and quarterly order_q_dist 0–20/0–15 stages."
+      ],
+      "validation": [
+        "Before a separately authorized full run, verify complete annual/quarterly date and firm coverage against the windows in expected_period and all required source columns/types. Record the available product version/download context for later output comparisons; do not make a 2017/2020 snapshot match a run prerequisite.",
+        "Use explicit column types/formats when staging annual or quarterly CSV inputs; do not rely on automatic type guessing. Preserve exact source names/case, gvkey string width and leading zeros, missing values, numeric date/quarter units and each field’s display format. Compare schema, key/date values and bounded row/key summaries across the staged inputs."
+      ]
+    },
+    {
+      "id": "A_FIELD_MAPPING",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_ANNUAL_FIELDS"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the actual author-specified source/mapping for sic and state in the annual Compustat export before preparing compa_all.dta.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_SRC_ANNUAL_READ",
+        "E_SRC_ANNUAL_FIELDS",
+        "E_COMP_CATALOG",
+        "E_FUNDA_PROBE",
+        "E_COMPANY_PROBE"
+      ],
+      "edits": [],
+      "steps": [
+        "Retain both fields required by the supplied Stata keep/read statements. The local annual fundamentals candidate lacks them; the local company table has gvkey/sic/state but no year/date key, and the author code does not specify joining it.",
+        "Use an author-prepared annual export or its documented input mapping if available. If the company table is the intended source, establish its intended join and current-versus-historical meaning before using its sic as the missing-sich fallback; do not infer a time-series join from a current company record."
+      ],
+      "validation": [
+        "Check the resulting annual input contains sic and state with documented meanings, types and matching rules before any Table 3 run."
+      ]
+    },
+    {
+      "id": "A_ORDERED_DRIVER",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_FORMAT_HANDOFFS"
+      ],
+      "kind": "data_preparation",
+      "description": "Split the supplied mixed-language source in a working copy into the documented Stata/SAS stages. Run both host wrappers from one job execution directory and use explicit typed CSV bridges that preserve the variables’ original units and formats.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_SRC_ANNUAL_READ",
+        "E_SRC_ANNUAL_FIELDS",
+        "E_SRC_SAS_STEP1",
+        "E_SRC_STATA_Q_KEYS",
+        "E_SRC_STATA_Q_LAGS",
+        "E_SRC_SAS_REG",
+        "E_SRC_FINAL_MERGE",
+        "E_SRC_FINAL_MODELS",
+        "E_SRC_IDENTIFIER_OUTPUT",
+        "E_SAS_CSV_DOC",
+        "E_STATA_CSV_DOC",
+        "E_WORKFLOW_TRACE"
+      ],
+      "edits": [],
+      "steps": [
+        "Create/use one writable job execution directory under output/reproductions, for example output/reproductions/jar-fc2b281c185c, and launch both Stata and SAS batch wrappers with that same directory as their current working directory. Keep Stata outputs, DTA files and CSV bridges relative to it; configure SAS WORK separately (recommended [redacted-path-d256559989d4]) and point COMP/RAW read-only libraries at the approved [redacted-path-5426644c0bed] paths. Do not embed absolute Dropbox workspace paths. Verify host input visibility and output writability before a separately authorized run.",
+        "Run Stata annual preparation (Codes for JAR.do lines 9–135): compa_all.dta -> compa_sich.dta -> compa_from_Huan_final_JAR.dta. Preserve the complete pre-filter SIC fill and authored annual variable construction. Stage/import with explicit types: gvkey is a 7-character string including leading zeros, datadate is a numeric daily date count, fyear is numeric, and names, case and missing values follow the supplied schema.",
+        "Run SAS Step 1 (lines 142–161): COMP.COMPA_ALL + WORK.COMPQ -> WORK.COMPA_Q. Export WORK.COMPA_Q to relative compa_q.csv with Base SAS PROC EXPORT; import it in Stata with an explicit column schema and save compa_q.dta before line 165. Preserve exact source names/case, gvkey as character width 7 with leading zeros, missing values, and daily datadate/datadateq as unchanged numeric day counts; datacqtr/datafqtr remain character strings.",
+        "Run Stata Step 2 (lines 165–195): compa_q.dta -> compa_q1.dta. Preserve the author’s quarterly date fallback, duplicate handling and hardcoded gvkey_datadate==392684/fyr==12 rule. datadate_qdate is a numeric quarter index created by quarterly()/qofd(), not a daily date; retain its quarter unit and Stata %tq format. Export compa_q1.dta to relative compa_q1.csv with explicit column types; import it into SAS as WORK.COMPA_Q1 without changing names/case, GVKEY width/leading zeros, values or missingness.",
+        "Run SAS Step 3 (lines 199–221): WORK.COMPA_Q1 -> WORK.B_DEC_16. After the supported line-207 spelling repair, export gvkey, datadate, b, b_dec and n to relative b_dec_16.csv using explicit types; keep gvkey character width 7, datadate as a numeric daily day count, and b/b_dec/n numeric. Import/save as Stata b_dec_16.dta before line 228. These identically named SAS and Stata objects are distinct datasets/formats.",
+        "Run the final Stata block (lines 226–256): merge compa_from_Huan_final_JAR.dta with b_dec_16.dta on gvkey/datadate, retain both reghdfe specifications and the authored sample, then save identifier_gvkey.dta. Capture the two model outputs in the Stata batch log because no table-file export command is supplied."
+      ],
+      "validation": [
+        "At each handoff, verify the named producer’s schema against the exact consumer: compa_q fields used by Stata Step 2; compa_q1 fields used by SAS PROC REG; b_dec_16 keys and b/b_dec/n fields used by the final Stata merge. Keep exact variable names and case, and verify bounded row/key counts.",
+        "Define CSV import types/formats explicitly on both sides; do not rely on automatic type guessing. Keep gvkey character width 7 and preserve leading zeros; preserve native missing values (including distinct SAS missing codes if present); retain datadate and datadateq as numeric day counts on the shared 1960 epoch and restore their matching SAS/Stata daily display formats. Keep datacqtr/datafqtr character. Keep Stata datadate_qdate as its numeric quarter index with %tq on the Stata side; never convert it to days. Preserve every other variable’s existing type/unit and reapply its matching display format after each bridge."
+      ]
+    },
+    {
+      "id": "A_SAS_SORT_FIX",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_SAS_SORT"
+      ],
+      "kind": "source_edit",
+      "description": "Correct the misspelled SAS BY-sort direction in a working copy so PROC SORT can apply the intended descending order to order_q_dist.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_SRC_SAS_SORT",
+        "E_SAS_SORT_DOC",
+        "E_SRC_STATA_Q_LAGS"
+      ],
+      "edits": [
+        {
+          "file": "Codes for JAR.do",
+          "sha256": "5f7770f48f60d5afcd89aef4682d2b000fbf1ad508112aa13560727134a95a30",
+          "line_begin": 207,
+          "line_end": 207,
+          "before": "by gvkey datadate desending order_q_dist;",
+          "after": "by gvkey datadate descending order_q_dist;",
+          "reason": "SAS PROC SORT documents DESCENDING as the BY-key modifier; the source’s preceding constructed compa_q1 schema contains no desending variable. Correct only the spelling, retaining the specified sort variables and order."
+        }
+      ],
+      "steps": [
+        "Apply this one-line correction only in the staged working copy used for the future SAS Step 3."
+      ],
+      "validation": [
+        "In a separately authorized SAS run, confirm PROC SORT accepts the corrected BY statement on the generated compa_q1_16 dataset and preserves the intended order_q_dist ordering."
+      ]
+    },
+    {
+      "id": "A_SOFTWARE_SETUP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW_ASREG",
+        "SW_SAS",
+        "SW_SASSTAT",
+        "I_SAS_RUNTIME"
+      ],
+      "kind": "software_setup",
+      "description": "Configure the verified Stata add-ons and recheck the SAS runtime/component state before a separately authorized run.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_ENV",
+        "E_WINSOR",
+        "E_SRC_ANNUAL_HISTORY",
+        "E_SRC_FINAL_MODELS",
+        "E_SRC_SAS_REG",
+        "E_SAS_STAT_DOC"
+      ],
+      "edits": [],
+      "steps": [
+        "Launch Stata from the same job execution directory used by the data stages: output/reproductions/jar-fc2b281c185c. Add the existing reproductions ado directory with adopath ++ \"../ado\" from that current directory, or stage the already-available asreg ado in that job-relative ../ado directory; no new install is needed. The exact winsor, reghdfe and ftools commands were already found in Stata 18.",
+        "Use the documented host SAS batch wrapper settings (-nodms, -work [redacted-path-d256559989d4], -autoexec operator SAS autoexec) for any future runtime check. The supplied environment probe failed at TKELS initialization; establish successful SAS startup and PROC REG/SAS/STAT availability before an authorized full run. Do not infer a missing license from the startup error."
+      ],
+      "validation": [
+        "From the shared job execution directory, confirm Stata reports version 18 and finds asreg after the relative ../ado setup, and that winsor, reghdfe and ftools resolve in that environment.",
+        "After SAS initialization succeeds, confirm the required DATA steps, PROC SQL, PROC SORT, PROC REG and SAS/STAT component are available; retain the exact SAS version and initialization log."
+      ]
+    }
+  ],
+  "review_notes": [
+    "The entire supplied 256-line source was read. Despite its .do extension and a static language inventory that lists only Stata, the source interleaves Stata and SAS preparation, regression and merge stages; it is substantive code, not a no-code release.",
+    "The two package-specific semantic_prechecks files were used as discovery leads only. Independent counting of cached source lines 12–71 confirms 60 repeated SICH-fill passes, not 70.",
+    "The only assessed target is the supplied baseline Table 3 workflow. The datasheet also mentions union election sources, but this supplied code does not read them; no union-data requirement is added. The appendix reports Tables A1–A7 without a corresponding supplied code branch.",
+    "The packaged identifier_gvkey.dta and streamed identifier_gvkey.txt contain firm keys only, as the datasheet says; they are final outputs/lookup data, not a prepared analysis panel or an analysis-only route.",
+    "The two regression results are not written to a table file in the supplied program; the future host batch run should capture the Stata log for review. The source’s hardcoded duplicate-resolution rule is preserved without firm/year substitution.",
+    "A readable local Compustat candidate is treated as an available route candidate without a separate current-entitlement/author-approval prerequisite. Its unresolved annual fields and full history remain explicit. The datasheet-reported May 2017 and April 2020 downloads are provenance context for later output comparisons, not required source matches; compatible current products can be used."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "1e89ecddeec99dc3c5d396f8a44d8078e2bdfe2d44a2da79c93cdb052bfc4d0a",
+    "applied": false
+  }
+}

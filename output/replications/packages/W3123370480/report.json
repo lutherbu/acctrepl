@@ -1,0 +1,233 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "The implied cost of capital: A new approach",
+  "doi": "10.1016/j.jacceco.2011.12.001",
+  "route": "reconstruction",
+  "paper_id": "W3123370480",
+  "years": 5,
+  "sources_checked": [
+    "COMP.FUNDA, ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat: current local SAS file checked read-only using aggregate metadata/date and accepted-screen summaries; 941,340 rows; DATADATE 1950-06-30 to 2026-06-30; base filters yield 43,437 rows in formation years 2009–2012 and 11,674 in 2013. Vendor release stamp is not embedded; file mtime 2026-07-22 UTC.",
+    "COMP.G_EXRT_DLY, ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat: current local SAS file checked read-only using aggregate metadata/date and accepted-screen summaries; 2,221,564 rows; DATADATE 1982-02-01 to 2026-07-19; GBP-to-USD positive quote dates extend through 2026-07-19. Vendor release stamp is not embedded; file mtime 2026-08-14 UTC.",
+    "COMP.G_EXRT_MTH, ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat: current local SAS file checked read-only using aggregate metadata/date and accepted-screen summaries; 75,838 rows; DATADATE 1982-01-31 to 2026-07-31; GBP-to-USD positive quote dates extend through 2026-07-31. Vendor release stamp is not embedded; file mtime 2026-08-14 UTC.",
+    "CRSP.MSF, ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat: current local SAS file checked read-only using aggregate metadata/date and accepted-screen summaries; 5,153,763 rows; DATE 1925-12-31 to 2024-12-31; accepted June-month rule has 6,837 securities in June 2013 (last June trading date 2013-06-28). Vendor release stamp is not embedded; file mtime 2025-12-05 UTC.",
+    "CRSP.DSENAMES, ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat: current local SAS file checked read-only using aggregate metadata/date and accepted-screen summaries; 117,859 rows; NAMEDT 1925-12-31 to 2024-12-31 and NAMEENDT through 2024-12-31; accepted 10/11 and exchange 1/2/3 screen has 3,634 effective records/unique PERMNOs on 2013-06-30. Vendor release stamp is not embedded; file mtime 2025-12-05 UTC.",
+    "CRSP.CCMXPF_LINKTABLE, ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat: current local SAS file checked read-only using aggregate metadata/date and accepted-screen summaries; 92,711 rows; LINKDT 1946-01-01 to 2025-12-31 and LINKENDDT through 2026-01-30; accepted LC/LU, P/C, nonzero LPERMNO effective-link filter has 5,468 rows on 2013-06-30. Vendor release stamp is not embedded; file mtime 2026-08-14 UTC."
+  ],
+  "changes": [
+    "Rebuilt the accepted historical construction jointly with added annual forecast origins through 2013. Extended the same source bounds to 2013, Compustat formation-year inputs to 2013, training predictor/outcome formation years to 2012, and the annual fit loop through 2013; rolling eligibility remains fit_year−10 ≤ outyr ≤ fit_year−1.",
+    "Preserved the accepted SAS source filters, winsorization, predictor/outcome construction, full-rank annual OLS screen, Stata xtfmb estimator, horizon-specific fits, and Newey–West lag 3. Kept fit_year through the handoff and instrumented each fit to print original-period and added-period counts from the active e(sample), plus its last contributing fit_year.",
+    "Used only the six local COMP/CRSP SAS sources named in the accepted construction; no external or substitute data were introduced.",
+    "Controller run succeeded for SAS build, handoff, and Stata cell table1b_eq1. The live e(sample) diagnostics reached fit_year 2013 in all three horizons; period counts matched the native table observation totals.",
+    "Controller run succeeded for SAS build, handoff, and Stata cell table1b_eq1. The live e(sample) diagnostics reached fit_year 2013 in all three horizons; period counts matched the native table observation totals."
+  ],
+  "limitations": [
+    "The paper does not specify the rolling-window endpoint convention, dividend mnemonic, primary-link selection rule, or Newey-West lag; the best-effort choices are documented in design.md.",
+    "Source support starts at 1963, shorter than a literal ten-year window for the earliest origin years; early origins use available historical rows and never post-origin outcomes.",
+    "Provider currency tables begin in the local 1980s vintage; non-USD monetary fields without exact, unique, positive dated rates remain missing while USD observations remain eligible.",
+    "The installed xtfmb lag option supplies individual coefficient HAC standard errors but zeroes off-diagonal covariances, so joint HAC inference is not reported.",
+    "The resource-catalog path recorded in the assigned work item was not present; exact source paths and fields came from the assigned feasibility record and each named source was checked directly. The SAS files do not embed vendor release labels, so current local identifies the on-disk versions used, not a separately verified vendor release date."
+  ],
+  "analyses": [
+    {
+      "scope_id": "earnings_forecast_eq1 / table1_1yr",
+      "key": "s1",
+      "label": "earnings_forecast_eq1 / table1_1yr",
+      "sample_ids": [
+        "icc_firm_year"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh pooled reconstruction completed through requested forecast origin 2013. The horizon-specific active e(sample) contains 1,304,760 original-period and 219,887 added-period firm-year training observations, with last contributing fit_year 2013.",
+      "source_evidence": [
+        "output/models/records/W3123370480.json, result_set_id=table1_1yr: Table 1 Panel B: E_{t+1}, Table 1 Panel B p. 6; the paper specifies annual origin years 1968–2008 and the preceding ten years.",
+        "papers/parsed/W3123370480.json, data_section_spans pp. 3–4: CRSP/Compustat intersection, share-code population and Eq. (1) construction.",
+        "output/reproductions/packages/W3123370480/attempt_02/build.sas, lines 539–561 (tau pair construction and ten-year fit_year expansion) and 629–632 (expected annual fits); output/reproductions/packages/W3123370480/attempt_02/stata.ipynb, cell_id=table1b_eq1 (xtfmb by horizon, lag(3))."
+      ],
+      "original_begin": 1968,
+      "original_end": 2008,
+      "requested_end": 2013,
+      "supported_end": 2013,
+      "last_added": 2013,
+      "count_unit": "Firm-year training observation in the horizon-specific xtfmb e(sample), counted across annual fit_year cross-sections; original_n uses fit_year ≤ 2008 and added_n uses fit_year 2009–2013.",
+      "original_n": 1304760,
+      "added_n": 219887,
+      "artifacts": [
+        "results/tables/table1_panel_b_eq1.csv"
+      ],
+      "comparison": "Focal total-assets coefficient (USD millions of forecast earnings per USD million of total assets (dimensionless ratio; Table 1 coefficient rounded to three decimals)). Original saved attempt_02 Table 1 Panel B CSV, column 1 (1-year ahead): 0.003***; extended pooled estimate in work/tables/table1_panel_b_eq1.csv, same column: 0.002***. Both locations report three-decimal coefficients.",
+      "native_evidence": {
+        "path": "urn:sha256:bbfb98912a98c9bb544cdf6a1bad2db4601d1b65631850f1eb60e605ad35cc7d",
+        "sha256": "bbfb98912a98c9bb544cdf6a1bad2db4601d1b65631850f1eb60e605ad35cc7d",
+        "marker": "EXT_SAMPLE s1 1304760 219887 2013"
+      }
+    },
+    {
+      "scope_id": "earnings_forecast_eq1 / table1_2yr",
+      "key": "s2",
+      "label": "earnings_forecast_eq1 / table1_2yr",
+      "sample_ids": [
+        "icc_firm_year"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh pooled reconstruction completed through requested forecast origin 2013. The horizon-specific active e(sample) contains 1,181,563 original-period and 210,322 added-period firm-year training observations, with last contributing fit_year 2013.",
+      "source_evidence": [
+        "output/models/records/W3123370480.json, result_set_id=table1_2yr: Table 1 Panel B: E_{t+2}, Table 1 Panel B p. 6; the paper specifies annual origin years 1968–2008 and the preceding ten years.",
+        "papers/parsed/W3123370480.json, data_section_spans pp. 3–4: CRSP/Compustat intersection, share-code population and Eq. (1) construction.",
+        "output/reproductions/packages/W3123370480/attempt_02/build.sas, lines 539–561 (tau pair construction and ten-year fit_year expansion) and 629–632 (expected annual fits); output/reproductions/packages/W3123370480/attempt_02/stata.ipynb, cell_id=table1b_eq1 (xtfmb by horizon, lag(3))."
+      ],
+      "original_begin": 1968,
+      "original_end": 2008,
+      "requested_end": 2013,
+      "supported_end": 2013,
+      "last_added": 2013,
+      "count_unit": "Firm-year training observation in the horizon-specific xtfmb e(sample), counted across annual fit_year cross-sections; original_n uses fit_year ≤ 2008 and added_n uses fit_year 2009–2013.",
+      "original_n": 1181563,
+      "added_n": 210322,
+      "artifacts": [
+        "results/tables/table1_panel_b_eq1.csv"
+      ],
+      "comparison": "Focal total-assets coefficient (USD millions of forecast earnings per USD million of total assets (dimensionless ratio; Table 1 coefficient rounded to three decimals)). Original saved attempt_02 Table 1 Panel B CSV, column 2 (2-year ahead): 0.005***; extended pooled estimate in work/tables/table1_panel_b_eq1.csv, same column: 0.004***. Both locations report three-decimal coefficients.",
+      "native_evidence": {
+        "path": "urn:sha256:bbfb98912a98c9bb544cdf6a1bad2db4601d1b65631850f1eb60e605ad35cc7d",
+        "sha256": "bbfb98912a98c9bb544cdf6a1bad2db4601d1b65631850f1eb60e605ad35cc7d",
+        "marker": "EXT_SAMPLE s2 1181563 210322 2013"
+      }
+    },
+    {
+      "scope_id": "earnings_forecast_eq1 / table1_3yr",
+      "key": "s3",
+      "label": "earnings_forecast_eq1 / table1_3yr",
+      "sample_ids": [
+        "icc_firm_year"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh pooled reconstruction completed through requested forecast origin 2013. The horizon-specific active e(sample) contains 1,066,050 original-period and 200,500 added-period firm-year training observations, with last contributing fit_year 2013.",
+      "source_evidence": [
+        "output/models/records/W3123370480.json, result_set_id=table1_3yr: Table 1 Panel B: E_{t+3}, Table 1 Panel B p. 6; the paper specifies annual origin years 1968–2008 and the preceding ten years.",
+        "papers/parsed/W3123370480.json, data_section_spans pp. 3–4: CRSP/Compustat intersection, share-code population and Eq. (1) construction.",
+        "output/reproductions/packages/W3123370480/attempt_02/build.sas, lines 539–561 (tau pair construction and ten-year fit_year expansion) and 629–632 (expected annual fits); output/reproductions/packages/W3123370480/attempt_02/stata.ipynb, cell_id=table1b_eq1 (xtfmb by horizon, lag(3))."
+      ],
+      "original_begin": 1968,
+      "original_end": 2008,
+      "requested_end": 2013,
+      "supported_end": 2013,
+      "last_added": 2013,
+      "count_unit": "Firm-year training observation in the horizon-specific xtfmb e(sample), counted across annual fit_year cross-sections; original_n uses fit_year ≤ 2008 and added_n uses fit_year 2009–2013.",
+      "original_n": 1066050,
+      "added_n": 200500,
+      "artifacts": [
+        "results/tables/table1_panel_b_eq1.csv"
+      ],
+      "comparison": "Focal total-assets coefficient (USD millions of forecast earnings per USD million of total assets (dimensionless ratio; Table 1 coefficient rounded to three decimals)). Original saved attempt_02 Table 1 Panel B CSV, column 3 (3-year ahead): 0.006***; extended pooled estimate in work/tables/table1_panel_b_eq1.csv, same column: 0.006***. Both locations report three-decimal coefficients.",
+      "native_evidence": {
+        "path": "urn:sha256:bbfb98912a98c9bb544cdf6a1bad2db4601d1b65631850f1eb60e605ad35cc7d",
+        "sha256": "bbfb98912a98c9bb544cdf6a1bad2db4601d1b65631850f1eb60e605ad35cc7d",
+        "marker": "EXT_SAMPLE s3 1066050 200500 2013"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 3
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1eddd-b760-73d1-8c7f-125aed573974",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3123370480.json",
+    "models": "output/models/records/W3123370480.json",
+    "predecessor": "output/reproductions/packages/W3123370480/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3123370480.json"
+  },
+  "input_hashes": {
+    "sample": "33713e2a5c6e8743e8889dbaebae78cb3f53990d76830c9d76ab7fe8749bddd8",
+    "models": "1819f5724cc6af6a44604c1ebb5c2a265870510be46cb2fb592ea1f689598961",
+    "predecessor": "19a358044470157746bfa9d0b78488815460763ff361015df01816102a52cded",
+    "feasibility": "e842088ffec3326fd8671041537585c87595a253b56f36e6e76443e8de6373d1"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:12a25019d696a83e1524674d57c507485f17975546e994eabd9ed3a5a8a50d85",
+    "sha256": "12a25019d696a83e1524674d57c507485f17975546e994eabd9ed3a5a8a50d85",
+    "ok": true,
+    "state_sha256": "f9ac8b235100bbdc7a3960b37001889bbcf8a0103f01924f026d4dbe3e9b2277",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.DSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764950802100128761
+      },
+      {
+        "dataset": "CRSP.MSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+        "bytes": 868417536,
+        "mtime_ns": 1764951132644186578
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "05698058ff529efad9309486b2133b366bc6091c94b2596ee974ccc652ff7c67",
+      "work/stata.ipynb": "06381502a91b1f554ce15ac4193cfa2da7533794d5832b4b82206931862ae568",
+      "work/submission.json": "0b04bb2231b47bba9ba5e057fd8e163a699141441e4e404c4cb3bb75dd6211ca"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "257d7d6a93810b775f783696f94e2ced28869303f39a4ce78446424d337df683",
+      "predecessor": "output/reproductions/packages/W3123370480/attempt_02/build.sas",
+      "predecessor_sha256": "c85349555b4028f2c5d5dfdce27351342dcb0ba042abde631f3926a9ebf36244",
+      "executed_sha256": "05698058ff529efad9309486b2133b366bc6091c94b2596ee974ccc652ff7c67",
+      "historical_predecessor_sha256": "e5fc64eb570e480c7cbec7717c659e9488b796d8f5d7c08bbf860a6f0a446f36"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "1e53e48a7ae13cb9d3e0fede1be1b219b182af3aa56c2cce9fcf71fe50d5328e",
+      "predecessor": "output/reproductions/packages/W3123370480/attempt_02/stata.ipynb",
+      "predecessor_sha256": "8db32040c3e5026909cdc0a9c441fb78aa44eb393b1b1383e776d70688e8ec0c",
+      "executed_sha256": "06381502a91b1f554ce15ac4193cfa2da7533794d5832b4b82206931862ae568",
+      "historical_predecessor_sha256": "e35339936916498163ee46d1e56f0074b0fdeafa974d8a12a17ca226ae9f85c0"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "6372614b45222a19ca0b80958df94d1c64489a4a8b6fd46bcf60ffe75be72802",
+    "predecessor": "4cd55d9ed57852ae8355864dea1f4e1149e02cc58dca7708fce45d569603864a",
+    "feasibility": "4b2f00e07c798ab423973de3983abb1e33c6f51870e30ab0b621dcf81c1a06f2"
+  }
+}

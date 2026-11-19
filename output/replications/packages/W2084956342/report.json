@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Accrual reliability, earnings persistence and stock prices",
+  "doi": "10.1016/j.jacceco.2005.04.005",
+  "route": "reconstruction",
+  "paper_id": "W2084956342",
+  "years": 5,
+  "sources_checked": [
+    "Project resource catalog output/feasibility_reproduction/resources/catalog.json (generated 2026-10-27); catalog paths/fields checked against exact current local SAS files listed below.",
+    "COMP.FUNDA at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat (metadata modified 2026-07-22; 941,340 rows/949 columns). Under accepted INDL/C/D/STD selectors, FYEAR 1961–2007 is present; FYEAR 2007 source records extend to DATADATE 2008-05-31. For FYEAR 2002–2007, each year has 10,857–11,253 selected rows, 7,495–8,395 current-row complete required fields including SALE, and 9,048–10,182 nonmissing OIADP rows; no duplicate selected GVKEY/FYEAR/DATADATE keys in FYEAR 2002–2007.",
+    "CRSP.DSF at ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat (modified 2025-12-06; 107,663,470 rows); DATE spans 1925-12-31–2024-12-31 and nonmissing RET spans 1926-01-02–2024-12-31. 2006–2008 each has more than 1.7 million daily records and more than 1.69 million nonmissing RETs.",
+    "CRSP.DSI at ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat (modified 2025-12-06; 26,051 rows); DATE and nonmissing VWRETD span 1926-01-02–2024-12-31, with 251, 251, and 253 nonmissing-return dates in 2006, 2007, and 2008.",
+    "CRSP.DSENAMES at ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat (modified 2025-12-06; 117,859 rows); NAMEDT spans 1925-12-31–2024-12-31 and NAMEENDT spans 1926-02-24–2024-12-31, with neither field missing.",
+    "CRSP.DSEDELIST at ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsedelist.sas7bdat (modified 2025-12-06; 38,872 rows); DLSTDT spans 1926-02-24–2024-12-31 and the hard PERMNO/DLSTDT duplicate-key audit found zero rows on duplicate keys.",
+    "CRSP.CCMXPF_LINKTABLE at ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat (modified 2026-08-14; 92,711 rows); LINKDT spans 1946-01-01–2025-12-31 and LINKENDDT spans 1950-05-30–2026-01-30, with 14,750 missing/open ends.",
+    "COMP.CO_INDUSTRY at ${ACCTREPL_SAS_ROOT}/comp/d_na/company/co_industry.sas7bdat (modified 2026-08-14; 372,563 rows) is referenced only for the accepted code diagnostic; YEAR spans 1982–2025 and has no 1960–1981 records, so it is not used as the early-period SIC source.",
+    "Fresh handoff work/data/compustat_108617/reg.dta (metadata only): 148,126 rows, 18 columns; lowercase year is int16 with numeric format %10.0g and denotes fiscal-year t; date_t is an int16 day count with generic numeric display format. All model variables and the year diagnostic are present with the expected case. The Stata count uses year, not date_t."
+  ],
+  "changes": [
+    "Rebuilt the pooled sample from the original regression-year start 1962 through requested end 2006. SAS source bounds now include FYEAR 1961–2007 for prior/current/lead inputs; the anchor is year=FYEAR and the CRSP availability window remains the accepted exact-day 12-month screen.",
+    "Kept the accepted sample selectors, accounting formulas, signs, winsorization, SIC preference, CCM/CRSP screen, annual full-rank OLS fits, and xtfmb Fama–MacBeth estimator. The fit now estimates 45 annual cross-sections (1962–2006); all 45 passed the existing rank and residual-df rules.",
+    "Added quiet period counts from the active xtfmb e(sample), saving each r(N) before the next command, and a native EXT_SAMPLE marker with the last contributing year. The diagnostic counts the actual firm-year observations entering the pooled Fama–MacBeth fit.",
+    "Wrote fresh aggregate outputs under work/artifacts/table5c_extended.* and updated the table note to identify t=1962–2006. The reconstruction rebuilt the SAS handoff from the exact current local sources; no predecessor-generated dataset or table was used as input.",
+    "Recorded independent aggregate-only source-date and required-field coverage checks in work/coverage_check.md. Current source records support the requested observation horizon; the source vintages and historical date windows are stated separately."
+  ],
+  "limitations": [
+    "The paper does not state Compustat annual-row selector conventions, average-assets endpoints, the historical SIC source/date rule, or CCM link and security-selection rules. The replay preserves the accepted package choices for these items.",
+    "The predecessor-period current-vintage sample contains 127,722 firm-years versus the paper’s published 108,617, a difference of 19,105. The predecessor review did not attribute that discrepancy to one cause; it remains relevant to the 1962–2001 portion of this pooled replay.",
+    "On predecessor final rows with both historical SIC sources valid, FUNDA.SICH and date-valid CRSP SIC disagree on 54,853 of 71,034 rows; 1,118 classify on opposite sides of the financial-company exclusion. The paper gives no provider preference; accepted code prefers FUNDA.SICH and uses dated CRSP SIC only when unavailable.",
+    "The paper does not state the transformation used for its Table 4 descriptive statistics. The predecessor review compared those moments with the final ±1-winsorized analysis inputs; the transformation discrepancy remains unresolved.",
+    "The local files are current-vintage sources rather than the authors’ contemporaneous vendor vintage; historical vendor revisions cannot be separated from other reconstruction differences. The source-date checks establish support through 2006 and its lag/lead/return windows, not a later fitted horizon."
+  ],
+  "analyses": [
+    {
+      "scope_id": "table5_panel_c_extended_multivariate / table5_panel_c_final_multivariate",
+      "key": "s1",
+      "label": "Table 5 Panel C, final multivariate row: next-year ROA on current ROA and all extended accrual components (Fama–MacBeth)",
+      "sample_ids": [
+        "compustat_108617"
+      ],
+      "status": "extended_full",
+      "reason": "The assigned final joint Table 5C fit was previously executed. Current local Compustat and CRSP sources cover the prior/current/lead accounting records and complete return-availability windows needed for FYEAR 1962–2006. The fresh controller replay completed the SAS rebuild and Stata estimator; all 45 annual cross-sections passed the retained full-rank rule. The native e(sample) marker reports 127,722 original-period and 20,404 added-period firm-year observations, with the last added observation year 2006.",
+      "source_evidence": [
+        "output/samples/records/W2084956342.json: data-section evidence, physical page 15; Compustat annual and CRSP daily sources, 1962–2001 sample period, firm-year unit and financial-company exclusion.",
+        "output/models/records/W2084956342.json: Table 5 Panel C and equation, physical pages 26–27; final multivariate row and 40 annual OLS cross-sections summarized by Fama–MacBeth, with method confirmed on page 28.",
+        "output/reproductions/packages/W2084956342/attempt_02/outcome.json: retained model/result-set pair and executed predecessor cell fmb_extended.",
+        "work/build.sas lines 75–82 and 177–212: accepted Compustat fields/selectors, FYEAR anchor as year, exact prior/current/next fiscal-year joins, and this replay’s FYEAR 1961–2007 / regression-year 1962–2006 bounds.",
+        "work/build.sas lines 214–229, 304–305, and 331–479: historical SIC fallback and accepted exact-day CRSP availability window, delisting treatment, and firm-year screen.",
+        "work/build.sas lines 535–562: final KEEP retains year, date_t, and all model variables; year remains the fiscal-year observation clock through Stata import.",
+        "work/stata.ipynb cell fmb_extended: original rank-checked annual OLS and xtfmb fit with active e(sample) counts and the EXT_SAMPLE s1 127722 20404 2006 native marker.",
+        "work/coverage_check.md: direct aggregate-only coverage checks of the exact local files and their vintages; FYEAR 2007 and CRSP dates through 2008 support the 2006 lead and availability window.",
+        "output/reproductions/packages/W2084956342/attempt_02/review.md, “Estimation and comparisons”: saved predecessor Fama–MacBeth mean for ROA_t and inherited construction/sample limitations."
+      ],
+      "original_begin": "1962",
+      "original_end": "2001",
+      "requested_end": "2006",
+      "supported_end": "2006",
+      "last_added": "2006",
+      "count_unit": "firm-year observations in xtfmb e(sample), summed across the annual cross-sections",
+      "original_n": 127722,
+      "added_n": 20404,
+      "artifacts": [
+        "results/artifacts/table5c_extended.md"
+      ],
+      "comparison": "For the persistence slope on ROA_t (dimensionless ROA_{t+1} change per unit ROA_t), the saved predecessor mean is 0.8099 in output/reproductions/packages/W2084956342/attempt_02/review.md, “Estimation and comparisons” (the saved table rounds it to 0.810). The fresh pooled estimate is 0.817930 in work/runtime/20261118T071707957502Z/cell_fmb_extended.log (EXT_FOCAL) and 0.818 rounded in work/artifacts/table5c_extended.md, a change of +0.008030.",
+      "native_evidence": {
+        "path": "urn:sha256:1fde7cfe30aa39933d6ce0afe916706bfcc15520647ea7cfb1ffdce023627917",
+        "sha256": "1fde7cfe30aa39933d6ce0afe916706bfcc15520647ea7cfb1ffdce023627917",
+        "marker": "EXT_SAMPLE s1 127722 20404 2006"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 1
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed72-e3b1-7c32-883e-0a5812997cb2",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W2084956342.json",
+    "models": "output/models/records/W2084956342.json",
+    "predecessor": "output/reproductions/packages/W2084956342/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W2084956342.json"
+  },
+  "input_hashes": {
+    "sample": "f67bd26692f77535cee794477aadae12bcf881ec201fba5a4d23a963703315af",
+    "models": "687cb82ab7fc735fa1d637eacfd387db09bfccc5ef2af2106bb2ab58ae766163",
+    "predecessor": "9f3a523fcd933e9cec6f72078bff8f124daf05e1374a26ed27db5a6a62153d87",
+    "feasibility": "c085fbd8d5461e6104730993bb33ceaf9ff7db43b1f6301bd52755ca6c66994e"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:1992fb54c36c7e6c82b43cbe2178cc09c61a1e416ddf7ff242aae378ad9cda62",
+    "sha256": "1992fb54c36c7e6c82b43cbe2178cc09c61a1e416ddf7ff242aae378ad9cda62",
+    "ok": true,
+    "state_sha256": "f65f916e1a52369e58b81ed8229c225a90d36908d5a208156e670790d53d1ed4",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.CO_INDUSTRY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/company/co_industry.sas7bdat",
+        "bytes": 21102592,
+        "mtime_ns": 1786702511923065405
+      },
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.DSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764950802100128761
+      },
+      {
+        "dataset": "CRSP.DSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat",
+        "bytes": 17251565568,
+        "mtime_ns": 1764950931963294339
+      },
+      {
+        "dataset": "CRSP.DSEDELIST",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsedelist.sas7bdat",
+        "bytes": 6094848,
+        "mtime_ns": 1764950801576115988
+      },
+      {
+        "dataset": "CRSP.DSI",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat",
+        "bytes": 2490368,
+        "mtime_ns": 1764951110019635009
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "ad72cd7edfa47b1cf0761cf85432e665847095d84ca8a6b4ee69cb37d1f4db4e",
+      "work/stata.ipynb": "9454a277d13f60c7926dd099ee496dbee851f929548f222dd5c034cac9008020",
+      "work/submission.json": "69a88676d9dd17a74c6b3c07381f93dc8ab429f96f1344e15579b5dc6786fe96"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "9989c416f35a82b7c616b8e2c10c8fe5bd589a8daf1d0f18f7ccfaed17cc4c79",
+      "predecessor": "output/reproductions/packages/W2084956342/attempt_02/build.sas",
+      "predecessor_sha256": "9b29a8e383054d8690321be0c89b66498cd1d6833f6ff740773190e50723432a",
+      "executed_sha256": "ad72cd7edfa47b1cf0761cf85432e665847095d84ca8a6b4ee69cb37d1f4db4e",
+      "historical_predecessor_sha256": "543875eb0fdc9bea6d14cd4202a2511d2e5af9da1c0d2f32d51af7fa6d84bc5e"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "ded06edca1ec17a14c88fd21b9616620d07c73973111b242e86e91b6d0546dce",
+      "predecessor": "output/reproductions/packages/W2084956342/attempt_02/stata.ipynb",
+      "predecessor_sha256": "026c1d079c379c2eb7f68a3708c4696abc536140b2a8399a25d2ab8a4971f5ae",
+      "executed_sha256": "9454a277d13f60c7926dd099ee496dbee851f929548f222dd5c034cac9008020",
+      "historical_predecessor_sha256": "bcd2e2429e801ec8c0a42a2784b463e09ac49c88dfda03e647695021e5a8138b"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "69a88676d9dd17a74c6b3c07381f93dc8ab429f96f1344e15579b5dc6786fe96",
+      "predecessor": "output/reproductions/packages/W2084956342/attempt_02/submission.json",
+      "predecessor_sha256": "f33843a7876b10098073a57797edf5a295ea850d40dd49f6f576306cf4e32682"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "a409e578c8cbfc8f13bd15995bdfff44a93280fbca54f37a97ee3b8cdc4be49e",
+    "predecessor": "899f3c0ed5aaf7ac348fcce13bb5e1945382863fdb8a1179a07438d38f1c9785",
+    "feasibility": "f22c911eab0b91c7ef9d665a74c8b023a51df390a77be19749c6d21c71ac30ff"
+  }
+}

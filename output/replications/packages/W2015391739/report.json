@@ -1,0 +1,336 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Asymmetric timeliness tests of accounting conservatism",
+  "doi": "10.1007/s11142-006-9023-y",
+  "route": "reconstruction",
+  "paper_id": "W2015391739",
+  "years": 5,
+  "sources_checked": [
+    "Local catalog snapshot output/feasibility_reproduction/resources/catalog.json (generated 2026-10-27; snapshot metadata only, not vendor-vintage equivalence).",
+    "COMP.FUNDA: ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; SHA-256 29b8d466f61ad2bf9fa5db91d717f52bf06956c22601af2ad7a880a39a97c29a; bounded accepted-field scan found selected complete company-year records through fiscal year 1995 (11,091 selected FY1995 rows); the later statement-month rate check is in work/source_coverage_preflight.json.",
+    "COMP.G_EXRT_MTH: ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat; SHA-256 fd63c25f42f1db6952fbd06ecd2260e3d1b164122e2dd01e1f8fda733c911f33; GBP-origin positive EXRAT12M quote groups begin 1982-01, and all selected FY1991-FY1995 company-years have their required statement-month conversion support.",
+    "CRSP.MSF: ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat; SHA-256 bf38b796705cf09b4ae42b4fea93362d17536a3333ad53418771ad6e0cb8a6e4; bounded scan covers all 420 calendar months from 1962-01 through 1996-12, including the months needed after FY1995.",
+    "CRSP.CCMXPF_LINKTABLE: ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat; SHA-256 15c2afe22c015c4a7570a13774237d66178ab5b22cfada9a9c070402f959503b; accepted link filters and date-valid joins are retained; pooled SAS diagnostics found 130,781 unique return links and zero ambiguous top-ranked anchors.",
+    "CRSP.MSENAMES: ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat; SHA-256 d49464c52952e01d81bb3203f03bde6507f676b5c0c69689724b53920ebec2f3; bounded date-effective name-history aggregate, retained as an audit input only and not used to add an estimation screen.",
+    "Assigned sample record output/samples/records/W2015391739.json: the retained firm-year period is 1963-1990 (physical paper p. 12); the four assigned fits are Table 2 Panel A/B columns (2)/(3) on physical p. 20 in output/models/records/W2015391739.json.",
+    "Accepted predecessor output/reproductions/packages/W2015391739/attempt_02: build.sas, stata.ipynb, submission.json and outcome.json; saved Table 2 panel tables supply the original 1963-1990 reconstructed estimates. The accepted handoff imports SAS and asserts isid gvkey fyear.",
+    "Accepted attempt_02 Stata handoff column metadata: fyear is numeric (%10.0g), and the DTA contains gvkey, fyear, x, r_actual and r_sim; the extended handoff preserved these fields and passed the same isid assertion."
+  ],
+  "changes": [
+    "Rebuilt the original and added observations jointly on the accepted Compustat fiscal-year clock; extended the annual filter from 1963-1990 through 1995.",
+    "Extended the accepted CRSP MSF calendar-date cap from 1991-12-31 to 1996-12-31 while keeping the original 1962 lower bound and FYE-9/FYE-8 through FYE+3 windows.",
+    "Kept the four accepted Table 2 OLS fits, within-year trimming, date-valid CCM/CRSP joins, pooled actual-return generator, one-draw same-year residual rotation, and seed unchanged.",
+    "Added inline Stata e(sample) counts for original and added fiscal-year ranges and one computed EXT_SAMPLE marker per fit; preserved the stable cell IDs and verified fyear as numeric in the accepted Stata handoff metadata.",
+    "Declared the fresh pooled handoff at data/basu_replication_1963_1995.sas7bdat and data/basu_replication_1963_1995/reg.dta; placed the native panel result tables under work/artifacts for hash-bound report evidence.",
+    "Removed the accepted SAS copy's single-GVKEY row-level diagnostic queries and retained aggregate fiscal-year/currency diagnostics so the run and report expose only aggregate source evidence."
+  ],
+  "limitations": [
+    "The predecessor's accepted 1963-1990 reconstruction already differed substantially from the paper's Table 2 sample sizes: Panel A bad-news actual/simulated N=39,201/39,140 versus the paper's 20,618/20,498, and Panel B good-news actual/simulated N=50,787/50,848 versus 29,333/29,453 (paper p. 20; saved predecessor tables and model record). Its full handoff had 89,988 rows versus Table 1 Panel A's 49,951; this inherited discrepancy remains unresolved. The extension compares to that saved accepted run and adds no screens to approach the paper's N.",
+    "The accepted simulated-return construction estimates one pooled actual-return-on-X generator. Re-estimating it on 1963-1995 changes the simulated sign partitions within 1963-1990: the bad-news old-period count is 39,233 versus 39,140 in the saved prior fit, and the good-news old-period count is 50,755 versus 50,848. The combined period counts come from the active pooled fits and the change follows the retained generator construction.",
+    "The bounded current EXRAT12M source has no GBP-origin quotes before January 1982. The accepted route therefore leaves 7,266 selected CAD annual rows without conversion across the pooled 1963-1995 inputs; the native constructor retains missingness and does not substitute another source or impute rates. Added years 1991-1995 have statement-month rate coverage.",
+    "Current COMP.FUNDA.IB is a provider mapping to annual A18, but historical vintage, restatement and exact definition equivalence to the paper's Compustat item 18 remain uncertain. The paper's Table 1 note says stock price while Table 2 p. 20 says firm market value; the accepted design follows Table 2 and uses company MVE at FYE-9.",
+    "The paper does not uniquely report the regression estimator, covariance correction, sidedness, or simulation seed. The accepted OLS with ordinary inference and fixed seed 20261103 are retained. Current-vintage CRSP/CCM links and the source-silent issue/share-class composition of company market equity remain limitations documented in work/design.md.",
+    "Only the accepted single-draw same-year residual permutation is retained; later simulation repetitions, fixed-slope robustness analyses, later-period paper columns and Table 3 are outside the four assigned scopes."
+  ],
+  "analyses": [
+    {
+      "scope_id": "bad_news_actual / bad_news_actual_table2_col2",
+      "key": "s1",
+      "label": "Table 2 Panel A, column (2): bad news, actual returns",
+      "sample_ids": [
+        "basu_replication_1963_1990"
+      ],
+      "status": "extended_full",
+      "reason": "The native Stata replay estimates the accepted OLS table 2 panel a, column (2): bad news, actual returns fit on pooled fiscal years 1963-1995. Its active e(sample) marker verifies 39,201 firm-year observations in 1963-1990 and 11,428 in 1991-1995, with last added year 1995. Verified local source coverage and the native construction support the requested endpoint.",
+      "source_evidence": [
+        "work/stata.ipynb cell table2_panel_a: `reg x r_actual if r_actual < 0` is the retained accepted fit; its EXT_SAMPLE line counts the active Stata e(sample) by fyear.",
+        "output/models/records/W2015391739.json: model/result set `bad_news_actual_table2_col2` maps to Table 2 Panel A column (2) and the sign partition Rit < 0; physical paper p. 20.",
+        "output/samples/records/W2015391739.json: the assigned firm-year sample is 1963-1990; physical paper p. 12.",
+        "work/build.sas: pooled fiscal-year filter, FYE-9 anchor, FYE-8 through FYE+3 CRSP return window, within-year trimming and accepted one-draw residual simulation."
+      ],
+      "original_begin": "1963",
+      "original_end": "1990",
+      "requested_end": "1995",
+      "supported_end": "1995",
+      "last_added": "1995",
+      "count_unit": "firm-year estimation observations in Stata e(sample)",
+      "original_n": 39201,
+      "added_n": 11428,
+      "artifacts": [
+        "results/artifacts/table2_panelA.md"
+      ],
+      "comparison": {
+        "unit": "OLS slope in scaled earnings X per one-unit 12-month stock return R",
+        "original": {
+          "estimate": 0.329,
+          "table_displayed": "0.329",
+          "n": 39140,
+          "period": "1963-1990",
+          "location": "output/reproductions/packages/W2015391739/attempt_02/tables/table2_panelA.md, Actual returns column"
+        },
+        "extended": {
+          "estimate": 0.3509623,
+          "table_displayed": "0.351",
+          "n": 50629,
+          "period": "1963-1995 pooled",
+          "location": "work/artifacts/table2_panelA.md, Actual returns column; native log work/runtime/20261118T063609734635Z/cell_table2_panel_a.log"
+        },
+        "note": "The saved original estimate and pooled extended estimate use the same retained fit and coefficient units."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:5c90b5672ffb0a4774da866c2b6656df5678e2cbac526812423ced0e0165db08",
+        "sha256": "5c90b5672ffb0a4774da866c2b6656df5678e2cbac526812423ced0e0165db08",
+        "marker": "EXT_SAMPLE s1 39201 11428 1995"
+      }
+    },
+    {
+      "scope_id": "bad_news_simulated / bad_news_simulated_table2_col3",
+      "key": "s2",
+      "label": "Table 2 Panel A, column (3): bad news, simulated returns",
+      "sample_ids": [
+        "basu_replication_1963_1990"
+      ],
+      "status": "extended_full",
+      "reason": "The native Stata replay estimates the accepted OLS table 2 panel a, column (3): bad news, simulated returns fit on pooled fiscal years 1963-1995. Its active e(sample) marker verifies 39,233 firm-year observations in 1963-1990 and 11,622 in 1991-1995, with last added year 1995. Verified local source coverage and the native construction support the requested endpoint. The accepted pooled actual-return generator is re-estimated on the combined trimmed sample, so its simulated sign partition can change for old fiscal years.",
+      "source_evidence": [
+        "work/stata.ipynb cell table2_panel_a: `reg x r_sim if !missing(r_sim) & r_sim < 0` is the retained accepted fit; its EXT_SAMPLE line counts the active Stata e(sample) by fyear.",
+        "output/models/records/W2015391739.json: model/result set `bad_news_simulated_table2_col3` maps to Table 2 Panel A column (3) and the sign partition Rit_sim < 0; physical paper p. 20.",
+        "output/samples/records/W2015391739.json: the assigned firm-year sample is 1963-1990; physical paper p. 12.",
+        "work/build.sas: pooled fiscal-year filter, FYE-9 anchor, FYE-8 through FYE+3 CRSP return window, within-year trimming and accepted one-draw residual simulation."
+      ],
+      "original_begin": "1963",
+      "original_end": "1990",
+      "requested_end": "1995",
+      "supported_end": "1995",
+      "last_added": "1995",
+      "count_unit": "firm-year estimation observations in Stata e(sample)",
+      "original_n": 39233,
+      "added_n": 11622,
+      "artifacts": [
+        "results/artifacts/table2_panelA.md"
+      ],
+      "comparison": {
+        "unit": "OLS slope in scaled earnings X per one-unit 12-month stock return R",
+        "original": {
+          "estimate": 0.46,
+          "table_displayed": "0.460",
+          "n": 39140,
+          "period": "1963-1990",
+          "location": "output/reproductions/packages/W2015391739/attempt_02/tables/table2_panelA.md, Simulated returns column"
+        },
+        "extended": {
+          "estimate": 0.430274,
+          "table_displayed": "0.430",
+          "n": 50855,
+          "period": "1963-1995 pooled",
+          "location": "work/artifacts/table2_panelA.md, Simulated returns column; native log work/runtime/20261118T063609734635Z/cell_table2_panel_a.log"
+        },
+        "note": "The saved prior 1963-1990 simulated partition had N=39,140; the pooled replay's old-period e(sample) has N=39,233 because the accepted full-sample generator is re-estimated on 1963-1995 before applying simulated-return signs. This keeps the existing construction pooled and is not a new period screen."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:5c90b5672ffb0a4774da866c2b6656df5678e2cbac526812423ced0e0165db08",
+        "sha256": "5c90b5672ffb0a4774da866c2b6656df5678e2cbac526812423ced0e0165db08",
+        "marker": "EXT_SAMPLE s2 39233 11622 1995"
+      }
+    },
+    {
+      "scope_id": "good_news_actual / good_news_actual_table2_col2",
+      "key": "s3",
+      "label": "Table 2 Panel B, column (2): good news, actual returns",
+      "sample_ids": [
+        "basu_replication_1963_1990"
+      ],
+      "status": "extended_full",
+      "reason": "The native Stata replay estimates the accepted OLS table 2 panel b, column (2): good news, actual returns fit on pooled fiscal years 1963-1995. Its active e(sample) marker verifies 50,787 firm-year observations in 1963-1990 and 17,273 in 1991-1995, with last added year 1995. Verified local source coverage and the native construction support the requested endpoint.",
+      "source_evidence": [
+        "work/stata.ipynb cell table2_panel_b: `reg x r_actual if !missing(r_actual) & r_actual >= 0` is the retained accepted fit; its EXT_SAMPLE line counts the active Stata e(sample) by fyear.",
+        "output/models/records/W2015391739.json: model/result set `good_news_actual_table2_col2` maps to Table 2 Panel B column (2) and the sign partition Rit ≥ 0; physical paper p. 20.",
+        "output/samples/records/W2015391739.json: the assigned firm-year sample is 1963-1990; physical paper p. 12.",
+        "work/build.sas: pooled fiscal-year filter, FYE-9 anchor, FYE-8 through FYE+3 CRSP return window, within-year trimming and accepted one-draw residual simulation."
+      ],
+      "original_begin": "1963",
+      "original_end": "1990",
+      "requested_end": "1995",
+      "supported_end": "1995",
+      "last_added": "1995",
+      "count_unit": "firm-year estimation observations in Stata e(sample)",
+      "original_n": 50787,
+      "added_n": 17273,
+      "artifacts": [
+        "results/artifacts/table2_panelB.md"
+      ],
+      "comparison": {
+        "unit": "OLS slope in scaled earnings X per one-unit 12-month stock return R",
+        "original": {
+          "estimate": 0.032,
+          "table_displayed": "0.032",
+          "n": 50787,
+          "period": "1963-1990",
+          "location": "output/reproductions/packages/W2015391739/attempt_02/tables/table2_panelB.md, Actual returns column"
+        },
+        "extended": {
+          "estimate": 0.0156782,
+          "table_displayed": "0.016",
+          "n": 68060,
+          "period": "1963-1995 pooled",
+          "location": "work/artifacts/table2_panelB.md, Actual returns column; native log work/runtime/20261118T063609734635Z/cell_table2_panel_b.log"
+        },
+        "note": "The saved original estimate and pooled extended estimate use the same retained fit and coefficient units."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:57fee6c843309225ef370547aaaa8d7d955297038248386ad53397e67c86dce7",
+        "sha256": "57fee6c843309225ef370547aaaa8d7d955297038248386ad53397e67c86dce7",
+        "marker": "EXT_SAMPLE s3 50787 17273 1995"
+      }
+    },
+    {
+      "scope_id": "good_news_simulated / good_news_simulated_table2_col3",
+      "key": "s4",
+      "label": "Table 2 Panel B, column (3): good news, simulated returns",
+      "sample_ids": [
+        "basu_replication_1963_1990"
+      ],
+      "status": "extended_full",
+      "reason": "The native Stata replay estimates the accepted OLS table 2 panel b, column (3): good news, simulated returns fit on pooled fiscal years 1963-1995. Its active e(sample) marker verifies 50,755 firm-year observations in 1963-1990 and 17,079 in 1991-1995, with last added year 1995. Verified local source coverage and the native construction support the requested endpoint. The accepted pooled actual-return generator is re-estimated on the combined trimmed sample, so its simulated sign partition can change for old fiscal years.",
+      "source_evidence": [
+        "work/stata.ipynb cell table2_panel_b: `reg x r_sim if !missing(r_sim) & r_sim >= 0` is the retained accepted fit; its EXT_SAMPLE line counts the active Stata e(sample) by fyear.",
+        "output/models/records/W2015391739.json: model/result set `good_news_simulated_table2_col3` maps to Table 2 Panel B column (3) and the sign partition Rit_sim ≥ 0; physical paper p. 20.",
+        "output/samples/records/W2015391739.json: the assigned firm-year sample is 1963-1990; physical paper p. 12.",
+        "work/build.sas: pooled fiscal-year filter, FYE-9 anchor, FYE-8 through FYE+3 CRSP return window, within-year trimming and accepted one-draw residual simulation."
+      ],
+      "original_begin": "1963",
+      "original_end": "1990",
+      "requested_end": "1995",
+      "supported_end": "1995",
+      "last_added": "1995",
+      "count_unit": "firm-year estimation observations in Stata e(sample)",
+      "original_n": 50755,
+      "added_n": 17079,
+      "artifacts": [
+        "results/artifacts/table2_panelB.md"
+      ],
+      "comparison": {
+        "unit": "OLS slope in scaled earnings X per one-unit 12-month stock return R",
+        "original": {
+          "estimate": 0.035,
+          "table_displayed": "0.035",
+          "n": 50848,
+          "period": "1963-1990",
+          "location": "output/reproductions/packages/W2015391739/attempt_02/tables/table2_panelB.md, Simulated returns column"
+        },
+        "extended": {
+          "estimate": 0.0315503,
+          "table_displayed": "0.032",
+          "n": 67834,
+          "period": "1963-1995 pooled",
+          "location": "work/artifacts/table2_panelB.md, Simulated returns column; native log work/runtime/20261118T063609734635Z/cell_table2_panel_b.log"
+        },
+        "note": "The saved prior 1963-1990 simulated partition had N=50,848; the pooled replay's old-period e(sample) has N=50,755 because the accepted full-sample generator is re-estimated on 1963-1995 before applying simulated-return signs. This keeps the existing construction pooled and is not a new period screen."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:57fee6c843309225ef370547aaaa8d7d955297038248386ad53397e67c86dce7",
+        "sha256": "57fee6c843309225ef370547aaaa8d7d955297038248386ad53397e67c86dce7",
+        "marker": "EXT_SAMPLE s4 50755 17079 1995"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 4
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed4b-bd82-7db1-84b6-1cf2bf4a072a",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W2015391739.json",
+    "models": "output/models/records/W2015391739.json",
+    "predecessor": "output/reproductions/packages/W2015391739/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W2015391739.json"
+  },
+  "input_hashes": {
+    "sample": "817c258ae4d73f8114e82dbf8682c0710384314b3ea1df62645dc7f2b1fa4900",
+    "models": "b174258879596797379bdc4feef86a820886d0364b437a256063d828662d15f2",
+    "predecessor": "00e0ab6f1ba4799e0a2eba0c383139b72b150428df69bd134e233c15f79ddcf5",
+    "feasibility": "2940f5ea38bdcb512156f5d573d6596302db758547bce2bdb8d59b00f6ba05f3"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:9538678a43ab5f64a7a842d5c84ecda520edacce9b2e3b2101f6f22962b4ad92",
+    "sha256": "9538678a43ab5f64a7a842d5c84ecda520edacce9b2e3b2101f6f22962b4ad92",
+    "ok": true,
+    "state_sha256": "213fc0dc4d88aed35fa96895bd10879606b0352f1f47400c42939a853044aa15",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      },
+      {
+        "dataset": "CRSP.MSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+        "bytes": 868417536,
+        "mtime_ns": 1764951132644186578
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "293d2dba169761fcfc5158c7d777d40e5bbf9e0bcc7f110d71b6372f0f560e0a",
+      "work/stata.ipynb": "30b76ff8f39ddf51f7683f0d6d54dcc6759787081e8d4a8e4859b21c6b7babb6",
+      "work/submission.json": "2a4fcd119f0b8c01977d5102cb19e56295ac1449422f17b48ff8c5e8093278e7"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "1845450d24fed516d7f5c20bd030512f2dae9de4753e4b28dbd3dd2e08c0595a",
+      "predecessor": "output/reproductions/packages/W2015391739/attempt_02/build.sas",
+      "predecessor_sha256": "84a8f16cb5c46022b1c32c1a55211b11f058b1c9cba0ff05e2b6b3aaceb66bbc",
+      "executed_sha256": "293d2dba169761fcfc5158c7d777d40e5bbf9e0bcc7f110d71b6372f0f560e0a",
+      "historical_predecessor_sha256": "20dd3672057ab0d42d762c3701beb546ae72420ed9ebe0c79a7dbad5620ca4b2"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "30b76ff8f39ddf51f7683f0d6d54dcc6759787081e8d4a8e4859b21c6b7babb6",
+      "predecessor": "output/reproductions/packages/W2015391739/attempt_02/stata.ipynb",
+      "predecessor_sha256": "b3bf9bd7dcdabe4b66a1ccb6eb38ff7d6aad2536da62cdc5d853534328533abc",
+      "historical_predecessor_sha256": "70211a7040f220b989993223970851ef682a03d0d45146ca69e2d38797b948f3"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "2a4fcd119f0b8c01977d5102cb19e56295ac1449422f17b48ff8c5e8093278e7",
+      "predecessor": "output/reproductions/packages/W2015391739/attempt_02/submission.json",
+      "predecessor_sha256": "cfcd885104bacb2123d2d3d43e042c06ec6b4b3ed67d3172f1a9b8e15b07c38e"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "18a0890fe17554f0f39760e0937e8e61886eaca625582ebe36f4208278ece8b4",
+    "predecessor": "d37f998b1085f7b12b36c08ff219471893b5ae889799b66bd3bddae06adbaffa",
+    "feasibility": "3f388ecd63accf8416f9000cdf41cb20480ebb4399c8c475badfee89da7cad26"
+  }
+}

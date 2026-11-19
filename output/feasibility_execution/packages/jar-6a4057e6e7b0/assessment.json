@@ -1,0 +1,1250 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-6a4057e6e7b0",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 56/Issue 2/12201 - Corporate-Scandals-and-Regulation/htw-datasheet-and-code.zip",
+        "sha256": "530aa6042e69104fe5b78da52c444a330bdc6290939dd7fc9509a60c4f0e6794"
+      },
+      {
+        "path": "JAR-Volume 56/Issue 2/12201 - Corporate-Scandals-and-Regulation/hail-tahoun-wang-accepted-proposal.pdf",
+        "sha256": "be1af849a252d173b5606a1dcef4c085d28b4306f7ace32de1e16c160550e160"
+      },
+      {
+        "path": "JAR-Volume 56/Issue 2/12201 - Corporate-Scandals-and-Regulation/htw-online-appendix.pdf",
+        "sha256": "e4ced92d891448e29910adad72692bcecd015737d9414176c5af3ccd60dd92ec"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "a257ea088bca727f8f8088228131f6ac1f3b836552dafe971698f13dacc231ee",
+    "work_item_sha256": "f31334a08ac817769b3bfe8b1e35dd638123b90837d470607dd4b12071d84013"
+  },
+  "title": "Corporate Scandals and Regulation",
+  "doi": "10.1111/1475-679X.12201",
+  "requirements": [
+    {
+      "id": "req_country_dta",
+      "kind": "data",
+      "description": "Author-prepared country-year scandal/regulation panel component required before the script generates combined variables and merges macroeconomic/crisis controls. Required columns are country/year/decade and the 10 scandal, regulation, and media-mention fields. The supplied combined HTW_scandal_data.dta matches this schema and identifier grid; nonmissing-value completeness and macro/RR merge compatibility remain unverified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_combined_scandal_panel",
+          "type": "local",
+          "status": "verified",
+          "location": "HTW scandal data/HTW_scandal_data.dta",
+          "description": "The supplied author-prepared combined DTA is readable and has all 13 required panel columns, 5,616 rows, 26 expected countries, unique country-year keys, and years 1800–2015. Its decade values are already 1800/1810/etc. The profile inspected only country/year/decade values, so count-field nonmissingness, sample fidelity, and merges with macro/RR panels still require future validation.",
+          "evidence_ids": [
+            "ev_scandal_panel_profile",
+            "ev_scandal_analysis_data_available",
+            "ev_panel_decade_scale",
+            "ev_panel_derived_vars"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "decade",
+            "regl_acct",
+            "regl_news",
+            "regl_oth",
+            "regl_supra",
+            "regl_tot",
+            "scand_acct",
+            "scand_near",
+            "scand_news",
+            "scand_non",
+            "scand_tot"
+          ],
+          "expected_period": "Author scandal/regulation panel with 26 expected countries and country-year keys spanning 1800–2015; profile reports 5,616 rows and no duplicate country-year keys."
+        },
+        {
+          "id": "route_country_workbooks",
+          "type": "local",
+          "status": "unverified",
+          "location": "HTW scandal data/Individual country data/*.xlsx",
+          "description": "The package also contains 26 country Excel workbooks and sampled probes confirm readable headers. They remain an alternate raw-input route only; no author conversion/aggregation program or full coverage profile establishes that these workbooks produce the expected country-year panel.",
+          "evidence_ids": [
+            "ev_inventory",
+            "ev_probe_xlsx_austria",
+            "ev_probe_xlsx_uk",
+            "ev_probe_xlsx_usa",
+            "ev_country_file_inputs",
+            "ev_country_fields"
+          ],
+          "expected_fields": [
+            "Country",
+            "Year",
+            "Newspaper scandals\nscand_news",
+            "Total scandals\nscand_tot",
+            "Accounting scandals\nscand_acct",
+            "Near accounting scandals\nscand_near",
+            "Non-accounting scandals\nscand_non",
+            "Newspaper regulations\nregl_news",
+            "Total regulations\nregl_tot",
+            "Accounting regulations\nregl_acct",
+            "Other regulations\nregl_oth",
+            "Supranational regulations\nregl_supra"
+          ],
+          "expected_period": "Country-specific histories, varying by country; paper/appendix spans 1800–2015 where available."
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "req_macro_panel",
+      "kind": "data",
+      "description": "The direct input inflation_gdp.dta required by the main do-file. Required source columns include country, year, gdppc, gdppc_est, infl, and infl_est; these become GDP/inflation levels and filled-value flags before lagged transforms.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_macro_partial",
+          "type": "local",
+          "status": "unverified",
+          "location": "HTW Data Description/inflation_gdp_est.dta",
+          "description": "The supplied file is a filled-value component, not the complete `inflation_gdp.dta`: the bounded profile confirms 539 nonmissing GDP values, 145 inflation values, and 130 recent GDP observations, but the file has only country/year/gdppc/infl and lacks the `gdppc_est`/`infl_est` indicators and historical baseline series required by the script.",
+          "evidence_ids": [
+            "ev_macro_fill_file",
+            "ev_macro_fill_profile",
+            "ev_macro_required_fields",
+            "ev_probe_macro_file"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "gdppc",
+            "infl"
+          ],
+          "expected_period": "Country-year GDP per capita and inflation series over the author analysis sample, with the required filled-value indicators."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_maddison_gdp",
+      "kind": "data",
+      "description": "Historical annual GDP per capita source used to build the GDP portion of inflation_gdp.dta. The author documentation specifies the 2013 Maddison release in 1990 international dollars; missing years are handled separately.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_maddison_2013",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.rug.nl/ggdc/historicaldevelopment/maddison/releases/maddison-project-database-2013?lang=en",
+          "description": "Official downloadable Excel release, version 2013, with annual historical GDP estimates through 2010. The author source specifies GDP per capita in 1990 international dollars. The 2011–2015 supplement and author gap fills remain separate mandatory inputs.",
+          "evidence_ids": [
+            "ev_maddison_public",
+            "ev_gdp_source_spec"
+          ],
+          "expected_fields": [
+            "GDP per capita"
+          ],
+          "expected_period": "Maddison Project Database version 2013 through 2010; use country-year observations needed from 1800 onward where available."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "req_recent_gdp",
+      "kind": "data",
+      "description": "The 2011–2015 GDP-per-capita component (130 country-years) used by the authors and adjusted to the 1990 international-dollar base. The original source was the November 2016 Conference Board database, but these author-prepared values are already present in inflation_gdp_est.dta.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_recent_gdp_local",
+          "type": "local",
+          "status": "verified",
+          "location": "HTW Data Description/inflation_gdp_est.dta",
+          "description": "The supplied author fill-value file contains 130 nonmissing GDP observations in 2011–2015. The data description states that the authors adjusted these 130 Conference Board observations to the Maddison 1990 international-dollar base, and identifies the file as containing the manually filled observations. Reacquiring the source workbook is not necessary merely to reuse these author-supplied values.",
+          "evidence_ids": [
+            "ev_macro_fill_profile",
+            "ev_gdp_recent_spec",
+            "ev_macro_fill_file"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "gdppc"
+          ],
+          "expected_period": "2011–2015; profile confirms 130 nonmissing GDP observations in the supplied author data, already adjusted by the authors to the 1990 international-dollar base."
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "req_macro_gapfills",
+      "kind": "data",
+      "description": "Author-filled GDP and inflation gap observations used to complete the source panel. The bounded profile verifies the authors’ reported 539 nonmissing GDP values (including the 130 recent observations) and 145 nonmissing inflation values in the supplied file; this is a local component, not a complete historical macro panel.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_author_gapfill_file",
+          "type": "local",
+          "status": "verified",
+          "location": "HTW Data Description/inflation_gdp_est.dta",
+          "description": "The author-supplied inflation_gdp_est.dta is readable with country, year, gdppc, and infl. Its bounded profile verifies 539 nonmissing GDP values, 145 nonmissing inflation values, 130 recent GDP values, 26 country names matching the scandal panel, unique country-year keys, and a 1799–2015 year range. The profile read only country/year/decade/value nonmissing counts; it does not establish the full base series or indicators.",
+          "evidence_ids": [
+            "ev_macro_fill_file",
+            "ev_macro_fill_method",
+            "ev_macro_fill_profile",
+            "ev_probe_macro_file"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "gdppc",
+            "infl"
+          ],
+          "expected_period": "539 nonmissing GDP values (including 130 for 2011–2015) and 145 nonmissing inflation values in the author-supplied filled-value file; not the complete historical macro series."
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "req_rr_inflation",
+      "kind": "data",
+      "description": "Historical annual inflation input for the macro panel from the online data accompanying Reinhart and Rogoff (2011), for country-years not covered by the authors’ later extension.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_rr_inflation_repo",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://www.openicpsr.org/openicpsr/project/112444/version/V1/view?path=/openicpsr/112444/fcr:versions/V1/Reinhart_Rogoff_20080344_Data/Inflation&type=folder",
+          "description": "OpenICPSR lists four Inflation Part Excel files from the cited Reinhart–Rogoff replication package. Exact annual series columns, country coverage, historical period, and compatibility with the authors’ March 2016 copy are not established without inspecting the data.",
+          "evidence_ids": [
+            "ev_rr_inflation_public",
+            "ev_inflation_source_spec"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "annual inflation / CPI change"
+          ],
+          "expected_period": "Historical years before the authors’ 2009–2015 IMF extension; exact country-year coverage to verify."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_imf_inflation_extension",
+      "kind": "data",
+      "description": "Annual inflation extension for 2009–2015 from the IMF, as named by the authors; exact IMF dataset/series and 2017 vintage are not identified in the package.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_imf_candidate",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://data.imf.org/Datasets/WEO",
+          "description": "Official current IMF WEO is a candidate annual inflation source, but the authors cite IMF data generically and downloaded in January 2017; this page does not prove the same series or vintage.",
+          "evidence_ids": [
+            "ev_imf_public",
+            "ev_inflation_source_spec"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "annual consumer-price inflation"
+          ],
+          "expected_period": "2009–2015 for the author sample; exact dataset/series and vintage require confirmation."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_israel_inflation",
+      "kind": "data",
+      "description": "Israel annual inflation observations, which the authors source from World Bank data because Israel is not covered by the cited Reinhart–Rogoff inflation data.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_wb_israel_candidate",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG?locations=IL",
+          "description": "Official World Bank annual consumer-price inflation series for Israel is a compatible discovery candidate for 2009–2015, but the authors’ January 2017 source vintage and historical values have not been verified.",
+          "evidence_ids": [
+            "ev_wb_public",
+            "ev_inflation_source_spec"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "Inflation, consumer prices (annual %)"
+          ],
+          "expected_period": "Israel observations required in the author sample, including the 2009–2015 extension; verify earliest required year and 2017-vintage values."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_rr_crisis_panel",
+      "kind": "data",
+      "description": "The RR_replication.dta annual country-year crisis dataset used to construct rr_crisis, crisis-type, first-year, and lagged moving-average controls. Code names source variables including currcrisis, inflcrisis, mktcrash, dc_dom, dc_ext, bc, and first-year fields. Authors exclude Israel from specifications requiring these crisis measures.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_rr_varieties_repo",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://www.openicpsr.org/openicpsr/project/112444/version/V1/view?path=/openicpsr/112444/fcr:versions/V1/Reinhart_Rogoff_20080344_Data/Varieties&type=folder",
+          "description": "OpenICPSR lists four Varieties Part Excel files from the cited Reinhart–Rogoff replication package. They are not the script-required RR_replication.dta; source variable schema, country/year coverage, and construction of crisis flags have not been verified.",
+          "evidence_ids": [
+            "ev_rr_varieties_public",
+            "ev_rr_public",
+            "ev_rr_source_input",
+            "ev_rr_required_fields"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "crisis-type indicators and first-year variables; exact source columns unverified"
+          ],
+          "expected_period": "Author crisis source through its documented final year; main code constructs zeros for 2011–2015, subject to the unresolved year-boundary discrepancy."
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "sw_stata",
+      "name": "Stata",
+      "status": "available",
+      "description": "The author workflow is Stata; local environment probe reports Stata 18. The package does not state a required Stata version.",
+      "evidence_ids": [
+        "ev_env"
+      ]
+    },
+    {
+      "id": "sw_corrtab",
+      "name": "corrtab",
+      "status": "preparation_required",
+      "description": "User-written Stata command called by HTW_analyses.do at line 74; not found in checked ado paths.",
+      "evidence_ids": [
+        "ev_probe_corrtab",
+        "ev_corrtab_call"
+      ]
+    },
+    {
+      "id": "sw_tabout",
+      "name": "tabout",
+      "status": "preparation_required",
+      "description": "User-written Stata command called for Table 3 exports; not found in checked ado paths.",
+      "evidence_ids": [
+        "ev_probe_tabout",
+        "ev_tabout_call"
+      ]
+    },
+    {
+      "id": "sw_outreg2",
+      "name": "outreg2",
+      "status": "preparation_required",
+      "description": "User-written Stata command called for Table 4 and regression exports; not found in checked ado paths.",
+      "evidence_ids": [
+        "ev_probe_outreg2",
+        "ev_outreg2_call",
+        "ev_macro_output_specs"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "issue_missing_inputs",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_inputs_and_unprovided_construction",
+      "description": "The main script’s complete inflation_gdp.dta and RR_replication.dta inputs are absent. The bundled inflation_gdp_est.dta now has a verified author-filled-value component route: its 539 GDP, 145 inflation, and 130 2011–2015 GDP values match the data description. It still contains only country/year/gdppc/infl, lacks the required gdppc_est/infl_est flags and historical baseline series, and therefore cannot replace the complete macro input. The R&R crisis input and its exact construction remain unresolved.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "ev_country_file_inputs",
+        "ev_gdp_recent_spec",
+        "ev_inventory",
+        "ev_macro_fill_file",
+        "ev_macro_fill_profile",
+        "ev_macro_required_fields",
+        "ev_panel_decade_scale",
+        "ev_panel_derived_vars",
+        "ev_probe_macro_file",
+        "ev_probe_scandal_panel",
+        "ev_raw_data_stage",
+        "ev_rr_source_input",
+        "ev_scandal_analysis_data_available",
+        "ev_scandal_panel_profile"
+      ]
+    },
+    {
+      "id": "issue_path_layout",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "project_path_configuration",
+      "description": "The main script hard-codes the authors’ workstation root and Desktop working directory. It includes regression files from a `03 STATA code` folder, while the package places both files under `HTW Data Description/STATA code`. The `01 Input_datasets` layout is also absent; `02 Countries - done` is needed only if the original per-country branch is retained rather than using the combined panel adapter.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "ev_macro_path",
+        "ev_macro_includes_tab11",
+        "ev_macro_includes_tab10",
+        "ev_inventory"
+      ]
+    },
+    {
+      "id": "issue_crisis_year_boundary",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "source_year_boundary_conflict",
+      "description": "The data description says the authors assume no financial crises for 2009–2015; the supplied code instead fills rr_* values with zero only for years 2011–2015 after extending the R&R key by five years. It is unclear whether 2009–2010 remain observed in RR_replication.dta and which boundary is intended. Do not alter crisis values until clarified.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "ev_crisis_source_spec",
+        "ev_rr_source_input",
+        "ev_rr_zero_years"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev_data_scandal_origin",
+      "kind": "source",
+      "description": "Data description identifies the scandal/regulation records as author- and RA-collected.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 31,
+      "line_end": 33,
+      "quote": "the authors and local country research assistants hand-collected all the data between"
+    },
+    {
+      "id": "ev_gdp_source_spec",
+      "kind": "source",
+      "description": "Authors identify the Maddison 2013 GDP-per-capita base series and its unit.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 37,
+      "line_end": 39,
+      "quote": "Annual GDP per Capita (in 1990 international dollars)"
+    },
+    {
+      "id": "ev_gdp_recent_spec",
+      "kind": "source",
+      "description": "Authors identify the 2011–2015 Conference Board supplement and 1990-dollar adjustment.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 39,
+      "line_end": 43,
+      "quote": "2016 version) downloaded on January 29, 2017. We adjusted these recent years"
+    },
+    {
+      "id": "ev_inflation_source_spec",
+      "kind": "source",
+      "description": "Authors identify Reinhart–Rogoff inflation, IMF 2009–2015, and World Bank for Israel.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 44,
+      "line_end": 54,
+      "quote": "To fill in the years 2009 to 2015"
+    },
+    {
+      "id": "ev_crisis_source_spec",
+      "kind": "source",
+      "description": "Authors identify the Reinhart–Rogoff crisis dataset and a no-crisis assumption for final sample years.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 55,
+      "line_end": 60,
+      "quote": "but assume no crises instead."
+    },
+    {
+      "id": "ev_macro_fill_method",
+      "kind": "source",
+      "description": "Authors describe extrapolation/backfill for historical GDP and inflation gaps.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 61,
+      "line_end": 68,
+      "quote": "We linearly extrapolate missing years from adjacent observations"
+    },
+    {
+      "id": "ev_macro_fill_file",
+      "kind": "source",
+      "description": "Authors say the supplied file contains filled GDP and inflation observations, not the full source panel.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 69,
+      "line_end": 73,
+      "quote": "we provide the Stata dataset"
+    },
+    {
+      "id": "ev_data_public",
+      "kind": "source",
+      "description": "Authors state source data were publicly available; this does not establish a license barrier.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 84,
+      "line_end": 84,
+      "quote": "All of the source data for this project came from publicly available sources."
+    },
+    {
+      "id": "ev_analysis_program_scope",
+      "kind": "source",
+      "description": "Data description identifies Stata entry program, included regression macros, and Tables 3–6.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 112,
+      "line_end": 116,
+      "quote": "The Stata do-file"
+    },
+    {
+      "id": "ev_macro_path",
+      "kind": "source",
+      "description": "Main script contains author-machine absolute root and working-directory settings.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 36,
+      "line_end": 37,
+      "quote": "global m4"
+    },
+    {
+      "id": "ev_macro_required_fields",
+      "kind": "source",
+      "description": "Main script opens inflation_gdp.dta and immediately requires gdppc_est as well as gdppc.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 59,
+      "line_end": 62,
+      "quote": "use \"$m4/01 Input_datasets/inflation_gdp.dta\", clear"
+    },
+    {
+      "id": "ev_macro_temp_producer",
+      "kind": "source",
+      "description": "GDP/inflation input is transformed and saved as temp_inflation_gdp.dta before later merge.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 59,
+      "line_end": 98,
+      "quote": "save \"$m4/01 Input_datasets/temp_inflation_gdp.dta\", replace"
+    },
+    {
+      "id": "ev_rr_source_input",
+      "kind": "source",
+      "description": "RR_replication.dta is the input for a shifted temporary year-key file, then appended to the original.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 106,
+      "line_end": 117,
+      "quote": "use \"$m4/01 Input_datasets/RR_replication.dta\", clear"
+    },
+    {
+      "id": "ev_rr_required_fields",
+      "kind": "source",
+      "description": "Crisis source fields are renamed and combined into the rr_* variables used downstream.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 122,
+      "line_end": 151,
+      "quote": "rename currcrisis rr_curr"
+    },
+    {
+      "id": "ev_rr_zero_years",
+      "kind": "source",
+      "description": "Main code fills rr_* values with zeros for 2011–2015.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 155,
+      "line_end": 158,
+      "quote": "replace `x'=0 if (year>2010&year<2016)"
+    },
+    {
+      "id": "ev_country_file_inputs",
+      "kind": "source",
+      "description": "Main script loads Austria first and appends the listed 25 country-specific Stata files.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 213,
+      "line_end": 218,
+      "quote": "local countries"
+    },
+    {
+      "id": "ev_country_fields",
+      "kind": "source",
+      "description": "Country files must supply the scandal, regulation, and media-mention fields used by the panel stage.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 221,
+      "line_end": 232,
+      "quote": "label var scand_tot"
+    },
+    {
+      "id": "ev_merge_gdp_order",
+      "kind": "source",
+      "description": "Scandal panel consumes the GDP/inflation temporary dataset after its producer.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 317,
+      "line_end": 318,
+      "quote": "merge 1:1 country year using \"$m4/01 Input_datasets/temp_inflation_gdp.dta\""
+    },
+    {
+      "id": "ev_merge_rr_order",
+      "kind": "source",
+      "description": "Scandal panel consumes the RR temporary dataset after its producer.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 332,
+      "line_end": 333,
+      "quote": "merge 1:1 country year using \"$m4/01 Input_datasets/temp_RR_replication.dta\""
+    },
+    {
+      "id": "ev_rr_temp_producer",
+      "kind": "source",
+      "description": "RR crisis flags are lagged and saved to temp_RR_replication.dta before the later merge.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 174,
+      "line_end": 201,
+      "quote": "save \"$m4/01 Input_datasets/temp_RR_replication.dta\", replace"
+    },
+    {
+      "id": "ev_corrtab_call",
+      "kind": "source",
+      "description": "Main script calls corrtab.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 74,
+      "line_end": 74,
+      "quote": "corrtab gdp ln_gdp infl ln_infl,sig"
+    },
+    {
+      "id": "ev_tabout_call",
+      "kind": "source",
+      "description": "Main script calls tabout for Table 3 output.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 355,
+      "line_end": 355,
+      "quote": "tabout country using table3.xls"
+    },
+    {
+      "id": "ev_outreg2_call",
+      "kind": "source",
+      "description": "Main script calls outreg2 for Table 4; regression macros also call it.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 391,
+      "line_end": 391,
+      "quote": "quietly: outreg2"
+    },
+    {
+      "id": "ev_macro_includes_tab11",
+      "kind": "source",
+      "description": "Main script invokes the supplied tab11 macro for Table 5.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 417,
+      "line_end": 419,
+      "quote": "do \"$m4/03 STATA code/01 tab11_regressions.do\""
+    },
+    {
+      "id": "ev_macro_includes_tab10",
+      "kind": "source",
+      "description": "Main script invokes the supplied tab10 macro for Table 6.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 443,
+      "line_end": 445,
+      "quote": "do \"$m4/03 STATA code/01 tab10_regressions.do\""
+    },
+    {
+      "id": "ev_macro_output_specs",
+      "kind": "source",
+      "description": "Tab10 macro runs logit specifications and exports each result with outreg2.",
+      "file": "HTW Data Description/STATA code/01 tab10_regressions.do",
+      "line_begin": 12,
+      "line_end": 22,
+      "quote": "outreg2 using $output.xls"
+    },
+    {
+      "id": "ev_appendix_countries",
+      "kind": "source",
+      "description": "Online appendix documents 26 country-specific histories, data procedures, and coverage.",
+      "file": "_audit_supplements/htw-online-appendix.pdf",
+      "line_begin": 24,
+      "line_end": 35,
+      "quote": "for each of the 26 sample countries"
+    },
+    {
+      "id": "ev_raw_data_stage",
+      "kind": "source",
+      "description": "Paper describes country/year incident databases and creation of analysis indicators from raw data.",
+      "file": "_audit_supplements/hail-tahoun-wang-accepted-proposal.pdf",
+      "line_begin": 560,
+      "line_end": 570,
+      "quote": "For the analyses, we use the raw data"
+    },
+    {
+      "id": "ev_country_coverage_example",
+      "kind": "source",
+      "description": "Appendix coverage varies by country and identifies newspaper sources; historical origins are data provenance.",
+      "file": "_audit_supplements/htw-online-appendix.pdf",
+      "line_begin": 370,
+      "line_end": 376,
+      "quote": "Coverage: 1831 to 2015"
+    },
+    {
+      "id": "ev_maddison_public",
+      "kind": "public",
+      "description": "Official Groningen Growth and Development Centre page for the 2013 Maddison release; page provides an Excel download and period.",
+      "url": "https://www.rug.nl/ggdc/historicaldevelopment/maddison/releases/maddison-project-database-2013?lang=en",
+      "checked_at": "2026-11-07",
+      "quote": "new estimates of economic growth in the world economic between AD 1 and 2010",
+      "authority": "official"
+    },
+    {
+      "id": "ev_rr_public",
+      "kind": "public",
+      "description": "Official OpenICPSR repository record for the Reinhart–Rogoff AER 2011 replication package.",
+      "url": "https://www.openicpsr.org/openicpsr/project/112444/version/V1/view",
+      "checked_at": "2026-11-07",
+      "quote": "Replication data for: From Financial Crash to Debt Crisis",
+      "authority": "repository"
+    },
+    {
+      "id": "ev_rr_inflation_public",
+      "kind": "public",
+      "description": "OpenICPSR folder lists the package’s Inflation Part I–IV Excel files; field and historical coverage have not been inspected.",
+      "url": "https://www.openicpsr.org/openicpsr/project/112444/version/V1/view?path=/openicpsr/112444/fcr:versions/V1/Reinhart_Rogoff_20080344_Data/Inflation&type=folder",
+      "checked_at": "2026-11-07",
+      "quote": "Inflation_Part_I.xls",
+      "authority": "repository"
+    },
+    {
+      "id": "ev_rr_varieties_public",
+      "kind": "public",
+      "description": "OpenICPSR folder lists the package’s crisis-variety Excel files; exact schema and years have not been inspected.",
+      "url": "https://www.openicpsr.org/openicpsr/project/112444/version/V1/view?path=/openicpsr/112444/fcr:versions/V1/Reinhart_Rogoff_20080344_Data/Varieties&type=folder",
+      "checked_at": "2026-11-07",
+      "quote": "Varieties_Part_I.xls",
+      "authority": "repository"
+    },
+    {
+      "id": "ev_imf_public",
+      "kind": "public",
+      "description": "Official IMF WEO dataset page establishes a current annual inflation source candidate, not the authors’ specific 2017 table/vintage.",
+      "url": "https://data.imf.org/Datasets/WEO",
+      "checked_at": "2026-11-07",
+      "quote": "The database includes selected data on national accounts, inflation",
+      "authority": "official"
+    },
+    {
+      "id": "ev_wb_public",
+      "kind": "public",
+      "description": "Official World Bank indicator page for annual Israel inflation; current values are not verified against the authors’ 2017 vintage.",
+      "url": "https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG?locations=IL",
+      "checked_at": "2026-11-07",
+      "quote": "Inflation, consumer prices (annual %) - Israel",
+      "authority": "official"
+    },
+    {
+      "id": "ev_inventory",
+      "kind": "inspection",
+      "description": "Bounded inventory summary: 26 country XLSX workbooks and packaged data paths; no coverage claim.",
+      "artifact_path": "probes/archive_inventory_summary.json",
+      "sha256": "afb2888572148c1a4ecbf27c7872d399366cc8b8545714f68611d6f605042c11"
+    },
+    {
+      "id": "ev_static_audit",
+      "kind": "inspection",
+      "description": "Frozen static audit; syntax/dependency discovery only, not an execution or coverage certification.",
+      "artifact_path": "static_audit.json",
+      "sha256": "f242d0278d512ad91d7a218d88616db6a2014f51ed19dcde444ca0837520c37e"
+    },
+    {
+      "id": "ev_env",
+      "kind": "probe",
+      "description": "Environment probe reports Stata 18 available; no author code or study data was used.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "ev_probe_macro_file",
+      "kind": "probe",
+      "description": "Bounded packaged-file probe for inflation_gdp_est.dta: readable, columns country/year/gdppc/infl; one row inspected, coverage unverified.",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "f4e6fd0e0dc3f17ec558737320411418cc9b49d9945d93fc8603845c0b566622"
+    },
+    {
+      "id": "ev_probe_scandal_panel",
+      "kind": "probe",
+      "description": "Bounded packaged-file probe for HTW_scandal_data.dta: readable with country/year and scandal/regulation fields; one row inspected, coverage unverified.",
+      "artifact_path": "probes/packaged_2.json",
+      "sha256": "99f53886ac9388ecb4e981ebe20321d3ff379563dc91c64253875a6a91c20ed7"
+    },
+    {
+      "id": "ev_probe_xlsx_austria",
+      "kind": "probe",
+      "description": "Bounded XLSX probe confirms author workbook readability and raw headers; one row inspected, coverage unverified.",
+      "artifact_path": "probes/packaged_5.json",
+      "sha256": "4cbfa9ae290eb742764f624e2639403024b37f9a173a671264fc676dfd20845d"
+    },
+    {
+      "id": "ev_probe_xlsx_uk",
+      "kind": "probe",
+      "description": "Bounded XLSX probe confirms UK workbook readability and raw headers; one row inspected, coverage unverified.",
+      "artifact_path": "probes/packaged_3.json",
+      "sha256": "2c43037a186502858aa4be9a47a2895c31c52aa36944c23f6a4384dd03dd6875"
+    },
+    {
+      "id": "ev_probe_xlsx_usa",
+      "kind": "probe",
+      "description": "Bounded XLSX probe confirms USA workbook readability and raw headers; one row inspected, coverage unverified.",
+      "artifact_path": "probes/metadata_country_4.json",
+      "sha256": "87354e22c5af4a6fb2543da4c1320c6a34e894b03c2669e792d677ae0cf3a83e"
+    },
+    {
+      "id": "ev_probe_corrtab",
+      "kind": "probe",
+      "description": "Stata 18 `which corrtab` probe did not find the command in checked adopaths.",
+      "artifact_path": "probes/software_corrtab.json",
+      "sha256": "1e67e969e77440a46c1ad47d29f2f9945b8e739b1c88ce10b7ee2aeb0bae8c32"
+    },
+    {
+      "id": "ev_probe_tabout",
+      "kind": "probe",
+      "description": "Stata 18 `which tabout` probe did not find the command in checked adopaths.",
+      "artifact_path": "probes/software_tabout.json",
+      "sha256": "26c84ec50e968a33ea7e5d63f84f17a50047eaf8137cb47d733039d5e16e9159"
+    },
+    {
+      "id": "ev_probe_outreg2",
+      "kind": "probe",
+      "description": "Stata 18 `which outreg2` probe did not find the command in checked adopaths.",
+      "artifact_path": "probes/software_outreg2.json",
+      "sha256": "7677111787de36930225bebfdfcbec0fd4008e9cc02fb43d1a3b40f54e7539c2"
+    },
+    {
+      "id": "ev_scandal_analysis_data_available",
+      "kind": "source",
+      "description": "Author data description states that the scandal/regulation data used in analysis is supplied.",
+      "file": "HTW Data Description/HTW Data Description.pdf",
+      "line_begin": 92,
+      "line_end": 94,
+      "quote": "The scandals and regulation data used in the analysis is available here"
+    },
+    {
+      "id": "ev_panel_decade_scale",
+      "kind": "source",
+      "description": "Original country files are decade-scaled before combined panel variables are generated.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 240,
+      "line_end": 240,
+      "quote": "replace decade=decade*10"
+    },
+    {
+      "id": "ev_panel_derived_vars",
+      "kind": "source",
+      "description": "The next stage generates combined scandal/regulation fields after the decade conversion.",
+      "file": "HTW Data Description/STATA code/HTW_analyses.do",
+      "line_begin": 247,
+      "line_end": 250,
+      "quote": "gen scand_acct_near=scand_acct+scand_near"
+    },
+    {
+      "id": "ev_scandal_panel_profile",
+      "kind": "probe",
+      "description": "Coordinator-provided bounded metadata profile of HTW_scandal_data.dta: 5,616 rows, 26 countries, country-year keys with no duplicates, 1800–2015 year range, 13 expected columns, decade values already 1800/1810/etc. Profile reads country/year/decade only; it does not establish nonmissing values, full sample fidelity, or macro/RR merge compatibility.",
+      "artifact_path": "probes/coordinator_scandal_panel_profile.json",
+      "sha256": "ba00640902466cd8b257fdce9ffdc1438f39aa0f63579612d8821f1f14fee559"
+    },
+    {
+      "id": "ev_macro_fill_profile",
+      "kind": "probe",
+      "description": "Coordinator-provided bounded profile of inflation_gdp_est.dta: 600 observations, fields country/year/gdppc/infl, 26 names matching the scandal panel, unique country-year keys, and year range 1799–2015. It verifies 539 nonmissing GDP values, 145 inflation values, and 130 nonmissing GDP values in 2011–2015. It does not establish a complete macro panel or indicator flags.",
+      "artifact_path": "probes/coordinator_macro_fill_profile.json",
+      "sha256": "72a9aaf29fa99436470cba621e08170322e7e00268159b394ccc69dce9b0e2f9"
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_ids": [
+        "D0001",
+        "D0002"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "issue",
+      "target_ids": [
+        "issue_path_layout"
+      ],
+      "evidence_ids": [
+        "ev_macro_includes_tab11",
+        "ev_macro_includes_tab10",
+        "ev_inventory"
+      ],
+      "description": "Both required regression macro files are included in the archive, but the script references an author-machine `03 STATA code` directory that does not match their packaged `HTW Data Description/STATA code` location."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "req_macro_panel"
+      ],
+      "evidence_ids": [
+        "ev_macro_required_fields",
+        "ev_probe_macro_file"
+      ],
+      "description": "The mandatory inflation_gdp.dta input is absent. The bundled inflation_gdp_est.dta is readable but has only country/year/gdppc/infl and is documented as filled observations, so it does not establish a compatible full input."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "req_rr_crisis_panel"
+      ],
+      "evidence_ids": [
+        "ev_rr_source_input",
+        "ev_rr_required_fields",
+        "ev_rr_varieties_public"
+      ],
+      "description": "The mandatory RR_replication.dta input is absent; code requires country/year crisis source fields and creates derived rr_* controls."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "req_country_dta"
+      ],
+      "evidence_ids": [
+        "ev_country_file_inputs",
+        "ev_inventory",
+        "ev_panel_decade_scale",
+        "ev_panel_derived_vars",
+        "ev_probe_xlsx_austria",
+        "ev_scandal_analysis_data_available",
+        "ev_scandal_panel_profile"
+      ],
+      "description": "The original D0005 Austria .dta path is not in the archive. However, the supplied combined author DTA is a locally verified panel-component alternative with the required columns and country-year key profile. Use the conditional adapter after decade normalization and before combined fields; value completeness and macro/RR merges still need checking."
+    }
+  ],
+  "actions": [
+    {
+      "id": "action_maddison_acquire",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req_maddison_gdp"
+      ],
+      "kind": "data_acquisition",
+      "description": "Acquire the authors’ specified Maddison Project Database version 2013 workbook for the historical GDP base series.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "ev_maddison_public",
+        "ev_gdp_source_spec"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the official University of Groningen Maddison Project Database 2013 page and its Excel download.",
+        "Retain the release/version and attribution information.",
+        "Map the source country, year, and GDP-per-capita observations in 1990 international dollars into the historical component of the macro panel; keep country-year gaps for the separately documented author fill procedure."
+      ],
+      "validation": [
+        "Confirm the acquired workbook is the 2013 release and covers the required country-year observations through 2010.",
+        "Confirm the unit is the 1990 international-dollar GDP-per-capita measure used by the authors before combining it with 2011–2015 values."
+      ]
+    },
+    {
+      "id": "action_missing_inputs",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req_macro_panel",
+        "req_rr_inflation",
+        "req_imf_inflation_extension",
+        "req_israel_inflation",
+        "req_rr_crisis_panel",
+        "issue_missing_inputs"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the missing complete macro panel and RR crisis inputs, and resolve how the already supplied author fill values are assembled with historical baseline series and indicator flags.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_country_file_inputs",
+        "ev_crisis_source_spec",
+        "ev_gdp_recent_spec",
+        "ev_inflation_source_spec",
+        "ev_macro_fill_file",
+        "ev_macro_fill_method",
+        "ev_macro_fill_profile",
+        "ev_macro_required_fields",
+        "ev_probe_macro_file",
+        "ev_probe_scandal_panel",
+        "ev_rr_inflation_public",
+        "ev_rr_varieties_public",
+        "ev_scandal_analysis_data_available",
+        "ev_scandal_panel_profile"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the complete `inflation_gdp.dta` or the exact author assembly instructions for historical GDP/inflation baselines and `gdppc_est`/`infl_est` indicators. The packaged `inflation_gdp_est.dta` already contains the author-filled values and the 130 recent GDP values; do not request the Conference Board 2016 workbook merely to reacquire those values.",
+        "Request the IMF dataset/series and January 2017 vintage used for the 2009–2015 inflation extension, and the corresponding World Bank/WDI source vintage for Israel.",
+        "Request the exact `RR_replication.dta` or author-supplied mapping/program to create its crisis variables from the referenced Reinhart–Rogoff files. Confirm source columns, country coverage, and years.",
+        "Use the verified local GDP/inflation fill-value components through action_macro_fill_preparation only after historical baseline inputs and the author indicator/overlap convention are established.",
+        "Use the supplied HTW_scandal_data.dta as the conditional local route for the country-year scandal/regulation panel, following action_combined_panel_adapter. If future validation does not support the required values or merges, request the 26 per-country `.dta` files or their author construction program as a fallback.",
+        "Keep historical newspaper/archive sources as provenance of the already supplied author-collected scandal data, not as live acquisition requirements; do not infer an access barrier from subscription markers or catalog absence."
+      ],
+      "validation": [
+        "After acquiring or receiving the complete macro inputs, confirm the final country-year panel includes `country`, `year`, `gdppc`, `gdppc_est`, `infl`, and `infl_est`, with baseline periods and fill flags documented.",
+        "Confirm the R&R source variables, country coverage, and year treatment before creating the crisis panel.",
+        "Use bounded metadata checks for keys, row counts, and date ranges; do not substitute unverified current source values."
+      ]
+    },
+    {
+      "id": "action_macro_fill_preparation",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req_macro_panel",
+        "req_recent_gdp",
+        "req_macro_gapfills"
+      ],
+      "kind": "data_preparation",
+      "description": "Use the author-supplied fill-value file and recent-GDP observations as local components of the complete macro panel after its historical baselines are available.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_macro_fill_profile",
+        "ev_macro_fill_file",
+        "ev_macro_fill_method",
+        "ev_gdp_recent_spec",
+        "ev_macro_required_fields"
+      ],
+      "edits": [],
+      "steps": [
+        "Retain inflation_gdp_est.dta as the author-prepared source of 539 nonmissing GDP values (including 130 for 2011–2015) and 145 nonmissing inflation values. These recent GDP values are already included and described as adjusted to the Maddison 1990 international-dollar base; do not reacquire the Conference Board workbook just to recover them.",
+        "After compatible historical GDP and inflation baselines are available, merge the fill-value file by country/year and apply its nonmissing `gdppc`/`infl` values to the corresponding author-filled country-years, subject to confirmation of the authors’ overlap and overwrite convention.",
+        "Assemble `gdppc_est` and `infl_est` flags for rows filled from the local file using the author-confirmed indicator convention. The fill file has no flags, so do not infer their exact values or missing-value treatment without confirmation.",
+        "Write the resulting complete `inflation_gdp.dta` with `country`, `year`, `gdppc`, `gdppc_est`, `infl`, and `infl_est`; the local fill file alone is not a substitute for the historical baselines."
+      ],
+      "validation": [
+        "Before merging, confirm 539 nonmissing GDP values, 145 nonmissing inflation values, and 130 nonmissing GDP values in 2011–2015 in the local author file; confirm unique country-year keys and country names match the scandal panel.",
+        "After assembly, verify the full expected columns, historical period, country-year keys, GDP units, and indicator counts against author instructions.",
+        "Keep complete macro-panel readiness unresolved until the historical GDP/inflation baselines and flag convention are confirmed."
+      ]
+    },
+    {
+      "id": "action_combined_panel_adapter",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req_country_dta"
+      ],
+      "kind": "data_preparation",
+      "description": "Use the bundled author-prepared combined scandal panel as the local alternative to the absent 26 per-country Stata files, at the same panel stage before combined variables and macro/RR merges.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_scandal_panel_profile",
+        "ev_panel_decade_scale",
+        "ev_panel_derived_vars",
+        "ev_merge_gdp_order",
+        "ev_merge_rr_order"
+      ],
+      "edits": [],
+      "steps": [
+        "In an authorized working copy, bypass the original Austria-plus-25-country `.dta` load/append block and load `HTW scandal data/HTW_scandal_data.dta` as the scandal panel.",
+        "Place this adapter at the equivalent stage after the original decade normalization point (cached main-do line 240) and before the generated `scand_acct_near` and `regl_acct_oth` fields (lines 247 and 250). The bundled DTA already stores decades as 1800/1810/etc.; skip the multiplication for this route.",
+        "Continue with the existing derived variables, indicators, moving averages, and then merge `temp_inflation_gdp.dta` followed by `temp_RR_replication.dta` in the supplied order. Do not treat the combined panel as a substitute for either missing macroeconomic input."
+      ],
+      "validation": [
+        "Before any authorized execution, verify the panel still has 5,616 rows, 26 countries, unique country-year keys, and the expected fields after adaptation.",
+        "Inspect nonmissing count-field values and confirm the retained observations match the paper’s intended panel; the supplied profile did not inspect these values.",
+        "After macro/RR inputs are available, check country/year merge coverage and duplicates. The profile does not establish macro/RR merge compatibility."
+      ]
+    },
+    {
+      "id": "action_project_paths",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "issue_path_layout"
+      ],
+      "kind": "configuration",
+      "description": "Create a project-local working layout and direct the main script to it after required input files are available.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_macro_path",
+        "ev_macro_includes_tab11",
+        "ev_macro_includes_tab10",
+        "ev_inventory"
+      ],
+      "edits": [],
+      "steps": [
+        "Use a working copy of the supplied project and set `$m4` to a staged root containing `01 Input_datasets` and the regression-code directory. Include `02 Countries - done` only if the original per-country branch is retained; the combined-panel adapter instead requires a project-local path to `HTW_scandal_data.dta`.",
+        "Place or point the included tab10/tab11 files at the path used by the do-file, or update only those include paths to their actual `HTW Data Description/STATA code` locations after the staging layout is chosen.",
+        "Set the working directory to a dedicated output folder so logs and table files are written there.",
+        "Do not finalize path values until the missing macro/RR inputs and directory structure are supplied."
+      ],
+      "validation": [
+        "Before execution, use Stata `confirm file` checks for inflation_gdp.dta, RR_replication.dta, and both included regression macros. If the combined-panel adapter is selected, confirm its project-local HTW_scandal_data.dta path; if retaining the original branch, confirm all 26 country-specific inputs instead.",
+        "Confirm `$m4` resolves to the intended staged root and the working directory is writable."
+      ]
+    },
+    {
+      "id": "action_crisis_years",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "issue_crisis_year_boundary"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the documented 2009–2015 no-crisis statement against the do-file’s 2011–2015 zero-fill stage.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_crisis_source_spec",
+        "ev_rr_source_input",
+        "ev_rr_zero_years"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the authors to confirm whether crisis observations for 2009–2010 should remain sourced from the Reinhart–Rogoff data and whether the code’s 2011–2015 zero fill is intended.",
+        "Retain the existing code and data as separate evidence until the author confirms the target years; do not extend or change the zero-fill range by inference."
+      ],
+      "validation": [
+        "After clarification, inspect the assembled crisis panel for the confirmed source/zero-fill boundary and verify the five-year synthetic key expansion does not duplicate or omit any country-year."
+      ]
+    },
+    {
+      "id": "action_stata_addons",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sw_corrtab",
+        "sw_tabout",
+        "sw_outreg2"
+      ],
+      "kind": "software_setup",
+      "description": "Install or configure the three author-required Stata user commands in the project user ado path.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "ev_probe_corrtab",
+        "ev_probe_tabout",
+        "ev_probe_outreg2",
+        "ev_corrtab_call",
+        "ev_tabout_call",
+        "ev_outreg2_call"
+      ],
+      "edits": [],
+      "steps": [
+        "Install or configure `corrtab`, `tabout`, and `outreg2` from their documented Stata package sources in the project user ado path.",
+        "Keep setup local to the user/project adopath; do not modify shared catalogs during this assessment."
+      ],
+      "validation": [
+        "In Stata 18, run `which corrtab`, `which tabout`, and `which outreg2` after setup and confirm each resolves to the intended ado file."
+      ]
+    },
+    {
+      "id": "action_run_procedure",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [],
+      "kind": "run_procedure",
+      "description": "Future execution sequence for the full author workflow after the unresolved inputs, source-vintage questions, path configuration, and software setup are resolved. No code or regression is run in this assessment.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "ev_analysis_program_scope",
+        "ev_macro_temp_producer",
+        "ev_rr_source_input",
+        "ev_rr_temp_producer",
+        "ev_country_file_inputs",
+        "ev_merge_gdp_order",
+        "ev_merge_rr_order",
+        "ev_macro_includes_tab11",
+        "ev_macro_includes_tab10",
+        "ev_env"
+      ],
+      "edits": [],
+      "steps": [
+        "With all source data prepared, run HTW_analyses.do from a configured Stata 18 working copy.",
+        "Preserve the coded producer/consumer order: first create temp_inflation_gdp.dta from inflation_gdp.dta; next create and append temp.dta to RR_replication.dta, then create temp_RR_replication.dta; then supply the scandal panel. For the conditional local route, load HTW_scandal_data.dta after the decade-normalization stage without re-multiplying decade and before the combined variables are generated; otherwise use the original Austria-plus-25-country inputs. Merge the scandal panel first to temp_inflation_gdp.dta and then to temp_RR_replication.dta.",
+        "After the panel is assembled, execute the descriptive statistics and Table 3/4 outputs, then the tab11 Table 5 regressions and tab10 Table 6 regressions. The code creates intermediate files before their consumers and erases temporary files after use."
+      ],
+      "validation": [
+        "For a future authorized run, check the log for errors and confirm Table 3, Table 4, Table 5 panels A/B, and Table 6 panels A/B are produced.",
+        "Verify the resulting analysis panel has the author-required country-year keys and control variables and the confirmed 2009–2015 crisis treatment.",
+        "Execution remains unverified until a future authorized run completes and outputs are checked."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Single full_pipeline scope only. The bundled HTW_scandal_data.dta is a locally verified scandal-panel component alternative: its profile reports 5,616 rows, 26 countries, 1800–2015 country/year range, unique keys, and all 13 required columns. The profile read only country/year/decade values; count-field nonmissingness, full sample fidelity, and macro/RR merge compatibility remain unresolved. It does not support a separate complete analysis-only branch because the main analyses still require missing macroeconomic and RR crisis inputs.",
+    "The Stata code order was traced directly: build temp_inflation_gdp.dta from inflation_gdp.dta; create a shifted five-year temp.dta from RR_replication.dta, append it before generating lags and saving temp_RR_replication.dta; supply the scandal panel; merge first to temp_inflation_gdp.dta and then temp_RR_replication.dta; produce Tables 3–4 and invoke tab11/tab10 for Tables 5–6. The combined-panel adapter belongs after decade normalization and before the derived scandal/regulation combinations; its already-scaled decade values must not be multiplied again.",
+    "The author-supplied inflation_gdp_est.dta profile verifies 539 nonmissing GDP values, 145 nonmissing inflation values, and 130 nonmissing GDP values in 2011–2015; the 26 country names match the scandal panel and country-year keys are unique. The Conference Board 2016 source is provenance for those local recent-GDP values, not a required reacquisition. The file remains a fill component only: it lacks the complete historical baselines and the gdppc_est/infl_est indicators required by inflation_gdp.dta.",
+    "The archive contains 26 country Excel workbooks, the combined HTW_scandal_data.dta, and inflation_gdp_est.dta. The combined DTA profile establishes the scandal-panel schema and identifier grid; it does not establish count-value completeness or macro/RR merge compatibility. No inflation_gdp.dta or RR_replication.dta is present.",
+    "The country appendix and data description explain where already collected scandal evidence came from. Those historical source origins are not treated as live dependencies because author-collected country workbooks and the combined panel are supplied. Subscription symbols in source descriptions and catalog misses are not evidence of an access barrier.",
+    "The data description says no crisis observations for 2009–2015, while the do-file zero-fills only 2011–2015 after shifting the RR year key by five. This data/code discrepancy is retained as unresolved; no range or crisis values were changed.",
+    "The Maddison 2013 route is verified for the historical GDP base product; historical inflation sources, complete macro assembly/indicators, and RR inputs remain unresolved. No current source revision is substituted for the authors’ historical vintages.",
+    "The static audit is syntax/dependency discovery, not evidence of a successful execution. No author code, regression, data download, or installation was run."
+  ],
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Complete supplied Stata analysis workflow from required source and author-prepared input datasets through country-year panel construction, merges, descriptive statistics, and Tables 5–6 regressions. A distinct analysis-only scope is not supported: the only consolidated scandal DTA is one panel component and does not establish all required macro/crisis inputs or a separate complete analysis entry.",
+      "entry_points": [
+        "HTW Data Description/STATA code/HTW_analyses.do"
+      ],
+      "requirement_ids": [
+        "req_country_dta",
+        "req_macro_panel",
+        "req_maddison_gdp",
+        "req_recent_gdp",
+        "req_macro_gapfills",
+        "req_rr_inflation",
+        "req_imf_inflation_extension",
+        "req_israel_inflation",
+        "req_rr_crisis_panel"
+      ],
+      "software_ids": [
+        "sw_stata",
+        "sw_corrtab",
+        "sw_tabout",
+        "sw_outreg2"
+      ],
+      "issue_ids": [
+        "issue_missing_inputs",
+        "issue_path_layout",
+        "issue_crisis_year_boundary"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "ev_analysis_program_scope",
+        "ev_macro_required_fields",
+        "ev_rr_source_input",
+        "ev_country_file_inputs",
+        "ev_probe_scandal_panel",
+        "ev_macro_path",
+        "ev_macro_fill_profile"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "8688b7637618915aab118d07c5e75c2a49a59322953aad193e5d5c4193e11181",
+    "applied": false
+  }
+}

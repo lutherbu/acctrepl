@@ -1,0 +1,458 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Evaluating cross-sectional forecasting models for implied cost of capital",
+  "doi": "10.1007/s11142-014-9282-y",
+  "route": "reconstruction",
+  "paper_id": "W3121345849",
+  "years": 5,
+  "sources_checked": [
+    "COMP.FUNDA — ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; local file mtime 2026-07-22 07:44:45 UTC; 941,340 rows × 949 columns; SHA-256 29b8d466f61ad2bf9fa5db91d717f52bf06956c22601af2ad7a880a39a97c29a. The accepted descriptor-filtered required envelope has 485,609 rows from 1955-04-30 to 2017-03-31; the build resolves duplicates using latest DATADATE then latest FDATE.",
+    "COMP.G_EXRT_DLY — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat; local file mtime 2026-08-14 10:15:13 UTC; 2,221,564 rows × 5 columns; SHA-256 e570e6404df9aba943c03293a41f4a77753430cebd41e5e3e416357d89206547. All 102 unique GBP cross-rate date/currency pairs required in 2013–2017 are available without conflicts.",
+    "COMP.G_EXRT_MTH — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat; local file mtime 2026-08-14 10:15:13 UTC; 75,838 rows × 22 columns; SHA-256 fd63c25f42f1db6952fbd06ecd2260e3d1b164122e2dd01e1f8fda733c911f33. All 102 unique GBP cross-rate month/currency pairs required in 2013–2017 are available without conflicts.",
+    "Resource catalog — output/feasibility_reproduction/resources/catalog.json; generated 2026-10-27; SHA-256 4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27; exact named dataset entries and required fields are summarized in work/source_coverage.json.",
+    "Accepted predecessor — output/reproductions/packages/W3121345849/attempt_02/outcome.json (SHA-256 ec170b3902b24a84aa5bc38ed7df95503783c59f489c65c8099cf8f345c3f2e9); Table 1 aggregate tables at output/reproductions/packages/W3121345849/attempt_02/tables/{hvz,ep,ri}_forecast.csv.",
+    "Accepted handoff metadata — output/reproductions/packages/W3121345849/attempt_02/data/rolling_fit_panel/reg.dta: 415,060 rows × 29 columns; pyreadstat confirms case-sensitive avyear is int16 numeric %10.0g (calendar availability year), gvkey is string, and datadate is numeric SAS date serial. The new handoff checks are recorded in work/source_coverage.json.",
+    "Paper — papers/pdf/W3121345849.pdf, physical p. 7 for sample timing/window and p. 9 Table 1 for annual fit periods, panels, and horizons; equations and Appendix 1 at physical pp. 4–6 and 30–31.",
+    "Aggregate-only preflight and fresh native construction evidence: work/source_coverage.json and work/runtime/20261118T080553941811Z/build.lst (source and handoff counts), build.log, handoff.log, and the three fit-cell logs. Controller receipt is ok=true with code_unchanged=true and inputs_unchanged=true."
+  ],
+  "changes": [
+    "Rebuilt the full accepted Table 1 Compustat panel jointly from the current local source snapshots, extending estimation-year T from 1969–2012 through 2017. The source actual-DATADATE envelope is 30Apr1955–31Mar2017; no period beyond the checked endpoint is claimed.",
+    "Kept the accepted June 30/FYE rule, horizon-specific ten-year windows, source fields and identifiers, descriptor filters, FX construction, tie rule, model terms, annual winsorization, missing-AC/TACC rule, OLS/asreg estimator, and coefficient-mean inference unchanged.",
+    "Extended copied Stata fit loops to 2017 and added native e(sample) counts, checks of the 1969/2012/2017 endpoints, and one aggregate CSV per assigned scope. The base code and output paths remain job-local; the ado path resolves to the published reconstruction ado directory."
+  ],
+  "limitations": [
+    "The task sample ID compustat_forecast_eval is labeled as the later 1969–2008 forecast-error/ICC sample. The assigned fits are Table 1 coefficient fits for estimation years 1969–2012, and the accepted code uses rolling_fit_panel; the task schema allows only the former ID, so the rows retain it while this mapping discrepancy is made explicit.",
+    "The accepted attempt_02 had unresolved differences from the published Table 1: HVZ E slopes were comparatively close but AC differed; EP and RI estimates and adjusted R-squared differ, especially at horizons 2 and 3. The extension does not alter the accepted specification or attribute these gaps to vintage.",
+    "The inherited FX-only missing-AC/TACC zero-fill limitation remains: the prior audit found CAD prior-period daily-rate gaps, including 591/560/533 unique HVZ rows and 233/214/208 RI rows for horizons 1/2/3. The extended 2013–2017 period has complete required daily and monthly rate-pair coverage; all-period missing keys remain in the earlier history.",
+    "RI horizon 3 at estimation year 1969 remains underidentified because TACC is constant zero after the accepted missing-to-zero rule. The fresh pooled output omits that one coefficient vector and averages 48 qualifying annual fits, while all five added years are full rank."
+  ],
+  "analyses": [
+    {
+      "scope_id": "hvz_forecast / hvz_forecast_t_1",
+      "key": "s1",
+      "label": "Table 1 Panel A: HVZ annual rolling OLS, horizon t+1",
+      "sample_ids": [
+        "compustat_forecast_eval"
+      ],
+      "status": "extended_full",
+      "reason": "Extended full: the accepted Table 1 HVZ Panel A horizon t+1 rolling OLS fit was rebuilt jointly for estimation years 1969–2017 from the current local Compustat sources. The added fit years 2013–2017 contribute to the annual coefficient mean; actual source coverage and all required added-period rate pairs reach the 2017 endpoint. The native full-rank screen passed for the original and all five added annual fits.",
+      "source_evidence": [
+        "papers/pdf/W3121345849.pdf, physical p. 7 §3.2: June 30 estimation, April–March availability, and rolling ten-year training windows; physical p. 9 Table 1 Panel A, horizon t+1, annual coefficient fit.",
+        "work/submission.json, accepted sample rolling_fit_panel and fit hvz_forecast / hvz_forecast_t_1 mapped to cell hvzfit01; work/design.md §§Target and source evidence, Data and timing, Extended replay.",
+        "work/build.sas lines 7–20, 56–103, and 230–237: accepted descriptors, actual-date cutoffs through 31MAR2017, currency joins, and one-row-per-GVKEY×AVYEAR handoff.",
+        "work/stata.ipynb cell hvzfit01: 1969–2017 fit clock, unchanged horizon-specific ten-year windows, native e(sample) count, rank check, and computed EXT_SAMPLE s1 marker.",
+        "work/source_coverage.json: exact local source paths, vintages, checksums, bounded date/rate coverage, and current pooled handoff summary.",
+        "work/runtime/20261118T080553941811Z/build.lst pages 1–2 and 17–18: source endpoints, duplicate resolution counts, extended handoff period, and zero handoff-key duplicates.",
+        "work/runtime/20261118T080553941811Z/cell_hvzfit01.log: current full-rank fit status, s1 EXT_SAMPLE marker, and native-regress/asreg endpoint checks.",
+        "output/reproductions/packages/W3121345849/attempt_02/tables/hvz_forecast_forecast.csv: saved accepted 1969–2012 aggregate coefficient output for the like-for-like comparison."
+      ],
+      "original_begin": "1969",
+      "original_end": "2012",
+      "requested_end": "2017",
+      "supported_end": "2017",
+      "last_added": "2017",
+      "count_unit": "Firm-year rows in the actual native OLS e(sample), summed over full-rank annual fit-year regressions; overlapping ten-year windows count a GVKEY×AVYEAR again when it contributes to another annual fit.",
+      "original_n": 2663307,
+      "added_n": 407690,
+      "artifacts": [
+        "results/artifacts/s1.csv"
+      ],
+      "comparison": "Table 1 Panel A published E slope=0.8715; accepted attempt_02 saved E slope=0.9079; fresh pooled 1969–2017 E slope=0.900 (USD millions). The additional focal term AC is published -0.0405, attempt_02 -0.0585, and extended -0.066. Saved estimate: output/reproductions/packages/W3121345849/attempt_02/tables/hvz_forecast_forecast.csv; fresh aggregate: work/artifacts/s1.csv and work/tables/hvz_forecast_forecast.csv; published estimate: paper p. 9 Table 1.",
+      "native_evidence": {
+        "path": "urn:sha256:b8ebe12d49b3d5d5e49e5d34d0af2e2a15dc97a02a05b20ec34fd3a91fc61d80",
+        "sha256": "b8ebe12d49b3d5d5e49e5d34d0af2e2a15dc97a02a05b20ec34fd3a91fc61d80",
+        "marker": "EXT_SAMPLE s1 2663307 407690 2017"
+      }
+    },
+    {
+      "scope_id": "hvz_forecast / hvz_forecast_t_2",
+      "key": "s2",
+      "label": "Table 1 Panel A: HVZ annual rolling OLS, horizon t+2",
+      "sample_ids": [
+        "compustat_forecast_eval"
+      ],
+      "status": "extended_full",
+      "reason": "Extended full: the accepted Table 1 HVZ Panel A horizon t+2 rolling OLS fit was rebuilt jointly for estimation years 1969–2017 from the current local Compustat sources. The added fit years 2013–2017 contribute to the annual coefficient mean; actual source coverage and all required added-period rate pairs reach the 2017 endpoint. The native full-rank screen passed for the original and all five added annual fits.",
+      "source_evidence": [
+        "papers/pdf/W3121345849.pdf, physical p. 7 §3.2: June 30 estimation, April–March availability, and rolling ten-year training windows; physical p. 9 Table 1 Panel A, horizon t+2, annual coefficient fit.",
+        "work/submission.json, accepted sample rolling_fit_panel and fit hvz_forecast / hvz_forecast_t_2 mapped to cell hvzfit01; work/design.md §§Target and source evidence, Data and timing, Extended replay.",
+        "work/build.sas lines 7–20, 56–103, and 230–237: accepted descriptors, actual-date cutoffs through 31MAR2017, currency joins, and one-row-per-GVKEY×AVYEAR handoff.",
+        "work/stata.ipynb cell hvzfit01: 1969–2017 fit clock, unchanged horizon-specific ten-year windows, native e(sample) count, rank check, and computed EXT_SAMPLE s2 marker.",
+        "work/source_coverage.json: exact local source paths, vintages, checksums, bounded date/rate coverage, and current pooled handoff summary.",
+        "work/runtime/20261118T080553941811Z/build.lst pages 1–2 and 17–18: source endpoints, duplicate resolution counts, extended handoff period, and zero handoff-key duplicates.",
+        "work/runtime/20261118T080553941811Z/cell_hvzfit01.log: current full-rank fit status, s2 EXT_SAMPLE marker, and native-regress/asreg endpoint checks.",
+        "output/reproductions/packages/W3121345849/attempt_02/tables/hvz_forecast_forecast.csv: saved accepted 1969–2012 aggregate coefficient output for the like-for-like comparison."
+      ],
+      "original_begin": "1969",
+      "original_end": "2012",
+      "requested_end": "2017",
+      "supported_end": "2017",
+      "last_added": "2017",
+      "count_unit": "Firm-year rows in the actual native OLS e(sample), summed over full-rank annual fit-year regressions; overlapping ten-year windows count a GVKEY×AVYEAR again when it contributes to another annual fit.",
+      "original_n": 2416801,
+      "added_n": 381122,
+      "artifacts": [
+        "results/artifacts/s2.csv"
+      ],
+      "comparison": "Table 1 Panel A published E slope=0.8365; accepted attempt_02 saved E slope=0.8496; fresh pooled 1969–2017 E slope=0.838 (USD millions). The additional focal term AC is published -0.0549, attempt_02 -0.0857, and extended -0.099. Saved estimate: output/reproductions/packages/W3121345849/attempt_02/tables/hvz_forecast_forecast.csv; fresh aggregate: work/artifacts/s2.csv and work/tables/hvz_forecast_forecast.csv; published estimate: paper p. 9 Table 1.",
+      "native_evidence": {
+        "path": "urn:sha256:b8ebe12d49b3d5d5e49e5d34d0af2e2a15dc97a02a05b20ec34fd3a91fc61d80",
+        "sha256": "b8ebe12d49b3d5d5e49e5d34d0af2e2a15dc97a02a05b20ec34fd3a91fc61d80",
+        "marker": "EXT_SAMPLE s2 2416801 381122 2017"
+      }
+    },
+    {
+      "scope_id": "hvz_forecast / hvz_forecast_t_3",
+      "key": "s3",
+      "label": "Table 1 Panel A: HVZ annual rolling OLS, horizon t+3",
+      "sample_ids": [
+        "compustat_forecast_eval"
+      ],
+      "status": "extended_full",
+      "reason": "Extended full: the accepted Table 1 HVZ Panel A horizon t+3 rolling OLS fit was rebuilt jointly for estimation years 1969–2017 from the current local Compustat sources. The added fit years 2013–2017 contribute to the annual coefficient mean; actual source coverage and all required added-period rate pairs reach the 2017 endpoint. The native full-rank screen passed for the original and all five added annual fits.",
+      "source_evidence": [
+        "papers/pdf/W3121345849.pdf, physical p. 7 §3.2: June 30 estimation, April–March availability, and rolling ten-year training windows; physical p. 9 Table 1 Panel A, horizon t+3, annual coefficient fit.",
+        "work/submission.json, accepted sample rolling_fit_panel and fit hvz_forecast / hvz_forecast_t_3 mapped to cell hvzfit01; work/design.md §§Target and source evidence, Data and timing, Extended replay.",
+        "work/build.sas lines 7–20, 56–103, and 230–237: accepted descriptors, actual-date cutoffs through 31MAR2017, currency joins, and one-row-per-GVKEY×AVYEAR handoff.",
+        "work/stata.ipynb cell hvzfit01: 1969–2017 fit clock, unchanged horizon-specific ten-year windows, native e(sample) count, rank check, and computed EXT_SAMPLE s3 marker.",
+        "work/source_coverage.json: exact local source paths, vintages, checksums, bounded date/rate coverage, and current pooled handoff summary.",
+        "work/runtime/20261118T080553941811Z/build.lst pages 1–2 and 17–18: source endpoints, duplicate resolution counts, extended handoff period, and zero handoff-key duplicates.",
+        "work/runtime/20261118T080553941811Z/cell_hvzfit01.log: current full-rank fit status, s3 EXT_SAMPLE marker, and native-regress/asreg endpoint checks.",
+        "output/reproductions/packages/W3121345849/attempt_02/tables/hvz_forecast_forecast.csv: saved accepted 1969–2012 aggregate coefficient output for the like-for-like comparison."
+      ],
+      "original_begin": "1969",
+      "original_end": "2012",
+      "requested_end": "2017",
+      "supported_end": "2017",
+      "last_added": "2017",
+      "count_unit": "Firm-year rows in the actual native OLS e(sample), summed over full-rank annual fit-year regressions; overlapping ten-year windows count a GVKEY×AVYEAR again when it contributes to another annual fit.",
+      "original_n": 2190466,
+      "added_n": 357164,
+      "artifacts": [
+        "results/artifacts/s3.csv"
+      ],
+      "comparison": "Table 1 Panel A published E slope=0.8378; accepted attempt_02 saved E slope=0.8358; fresh pooled 1969–2017 E slope=0.825 (USD millions). The additional focal term AC is published -0.0585, attempt_02 -0.0853, and extended -0.102. Saved estimate: output/reproductions/packages/W3121345849/attempt_02/tables/hvz_forecast_forecast.csv; fresh aggregate: work/artifacts/s3.csv and work/tables/hvz_forecast_forecast.csv; published estimate: paper p. 9 Table 1.",
+      "native_evidence": {
+        "path": "urn:sha256:b8ebe12d49b3d5d5e49e5d34d0af2e2a15dc97a02a05b20ec34fd3a91fc61d80",
+        "sha256": "b8ebe12d49b3d5d5e49e5d34d0af2e2a15dc97a02a05b20ec34fd3a91fc61d80",
+        "marker": "EXT_SAMPLE s3 2190466 357164 2017"
+      }
+    },
+    {
+      "scope_id": "ep_forecast / ep_forecast_t_1",
+      "key": "s4",
+      "label": "Table 1 Panel B: EP annual rolling OLS, horizon t+1",
+      "sample_ids": [
+        "compustat_forecast_eval"
+      ],
+      "status": "extended_full",
+      "reason": "Extended full: the accepted Table 1 EP Panel B horizon t+1 rolling OLS fit was rebuilt jointly for estimation years 1969–2017 from the current local Compustat sources. The added fit years 2013–2017 contribute to the annual coefficient mean; actual source coverage and all required added-period rate pairs reach the 2017 endpoint. The native full-rank screen passed for the original and all five added annual fits.",
+      "source_evidence": [
+        "papers/pdf/W3121345849.pdf, physical p. 7 §3.2: June 30 estimation, April–March availability, and rolling ten-year training windows; physical p. 9 Table 1 Panel B, horizon t+1, annual coefficient fit.",
+        "work/submission.json, accepted sample rolling_fit_panel and fit ep_forecast / ep_forecast_t_1 mapped to cell epfit01; work/design.md §§Target and source evidence, Data and timing, Extended replay.",
+        "work/build.sas lines 7–20, 56–103, and 230–237: accepted descriptors, actual-date cutoffs through 31MAR2017, currency joins, and one-row-per-GVKEY×AVYEAR handoff.",
+        "work/stata.ipynb cell epfit01: 1969–2017 fit clock, unchanged horizon-specific ten-year windows, native e(sample) count, rank check, and computed EXT_SAMPLE s4 marker.",
+        "work/source_coverage.json: exact local source paths, vintages, checksums, bounded date/rate coverage, and current pooled handoff summary.",
+        "work/runtime/20261118T080553941811Z/build.lst pages 1–2 and 17–18: source endpoints, duplicate resolution counts, extended handoff period, and zero handoff-key duplicates.",
+        "work/runtime/20261118T080553941811Z/cell_epfit01.log: current full-rank fit status, s4 EXT_SAMPLE marker, and native-regress/asreg endpoint checks.",
+        "output/reproductions/packages/W3121345849/attempt_02/tables/ep_forecast_forecast.csv: saved accepted 1969–2012 aggregate coefficient output for the like-for-like comparison."
+      ],
+      "original_begin": "1969",
+      "original_end": "2012",
+      "requested_end": "2017",
+      "supported_end": "2017",
+      "last_added": "2017",
+      "count_unit": "Firm-year rows in the actual native OLS e(sample), summed over full-rank annual fit-year regressions; overlapping ten-year windows count a GVKEY×AVYEAR again when it contributes to another annual fit.",
+      "original_n": 2635555,
+      "added_n": 401809,
+      "artifacts": [
+        "results/artifacts/s4.csv"
+      ],
+      "comparison": "Table 1 Panel B published E slope=0.9614; accepted attempt_02 saved E slope=0.8658; fresh pooled 1969–2017 E slope=0.851 (USD per share). The additional focal term NegE×E is published -0.7096, attempt_02 -2.7905, and extended -2.681. Saved estimate: output/reproductions/packages/W3121345849/attempt_02/tables/ep_forecast_forecast.csv; fresh aggregate: work/artifacts/s4.csv and work/tables/ep_forecast_forecast.csv; published estimate: paper p. 9 Table 1.",
+      "native_evidence": {
+        "path": "urn:sha256:900a9b69cd8375a5e2b99dd17b401caac67743f06bab5ab1d2ac8a4872cc89e6",
+        "sha256": "900a9b69cd8375a5e2b99dd17b401caac67743f06bab5ab1d2ac8a4872cc89e6",
+        "marker": "EXT_SAMPLE s4 2635555 401809 2017"
+      }
+    },
+    {
+      "scope_id": "ep_forecast / ep_forecast_t_2",
+      "key": "s5",
+      "label": "Table 1 Panel B: EP annual rolling OLS, horizon t+2",
+      "sample_ids": [
+        "compustat_forecast_eval"
+      ],
+      "status": "extended_full",
+      "reason": "Extended full: the accepted Table 1 EP Panel B horizon t+2 rolling OLS fit was rebuilt jointly for estimation years 1969–2017 from the current local Compustat sources. The added fit years 2013–2017 contribute to the annual coefficient mean; actual source coverage and all required added-period rate pairs reach the 2017 endpoint. The native full-rank screen passed for the original and all five added annual fits.",
+      "source_evidence": [
+        "papers/pdf/W3121345849.pdf, physical p. 7 §3.2: June 30 estimation, April–March availability, and rolling ten-year training windows; physical p. 9 Table 1 Panel B, horizon t+2, annual coefficient fit.",
+        "work/submission.json, accepted sample rolling_fit_panel and fit ep_forecast / ep_forecast_t_2 mapped to cell epfit01; work/design.md §§Target and source evidence, Data and timing, Extended replay.",
+        "work/build.sas lines 7–20, 56–103, and 230–237: accepted descriptors, actual-date cutoffs through 31MAR2017, currency joins, and one-row-per-GVKEY×AVYEAR handoff.",
+        "work/stata.ipynb cell epfit01: 1969–2017 fit clock, unchanged horizon-specific ten-year windows, native e(sample) count, rank check, and computed EXT_SAMPLE s5 marker.",
+        "work/source_coverage.json: exact local source paths, vintages, checksums, bounded date/rate coverage, and current pooled handoff summary.",
+        "work/runtime/20261118T080553941811Z/build.lst pages 1–2 and 17–18: source endpoints, duplicate resolution counts, extended handoff period, and zero handoff-key duplicates.",
+        "work/runtime/20261118T080553941811Z/cell_epfit01.log: current full-rank fit status, s5 EXT_SAMPLE marker, and native-regress/asreg endpoint checks.",
+        "output/reproductions/packages/W3121345849/attempt_02/tables/ep_forecast_forecast.csv: saved accepted 1969–2012 aggregate coefficient output for the like-for-like comparison."
+      ],
+      "original_begin": "1969",
+      "original_end": "2012",
+      "requested_end": "2017",
+      "supported_end": "2017",
+      "last_added": "2017",
+      "count_unit": "Firm-year rows in the actual native OLS e(sample), summed over full-rank annual fit-year regressions; overlapping ten-year windows count a GVKEY×AVYEAR again when it contributes to another annual fit.",
+      "original_n": 2390902,
+      "added_n": 374313,
+      "artifacts": [
+        "results/artifacts/s5.csv"
+      ],
+      "comparison": "Table 1 Panel B published E slope=0.9846; accepted attempt_02 saved E slope=0.8444; fresh pooled 1969–2017 E slope=0.829 (USD per share). The additional focal term NegE×E is published -1.1451, attempt_02 -3.6720, and extended -3.558. Saved estimate: output/reproductions/packages/W3121345849/attempt_02/tables/ep_forecast_forecast.csv; fresh aggregate: work/artifacts/s5.csv and work/tables/ep_forecast_forecast.csv; published estimate: paper p. 9 Table 1.",
+      "native_evidence": {
+        "path": "urn:sha256:900a9b69cd8375a5e2b99dd17b401caac67743f06bab5ab1d2ac8a4872cc89e6",
+        "sha256": "900a9b69cd8375a5e2b99dd17b401caac67743f06bab5ab1d2ac8a4872cc89e6",
+        "marker": "EXT_SAMPLE s5 2390902 374313 2017"
+      }
+    },
+    {
+      "scope_id": "ep_forecast / ep_forecast_t_3",
+      "key": "s6",
+      "label": "Table 1 Panel B: EP annual rolling OLS, horizon t+3",
+      "sample_ids": [
+        "compustat_forecast_eval"
+      ],
+      "status": "extended_full",
+      "reason": "Extended full: the accepted Table 1 EP Panel B horizon t+3 rolling OLS fit was rebuilt jointly for estimation years 1969–2017 from the current local Compustat sources. The added fit years 2013–2017 contribute to the annual coefficient mean; actual source coverage and all required added-period rate pairs reach the 2017 endpoint. The native full-rank screen passed for the original and all five added annual fits.",
+      "source_evidence": [
+        "papers/pdf/W3121345849.pdf, physical p. 7 §3.2: June 30 estimation, April–March availability, and rolling ten-year training windows; physical p. 9 Table 1 Panel B, horizon t+3, annual coefficient fit.",
+        "work/submission.json, accepted sample rolling_fit_panel and fit ep_forecast / ep_forecast_t_3 mapped to cell epfit01; work/design.md §§Target and source evidence, Data and timing, Extended replay.",
+        "work/build.sas lines 7–20, 56–103, and 230–237: accepted descriptors, actual-date cutoffs through 31MAR2017, currency joins, and one-row-per-GVKEY×AVYEAR handoff.",
+        "work/stata.ipynb cell epfit01: 1969–2017 fit clock, unchanged horizon-specific ten-year windows, native e(sample) count, rank check, and computed EXT_SAMPLE s6 marker.",
+        "work/source_coverage.json: exact local source paths, vintages, checksums, bounded date/rate coverage, and current pooled handoff summary.",
+        "work/runtime/20261118T080553941811Z/build.lst pages 1–2 and 17–18: source endpoints, duplicate resolution counts, extended handoff period, and zero handoff-key duplicates.",
+        "work/runtime/20261118T080553941811Z/cell_epfit01.log: current full-rank fit status, s6 EXT_SAMPLE marker, and native-regress/asreg endpoint checks.",
+        "output/reproductions/packages/W3121345849/attempt_02/tables/ep_forecast_forecast.csv: saved accepted 1969–2012 aggregate coefficient output for the like-for-like comparison."
+      ],
+      "original_begin": "1969",
+      "original_end": "2012",
+      "requested_end": "2017",
+      "supported_end": "2017",
+      "last_added": "2017",
+      "count_unit": "Firm-year rows in the actual native OLS e(sample), summed over full-rank annual fit-year regressions; overlapping ten-year windows count a GVKEY×AVYEAR again when it contributes to another annual fit.",
+      "original_n": 2168280,
+      "added_n": 350906,
+      "artifacts": [
+        "results/artifacts/s6.csv"
+      ],
+      "comparison": "Table 1 Panel B published E slope=0.9992; accepted attempt_02 saved E slope=0.8559; fresh pooled 1969–2017 E slope=0.828 (USD per share). The additional focal term NegE×E is published -1.4155, attempt_02 -3.9841, and extended -3.900. Saved estimate: output/reproductions/packages/W3121345849/attempt_02/tables/ep_forecast_forecast.csv; fresh aggregate: work/artifacts/s6.csv and work/tables/ep_forecast_forecast.csv; published estimate: paper p. 9 Table 1.",
+      "native_evidence": {
+        "path": "urn:sha256:900a9b69cd8375a5e2b99dd17b401caac67743f06bab5ab1d2ac8a4872cc89e6",
+        "sha256": "900a9b69cd8375a5e2b99dd17b401caac67743f06bab5ab1d2ac8a4872cc89e6",
+        "marker": "EXT_SAMPLE s6 2168280 350906 2017"
+      }
+    },
+    {
+      "scope_id": "ri_forecast / ri_forecast_t_1",
+      "key": "s7",
+      "label": "Table 1 Panel C: RI annual rolling OLS, horizon t+1",
+      "sample_ids": [
+        "compustat_forecast_eval"
+      ],
+      "status": "extended_full",
+      "reason": "Extended full: the accepted Table 1 RI Panel C horizon t+1 rolling OLS fit was rebuilt jointly for estimation years 1969–2017 from the current local Compustat sources. The added fit years 2013–2017 contribute to the annual coefficient mean; actual source coverage and all required added-period rate pairs reach the 2017 endpoint. The native full-rank screen passed for the original and all five added annual fits.",
+      "source_evidence": [
+        "papers/pdf/W3121345849.pdf, physical p. 7 §3.2: June 30 estimation, April–March availability, and rolling ten-year training windows; physical p. 9 Table 1 Panel C, horizon t+1, annual coefficient fit.",
+        "work/submission.json, accepted sample rolling_fit_panel and fit ri_forecast / ri_forecast_t_1 mapped to cell rifit01; work/design.md §§Target and source evidence, Data and timing, Extended replay.",
+        "work/build.sas lines 7–20, 56–103, and 230–237: accepted descriptors, actual-date cutoffs through 31MAR2017, currency joins, and one-row-per-GVKEY×AVYEAR handoff.",
+        "work/stata.ipynb cell rifit01: 1969–2017 fit clock, unchanged horizon-specific ten-year windows, native e(sample) count, rank check, and computed EXT_SAMPLE s7 marker.",
+        "work/source_coverage.json: exact local source paths, vintages, checksums, bounded date/rate coverage, and current pooled handoff summary.",
+        "work/runtime/20261118T080553941811Z/build.lst pages 1–2 and 17–18: source endpoints, duplicate resolution counts, extended handoff period, and zero handoff-key duplicates.",
+        "work/runtime/20261118T080553941811Z/cell_rifit01.log: current full-rank fit status, s7 EXT_SAMPLE marker, and native-regress/asreg endpoint checks.",
+        "output/reproductions/packages/W3121345849/attempt_02/tables/ri_forecast_forecast.csv: saved accepted 1969–2012 aggregate coefficient output for the like-for-like comparison."
+      ],
+      "original_begin": "1969",
+      "original_end": "2012",
+      "requested_end": "2017",
+      "supported_end": "2017",
+      "last_added": "2017",
+      "count_unit": "Firm-year rows in the actual native OLS e(sample), summed over full-rank annual fit-year regressions; overlapping ten-year windows count a GVKEY×AVYEAR again when it contributes to another annual fit.",
+      "original_n": 2586231,
+      "added_n": 401073,
+      "artifacts": [
+        "results/artifacts/s7.csv"
+      ],
+      "comparison": "Table 1 Panel C published E slope=0.8649; accepted attempt_02 saved E slope=0.6161; fresh pooled 1969–2017 E slope=0.587 (USD per share). The additional focal term TACC is published -0.0034, attempt_02 0.1766, and extended 0.178. Saved estimate: output/reproductions/packages/W3121345849/attempt_02/tables/ri_forecast_forecast.csv; fresh aggregate: work/artifacts/s7.csv and work/tables/ri_forecast_forecast.csv; published estimate: paper p. 9 Table 1.",
+      "native_evidence": {
+        "path": "urn:sha256:06895f0c60cfb2a0d60c93c39d89727de7a42270a5275cb448dcce071648cdbb",
+        "sha256": "06895f0c60cfb2a0d60c93c39d89727de7a42270a5275cb448dcce071648cdbb",
+        "marker": "EXT_SAMPLE s7 2586231 401073 2017"
+      }
+    },
+    {
+      "scope_id": "ri_forecast / ri_forecast_t_2",
+      "key": "s8",
+      "label": "Table 1 Panel C: RI annual rolling OLS, horizon t+2",
+      "sample_ids": [
+        "compustat_forecast_eval"
+      ],
+      "status": "extended_full",
+      "reason": "Extended full: the accepted Table 1 RI Panel C horizon t+2 rolling OLS fit was rebuilt jointly for estimation years 1969–2017 from the current local Compustat sources. The added fit years 2013–2017 contribute to the annual coefficient mean; actual source coverage and all required added-period rate pairs reach the 2017 endpoint. The native full-rank screen passed for the original and all five added annual fits.",
+      "source_evidence": [
+        "papers/pdf/W3121345849.pdf, physical p. 7 §3.2: June 30 estimation, April–March availability, and rolling ten-year training windows; physical p. 9 Table 1 Panel C, horizon t+2, annual coefficient fit.",
+        "work/submission.json, accepted sample rolling_fit_panel and fit ri_forecast / ri_forecast_t_2 mapped to cell rifit01; work/design.md §§Target and source evidence, Data and timing, Extended replay.",
+        "work/build.sas lines 7–20, 56–103, and 230–237: accepted descriptors, actual-date cutoffs through 31MAR2017, currency joins, and one-row-per-GVKEY×AVYEAR handoff.",
+        "work/stata.ipynb cell rifit01: 1969–2017 fit clock, unchanged horizon-specific ten-year windows, native e(sample) count, rank check, and computed EXT_SAMPLE s8 marker.",
+        "work/source_coverage.json: exact local source paths, vintages, checksums, bounded date/rate coverage, and current pooled handoff summary.",
+        "work/runtime/20261118T080553941811Z/build.lst pages 1–2 and 17–18: source endpoints, duplicate resolution counts, extended handoff period, and zero handoff-key duplicates.",
+        "work/runtime/20261118T080553941811Z/cell_rifit01.log: current full-rank fit status, s8 EXT_SAMPLE marker, and native-regress/asreg endpoint checks.",
+        "output/reproductions/packages/W3121345849/attempt_02/tables/ri_forecast_forecast.csv: saved accepted 1969–2012 aggregate coefficient output for the like-for-like comparison."
+      ],
+      "original_begin": "1969",
+      "original_end": "2012",
+      "requested_end": "2017",
+      "supported_end": "2017",
+      "last_added": "2017",
+      "count_unit": "Firm-year rows in the actual native OLS e(sample), summed over full-rank annual fit-year regressions; overlapping ten-year windows count a GVKEY×AVYEAR again when it contributes to another annual fit.",
+      "original_n": 2334730,
+      "added_n": 373619,
+      "artifacts": [
+        "results/artifacts/s8.csv"
+      ],
+      "comparison": "Table 1 Panel C published E slope=0.8280; accepted attempt_02 saved E slope=0.5711; fresh pooled 1969–2017 E slope=0.543 (USD per share; extended TACC p=0.698). The additional focal term TACC is published -0.0217, attempt_02 0.0573, and extended 0.055. Saved estimate: output/reproductions/packages/W3121345849/attempt_02/tables/ri_forecast_forecast.csv; fresh aggregate: work/artifacts/s8.csv and work/tables/ri_forecast_forecast.csv; published estimate: paper p. 9 Table 1. The extended TACC mean is not significant (two-sided p=0.698).",
+      "native_evidence": {
+        "path": "urn:sha256:06895f0c60cfb2a0d60c93c39d89727de7a42270a5275cb448dcce071648cdbb",
+        "sha256": "06895f0c60cfb2a0d60c93c39d89727de7a42270a5275cb448dcce071648cdbb",
+        "marker": "EXT_SAMPLE s8 2334730 373619 2017"
+      }
+    },
+    {
+      "scope_id": "ri_forecast / ri_forecast_t_3",
+      "key": "s9",
+      "label": "Table 1 Panel C: RI annual rolling OLS, horizon t+3",
+      "sample_ids": [
+        "compustat_forecast_eval"
+      ],
+      "status": "extended_full",
+      "reason": "Extended full: the accepted Table 1 RI Panel C horizon t+3 rolling OLS fit was rebuilt jointly for estimation years 1969–2017 from the current local Compustat sources. The added fit years 2013–2017 contribute to the annual coefficient mean; actual source coverage and all required added-period rate pairs reach the 2017 endpoint. The original T=1969 RI horizon-3 fit remains rank deficient because TACC is constant zero under the inherited missing-to-zero rule, so the pooled table has 48 qualifying annual fits (43 original-period and all five added-period fits).",
+      "source_evidence": [
+        "papers/pdf/W3121345849.pdf, physical p. 7 §3.2: June 30 estimation, April–March availability, and rolling ten-year training windows; physical p. 9 Table 1 Panel C, horizon t+3, annual coefficient fit.",
+        "work/submission.json, accepted sample rolling_fit_panel and fit ri_forecast / ri_forecast_t_3 mapped to cell rifit01; work/design.md §§Target and source evidence, Data and timing, Extended replay.",
+        "work/build.sas lines 7–20, 56–103, and 230–237: accepted descriptors, actual-date cutoffs through 31MAR2017, currency joins, and one-row-per-GVKEY×AVYEAR handoff.",
+        "work/stata.ipynb cell rifit01: 1969–2017 fit clock, unchanged horizon-specific ten-year windows, native e(sample) count, rank check, and computed EXT_SAMPLE s9 marker.",
+        "work/source_coverage.json: exact local source paths, vintages, checksums, bounded date/rate coverage, and current pooled handoff summary.",
+        "work/runtime/20261118T080553941811Z/build.lst pages 1–2 and 17–18: source endpoints, duplicate resolution counts, extended handoff period, and zero handoff-key duplicates.",
+        "work/runtime/20261118T080553941811Z/cell_rifit01.log: current full-rank fit status, s9 EXT_SAMPLE marker, and native-regress/asreg endpoint checks.",
+        "output/reproductions/packages/W3121345849/attempt_02/tables/ri_forecast_forecast.csv: saved accepted 1969–2012 aggregate coefficient output for the like-for-like comparison."
+      ],
+      "original_begin": "1969",
+      "original_end": "2012",
+      "requested_end": "2017",
+      "supported_end": "2017",
+      "last_added": "2017",
+      "count_unit": "Firm-year rows in the actual native OLS e(sample), summed over full-rank annual fit-year regressions; overlapping ten-year windows count a GVKEY×AVYEAR again when it contributes to another annual fit.",
+      "original_n": 2100770,
+      "added_n": 350237,
+      "artifacts": [
+        "results/artifacts/s9.csv"
+      ],
+      "comparison": "Table 1 Panel C published E slope=0.8105; accepted attempt_02 saved E slope=0.5443; fresh pooled 1969–2017 E slope=0.499 (USD per share; extended TACC p=0.994). The additional focal term TACC is published -0.0413, attempt_02 -0.0288, and extended -0.002. Saved estimate: output/reproductions/packages/W3121345849/attempt_02/tables/ri_forecast_forecast.csv; fresh aggregate: work/artifacts/s9.csv and work/tables/ri_forecast_forecast.csv; published estimate: paper p. 9 Table 1. The extended TACC mean is not significant (two-sided p=0.994).",
+      "native_evidence": {
+        "path": "urn:sha256:06895f0c60cfb2a0d60c93c39d89727de7a42270a5275cb448dcce071648cdbb",
+        "sha256": "06895f0c60cfb2a0d60c93c39d89727de7a42270a5275cb448dcce071648cdbb",
+        "marker": "EXT_SAMPLE s9 2100770 350237 2017"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 9
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed9e-9079-7151-a92f-4d4be6c21cea",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3121345849.json",
+    "models": "output/models/records/W3121345849.json",
+    "predecessor": "output/reproductions/packages/W3121345849/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3121345849.json"
+  },
+  "input_hashes": {
+    "sample": "c18207e1cd14b8aeb7db0a198cf6618e956cadf21d7b3b86f9244ec3228c434b",
+    "models": "6ab08f41d8397ac2437be860ff8562d3f146f02740ad82ebde82555a2fd223c6",
+    "predecessor": "585bd202dbcbbdb912f87be88b5545b3c47262c3d48b97589d820ffe2841d947",
+    "feasibility": "bd4344233423af69070a2d26873f1d4d5e6afae99fda69c53e6bfe9654568c38"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:de597d3854193908d13beb5970a0b15113b1b371e0b6f23f3a03fd1ae84aa5ca",
+    "sha256": "de597d3854193908d13beb5970a0b15113b1b371e0b6f23f3a03fd1ae84aa5ca",
+    "ok": true,
+    "state_sha256": "9f23858e19d80d5b2dea16090707e164a5d13722929828f2950ffa4e1178fcc9",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "4fc40919bbfbcf866207c6782004584e0cced256925906209e0ee654b1f937fa",
+      "work/stata.ipynb": "1c44c07cc49244379681fb365108be15fa546096bd3ab54e6912cd4e0517aff7",
+      "work/submission.json": "5fc604a019e6a0a75e075b80c622f32c41995e74274ea4cda7b0222b96337576"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "45f2ab6288c6e09ca3b16d81df3f0cda0a3cf4c35d79ebe0a13a72dc683578e5",
+      "predecessor": "output/reproductions/packages/W3121345849/attempt_02/build.sas",
+      "predecessor_sha256": "4c79086ed16eb07c960ffeac072666ff98879bed32a16a8975dccce9fb13757d",
+      "executed_sha256": "4fc40919bbfbcf866207c6782004584e0cced256925906209e0ee654b1f937fa",
+      "historical_predecessor_sha256": "24c6c5b7240240737a3d469a11ff645f24b26583926f706941ef5fcf4395b686"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "fed686422b6fa6159ef382033e033044ab52c593e4a4f7cd54b3a533efabc260",
+      "predecessor": "output/reproductions/packages/W3121345849/attempt_02/stata.ipynb",
+      "predecessor_sha256": "6b54fdd198c8f66182102296d448088b079a8c6b82943b32dec5c58b30beda03",
+      "executed_sha256": "1c44c07cc49244379681fb365108be15fa546096bd3ab54e6912cd4e0517aff7",
+      "historical_predecessor_sha256": "3c23d750d6604532b5cdbaec2457872a96d39d810d8dc41e023c32611c5c4f99"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "5fc604a019e6a0a75e075b80c622f32c41995e74274ea4cda7b0222b96337576",
+      "predecessor": "output/reproductions/packages/W3121345849/attempt_02/submission.json",
+      "predecessor_sha256": "f63acc97d0a0427eb67ab6f78d1a4a877f99f48297cc409f344c975c1c4a13b2"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "069d13061ebf38f106e62648279e87caa925b048cd9c04cd43075c5656878ad3",
+    "predecessor": "ec170b3902b24a84aa5bc38ed7df95503783c59f489c65c8099cf8f345c3f2e9",
+    "feasibility": "01681b096574223788918a634d354da2e74a5af1345bf2585c0a79e6ef72e342"
+  }
+}

@@ -1,0 +1,336 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Financial Statement Comparability and the Efficiency of Acquisition Decisions",
+  "doi": "10.1111/1911-3846.12380",
+  "route": "reconstruction",
+  "paper_id": "W3125232597",
+  "years": 5,
+  "sources_checked": [
+    "SDC.WRDS_MA_DETAILS — ${ACCTREPL_SAS_ROOT}/tfn/sdc_ma/wrds_ma_details.sas7bdat; local file mtime 2025-12-04, 1,399,023 rows. DATEANN and DATEEFF each span 1965-01-01–2022-12-30; 230,167 DATEANN records lie in 2010–2014. Bounded accepted-screen probe: 574 unique completed U.S. public M/AM/AA deals with required IDs and RANKVAL≥$1m announced 2010–2014; max DATEEFF 2017-10-06 before the relative-size and later completeness screens.",
+    "COMP.FUNDA — ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; local file mtime 2026-07-22, 941,340 rows. DATADATE spans 1950-06-30–2026-06-30; accepted INDL/C/D/STD annual construction was bounded through 2020.",
+    "COMP.FUNDQ — ${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat; local file mtime 2026-07-22, 2,130,133 rows. DATADATE spans 1961-03-31–2026-06-30; accepted quarterly history was bounded through 2020.",
+    "COMP.SEC_IDHIST — ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_idhist.sas7bdat; local file mtime 2026-08-14, 861,868 rows. EFFFROM spans 1900-01-01–2028-12-15; EFFTHRU ordinary dates span 1968-01-01–2900-01-01, with the accepted open-end handling retained.",
+    "COMP.G_EXRT_DLY — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat; local file mtime 2026-08-14, 2,221,564 rows. DATADATE spans 1982-02-01–2026-07-19.",
+    "CRSP.DSF — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat; local file mtime 2025-12-06, 107,663,470 rows. DATE spans 1925-12-31–2024-12-31; 8,573,860 daily rows are dated 2010–2014.",
+    "CRSP.DSI — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat; local file mtime 2025-12-06, 26,051 rows. DATE spans 1925-12-31–2024-12-31; the daily market-index series includes 2010–2014.",
+    "CRSP.MSF — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat; local file mtime 2025-12-06, 5,153,763 rows. DATE spans 1925-12-31–2024-12-31; 413,368 monthly rows are dated 2010–2014.",
+    "CRSP.MSEDELIST — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msedelist.sas7bdat; local file mtime 2025-12-06, 38,843 rows. DLSTDT spans 1926-02-24–2024-12-31.",
+    "CRSP.STOCKNAMES — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/stocknames.sas7bdat; local file mtime 2025-12-06, 83,280 rows. NAMEDT spans 1925-12-31–2024-12-31 and NAMEENDDT spans 1926-02-24–2024-12-31.",
+    "CRSP.CCMXPF_LINKTABLE — ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat; local file mtime 2026-08-14, 92,711 rows. LINKDT spans 1946-01-01–2025-12-31; ordinary LINKENDDT spans 1950-05-30–2026-01-30; accepted special open-end treatment retained.",
+    "TFN.S34 — ${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat; current local file mtime 2026-08-15, 127,142,721 catalog rows. Native build’s accepted 1982–2014 usable-date restriction yielded 60,677,238 usable rows, RDATE/FDATE through 2014-12-31, and added-period date counts; see work/runtime/20261118T104035676182Z/build.lst, page 58."
+  ],
+  "changes": [
+    "Extended the unchanged announcement start (1983-01-01) from 2009-12-31 through 2014-12-31. The controller checked calendar-year arithmetic for the requested five-year extension.",
+    "Changed the shared supporting-source bound from 2012-12-31 to 2020-12-31. The added-period accepted SDC candidate screen has latest completion 2017-10-06, so the unchanged completion-year ΔROA construction requires post years through 2020.",
+    "Retained announcement_date and ann_year in the SAS-to-Stata handoff solely as observation-clock diagnostics; checked 5,139 rows, nonmissing values on both fields, and 5,139/5,139 agreement between the converted SAS date and ann_year. The regression right-hand sides are unchanged.",
+    "Inserted e(sample)-based original/added counts and computed last-added year into each assigned Stata fit cell. The OLS terms, robust standard errors, transformations, windows, and established construction choices were otherwise unchanged."
+  ],
+  "limitations": [
+    "The local SDC catalog includes RANKVAL (ranking value including target net debt), ENTVAL (enterprise value), and EQVAL (equity value). The paper says deal value without identifying which field definition it means; A2 uses RANKVAL as a best-effort screen choice.",
+    "The local pre-value SDC screen has 6,681 unique deals versus the paper's 6,282; 645 local deals have missing RANKVAL, and 906 otherwise eligible deals lack positive acquirer MVE before the 1% relative-size screen. The 4,697 material-deal population is 566 below the paper's implied 5,263; the local value and market-value coverage gaps remain material.",
+    "A2 reports the raw TRG_COMP ratio-scale mean and median in the design/review. Multiplying by 100 would display a different candidate convention, but the source does not identify an extra multiplier or resolve the units; the decile-rank regressor is invariant to positive rescaling.",
+    "The event control field meanings, reporting-currency conversions, company-level MVE route and price/share checks, S34 share-basis conversion, daily and quarterly window coverage, and native comparability-regression rank were checked in the final SAS log/listing. Daily SYNC windows range down to 3 observations because the paper gives no minimum.",
+    "The three fitted Ns differ slightly from the published Ns. Table 3 uses one-sided inference for target comparability; reported Stata p-values follow the strict template's two-sided convention.",
+    "The paper describes returns during quarter t without naming fiscal or calendar boundaries. A2 interprets t as the Compustat fiscal quarter, using CRSP monthly total returns ending in the DATADATE month and the preceding two months; calendar returns remain for common-period stock correlation. A2 retains the latest dated row at or before the anchor once per fiscal-quarter key/window and preserves the 16-quarter/minimum-14 rule.",
+    "Pooled estimation recomputes the accepted construction’s sample-dependent target-comparability decile ranks and below-median acquirer-Q cutoff on the expanded eligible population. The original-only and pooled focal estimates therefore differ in part because these accepted cutoffs change, not only because later deals were added."
+  ],
+  "analyses": [
+    {
+      "scope_id": "table3_acq_car / table3_acq_car_main",
+      "key": "s1",
+      "label": "Table 3 full-control OLS: ACQ_CAR",
+      "sample_ids": [
+        "us_acquisitions_1307"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh pooled rerun of the accepted Table 3 full-control OLS on the merger-deal sample. The native e(sample) contains 1334 original-period observations and 183 added-period observations, with 2014 as the last contributing announcement year. Current local dated inputs cover the requested endpoint and the ΔROA post-completion horizon through 2020.",
+      "source_evidence": [
+        "output/samples/records/W3125232597.json, sample record us_acquisitions_1307: deal-level completed U.S. public-target acquisitions, announcement dates 1983-01-01 through 2009-12-31, p. 21.",
+        "output/models/records/W3125232597.json, model_id table3_acq_car: ACQ_CAR; definition and event window in model record pp. 16, 46; Equation (5), p. 18.",
+        "output/reproductions/packages/W3125232597/attempt_02/build.sas, accepted lines 13-16 and 68-90 (sample date clock and event screen); output/reproductions/packages/W3125232597/attempt_02/stata.ipynb, assigned Table 3 fit cell (original full-control OLS and robust SE).",
+        "output/reproductions/packages/W3125232597/attempt_02/design.md, “Variables and windows” and “Sample and inference” (full-control deal-level OLS; accepted outcome construction and limitations).",
+        "work/runtime/20261118T104035676182Z/cell_table3_acq_car.log, computed EXT_SAMPLE marker; work/tables/table3_acq_car.csv, fresh pooled aggregate regression output."
+      ],
+      "original_begin": "1983-01-01",
+      "original_end": "2009-12-31",
+      "requested_end": "2014-12-31",
+      "supported_end": "2014-12-31",
+      "last_added": "2014",
+      "count_unit": "Deal-level complete-case observation in the corresponding full-control OLS e(sample).",
+      "original_n": 1334,
+      "added_n": 183,
+      "artifacts": [
+        "results/tables/table3_acq_car.csv"
+      ],
+      "comparison": {
+        "focal_predictor": "TRG_COMPRNK: target comparability decile rank divided by nine (unitless 0–1 scale).",
+        "coefficient_unit": "ACQ_CAR three-day abnormal-return fraction per one-unit increase in TRG_COMPRNK.",
+        "saved_original": {
+          "estimate": -0.0046733,
+          "robust_se": 0.0093283,
+          "two_sided_p": 0.616,
+          "n": 1334,
+          "location": "output/reproductions/packages/W3125232597/attempt_02/runtime/20261103T034107834265Z/cell_table3_acq_car.log"
+        },
+        "pooled_extended": {
+          "estimate": -0.0049202,
+          "robust_se": 0.0090697,
+          "two_sided_p": 0.588,
+          "n": 1517,
+          "location": "work/runtime/20261118T104035676182Z/cell_table3_acq_car.log"
+        },
+        "note": "The saved A2 coefficient is from the original-only run. The pooled replay follows the accepted construction, which re-ranks valid target comparability scores and recomputes the below-median acquirer-Q indicator on the pooled eligible population; changes therefore include those sample-dependent cutoffs."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:2f34a9cb35b20a76400b9a766ea48bd0f75ee6d16a3b2653b40c22d60af702ee",
+        "sha256": "2f34a9cb35b20a76400b9a766ea48bd0f75ee6d16a3b2653b40c22d60af702ee",
+        "marker": "EXT_SAMPLE s1 1334 183 2014"
+      }
+    },
+    {
+      "scope_id": "table3_synergy / table3_synergy_main",
+      "key": "s2",
+      "label": "Table 3 full-control OLS: SYNERGY",
+      "sample_ids": [
+        "us_acquisitions_1307"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh pooled rerun of the accepted Table 3 full-control OLS on the merger-deal sample. The native e(sample) contains 1332 original-period observations and 183 added-period observations, with 2014 as the last contributing announcement year. Current local dated inputs cover the requested endpoint and the ΔROA post-completion horizon through 2020.",
+      "source_evidence": [
+        "output/samples/records/W3125232597.json, sample record us_acquisitions_1307: deal-level completed U.S. public-target acquisitions, announcement dates 1983-01-01 through 2009-12-31, p. 21.",
+        "output/models/records/W3125232597.json, model_id table3_synergy: SYNERGY; definition and event window in model record pp. 17, 46; Equation (5), p. 18.",
+        "output/reproductions/packages/W3125232597/attempt_02/build.sas, accepted lines 13-16 and 68-90 (sample date clock and event screen); output/reproductions/packages/W3125232597/attempt_02/stata.ipynb, assigned Table 3 fit cell (original full-control OLS and robust SE).",
+        "output/reproductions/packages/W3125232597/attempt_02/design.md, “Variables and windows” and “Sample and inference” (full-control deal-level OLS; accepted outcome construction and limitations).",
+        "work/runtime/20261118T104035676182Z/cell_table3_synergy.log, computed EXT_SAMPLE marker; work/tables/table3_synergy.csv, fresh pooled aggregate regression output."
+      ],
+      "original_begin": "1983-01-01",
+      "original_end": "2009-12-31",
+      "requested_end": "2014-12-31",
+      "supported_end": "2014-12-31",
+      "last_added": "2014",
+      "count_unit": "Deal-level complete-case observation in the corresponding full-control OLS e(sample).",
+      "original_n": 1332,
+      "added_n": 183,
+      "artifacts": [
+        "results/tables/table3_synergy.csv"
+      ],
+      "comparison": {
+        "focal_predictor": "TRG_COMPRNK: target comparability decile rank divided by nine (unitless 0–1 scale).",
+        "coefficient_unit": "SYNERGY weighted CAR fraction per one-unit increase in TRG_COMPRNK.",
+        "saved_original": {
+          "estimate": 0.0028434,
+          "robust_se": 0.0090316,
+          "two_sided_p": 0.753,
+          "n": 1332,
+          "location": "output/reproductions/packages/W3125232597/attempt_02/runtime/20261103T034107834265Z/cell_table3_synergy.log"
+        },
+        "pooled_extended": {
+          "estimate": -0.000822,
+          "robust_se": 0.0086987,
+          "two_sided_p": 0.925,
+          "n": 1515,
+          "location": "work/runtime/20261118T104035676182Z/cell_table3_synergy.log"
+        },
+        "note": "The saved A2 coefficient is from the original-only run. The pooled replay follows the accepted construction, which re-ranks valid target comparability scores and recomputes the below-median acquirer-Q indicator on the pooled eligible population; changes therefore include those sample-dependent cutoffs."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:02b342aad136f36f27be1214284acd1d9180a593b6204888fef8e9542248c754",
+        "sha256": "02b342aad136f36f27be1214284acd1d9180a593b6204888fef8e9542248c754",
+        "marker": "EXT_SAMPLE s2 1332 183 2014"
+      }
+    },
+    {
+      "scope_id": "table3_delta_roa / table3_delta_roa_main",
+      "key": "s3",
+      "label": "Table 3 full-control OLS: ΔROA",
+      "sample_ids": [
+        "us_acquisitions_1307"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh pooled rerun of the accepted Table 3 full-control OLS on the merger-deal sample. The native e(sample) contains 1058 original-period observations and 153 added-period observations, with 2014 as the last contributing announcement year. Current local dated inputs cover the requested endpoint and the ΔROA post-completion horizon through 2020.",
+      "source_evidence": [
+        "output/samples/records/W3125232597.json, sample record us_acquisitions_1307: deal-level completed U.S. public-target acquisitions, announcement dates 1983-01-01 through 2009-12-31, p. 21.",
+        "output/models/records/W3125232597.json, model_id table3_delta_roa: ΔROA; completion-year outcome definition in model record pp. 17, 46; Equation (5), p. 18.",
+        "output/reproductions/packages/W3125232597/attempt_02/build.sas, accepted lines 13-16 and 68-90 (sample date clock and event screen); output/reproductions/packages/W3125232597/attempt_02/stata.ipynb, assigned Table 3 fit cell (original full-control OLS and robust SE).",
+        "output/reproductions/packages/W3125232597/attempt_02/design.md, “Variables and windows” and “Sample and inference” (full-control deal-level OLS; accepted outcome construction and limitations).",
+        "work/runtime/20261118T104035676182Z/cell_table3_delta_roa.log, computed EXT_SAMPLE marker; work/tables/table3_delta_roa.csv, fresh pooled aggregate regression output."
+      ],
+      "original_begin": "1983-01-01",
+      "original_end": "2009-12-31",
+      "requested_end": "2014-12-31",
+      "supported_end": "2014-12-31",
+      "last_added": "2014",
+      "count_unit": "Deal-level complete-case observation in the corresponding full-control OLS e(sample).",
+      "original_n": 1058,
+      "added_n": 153,
+      "artifacts": [
+        "results/tables/table3_delta_roa.csv"
+      ],
+      "comparison": {
+        "focal_predictor": "TRG_COMPRNK: target comparability decile rank divided by nine (unitless 0–1 scale).",
+        "coefficient_unit": "ΔROA operating-performance ratio per one-unit increase in TRG_COMPRNK.",
+        "saved_original": {
+          "estimate": 0.0099004,
+          "robust_se": 0.0098008,
+          "two_sided_p": 0.313,
+          "n": 1041,
+          "location": "output/reproductions/packages/W3125232597/attempt_02/runtime/20261103T034107834265Z/cell_table3_delta_roa.log"
+        },
+        "pooled_extended": {
+          "estimate": 0.0035381,
+          "robust_se": 0.0086761,
+          "two_sided_p": 0.683,
+          "n": 1211,
+          "location": "work/runtime/20261118T104035676182Z/cell_table3_delta_roa.log"
+        },
+        "note": "The saved A2 coefficient is from the original-only run. The pooled replay follows the accepted construction, which re-ranks valid target comparability scores and recomputes the below-median acquirer-Q indicator on the pooled eligible population; changes therefore include those sample-dependent cutoffs."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:f7b469a302b62a079e17d973e917c2e33bd529b3d56ca1c2f5a5e9278e647907",
+        "sha256": "f7b469a302b62a079e17d973e917c2e33bd529b3d56ca1c2f5a5e9278e647907",
+        "marker": "EXT_SAMPLE s3 1058 153 2014"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 3
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ee28-2ac8-7a62-870c-466dcfb91fda",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3125232597.json",
+    "models": "output/models/records/W3125232597.json",
+    "predecessor": "output/reproductions/packages/W3125232597/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3125232597.json"
+  },
+  "input_hashes": {
+    "sample": "0fb7fb3fbafa5179b79a86759ec7bb63688c55d652c97fdfa72cfc1cf0d8ddb0",
+    "models": "46c57115c39c1e5bae783f98372f2fac302d8dc8e90b0486dfe16df7ef03fe0f",
+    "predecessor": "aa91dfe9507ff93ffa65a10b2eb4ebd05771874496b9d79e919a641863d9d18c",
+    "feasibility": "3108a9a1fee25d604d7013b57a4480ff919c330ba3ab326da291f57771864d83"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:a31712e24d5ef13fe1a3c9e8db8ad7c7b0c40b507438fc0e4140a20972c5a839",
+    "sha256": "a31712e24d5ef13fe1a3c9e8db8ad7c7b0c40b507438fc0e4140a20972c5a839",
+    "ok": true,
+    "state_sha256": "000ee41485a9aeaddd289f4fedfbe28f2c9c676737c210caf71010e27eb4542e",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "SDC.WRDS_MA_DETAILS",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/sdc_ma/wrds_ma_details.sas7bdat",
+        "bytes": 11461197824,
+        "mtime_ns": 1764861673124876940
+      },
+      {
+        "dataset": "COMP.SEC_IDHIST",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_idhist.sas7bdat",
+        "bytes": 55508992,
+        "mtime_ns": 1786704738522227827
+      },
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.FUNDQ",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+        "bytes": 11168514048,
+        "mtime_ns": 1784706315462178578
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "CRSP.DSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat",
+        "bytes": 17251565568,
+        "mtime_ns": 1764950931963294339
+      },
+      {
+        "dataset": "CRSP.DSI",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat",
+        "bytes": 2490368,
+        "mtime_ns": 1764951110019635009
+      },
+      {
+        "dataset": "CRSP.MSEDELIST",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msedelist.sas7bdat",
+        "bytes": 6094848,
+        "mtime_ns": 1764951124659991929
+      },
+      {
+        "dataset": "CRSP.MSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+        "bytes": 868417536,
+        "mtime_ns": 1764951132644186578
+      },
+      {
+        "dataset": "CRSP.STOCKNAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/stocknames.sas7bdat",
+        "bytes": 12845056,
+        "mtime_ns": 1764951373746064803
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "TFN.S34",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat",
+        "bytes": 21583233024,
+        "mtime_ns": 1786793343423906928
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "db72fc7e665d6cec130653d2446c5417db0e9f8c1035a7985ac78655990069e8",
+      "work/stata.ipynb": "bc3f43e4ece967328efd7c462b062646f104d35cda4c53cd6a2055e83965f18b",
+      "work/submission.json": "d66263c5fa9b8c0ed727e38d951dda3272c2896880b70d4db8841fa91c8d16d9"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "2ec31d82f8fff7fa4435eb49df9f3693f7d1086069fc4ad5ce89226c3570afae",
+      "predecessor": "output/reproductions/packages/W3125232597/attempt_02/build.sas",
+      "predecessor_sha256": "da389f04fd45720a88fb7f3b09c77497f6c2eb20336004fdc622bf8f9f107dd1",
+      "executed_sha256": "db72fc7e665d6cec130653d2446c5417db0e9f8c1035a7985ac78655990069e8",
+      "historical_predecessor_sha256": "adb3b79de754b2ce8b993739231e9184f006d934ed55844601ac8b7bfeed5aec"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "f14b6c260a605657a99549d295e7ae2b2b1d32b589833c388b140d9bcdfa1e7e",
+      "predecessor": "output/reproductions/packages/W3125232597/attempt_02/stata.ipynb",
+      "predecessor_sha256": "790f76fb9b7dbc75509f3489d77f12ce8e65acd6345d4838dc9c315142db44e0",
+      "executed_sha256": "bc3f43e4ece967328efd7c462b062646f104d35cda4c53cd6a2055e83965f18b",
+      "historical_predecessor_sha256": "1ce82b402613123922ca9a1082d7c4853c06094d9e51087745383416a041de93"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "eb84c327f2f23d2f7dbe0efc6287157de55b1aa84ec30a8895c8e37249d07769",
+    "predecessor": "8d4923ae4eb56696153ce7bc4440a56beec35201bdaa5bda2f8c2847b5e940be",
+    "feasibility": "8e9167a206303e8f60a09bcca1bc9d7f354b718f655e6e92d2f59c5e91c9ed67"
+  }
+}

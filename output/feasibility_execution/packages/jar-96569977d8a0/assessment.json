@@ -1,0 +1,1336 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-96569977d8a0",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 60/Issue 1/12409 - Personal-Financial-Distress-Limited-Attention-and-Sell-Side-Analysts/aslan-datasheet-and-code.zip",
+        "sha256": "fcdd18cc6f2aa645d0d457f2d22ff8c0277f5781293a811c0cbcebb9cdd3945c"
+      },
+      {
+        "path": "JAR-Volume 60/Issue 1/12409 - Personal-Financial-Distress-Limited-Attention-and-Sell-Side-Analysts/aslan-online-appendix.pdf",
+        "sha256": "890b732de51bcd3b0b6f3c82ecf9228d1d618fdbb89afcf0bcd9f2524880f666"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "b27a13e5107ad64aa7d573bd0d83eddda9fef42731cdc1c8d8677c1738fa296f",
+    "work_item_sha256": "c0b7e8ae378a865d7e2dde5960c6f9e9ef4f5e19ed7635778929d9d0d33ac785"
+  },
+  "title": "Personal Financial Distress, Limited Attention and Sell-Side Analysts",
+  "doi": "10.1111/1475-679X.12409",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Supplied SAS workflow embedded in Code.pdf, including identifier linking, CRSP/13F/Compustat joins, main and interaction regressions, and the two-iteration randomization appendix branch. Code.pdf is a program container requiring extraction/reflow and setup; it is not itself a directly executable standalone driver.",
+      "entry_points": [
+        "Code.pdf"
+      ],
+      "requirement_ids": [
+        "req-idsum",
+        "req-stocknames",
+        "req-varset",
+        "req-crsp-msf",
+        "req-crsp-msenames-direct",
+        "req-s34type1",
+        "req-s34type3",
+        "req-mycompq",
+        "req-gvkeyperm",
+        "req-analysts"
+      ],
+      "software_ids": [
+        "sw-sas",
+        "sw-sasstat"
+      ],
+      "issue_ids": [
+        "iss-prepared-inputs",
+        "iss-crspm-source",
+        "iss-macro-name",
+        "iss-randomization-fields",
+        "iss-path-configuration",
+        "iss-crsp-library-binding",
+        "iss-compustat-contract",
+        "iss-tfn-table-mapping"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "src-librefs",
+        "src-idlink",
+        "src-crspm",
+        "src-13f",
+        "src-compustat",
+        "src-analysts",
+        "src-main-calls",
+        "src-primary-analysis-calls",
+        "src-interaction-analysis-calls",
+        "src-randomization",
+        "inspection-static-audit"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "req-idsum",
+      "kind": "data",
+      "description": "Author-prepared IBES identifier summary consumed by the supplied identifier-link builder; the code uses ticker, CUSIP, company name, security dates, fallback ticker and US-firm flag.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-idsum-prepared",
+          "type": "local",
+          "status": "unverified",
+          "location": "mylib.idsum (author-prepared SAS table; not included in this package)",
+          "description": "The source names this prepared table but the package has no data file; its fields and identifier-history coverage must be confirmed from a compatible author-prepared delivery.",
+          "evidence_ids": [
+            "src-idlink",
+            "src-ibes-fallback"
+          ],
+          "expected_fields": [
+            "TICKER",
+            "CUSIP",
+            "CNAME",
+            "SDATES",
+            "OFTIC",
+            "USFIRM"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req-stocknames",
+      "kind": "data",
+      "description": "Name-history table consumed for ticker/CUSIP identifier linking, with PERMNO, company/security names and effective dates.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-stocknames-prepared",
+          "type": "local",
+          "status": "unverified",
+          "location": "mylib.stocknames (author-prepared SAS table; not included in this package)",
+          "description": "This is the named author-prepared input. Its history, field compatibility and coverage are not present in the package.",
+          "evidence_ids": [
+            "src-idlink",
+            "src-stocknames-fields"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "NCUSIP",
+            "COMNAM",
+            "NAMEDT",
+            "NAMEENDDT",
+            "TICKER"
+          ]
+        },
+        {
+          "id": "route-stocknames-crsp-local",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat",
+          "description": "Bounded metadata confirmed this readable CRSP.MSENAMES file has the required fields, but did not verify the historical/population coverage needed for the authored identifier joins.",
+          "evidence_ids": [
+            "catalog-resources",
+            "probe-crsp-msenames",
+            "inspection-catalog-commands"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "NCUSIP",
+            "COMNAM",
+            "NAMEDT",
+            "NAMEENDT",
+            "TICKER"
+          ],
+          "expected_period": "Name/CUSIP history needed for the author identifier links; full required history is unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req-varset",
+      "kind": "data",
+      "description": "Author-prepared stock-quarter analyst/firms control table joined to idlink by PERMNO and YRQTR and reused in the combined analysis table.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-varset-prepared",
+          "type": "local",
+          "status": "unverified",
+          "location": "mylib.varset (author-prepared SAS table; not included in this package)",
+          "description": "The code comment and consumer specify PERMNO, quarter, size, return volatility, analyst count and analyst ID. No compatible prepared table or coverage is included.",
+          "evidence_ids": [
+            "src-varset"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "YRQTR",
+            "FSIZE",
+            "RETVOL",
+            "NANALYSTS",
+            "ANALYSTID"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req-crsp-msf",
+      "kind": "data",
+      "description": "CRSP monthly security series underlying the external crspm routine that produces the supplied workflow's quarterly-normalized CRSP output.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-crsp-msf-local",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+          "description": "A bounded one-row read confirmed the candidate file and requested columns, but the sample did not verify 2005–2009 coverage, values or the external macro's exact source-product contract.",
+          "evidence_ids": [
+            "catalog-resources",
+            "probe-crsp-msf",
+            "src-crspm",
+            "inspection-catalog-commands"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "DATE",
+            "PRC",
+            "RET",
+            "SHROUT",
+            "CFACPR",
+            "CFACSHR"
+          ],
+          "expected_period": "Monthly CRSP history from 01jan2005 through 31dec2009, with security-name fields supplied separately."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req-crsp-msenames-direct",
+      "kind": "data",
+      "description": "CRSP security-name history used both for the external %crspm call's NCUSIP/EXCHCD/SHRCD security fields and for the direct CUSIP-to-PERMNO mapping in the 13F ownership join, separate from the named mylib.stocknames prepared-table consumer.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-crsp-msenames-direct",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat",
+          "description": "The candidate file was readable with the requested security-name and CUSIP/PERMNO columns, but full history and the CRSP libref binding are unverified; Code.pdf contains both a direct crsp.msenames reference and the external %crspm sevars request.",
+          "evidence_ids": [
+            "catalog-resources",
+            "probe-crsp-msenames",
+            "src-crspm",
+            "src-13f",
+            "src-librefs",
+            "inspection-catalog-commands"
+          ],
+          "expected_fields": [
+            "NCUSIP",
+            "PERMNO",
+            "EXCHCD",
+            "SHRCD"
+          ],
+          "expected_period": "Historical CUSIP-to-PERMNO mapping required for the 13F holdings join; full history is unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req-s34type1",
+      "kind": "data",
+      "description": "Prepared 13F filing-level table used to construct first/last reporter status and manager counts.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-s34type1-prepared",
+          "type": "local",
+          "status": "unverified",
+          "location": "inst.s34type1 (author-prepared SAS table; not included in this package)",
+          "description": "The supplied code consumes filing/report dates and manager identifiers/names. Compatible fields and full history, including reporter status before 2005, are not supplied.",
+          "evidence_ids": [
+            "src-13f"
+          ],
+          "expected_fields": [
+            "RDATE",
+            "FDATE",
+            "MGRNO",
+            "MGRNAME"
+          ],
+          "expected_period": "Reporter history needed to identify first/last reports around the 2005–2009 analysis interval; earlier history is unresolved."
+        },
+        {
+          "id": "route-s34type1-tfn-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat",
+          "description": "The frozen catalog lists a combined TFN.S34 candidate with relevant catalog fields; the bounded row read timed out, and its mapping to the prepared type1 table and historical coverage are unresolved.",
+          "evidence_ids": [
+            "catalog-resources",
+            "probe-tfn-s34",
+            "inspection-catalog-commands"
+          ],
+          "expected_fields": [
+            "RDATE",
+            "FDATE",
+            "MGRNO",
+            "MGRNAME",
+            "TYPECODE"
+          ],
+          "expected_period": "Quarterly filing history needed for reporter status; coverage and table split are unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req-s34type3",
+      "kind": "data",
+      "description": "Prepared 13F holdings table merged to filing-level reporters by FDATE and MGRNO, then mapped to CRSP PERMNO by historical CUSIP.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-s34type3-prepared",
+          "type": "local",
+          "status": "unverified",
+          "location": "inst.s34type3 (author-prepared SAS table; not included in this package)",
+          "description": "The code consumes FDATE, MGRNO, CUSIP and SHARES and drops the voting-authority fields. No compatible prepared table or coverage is included.",
+          "evidence_ids": [
+            "src-13f"
+          ],
+          "expected_fields": [
+            "FDATE",
+            "MGRNO",
+            "CUSIP",
+            "SHARES",
+            "TYPE",
+            "SOLE",
+            "SHARED",
+            "NO"
+          ]
+        },
+        {
+          "id": "route-s34type3-tfn-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat",
+          "description": "The catalog lists a combined TFN.S34 candidate with holdings fields, but the allowed bounded probe timed out and the author type3-table mapping, typecode transformation and coverage are unresolved.",
+          "evidence_ids": [
+            "catalog-resources",
+            "probe-tfn-s34",
+            "inspection-catalog-commands"
+          ],
+          "expected_fields": [
+            "FDATE",
+            "MGRNO",
+            "CUSIP",
+            "SHARES",
+            "TYPECODE"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req-mycompq",
+      "kind": "data",
+      "description": "Author-prepared quarterly Compustat table winsorized and filtered before joining to the dated gvkey-PERMNO crosswalk; the supplied consumer expects YRQTR and FYEAR as well as the financial and format fields.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-mycompq-prepared",
+          "type": "local",
+          "status": "unverified",
+          "location": "mylib.mycompq (author-prepared SAS table; not included in this package)",
+          "description": "The exact prepared-file fields, FYEAR/YRQTR constructions and period coverage are not included; preserve the source names from the code pending a compatible table or supported mapping.",
+          "evidence_ids": [
+            "src-compustat"
+          ],
+          "expected_fields": [
+            "GVKEY",
+            "DATADATE",
+            "FYEAR",
+            "YRQTR",
+            "INDFMT",
+            "DATAFMT",
+            "POPSRC",
+            "CONSOL",
+            "ATQ",
+            "LTQ",
+            "CEQQ"
+          ],
+          "expected_period": "Quarterly Compustat data used by the supplied 2005–2009 workflow; full history and quarter mapping are unverified."
+        },
+        {
+          "id": "route-comp-fundq-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+          "description": "Bounded metadata verified a readable COMP.FUNDQ file with the finance and format fields, but it exposes FYEARQ rather than the code's FYEAR and the probe did not expose YRQTR. Do not infer a fiscal-year/quarter transformation; coverage and the author's exact prepared contract remain unresolved.",
+          "evidence_ids": [
+            "catalog-resources",
+            "probe-comp-fundq",
+            "src-compustat",
+            "inspection-catalog-commands"
+          ],
+          "expected_fields": [
+            "GVKEY",
+            "DATADATE",
+            "FYEARQ",
+            "INDFMT",
+            "DATAFMT",
+            "POPSRC",
+            "CONSOL",
+            "ATQ",
+            "LTQ",
+            "CEQQ"
+          ],
+          "expected_period": "Quarterly Compustat history needed for the supplied 2005–2009 workflow; coverage and YRQTR mapping are unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req-gvkeyperm",
+      "kind": "data",
+      "description": "Dated gvkey-to-PERMNO link table used to join quarterly Compustat records to the CRSP/idlink panel under link-type and primary-link filters.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-gvkeyperm-prepared",
+          "type": "local",
+          "status": "unverified",
+          "location": "mylib.gvkeyperm (author-prepared SAS table; not included in this package)",
+          "description": "No prepared copy or coverage is present in the package; the author code states the expected link fields and date filters.",
+          "evidence_ids": [
+            "src-compustat"
+          ],
+          "expected_fields": [
+            "GVKEY",
+            "LPERMNO",
+            "LINKTYPE",
+            "LINKPRIM",
+            "LINKDT",
+            "LINKENDDT"
+          ]
+        },
+        {
+          "id": "route-ccm-link-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+          "description": "A bounded one-row read verified the exact link columns in the local candidate. Historical link coverage and compatibility with the author's selected records remain unverified.",
+          "evidence_ids": [
+            "catalog-resources",
+            "probe-ccm-link",
+            "src-compustat",
+            "inspection-catalog-commands"
+          ],
+          "expected_fields": [
+            "GVKEY",
+            "LPERMNO",
+            "LINKTYPE",
+            "LINKPRIM",
+            "LINKDT",
+            "LINKENDDT"
+          ],
+          "expected_period": "Dated company-security link history covering the quarterly records used in 2005–2009; full coverage is unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req-analysts",
+      "kind": "data",
+      "description": "Author-prepared analyst-quarter outcomes, housing controls, analyst characteristics and employer/geography keys merged into all5 and used by the supplied main, interaction and randomization regressions.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route-analysts-prepared",
+          "type": "local",
+          "status": "unverified",
+          "location": "mylib.analysts (author-prepared SAS table; not included in this package)",
+          "description": "The code consumes the prepared analyst-quarter table. Datasheet-listed historical profile, deeds/property and census origins are contextual construction sources, not mandatory additional inputs when a compatible prepared table is supplied; prepared-table fields, joins and coverage remain unknown.",
+          "evidence_ids": [
+            "src-analysts",
+            "src-datasheet-origins"
+          ],
+          "expected_fields": [
+            "ANALYSTID",
+            "YRQTR",
+            "CHPI",
+            "ERRORS",
+            "BIAS",
+            "NREVS",
+            "HORIZON",
+            "STAR",
+            "PORTSIZE",
+            "IVY",
+            "TENURE",
+            "EXP",
+            "COHORT",
+            "FIRSTEMP",
+            "ANALYSTZIP",
+            "EMPID",
+            "ZIPYRQTR",
+            "EMPIDYRQTR",
+            "EMPCBSA",
+            "FIRMYRQTR",
+            "PROBLAYOFF",
+            "OWNER",
+            "RECOURSE",
+            "CLTV90",
+            "EQUITY",
+            "FORECLOSURE"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "sw-sas",
+      "name": "SAS 9.4",
+      "status": "unverified",
+      "description": "Code.pdf is SAS source. The documented local SAS startup ended in a TKELS initialization failure, so runtime availability/version for this assessment is unverified; the failure is not evidence of a missing license.",
+      "evidence_ids": [
+        "src-librefs",
+        "probe-environment"
+      ]
+    },
+    {
+      "id": "sw-sasstat",
+      "name": "SAS/STAT",
+      "status": "unverified",
+      "description": "The supplied CLSTR macro calls CLUST3, which invokes PROC SURVEYREG on its empty-instruments branch; the supplied primary call spelling %clustr remains unresolved. Official documentation identifies the SAS/STAT procedure, but component availability locally is unverified.",
+      "evidence_ids": [
+        "src-surveyreg",
+        "public-surveyreg-doc",
+        "probe-environment"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "iss-prepared-inputs",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_empirical_inputs",
+      "description": "The code expects prepared SAS tables in the mylib and inst libraries (including analyst, stock/forecast, quarterly Compustat, identifier-link, and two 13F tables), but the package inventory contains only the datasheet PDF, Code.pdf, and online appendix PDF. Their exact fields and history are being derived from the supplied consumers; no compatible prepared-data file is included.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src-librefs",
+        "src-idlink",
+        "src-13f",
+        "src-compustat",
+        "src-analysts"
+      ]
+    },
+    {
+      "id": "iss-crspm-source",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_external_sas_macro",
+      "description": "The supplied PDF calls an external crspm.sas routine at a Windows path and invokes it to create mylib.crsp_m; that routine and its interface/source closure are not included. The original PDF page 4 was inspected: the extracted INCLUDE statement uses a curly opening quote, so any normalization/path change must be made in a working copy after reflow, not to the PDF binary.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src-crspm",
+        "src-crsp-derive",
+        "inspection-original-page4"
+      ]
+    },
+    {
+      "id": "iss-macro-name",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_macro_binding",
+      "description": "The supplied definition is %macro clstr, which calls the supplied %macro clust3, while the primary and interaction calls are spelled %clustr. The randomization regression macro calls %clstr. No alias or definition for clustr appears in Code.pdf; confirm the intended primary/interaction macro binding before a working-copy repair.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src-macro-definitions",
+        "src-main-calls",
+        "src-randomization",
+        "inspection-original-page30",
+        "inspection-original-page31"
+      ]
+    },
+    {
+      "id": "iss-randomization-fields",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "randomization_generated_field_contract",
+      "description": "Two concrete field omissions are supported by the supplied source: RAND is absent from the input KEEP= list but used in BY, and final&i omits GVKEY and EMPCBSA even though regression(2) requests them as clusters and fixed effects. In a reflowed working copy, add RAND to the KEEP list and add a.gvkey and a.empcbsa to the final SELECT; these variables are already present in all5/nround. Keep the original PDF unchanged.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "src-randomization",
+        "public-keep-option-doc"
+      ]
+    },
+    {
+      "id": "iss-path-configuration",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "embedded_source_path_setup",
+      "description": "Code.pdf embeds a SAS source program with Windows absolute library roots for mylib and inst and a curly-quoted Windows include path. The program needs extraction/reflow and a working-copy configuration with writable output roots; the original PDF must remain unchanged.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "src-librefs",
+        "src-crspm",
+        "inspection-original-page4"
+      ]
+    },
+    {
+      "id": "iss-crsp-library-binding",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "libref_configuration",
+      "description": "Code.pdf directly queries crsp.msenames but declares only MYLIB and INST. The selected CRSP.MSENAMES candidate is locally readable at ${ACCTREPL_SAS_ROOT}/crsp/a_stock; bind CRSP to that directory in the working configuration. This is routine setup. Historical coverage remains an unverified data-route condition, and the separate external crspm macro/interface remains an unresolved source-closure issue.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "src-librefs",
+        "src-13f",
+        "catalog-resources",
+        "probe-crsp-msenames"
+      ]
+    },
+    {
+      "id": "iss-compustat-contract",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_quarterly_compustat_mapping",
+      "description": "The local COMP.FUNDQ candidate exposes FYEARQ and the bounded schema sample does not expose YRQTR, while the author-prepared mycompq consumer filters on FYEAR and uses YRQTR. Confirm a compatible prepared-table contract or source-supported field/quarter mapping before treating the local candidate as equivalent.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src-compustat",
+        "probe-comp-fundq",
+        "catalog-resources"
+      ]
+    },
+    {
+      "id": "iss-tfn-table-mapping",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_13f_table_mapping",
+      "description": "The local TFN.S34 candidate is a combined raw table; the one-row read timed out, and the supplied consumers expect separate s34type1 filing and s34type3 holdings tables. Their split/typecode mapping and full pre-2005 reporter history are not verified.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src-13f",
+        "probe-tfn-s34",
+        "catalog-resources"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "src-librefs",
+      "kind": "source",
+      "description": "Code.pdf opens the two author-prepared SAS libraries using Windows paths.",
+      "file": "Code.pdf",
+      "line_begin": 1,
+      "line_end": 2,
+      "quote": "libname mylib \"[redacted-path-466c8b37aa15]\";\nlibname inst \"[redacted-path-b6527700696d]\";"
+    },
+    {
+      "id": "src-idlink",
+      "kind": "source",
+      "description": "The identifier-link preparation starts from the prepared IBES identifier summary and CRSP stock-name history.",
+      "file": "Code.pdf",
+      "line_begin": 4,
+      "line_end": 8,
+      "quote": "%let ibes1= mylib.idsum;\n%let crsp1= mylib.stocknames;\n /* link by cusip */\nproc sort data=&ibes1 out=ibes1 (keep=ticker cusip cname sdates);\n  where usfirm=1 and not(missing(cusip));"
+    },
+    {
+      "id": "src-stocknames-fields",
+      "kind": "source",
+      "description": "The ID-link builder consumes ticker, company name, PERMNO, CUSIP and effective-name dates from the prepared stock-name table.",
+      "file": "Code.pdf",
+      "line_begin": 29,
+      "line_end": 32,
+      "quote": " /* crsp: get all permno-ncusip combinations */\nproc sort data=&crsp1 out=crsp1 (keep=permno ncusip comnam namedt nameenddt);\n  where not missing(ncusip);\n  by permno ncusip namedt;"
+    },
+    {
+      "id": "src-crspm",
+      "kind": "source",
+      "description": "The code requests 2005–2009 monthly CRSP inputs through an external crspm.sas include and writes mylib.crsp_m.",
+      "file": "Code.pdf",
+      "line_begin": 169,
+      "line_end": 178,
+      "page": 4,
+      "quote": "%let begdate = 01jan2005;\n%let enddate = 31dec2009;\n\n%let sfilter = (shrcd in (10,11));\n%let msfvars = prc ret shrout cfacpr cfacshr;\n%let msevars = ncusip exchcd shrcd ;\n%INCLUDE “[redacted-path-0654b89886b3];\nOptions source2 /*nosource2*/ ORIENTATION=PORTRAIT;\n%crspm(s=m,start=&begdate,end=&enddate,sfvars=&msfvars,sevars=&msevars,filters=&sfilter,\noutset=mylib.crsp_m);"
+    },
+    {
+      "id": "src-crsp-derive",
+      "kind": "source",
+      "description": "The downstream monthly output is normalized to quarter-end and constructs adjusted price, shares, market capitalization and quarter-level ownership inputs.",
+      "file": "Code.pdf",
+      "line_begin": 179,
+      "line_end": 196,
+      "quote": "data crsp_m; format qdate date9.;\nset mylib.crsp_m;\nqdate = intnx('QTR',date,0,'E');\ndate = intnx('MONTH',date,0,'E');\np = abs(prc)/cfacpr;\ntso=shrout*1000;\nif tso<=0 then tso=.;\nme = p*tso/1000000;\nlabel p = \"price at period end, adjusted\";\nlabel tso = \"total shares outstanding, adjusted\";\nlabel me = \"market capitalization, x$1m\";\ndrop ncusip prc cfacpr shrout exchcd shrcd ret;\nformat ret percentn8.4 me p dollar12.3 tso comma12.;\nrun;\ndata crsp_m;\nset crsp_m;\nby permno qdate date;\nif last.qdate;"
+    },
+    {
+      "id": "src-13f",
+      "kind": "source",
+      "description": "The workflow builds 13F reporting indicators from s34type1 and joins s34type3 holdings, then maps historical CUSIPs through CRSP.MSENAMES.",
+      "file": "Code.pdf",
+      "line_begin": 199,
+      "line_end": 243,
+      "quote": " proc sql;\ncreate table first_vint\nas select distinct rdate, fdate, mgrno, mgrname\nfrom inst.s34type1\ngroup by mgrno, rdate\nhaving fdate=min(fdate)\norder by mgrno, rdate;\nquit;\n data first_vint;\nset first_vint;\nby mgrno rdate;\nlength first_report 3;\nfirst_report = (first.mgrno or intck('QTR',lag(rdate),rdate)>1);\nrun;\n proc sort data=first_vint nodupkey; by mgrno descending rdate; run;\ndata first_vint;\nset first_vint;\nby mgrno descending rdate;\nlength last_report 3;\nlast_report = (first.mgrno or intck('QTR',rdate,lag(rdate))>1);\nif (\"&begdate\"d <= rdate <=\"&enddate\"d);\nrun;\nproc sql undo_policy=none;\ncreate table first_vint\nas select distinct *, count(mgrno) as numinst\nfrom first_vint\ngroup by rdate\norder by fdate, mgrno;\nquit;\n\n data holdings_v1 / view=holdings_v1;\nmerge first_vint(in=a drop=mgrname)\n   inst.s34type3(in=b drop=type sole shared no);\nby fdate mgrno;\nif a and b and shares>0;\nrun;\n/* Map 13F's Historical CUSIP to CRSP Unique Identifier PERMNO */\nproc sql;\ncreate view holdings_v2 as\nselect distinct a.rdate, a.fdate, a.mgrno, a.numinst,\n         a.first_report, a.last_report, b.permno, a.shares\nfrom holdings_v1 as a,\n    (select distinct ncusip, permno from crsp.msenames\n     where not missing(ncusip)) as b\n     where a.cusip=b.ncusip;"
+    },
+    {
+      "id": "src-ownership-to-io",
+      "kind": "source",
+      "description": "The 13F CUSIP mapping joins holdings to CRSP quarterly records, aggregates holdings into io metrics, then produces the quarterly ownership ratio consumed later.",
+      "file": "Code.pdf",
+      "line_begin": 243,
+      "line_end": 272,
+      "quote": "     where a.cusip=b.ncusip;\nquit;\nproc sql;\ncreate table holdings as\nselect distinct a.rdate, a.mgrno, a.numinst, a.first_report, a.last_report,\n       a.permno, a.shares as shares_adj label = \"adjusted shares held\"\nfrom holdings_v2 as a, crsp_m as b\nwhere a.permno=b.permno and a.fdate = b.qdate;\nquit;\nproc sort data=holdings nodupkey; by permno rdate mgrno; run;\nproc sort data=crsp_m    nodupkey; by permno qdate;        run;\nproc means data=holdings noprint;\nwhere shares_adj>0;\nby permno rdate;\nvar shares_adj first_report;\noutput out=io_metrics (drop=_freq_ _type_)\n        n=numowners max(numinst)=numinst\n        sum(shares_adj)=io_total ;\nrun;\ndata io;\nmerge io_metrics(in=a) crsp_m (in=b rename=(qdate=rdate));\nby permno rdate;\nif b and tso>0;\nior = io_total/tso;\nif missing(ior) then ior=0;\nformat ior percentn8.2;\nyear=year(rdate); qtr=qtr(rdate);\nyrqtr=year || '.' || qtr;\nif ior>1 then delete;\nrun;"
+    },
+    {
+      "id": "src-compustat",
+      "kind": "source",
+      "description": "Quarterly Compustat inputs are winsorized before the fiscal-year filter; the prepared gvkey-permno history supplies the later dated join.",
+      "file": "Code.pdf",
+      "line_begin": 336,
+      "line_end": 357,
+      "quote": "%win(inset=mylib.mycompq, outset=mycompqw, sortvar=yrqtr, vars=atq ltq ceqq, PERC1=1, trim=0 );\n*also tried %win with (PERC1=0) and with sortvar=year in separately. results are robust;\n%let start=2005;\n%let end=2009;\n    data mycompqw;\n    set mycompqw;\n\n    if &start<=fyear<=&end;\n    *no double records;\n    if indfmt='INDL' and datafmt='STD' and popsrc='D' and consol='C' ;\n    run;\n    /* match it with gvkey-permno identifier link*/\nproc sql;\n      create table all2 as\n      select a.*, b.lpermno as permno\n      from mycompqw a left join mylib.gvkeyperm b\n        on a.gvkey=b.gvkey\n        and b.lpermno ne .\n        and b.linktype in (\"LC\" \"LN\" \"LU\" \"LX\" \"LD\" \"LS\")\n        and b.linkprim in (\"C\", \"P\")\n        and ((a.datadate >= b.linkdt) or b.linkdt eq .B) and\n            ((a.datadate <= b.linkenddt) or b.linkenddt eq .E)   ;"
+    },
+    {
+      "id": "src-panel-join-sequence",
+      "kind": "source",
+      "description": "The author code forms all3 from all2 and all1 with the PERMNO/quarter keys, adds ownership from io into all4, then merges the prepared analyst-quarter table into all5.",
+      "file": "Code.pdf",
+      "line_begin": 359,
+      "line_end": 382,
+      "quote": "    * merge it with fsize, volatility,\n# of analyst following, and analystid;\nproc sql;\n         create table all3 as\n         select a.*, b.*,(atq-ltq)/ceqq as bm\n         from all2 as a, all1 as b\n         where a.permno = b.permno and a.yrqtr=b.yrqtr and 2005.1<=yrqtr<=2009.4;\nquit;\nproc sql;\n  create table all4\n  as select a.*, b.ior\n  from all3 a, io b\n  where a.permno=b.permno and a.yrqtr=b.yrqtr ;\nquit;\n* merge crsp/comp/13f final data with the set which\nincludes analyst characteristics,\nchpi and housing controls for each analyst;\nproc sql;\n  create table all5\n  as select a.*, b.chpi, b.errors, b.bias, b.nrevs, b.horizon, b.star, b.portsize, b.ivy, b.tenure,\nb.exp, b.cohort, b.firstemp, b.analystzip, b.empid, b.zipyrqtr, b.empidyrqtr, b.empcbsa,\nb.firmyrqtr, b.problayoff, b.owner, b.recourse, b.cltv90, b.equity, b.foreclosure\nfrom all4 a, mylib.analysts b\n  where a.analystid=b.analystid and a.yrqtr=b.yrqtr ;"
+    },
+    {
+      "id": "src-analysts",
+      "kind": "source",
+      "description": "The prepared analyst-quarter table supplies housing distress, forecast outcomes, analyst traits, employer/geography keys and interactions used in all5 and all5_int.",
+      "file": "Code.pdf",
+      "line_begin": 373,
+      "line_end": 382,
+      "quote": "* merge crsp/comp/13f final data with the set which\nincludes analyst characteristics,\nchpi and housing controls for each analyst;\nproc sql;\n  create table all5\n  as select a.*, b.chpi, b.errors, b.bias, b.nrevs, b.horizon, b.star, b.portsize, b.ivy, b.tenure,\nb.exp, b.cohort, b.firstemp, b.analystzip, b.empid, b.zipyrqtr, b.empidyrqtr, b.empcbsa,\nb.firmyrqtr, b.problayoff, b.owner, b.recourse, b.cltv90, b.equity, b.foreclosure\nfrom all4 a, mylib.analysts b\n  where a.analystid=b.analystid and a.yrqtr=b.yrqtr ;"
+    },
+    {
+      "id": "src-macro-definitions",
+      "kind": "source",
+      "description": "Code.pdf includes the NWORDS, WIN, CLSTR and CLUST3 macro definitions; clstr contains the supported clust3 call.",
+      "file": "Code.pdf",
+      "line_begin": 386,
+      "line_end": 386,
+      "quote": "%macro clstr(data=,dependent=,var=,fe=,class=, format=,"
+    },
+    {
+      "id": "src-clust3-definition",
+      "kind": "source",
+      "description": "The companion CLUST3 macro is also supplied in Code.pdf.",
+      "file": "Code.pdf",
+      "line_begin": 1396,
+      "line_end": 1396,
+      "quote": "%macro clust3(data, dependent, var, class, format, cluster, weight, output, multi,noint,print);"
+    },
+    {
+      "id": "src-main-calls",
+      "kind": "source",
+      "description": "Primary and interaction specifications are actually called as %clustr after the supplied %macro clstr definition.",
+      "file": "Code.pdf",
+      "line_begin": 1674,
+      "line_end": 1675,
+      "quote": "%mend;\n%clustr(data=all5, dependent=errors, var= chpi, fe=empcbsa yrqtr, cluster=gvkey analystid);"
+    },
+    {
+      "id": "src-primary-analysis-calls",
+      "kind": "source",
+      "description": "Eight supplied primary regression calls use the all5 panel for the errors and bias outcomes across four specifications.",
+      "file": "Code.pdf",
+      "line_begin": 1675,
+      "line_end": 1690,
+      "quote": "%clustr(data=all5, dependent=errors, var= chpi, fe=empcbsa yrqtr, cluster=gvkey analystid);\n%clustr(data=all5, dependent=errors, var= chpi fsize ior retvol bm nanalysts,\nfe=empcbsa yrqtr, cluster=gvkey analystid);\n%clustr(data=all5, dependent=errors, var= chpi fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp,\nfe=empcbsa yrqtr, cluster=gvkey analystid);\n%clustr(data=all5, dependent=errors, var= chpi nrevs horizon star portsize\nivy tenure exp cohort firstemp, fe=empcbsa firmyrqtr, cluster=gvkey analystid);\n%clustr(data=all5, dependent=bias, var= chpi, fe=empcbsa yrqtr, cluster=gvkey analystid);\n%clustr(data=all5, dependent=bias, var= chpi fsize ior retvol bm nanalysts,\nfe=empcbsa yrqtr, cluster=gvkey analystid);\n%clustr(data=all5, dependent=bias, var= chpi fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp, fe=empcbsa yrqtr, cluster=gvkey analystid);\n%clustr(data=all5, dependent=bias, var= chpi nrevs horizon star portsize\nivy tenure exp cohort firstemp,\nfe=empcbsa firmyrqtr, cluster=gvkey analystid);"
+    },
+    {
+      "id": "src-interaction-analysis-calls",
+      "kind": "source",
+      "description": "The supplied workflow derives five housing interaction variables in all5_int and runs paired errors/bias specifications for the interactions.",
+      "file": "Code.pdf",
+      "line_begin": 1691,
+      "line_end": 1704,
+      "quote": "data all5_int;\nset all5;\nproblayoff_int=chpi*problayoff;\nowner_int=chpi*owner;\ncltv90_int=chpi*cltv90;\nrecourse_int=chpi*recourse;\nforeclosure_int=chpi*foreclosure;\nrun;\n%clustr(data=all5_int, dependent=errors, var= problayoff_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp problayoff,\nfe=empid zipyrqtr, cluster=gvkey analystid);\n%clustr(data=all5_int, dependent=bias, var= problayoff_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp problayoff,\nfe=empid zipyrqtr, cluster=gvkey analystid);"
+    },
+    {
+      "id": "src-interaction-analysis-calls-final",
+      "kind": "source",
+      "description": "The remaining interaction specifications invoke the same paired errors/bias calls for CLTV90, recourse and foreclosure interactions.",
+      "file": "Code.pdf",
+      "line_begin": 1712,
+      "line_end": 1729,
+      "quote": "%clustr(data=all5_int, dependent=errors, var= cltv90_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp cltv90,\nfe=empid zipyrqtr, cluster=gvkey analystid);\n%clustr(data=all5_int, dependent=bias, var= cltv90_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp cltv90,\nfe=empid zipyrqtr, cluster=gvkey analystid);\n%clustr(data=all5_int, dependent=errors, var= recourse_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp recourse,\nfe=empid zipyrqtr, cluster=gvkey analystid);\n%clustr(data=all5_int, dependent=bias, var= recourse_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp recourse,\nfe=empid zipyrqtr, cluster=gvkey analystid);\n%clustr(data=all5_int, dependent=errors, var= foreclosure_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp foreclosure,\nfe=empid zipyrqtr, cluster=gvkey analystid);\n%clustr(data=all5_int, dependent=bias, var= foreclosure_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp foreclosure,\nfe=empid zipyrqtr, cluster=gvkey analystid);"
+    },
+    {
+      "id": "src-interaction-owner-calls",
+      "kind": "source",
+      "description": "The supplied interaction branch invokes paired errors/bias regressions for the owner interaction.",
+      "file": "Code.pdf",
+      "line_begin": 1705,
+      "line_end": 1710,
+      "quote": "%clustr(data=all5_int, dependent=errors, var= owner_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp owner,\nfe=empid zipyrqtr, cluster=gvkey analystid);\n%clustr(data=all5_int, dependent=bias, var= owner_int fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp owner,\nfe=empid zipyrqtr, cluster=gvkey analystid);"
+    },
+    {
+      "id": "src-randomization",
+      "kind": "source",
+      "description": "The supplied unseeded randomization invokes two repetitions and creates finali with a restricted SELECT before the two regression calls.",
+      "file": "Code.pdf",
+      "line_begin": 1730,
+      "line_end": 1773,
+      "page": 31,
+      "quote": "%macro randsamp(n);\n%do i = 1 %to &n. ;\ndata all5&i;\nset all5;\noriginal_order+1;\n*seed=&sysrandom ;\nrand = rand('Uniform');\nrun;\nproc sort data=all5&i(keep=analystzip analystid yrqtr)\nout=round&i(rename=(analystid=pseudo_analystid));\n  by analystzip rand;\nrun;\n data nall5&i;\n  merge round&i all5&i;\n  drop rand;\nrun;\nproc sort data=nall5&i out=nround&i(drop=original_order);\n  by original_order;\nrun;\nproc sql;\ncreate table final&i as\nselect a.analystzip, a.pseudo_analystid, a.analystid, a.yrqtr, a.chpi,\na.fsize,a.ior,a.retvol,a.bm,a.nanalysts,a.nrevs,\na.horizon, a.star, a.portsize, a.ivy, a.tenure, a.exp, a.cohort, a.firstemp, b.errors, b.bias\nfrom nround&i as a, all5&i as b\nwhere a.analystzip=b.analystzip and a.pseudo_analystid=b.analystid;\nrun;\n%end;\n%mend randsamp;\n%randsamp(2);\n%macro regression(n);\n%do j = 1 %to &n. ;\n%If &j. = 1 %then %do;\n%clstr(data=final&j., dependent=errors, var= chpi fsize ior retvol bm nanalysts nrevs\nhorizon star portsize ivy tenure exp cohort firstemp, fe=empcbsa yrqtr, cluster=gvkey analystid);\n%end;\n%If &j. ne 1 %then %do;\n%clstr(data=final&j., dependent=errors, var= chpi fsize ior retvol bm nanalysts nrevs\n\nhorizon star portsize ivy tenure exp cohort firstemp, fe=empcbsa yrqtr, cluster=gvkey analystid);\n%end;\n%end;\n%mend regression;\n%regression(2);"
+    },
+    {
+      "id": "src-append-call",
+      "kind": "source",
+      "description": "The supplied randomization sequence invokes APPEND for exactly two outputs after the two regression calls.",
+      "file": "Code.pdf",
+      "line_begin": 1774,
+      "line_end": 1785,
+      "quote": "%macro append(n);\n%do j = 1 %to &n. ;\n%If &j.=1 %then %do;\ndata all; set final&j._est_cl; keep parameter estimate StdErr_or_cl1; run;\n%end;\n%If &j. ne 1 %then %do;\ndata final&j._est_cl; set final&j._est_cl; keep parameter estimate StdErr_or_cl1; run;\nproc append base=all data=Final&j._est_cl; run;\n%end;\n%end;\n%mend append;\n%append(2);"
+    },
+    {
+      "id": "src-appendix-randomization",
+      "kind": "source",
+      "description": "The online appendix describes a 10,000-iteration randomization procedure; this is a paper-side description and does not change the supplied code's explicit count of two.",
+      "file": "_audit_supplements/aslan-online-appendix.pdf",
+      "line_begin": 241,
+      "line_end": 241,
+      "quote": "for 10,000 iterations."
+    },
+    {
+      "id": "src-ibes-fallback",
+      "kind": "source",
+      "description": "The fallback ticker branch reads OFTIC and the SDATE/CUSIP identity fields from the original idsum table.",
+      "file": "Code.pdf",
+      "line_begin": 80,
+      "line_end": 85,
+      "quote": "proc sql;\n  create table nomatch2\n  as select b.ticker, b.cname, b.oftic, b.sdates, b.cusip\n  from nomatch1 as a, &ibes1 as b\n  where a.ticker = b.ticker and not (missing(b.oftic))\n  order by ticker, oftic, sdates;"
+    },
+    {
+      "id": "src-varset",
+      "kind": "source",
+      "description": "The stock-quarter varset supplies the firm controls, analyst count, analyst identifier and PERMNO/quarter join key used in all1.",
+      "file": "Code.pdf",
+      "line_begin": 160,
+      "line_end": 167,
+      "quote": "* merge idlink it with stock level varset which includes permno, fsize, retvol,\nyrqtr,# of analyst following and analystid;\nproc sql;\n  create table all1\n  as select a.*, b.*\n  from mylib.varset a left join mylib.idlink b\n  on a.permno=b.permno and b.score <= 0;\n  order by permno yrqtr;"
+    },
+    {
+      "id": "src-nwords",
+      "kind": "source",
+      "description": "NWORDS is supplied in Code.pdf and is called by the WIN macro.",
+      "file": "Code.pdf",
+      "line_begin": 273,
+      "line_end": 273,
+      "quote": "%MACRO NWORDS (INVAR);"
+    },
+    {
+      "id": "src-win",
+      "kind": "source",
+      "description": "WIN is supplied as an author macro in Code.pdf.",
+      "file": "Code.pdf",
+      "line_begin": 283,
+      "line_end": 283,
+      "quote": "%MACRO WIN (INSET=,OUTSET=,SORTVAR=,VARS=,PERC1=1,TRIM=0);"
+    },
+    {
+      "id": "src-surveyreg",
+      "kind": "source",
+      "description": "The supplied CLUST3 macro invokes PROC SURVEYREG for the active cluster calculations.",
+      "file": "Code.pdf",
+      "line_begin": 1404,
+      "line_end": 1404,
+      "quote": "    proc surveyreg data=&data ;"
+    },
+    {
+      "id": "src-clstr-ols-branch",
+      "kind": "source",
+      "description": "The clstr macro dispatches to CLUST3 when instruments are empty.",
+      "file": "Code.pdf",
+      "line_begin": 914,
+      "line_end": 919,
+      "quote": "    %if &instruments =%str() %then %do;\n        %let print=no;\n        %clust3(data=&data.&demean,dependent=&dependent, var=&var,\n\n                        cluster=&cluster,weight=&weight,\n                        multi=&multi, output=&data._est_cl,noint=&noint,print=&print);"
+    },
+    {
+      "id": "src-clstr-iv-branch",
+      "kind": "source",
+      "description": "The generic macro keeps an endogenous/instruments branch separate from the empty-instruments branch.",
+      "file": "Code.pdf",
+      "line_begin": 1052,
+      "line_end": 1058,
+      "quote": "    %else %if &instruments ne %str() %then %do;\n        %let j=1;\n        %do %while (%scan(&endogenous,&j) ne %str());\n            %let print=no;\n            %clust3(data=&data.&demean,dependent=%scan(&endogenous,&j), var=&instruments &var,\ncluster=&cluster, weight=&weight,\n                multi=&multi, output=&data._est_cl_step1_&j,noint=&noint,print=&print);"
+    },
+    {
+      "id": "src-proc-reg-syslin",
+      "kind": "source",
+      "description": "PROC REG and PROC SYSLIN occur inside the endogenous/instruments branch, not in the supplied no-instruments call arguments.",
+      "file": "Code.pdf",
+      "line_begin": 1192,
+      "line_end": 1204,
+      "quote": "proc reg data=&data.&demean noprint;\n     model %scan(&endogenous,&j)= &instruments   &var    ;\n     output out=&data._tmp_s1_&j (keep=mykey pred)    predicted = pred;\n     %if &weight ne %str() %then %do;\n         weight &weight;\n     %end;\nrun;\n\n       %let j=%eval(&j+1);\n       %end;\n\n       * 2.1 run syslin to get the structural estimates and save the tsls residuals ;\n       proc syslin data=&data.&demean 2sls out=&data._tmp_s2_r ;"
+    },
+    {
+      "id": "src-datasheet-origins",
+      "kind": "source",
+      "description": "The datasheet lists historical origins for analyst housing/background data and the Compustat/CRSP and 13F inputs; these do not replace a compatible prepared-table route.",
+      "file": "Aslan datasheet.pdf",
+      "line_begin": 22,
+      "line_end": 31,
+      "quote": "main analysis is based on the analysts’ home addresses. Analysts' deed records and home addresses are\nobtained from CoreLogic, which provides mortgage transactions and property-level information from\nU.S. deed records as originally recorded at local registries of deeds. For each deed transaction, the\ndataset provides, among other things, the full names of the seller(s) and buyer(s), the mortgage\namount, the mortgage term, the transaction price, the address, and the transaction date, allowing me\nto create the complete ownership history of each house. Firm characteristics are from Compustat and\nCRSP. Neighborhood characteristics are extracted from 2000 Decennial Census. Institutional holdings\nare from Thomson Reuters 13F ownership database. Time series of the three Fama-French factors\nand the momentum factor are obtained from Kenneth French's data library. Zip code-level home\nvalues are from CoreLogic. I vouch for the stated sources of the raw data."
+    },
+    {
+      "id": "probe-environment",
+      "kind": "probe",
+      "description": "The frozen environment artifact records SAS startup attempts ending in a TKELS initialization failure; it explicitly does not establish license absence or author-code compatibility.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "inspection-original-page4",
+      "kind": "inspection",
+      "description": "Rendered original Code.pdf page 4 was inspected; the INCLUDE path is curly-quoted in the PDF, so normalization belongs in a reflowed working copy.",
+      "file": "Code.pdf",
+      "page": 4,
+      "line_begin": 169,
+      "line_end": 178,
+      "quote": "%let begdate = 01jan2005;\n%let enddate = 31dec2009;\n\n%let sfilter = (shrcd in (10,11));\n%let msfvars = prc ret shrout cfacpr cfacshr;\n%let msevars = ncusip exchcd shrcd ;\n%INCLUDE “[redacted-path-0654b89886b3];\nOptions source2 /*nosource2*/ ORIENTATION=PORTRAIT;\n%crspm(s=m,start=&begdate,end=&enddate,sfvars=&msfvars,sevars=&msevars,filters=&sfilter,\noutset=mylib.crsp_m);"
+    },
+    {
+      "id": "inspection-original-page30",
+      "kind": "inspection",
+      "description": "Rendered original Code.pdf page 30 was inspected to confirm the supplied primary-call spelling on the source page.",
+      "file": "Code.pdf",
+      "page": 30,
+      "line_begin": 1675,
+      "line_end": 1675,
+      "quote": "%clustr(data=all5, dependent=errors, var= chpi, fe=empcbsa yrqtr, cluster=gvkey analystid);"
+    },
+    {
+      "id": "inspection-original-page31",
+      "kind": "inspection",
+      "description": "Rendered original Code.pdf page 31 was inspected to confirm randomization-call spelling and field context on the source page.",
+      "file": "Code.pdf",
+      "page": 31,
+      "line_begin": 1735,
+      "line_end": 1740,
+      "quote": "*seed=&sysrandom ;\nrand = rand('Uniform');\nrun;\nproc sort data=all5&i(keep=analystzip analystid yrqtr)\nout=round&i(rename=(analystid=pseudo_analystid));\n  by analystzip rand;"
+    },
+    {
+      "id": "inspection-static-audit",
+      "kind": "inspection",
+      "description": "The frozen static audit reports zero detected artifacts/checklist IDs and no supported code, while direct reading of the complete cached Code.pdf reveals the substantial supplied SAS program documented in this assessment; the parser result is therefore not treated as evidence of code absence or a completed route.",
+      "artifact_path": "static_audit.json",
+      "sha256": "985b1e5251cef2d5c762c63e3d099a64659df224800b38b280ef74383afe32b9"
+    },
+    {
+      "id": "catalog-resources",
+      "kind": "catalog",
+      "description": "The exact registered frozen resource catalog was checked by SHA-256; it lists the exact local CRSP, Compustat and TFN candidate datasets cited in the routes.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "probe-crsp-msenames",
+      "kind": "probe",
+      "description": "A bounded one-row read verified the CRSP.MSENAMES file and all name-history and security-class fields needed by the two authored reads; it does not prove full date/population coverage.",
+      "artifact_path": "probes/crsp_msenames_all.json",
+      "sha256": "4f853f41a96905a0539b37dc984982c3ec1bd49fada957aefec8506df190fa01"
+    },
+    {
+      "id": "probe-crsp-msf",
+      "kind": "probe",
+      "description": "A bounded one-row read verified the CRSP.MSF file and requested monthly price, return, shares and adjustment-factor columns; it does not prove 2005–2009 coverage.",
+      "artifact_path": "probes/crsp_msf.json",
+      "sha256": "79bdb4ce816963361dc9361933dc0245d763125aac9a9e77874aec6f71f8fdf2"
+    },
+    {
+      "id": "probe-comp-fundq",
+      "kind": "probe",
+      "description": "A bounded one-row read verified the local COMP.FUNDQ file and its actual quarterly fields; it exposes FYEARQ rather than the code's FYEAR and does not establish the code's YRQTR mapping or full history.",
+      "artifact_path": "probes/comp_fundq.json",
+      "sha256": "4cd2e1e10713ccb3f8e54e6cbc03bfc3d2810dc0f6765194e9e748f3783cd6e5"
+    },
+    {
+      "id": "probe-ccm-link",
+      "kind": "probe",
+      "description": "A bounded one-row read verified the CRSP.CCMXPF_LINKTABLE file and the expected GVKEY/PERMNO/date/link-type columns; complete historical link coverage remains unverified.",
+      "artifact_path": "probes/crsp_ccmlink.json",
+      "sha256": "b17dbba0d24ff6efffcc2701e53c7eebad0c56b21c3e2e74f15285af187b160d"
+    },
+    {
+      "id": "probe-tfn-s34",
+      "kind": "probe",
+      "description": "The exact catalog-listed TFN.S34 one-row probe hit the bounded helper's 15-second timeout; access/readability, content and compatibility remain unverified, not absent or unlicensed.",
+      "artifact_path": "probes/tfn_s34.json",
+      "sha256": "0871741fdea169fcdc38fa4475ee0db6cece6e85ab4c7e2afda461a877a7e878"
+    },
+    {
+      "id": "inspection-catalog-commands",
+      "kind": "inspection",
+      "description": "Structured history retains the actual bounded catalog probe argv, cwd, stdout/stderr, exit code, and each probe artifact hash.",
+      "artifact_path": "probes/catalog_probe_command_history_v2.json",
+      "sha256": "e858dedf049e342a4c11be0622b575fbe9e397e6d6b2f9a90070aa46ab867af8"
+    },
+    {
+      "id": "public-surveyreg-doc",
+      "kind": "public",
+      "description": "The official SAS/STAT 15.1 User's Guide identifies SURVEYREG; this establishes the required SAS/STAT component, not its installation here.",
+      "url": "https://documentation.sas.com/api/collections/pgmsascdc/9.4_3.4/docsets/statug/content/surveyreg.pdf?locale=en",
+      "checked_at": "2026-11-10",
+      "authority": "official",
+      "quote": "The SURVEYREG Procedure"
+    },
+    {
+      "id": "public-keep-option-doc",
+      "kind": "public",
+      "description": "The official SAS 9.4 reference states that an input KEEP= option makes only named variables available for processing; this supports adding RAND to the randomization sort's KEEP list in a working copy.",
+      "url": "https://documentation.sas.com/api/collections/pgmsascdc/9.4_3.5/docsets/ledsoptsref/content/ledsoptsref.pdf?locale=en",
+      "checked_at": "2026-11-10",
+      "authority": "official",
+      "quote": "only those variables that are listed after the KEEP= data set option are available for processing."
+    }
+  ],
+  "dependency_review": [],
+  "actions": [
+    {
+      "id": "action-acquire-prepared-tables",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req-idsum",
+        "req-stocknames",
+        "req-varset",
+        "req-s34type1",
+        "req-s34type3",
+        "req-mycompq",
+        "req-gvkeyperm",
+        "req-analysts",
+        "iss-prepared-inputs"
+      ],
+      "kind": "data_acquisition",
+      "description": "Obtain or identify compatible author-prepared input tables for the named mylib/inst consumers while retaining their separate schemas and exact table roles.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src-librefs",
+        "src-idlink",
+        "src-stocknames-fields",
+        "src-varset",
+        "src-13f",
+        "src-compustat",
+        "src-analysts",
+        "src-datasheet-origins"
+      ],
+      "edits": [],
+      "steps": [
+        "Provide compatible prepared tables for mylib.idsum, mylib.stocknames, mylib.varset, inst.s34type1, inst.s34type3, mylib.mycompq, mylib.gvkeyperm, and mylib.analysts; these are distinct supplied-code consumers and no compatible prepared data files are in the package.",
+        "Place the selected inputs under the corresponding mylib/ and inst/ run libraries after configuring writable working directories; preserve their original table names or document a direct alias in the working copy.",
+        "For each table, record the consumed fields, key, period and construction metadata from its actual prepared schema. Keep CoreLogic/property/profile/census provenance as conditional construction context when the compatible prepared analyst table is available; do not add those raw origins as mandatory extra inputs."
+      ],
+      "validation": [
+        "Before any author-code run, check the delivered table schemas against each route's expected_fields and confirm date/identifier coverage for the 2005–2009 workflow and any required pre-period reporter history.",
+        "Confirm that mylib.mycompq actually provides the source names FYEAR and YRQTR or preserve the corresponding unresolved mapping issue; do not silently substitute FYEARQ.",
+        "Confirm that inst.s34type1 and inst.s34type3 remain separately mapped to filing-level and holdings roles, and that the analyst table keys are ANALYSTID/YRQTR."
+      ]
+    },
+    {
+      "id": "action-verify-local-candidates",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req-stocknames",
+        "req-crsp-msf",
+        "req-crsp-msenames-direct",
+        "req-s34type1",
+        "req-s34type3",
+        "req-mycompq",
+        "req-gvkeyperm",
+        "iss-compustat-contract",
+        "iss-tfn-table-mapping"
+      ],
+      "kind": "data_preparation",
+      "description": "Assess the exact catalog-listed local candidates as alternative routes to prepared inputs, preserving the author-prepared route where local history, product compatibility or transformation is not established.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "catalog-resources",
+        "probe-crsp-msenames",
+        "probe-crsp-msf",
+        "probe-comp-fundq",
+        "probe-ccm-link",
+        "probe-tfn-s34",
+        "inspection-catalog-commands",
+        "src-compustat",
+        "src-13f"
+      ],
+      "edits": [],
+      "steps": [
+        "For CRSP.MSENAMES and CRSP.MSF, confirm required date/population coverage, source product and identifiers for the authored joins; use the catalogued paths and keep CRSP.MSENAMES available under the direct crsp.msenames reference.",
+        "For CRSP.CCMXPF_LINKTABLE, confirm link-date coverage and the authored linktype/linkprim selection before mapping it to mylib.gvkeyperm.",
+        "For COMP.FUNDQ, preserve the observed FYEARQ field and resolve the author FYEAR and YRQTR contract from supported prepared-source documentation before any field mapping.",
+        "For TFN.S34, resolve readable access through an allowed bounded metadata check and document how the combined table maps to s34type1 and s34type3, including typecode and reporter history; the timed-out probe does not establish absence or an access barrier.",
+        "Use CRSP.MSENAMES as a stocknames alternative only after confirming the same required effective-date/name history and identifier coverage."
+      ],
+      "validation": [
+        "A bounded readable file/column result alone does not verify date or population coverage; retain each route as unverified until its source product, fields, key and required history are supported.",
+        "Do not infer FYEAR/YRQTR construction, 13F table splitting, ownership units or security-history completeness from catalog field names."
+      ]
+    },
+    {
+      "id": "action-recover-crspm-source",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "iss-crspm-source"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the missing external crspm.sas producer and its actual interface before relying on the generated monthly CRSP table.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src-crspm",
+        "src-crsp-derive"
+      ],
+      "edits": [],
+      "steps": [
+        "Identify the exact author-supplied crspm.sas source and its documented dependencies/namespace; do not substitute an unverified routine.",
+        "Confirm that its supported interface accepts the supplied monthly MSF/MSENAMES variable lists, SHRCd filter, 2005–2009 dates and output name mylib.crsp_m.",
+        "Retain the complete recovered macro file and its provenance in the working project; do not create a standalone source or hash from Code.pdf extraction."
+      ],
+      "validation": [
+        "Before use, compare the macro's documented input/output contract with the exact call and downstream fields in src-crspm and src-crsp-derive.",
+        "Keep this source-closure issue unresolved until the producer and namespace are actually available and compatible."
+      ]
+    },
+    {
+      "id": "action-resolve-clustr-binding",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "iss-macro-name"
+      ],
+      "kind": "clarification",
+      "description": "Confirm the intended primary/interaction macro binding for the supplied %clustr calls before preparing a runnable working copy.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src-macro-definitions",
+        "src-clust3-definition",
+        "src-primary-analysis-calls",
+        "src-interaction-analysis-calls",
+        "src-randomization"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm whether the primary and interaction spelling %clustr is intended to bind to the supplied %macro clstr or to another author macro/alias.",
+        "Preserve the supplied %macro clust3 definition and the randomization macro's explicit %clstr calls while resolving the primary/interaction binding; do not add a guessed alias or silently rename calls.",
+        "Once the author-supported binding is established, apply only that supported name repair to the reflowed working copy and preserve the original Code.pdf."
+      ],
+      "validation": [
+        "Statically check that every primary, interaction and randomization call resolves to a supplied or recovered macro definition and retains its original arguments.",
+        "Keep the binding unresolved until the author-supported namespace is known."
+      ]
+    },
+    {
+      "id": "action-configure-working-copy",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "iss-path-configuration",
+        "iss-crsp-library-binding"
+      ],
+      "kind": "configuration",
+      "description": "Reflow the PDF-embedded SAS program into a working source file and configure coherent relative author-library roots plus the direct CRSP name-history libref.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "src-librefs",
+        "src-crspm",
+        "src-13f",
+        "probe-crsp-msenames",
+        "catalog-resources"
+      ],
+      "edits": [],
+      "steps": [
+        "Extract and reflow Code.pdf to a new working .sas file under an analysis/ run directory; preserve Code.pdf and record that the original program was embedded in a PDF container.",
+        "Use analysis/ as the working directory, bind MYLIB to a writable ./mylib run directory and INST to ./inst, and place the recovered external macro under ./macros after its source is obtained.",
+        "In the reflowed working copy only, replace the Windows library roots with the relative run paths and normalize the curly-quoted include to an ASCII-quoted relative path such as %INCLUDE \"macros/crspm.sas\"; keep the binary PDF unchanged.",
+        "Bind CRSP to ${ACCTREPL_SAS_ROOT}/crsp/a_stock for the direct CRSP.MSENAMES query, subject to host path visibility; do not assume this establishes the unknown external crspm macro's own library contract.",
+        "Keep the COMP.CCMXPF_LINKTABLE candidate's ${ACCTREPL_SAS_ROOT}/crsp/a_ccm path separate when preparing mylib.gvkeyperm; the CRSP.MSENAMES/MSF directory does not contain that separate library file."
+      ],
+      "validation": [
+        "Before a future separately authorized run, verify the relative working directories exist and MYLIB is writable, INST is readable, the CRSP.MSENAMES path resolves, and the recovered include path resolves.",
+        "Statically check all affected libname and include references after reflow; do not patch Code.pdf or insert absolute Dropbox workspace paths."
+      ]
+    },
+    {
+      "id": "action-fix-randomization-fields",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "iss-randomization-fields"
+      ],
+      "kind": "configuration",
+      "description": "Apply the two source-supported field fixes in the reflowed randomization working copy so the sort key and the later fixed-effect/cluster variables survive the generated tables.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "src-randomization",
+        "src-panel-join-sequence",
+        "public-keep-option-doc"
+      ],
+      "edits": [],
+      "steps": [
+        "In the PROC SORT input KEEP= list at the supplied randomization block, retain the existing variables and add RAND: KEEP=ANALYSTZIP ANALYSTID YRQTR RAND, because RAND is generated immediately above and used in BY ANALYSTZIP RAND.",
+        "In the final&i SELECT of the reflowed copy, add a.GVKEY and a.EMPCBSA to the selected columns so final1/final2 contain the variables passed to cluster=GVKEY ANALYSTID and fe=EMPCBSA YRQTR in regression(2).",
+        "Leave the random assignment, shuffle keys, downstream DROP RAND, source order and original Code.pdf unchanged."
+      ],
+      "validation": [
+        "Statically verify RAND is available to PROC SORT's BY statement and remains dropped after the shuffled merge.",
+        "Statically verify final1/final2 expose GVKEY and EMPCBSA with the names consumed by the later regression calls; do not run a trial regression."
+      ]
+    },
+    {
+      "id": "action-confirm-sas-runtime",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sw-sas",
+        "sw-sasstat"
+      ],
+      "kind": "software_setup",
+      "description": "Confirm the existing SAS runtime and SAS/STAT component availability through approved local metadata before any separately authorized execution.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "probe-environment",
+        "src-surveyreg",
+        "public-surveyreg-doc"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the approved SAS version/which/help or installed-component metadata checks to confirm the configured runtime without launching the author program; record the prior TKELS initialization failure as runtime unverified, not as a license denial.",
+        "Confirm SAS/STAT availability for the active PROC SURVEYREG path in the supplied CLUST3 macro; do not add SAS/ETS as an active dependency solely for the dormant instruments branch.",
+        "If the existing runtime or required component is not available, arrange an approved compatible local runtime/component before a separate run; do not install packages or infer entitlement from a startup error."
+      ],
+      "validation": [
+        "Record the exact tool/metadata result and version/component status; no author-code startup, compilation, syntax trial or estimation belongs in this assessment.",
+        "Keep SAS/STAT unverified until the component itself is confirmed, even though official documentation identifies PROC SURVEYREG."
+      ]
+    },
+    {
+      "id": "action-ordered-run-procedure",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req-idsum",
+        "req-stocknames",
+        "req-varset",
+        "req-crsp-msf",
+        "req-crsp-msenames-direct",
+        "req-s34type1",
+        "req-s34type3",
+        "req-mycompq",
+        "req-gvkeyperm",
+        "req-analysts",
+        "iss-prepared-inputs",
+        "iss-crspm-source",
+        "iss-macro-name",
+        "iss-randomization-fields",
+        "iss-path-configuration",
+        "iss-crsp-library-binding",
+        "iss-compustat-contract",
+        "iss-tfn-table-mapping"
+      ],
+      "kind": "run_procedure",
+      "description": "Once all required inputs, source bindings and working-copy corrections are resolved, follow the supplied producer-consumer order and retain every active primary, interaction and randomization branch.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src-idlink",
+        "src-ibes-fallback",
+        "src-varset",
+        "src-crspm",
+        "src-crsp-derive",
+        "src-13f",
+        "src-ownership-to-io",
+        "src-compustat",
+        "src-panel-join-sequence",
+        "src-primary-analysis-calls",
+        "src-interaction-analysis-calls",
+        "src-interaction-owner-calls",
+        "src-interaction-analysis-calls-final",
+        "src-randomization",
+        "src-append-call",
+        "src-clstr-ols-branch",
+        "src-clstr-iv-branch",
+        "src-proc-reg-syslin"
+      ],
+      "edits": [],
+      "steps": [
+        "From mylib.idsum and mylib.stocknames, build the supplied identifier-link products using the CUSIP path and the OFTIC/ticker fallback; merge the resulting mylib.idlink with mylib.varset on PERMNO and the authored score condition to produce all1.",
+        "Use the recovered external %crspm routine with the documented CRSP monthly inputs to produce mylib.crsp_m; follow the supplied CRSP normalization to quarter-end, adjusted price/shares/market capitalization and the quarter-end CRSP work table.",
+        "From inst.s34type1, build first_vint reporter flags/counts; join inst.s34type3 into holdings_v1, map historical CUSIP through crsp.msenames into holdings_v2, join to quarter-end CRSP to make holdings, aggregate io_metrics, and merge with CRSP to produce io/ior. Retain the earlier reporter history the first/last logic consumes.",
+        "Run the supplied WIN macro on mylib.mycompq to create mycompqw and winsorize ATQ/LTQ/CEQQ before the FYEAR 2005–2009 and format filters; join through mylib.gvkeyperm to make all2, join all2 with all1 to create all3 and BM, join ownership io to create all4, and join mylib.analysts on ANALYSTID/YRQTR to create all5.",
+        "After the author-supported macro name binding is resolved, execute the eight supplied primary %clustr calls on all5, then create all5_int from the five housing interactions and retain all ten paired errors/bias interaction calls.",
+        "Retain the supplied randomization sequence after the main/interaction source block: %randsamp(2) produces final1/final2, %regression(2) estimates those outputs, and %append(2) assembles them. Preserve the supplied two-iteration, unseeded behavior exactly.",
+        "Keep the generic instruments branch present as supplied. The provided selected calls use the empty-instruments path; do not add separate IV data or active SAS/ETS dependencies without an actual selected call."
+      ],
+      "validation": [
+        "Before any separately authorized execution, statically trace each producer's output names and keys into the next consumer, including all1, mylib.crsp_m/crsp_m, holdings/io, all2 through all5, all5_int and final1/final2.",
+        "Resolve the unavailable CRSP macro, the direct CRSP libref, the %clustr binding, the Compustat field contract, 13F type mapping, missing prepared inputs and SAS/STAT runtime status before treating the pipeline as runnable.",
+        "Do not execute, compile, import, syntax-test or estimate the author program as part of this assessment."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Code.pdf was read through all 1,786 cached lines. Its native SAS ID-linking, CRSP, 13F, Compustat, analyst-panel, primary, interaction and randomization branches were reviewed despite zero checklist IDs in the static audit. Original PDF pages 4, 30 and 31 were rendered to verify the INCLUDE glyph and macro spellings.",
+    "The exact registered catalog was used for bounded one-row CRSP, Compustat and CCM link probes. The local TFN.S34 one-row probe timed out at 15 seconds and remains unverified; this is not evidence of absence or entitlement denial. Historical coverage, prepared-table contracts and source mappings remain unverified where specified by the routes/issues.",
+    "Randomization fidelity context: the supplied code calls randsamp(2), regression(2), and append(2) with unseeded RAND; the online appendix describes 10,000 iterations. This selected scope follows the supplied code count and behavior; the paper-side discrepancy is recorded without requiring clarification or changing the count/seed.",
+    "No author program was executed, imported, compiled, syntax-tested or estimated. The SAS startup TKELS failure leaves runtime/component status unverified and is not interpreted as license denial. The output is a static proposal; no execution is certified."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "51667be13eed65ec9247a01712f2305ee2cdf6b103eb9a75655b821b10ea28d7",
+    "applied": false
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "paper_id": "W3121890812",
+  "attempt": 2,
+  "required_commands": [
+    "esttab",
+    "estpost",
+    "estadd"
+  ],
+  "source_datasets": [
+    "COMP.FUNDA",
+    "CRSP.CCMXPF_LINKTABLE",
+    "CRSP.DSF"
+  ],
+  "samples": [
+    {
+      "sample_id": "book_tax_firm_years",
+      "sas_file": "data/book_tax_firm_years.sas7bdat",
+      "dta_file": "data/book_tax_firm_years/reg.dta",
+      "key": [
+        "gvkey",
+        "fyear"
+      ],
+      "description": "1994–2000 U.S.-incorporated, nonfinancial/nonutility Compustat firm-years with an active primary CCM link and CRSP daily data in the trailing fiscal-year interval. Complete PTBI and temporary-BTD construction, positive current PTBI, no observed negative current tax under TXT-TXDI, stable adjacent-year currency, and no observed positive TLCF. Unknown current-tax and TLCF status is retained and flagged, not coded as zero. One selected final report per GVKEY/fiscal-year label; includes leads/lags needed for average-assets scaling."
+    }
+  ],
+  "fits": [
+    {
+      "model_id": "h1_pretax_earnings_persistence",
+      "result_set_id": "table3_panel_b",
+      "cell_id": "table3_panel_b",
+      "table_basename": "tables/table3_panel_b",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "Equation (2) is one full-sample interacted OLS fit; SmallBTD is the reference group, with no industry controls, weights, or fixed effects.",
+        "Compustat legacy items #6/#16/#49/#50/#52/#170/#269/#270 map to AT/TXT/MII/TXDI/TLCF/PI/TXDFED/TXDFO, respectively, verified against cited provider pages and current catalog labels.",
+        "Current tax is computed as TXT-TXDI per the paper's Table 2 note. Only observed negative values are excluded; cases with missing formula inputs are retained and flagged as unknown under a stated best-effort screen policy. TXC is compared with the item formula as a field check.",
+        "UPD=3 is used as a provider-defined final-report status, not a paper-prescribed sample criterion; 5,526 UPD=1 and 535 UPD=2 rows are removed from 109,696 standard rows in fiscal labels 1993–2001.",
+        "Average total assets is not precisely timed in the paper. The build uses the mean of AT at t-1 and t for variables at t, and t plus t+1 for PTBI at t+1.",
+        "The paper does not give numeric SIC ranges; financial services are SIC 6000–6999 and utilities are SIC 4900–4999.",
+        "CRSP intersection uses time-valid CCM links with LINKPRIM P/C and LINKTYPE LC/LU, plus a CRSP daily record in the 12 months ending at DATADATE; exact author link rules are unreported.",
+        "The Compustat NOL identifier is unresolved. Observed positive TLCF is treated as an identified NOL; missing TLCF remains unclassified and is not set to zero.",
+        "Currency codes must be observed and stable across t-1, t, and t+1. Ratios remain in the reporting currency because numerator and denominator share units; changing-currency periods are excluded without conversion.",
+        "Scaled PTBI at t and t+1 and scaled temporary BTD use pooled 1st/99th percentile cutoffs from the eligible analysis sample. The paper does not specify pooled versus year-specific cutoffs.",
+        "The paper does not name a covariance correction. Stata conventional OLS standard errors and two-tailed p-values are used; an F-test compares the two PTBI interaction slopes."
+      ],
+      "blocked_reason": null
+    }
+  ],
+  "limitations": [
+    "The local current-vintage source build yields 37,521 CRSP-intersection firm-years before accounting screens, versus 47,507 reported in the paper; the final sample is 15,609 firm-years and 4,572 firms versus 14,106 and 4,048 reported. Local attrition differs across screens, including its narrow Equation (2) missing-variable screen; the paper does not enumerate every field behind its missing-regression-variable count. No specific data-vintage cause is established.",
+    "Local Table 3 Panel B estimates have N=15,609, adjusted R-squared 0.2616, interactions -0.0904 (t=-4.09) and -0.2239 (t=-8.37), and interaction-equality F=20.41 (p=0.0000063). Source values are N=14,106, adjusted R-squared 0.272, interactions -0.100 (t=-4.56) and -0.212 (t=-7.99), and equality F=15.01 (p=0.0001). The local intercept is -0.0098 (t=-5.20) versus -0.003 (t=-1.62). These differences are reported without sample or coefficient tuning.",
+    "The local TLCF field is missing for 5,687 final observations; they are retained as unknown NOL status rather than set to zero. Observed positive TLCF (3,912 rows) is used as a best-effort NOL screen because the current catalog exposes no separate verified NOL flag. The source screen is Compustat-identified NOL, and its current mapping is unresolved.",
+    "Paper-defined current tax is item #16 less item #50 (TXT-TXDI). The direct TXC field differs from this formula in 3,627 of 69,578 observed comparison rows (5.21%) at a $0.0001 million tolerance. The formula is used; 29 final observations with missing formula inputs are retained with unknown status under a documented best-effort policy because the paper does not state how missing screen values are handled.",
+    "Exact average-assets timing, numeric SIC ranges, current-tax unknown handling, NOL identification, and CRSP link selection are not fully specified. Currency codes must be stable from t-1 through t+1; changing-currency rows are excluded and retained ratios are unitless. The local provider data are current-catalog records; historical population coverage is unverified. The paper does not identify a covariance correction, so conventional OLS inference is used."
+  ]
+}

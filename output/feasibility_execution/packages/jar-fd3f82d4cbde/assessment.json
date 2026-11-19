@@ -1,0 +1,1885 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-fd3f82d4cbde",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 58/Issue 5/12336 - The-effect-of-managerial-litigation-risk-on-earnings-warnings-Evidence-from-a-natural-experiment/hlyz-datasheet-code-and-identifiers.zip",
+        "sha256": "680c595dccb7b279426241548e30c4bfdff4e9cd0fdf66a892ffe94824463dfc"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "72c7e913b48c946af36dad0c8bcf8dbc3eaa165c588c42ec6a9e21e1f4cccab7"
+  },
+  "title": "The effect of managerial litigation risk on earnings warnings: Evidence from a natural experiment",
+  "doi": "10.1111/1475-679X.12336",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Supplied SAS raw-to-matched-sample workflow, retaining the in-source Stata pscore producer because active SAS imports warn_pscore.dta; ends at the SAS match_sample.dta export. The datasheet-described paper-wide Stata analyses are not supplied as code and are contextual.",
+      "entry_points": [
+        "HLYZ Codes.sas"
+      ],
+      "requirement_ids": [
+        "R-COMPQ",
+        "R-CCM",
+        "R-CRSP",
+        "R-IBLINK",
+        "R-ANALYSTDETAIL",
+        "R-IO",
+        "R-SEG",
+        "R-COMPA",
+        "R-CIG",
+        "R-IBSUM",
+        "R-HEADER",
+        "R-CIKLINK",
+        "R-STATEVALID",
+        "R-UDSTATE"
+      ],
+      "software_ids": [
+        "SW-SAS",
+        "SW-STATA",
+        "SW-FFIND",
+        "SW-PSMATCH2"
+      ],
+      "issue_ids": [
+        "I-INPUT-CONTRACT",
+        "I-WINSOR",
+        "I-PSCORE-HANDOFF",
+        "I-PATHS"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E-OVERVIEW",
+        "E-ROOT",
+        "E-DATASHEET",
+        "E-PSCORE",
+        "E-MATCHOUT",
+        "E-FIRMLIST",
+        "E-ENV",
+        "E-QTR-PRODUCER",
+        "E-FIRSTCALL-PRODUCER",
+        "E-ROA-HISTORY",
+        "E-IO-HISTORY",
+        "E-LITRISK-HISTORY",
+        "E-CATALOG-LOOKUPS",
+        "E-SRAF-PUBLIC",
+        "E-SW-FFIND",
+        "E-SW-PSMATCH2",
+        "E-WORKFLOW-TRACE",
+        "E-WORKFLOW-TRACE-V4",
+        "E-WORKFLOW-TRACE-V5",
+        "E-CIG-PASS",
+        "E-ANALYST1-KEEP",
+        "E-CIG-SELECT",
+        "E-CIG-GVKEY-CONSUMER"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R-COMPQ",
+      "kind": "data",
+      "description": "Compustat quarterly fundamentals used for quarterly controls, one-quarter lags, analyst-surprise dates and the prior 3–60 month ROA-dispersion window; code uses SIC from this input.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-COMPQ-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS Compustat quarterly fundamentals (author filename compustat_fundq.sas7bdat)",
+          "description": "Author-named prepared input is required. Local COMP.FUNDQ has the core quarterly fields but lacks SIC; COMP.COMPANY has SIC, but its merge into the quarterly input and required history are unresolved.",
+          "evidence_ids": [
+            "E-COMPQ"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyearq",
+            "fqtr",
+            "datadate",
+            "ibq",
+            "atq",
+            "sic",
+            "prccq",
+            "cshoq",
+            "ceqq",
+            "ajexq",
+            "rdq",
+            "aqaq"
+          ],
+          "expected_period": "Code filters 1990–2012, uses adjacent-quarter lags and prior ROA from 3–60 months; final sample selects 1995–2010."
+        },
+        {
+          "id": "R-COMPQ-COMMON-PAIR",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.FUNDQ plus COMP.COMPANY under ${ACCTREPL_SAS_ROOT}",
+          "description": "One-row probes confirm quarterly fundamentals fields and company SIC separately. A suitable merge to supply the code's SIC field is ordinary preparation; history and field compatibility still require validation.",
+          "evidence_ids": [
+            "E-PROBE-COMPQ",
+            "E-PROBE-COMPANY",
+            "E-FROZEN-CATALOG"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyearq",
+            "fqtr",
+            "datadate",
+            "ibq",
+            "atq",
+            "prccq",
+            "cshoq",
+            "ceqq",
+            "ajexq",
+            "rdq",
+            "aqaq",
+            "sic"
+          ],
+          "expected_period": "1990–2012 source filter plus quarterly lag and 3–60 month ROA lookback; history and SIC mapping are unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-CCM",
+      "kind": "data",
+      "description": "Dated GVKEY–PERMNO crosswalk used for quarterly and annual Compustat records.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-CCM-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS CCMXPF link history (ccmxpf_linktable.sas7bdat)",
+          "description": "Common CCMXPF candidate is one-row readable with the expected dated link fields and USEDFLAG (case-insensitive); required effective-link history and period coverage are unverified.",
+          "evidence_ids": [
+            "E-CCM"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "lpermno",
+            "linkdt",
+            "linkenddt",
+            "linktype",
+            "usedflag"
+          ],
+          "expected_period": "Effective dated links for Compustat quarterly/annual records used in 1990–2012 construction and later sample."
+        },
+        {
+          "id": "R-CCM-COMMON",
+          "type": "local",
+          "status": "unverified",
+          "location": "CRSP.CCMXPF_LINKTABLE at ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+          "description": "The bounded probe confirms GVKEY, LPERMNO, LINKDT, LINKENDDT, LINKTYPE and USEDFLAG. It does not verify valid link history or sample-period coverage.",
+          "evidence_ids": [
+            "E-PROBE-CCM",
+            "E-CATALOG-LOOKUPS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "lpermno",
+            "linkdt",
+            "linkenddt",
+            "linktype",
+            "USEDFLAG"
+          ],
+          "expected_period": "Dated links spanning the 1990–2012 source constructions and 1995–2010 sample; historical coverage remains unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-CRSP",
+      "kind": "data",
+      "description": "CRSP monthly stock/market returns, volume and shares outstanding used for quarterly abnormal returns and annual litigation-risk proxies.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-CRSP-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS CRSP monthly stock file (crsp_msf.sas7bdat)",
+          "description": "Author input must provide PERMNO/DATE/RET/VWRETD for quarterly abnormal returns and VOL/SHROUT/CFACSHR for annual risk. Common MSF lacks VWRETD; common MSI contains DATE/VWRETD.",
+          "evidence_ids": [
+            "E-CRSP"
+          ],
+          "expected_fields": [
+            "permno",
+            "date",
+            "ret",
+            "vwretd",
+            "vol",
+            "shrout",
+            "cfacshr"
+          ],
+          "expected_period": "Monthly current and two prior months for quarterly abnormal returns, prior-quarter abnormal return, and fiscal-year CRSP risk windows from prior datadate or a 12-month fallback through current datadate; full coverage unresolved."
+        },
+        {
+          "id": "R-CRSP-MSF-MSI",
+          "type": "local",
+          "status": "unverified",
+          "location": "CRSP.MSF plus CRSP.MSI under ${ACCTREPL_SAS_ROOT}, joined by DATE",
+          "description": "Bounded probes show MSF stock fields and separate MSI DATE/VWRETD. Joining standard CRSP monthly products by DATE is a preparation step; key compatibility and required monthly history remain to verify.",
+          "evidence_ids": [
+            "E-PROBE-CRSP-MSF",
+            "E-PROBE-CRSP-MSI",
+            "E-FROZEN-CATALOG"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "DATE",
+            "RET",
+            "VOL",
+            "SHROUT",
+            "CFACSHR",
+            "VWRETD"
+          ],
+          "expected_period": "Quarterly current/prior return windows and annual fiscal-year CRSP measures for the supplied sample history; unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-IBLINK",
+      "kind": "data",
+      "description": "IBES–CRSP ticker/PERMNO linking table used to attach analyst identifiers.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-IBLINK-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS author sample-code linking output (link_ibes_crsp_2016.sas7bdat)",
+          "description": "The author-named 2016 sample-code link output is sorted by ticker/score and reduced to one row per ticker. Required ticker/PERMNO mapping and study-period coverage remain unverified.",
+          "evidence_ids": [
+            "E-IBLINK"
+          ],
+          "expected_fields": [
+            "ticker",
+            "permno",
+            "score"
+          ],
+          "expected_period": "Author names a 2016 link output; date-effective mapping and applicable study-period coverage are unresolved."
+        },
+        {
+          "id": "R-IBLINK-COMMON",
+          "type": "local",
+          "status": "unverified",
+          "location": "WRDSAPPS.IBCRSPHIST at ${ACCTREPL_SAS_ROOT}/wrdsapps/linking/iclink/ibcrsphist.sas7bdat",
+          "description": "Bounded probe confirms TICKER/PERMNO/SCORE and table dates sdate/edate; period coverage and compatibility with the code's one-row-per-ticker selection remain unverified.",
+          "evidence_ids": [
+            "E-PROBE-IBLINK",
+            "E-CATALOG-LOOKUPS"
+          ],
+          "expected_fields": [
+            "TICKER",
+            "PERMNO",
+            "SCORE"
+          ],
+          "expected_period": "Ticker/PERMNO mapping used with analyst forecasts across required sample history; date-effective selection is unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-ANALYSTDETAIL",
+      "kind": "data",
+      "description": "Dated IBES analyst detail forecast and actual values used for earnings-surprise construction.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-ANALYSTDETAIL-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS IBES analyst detail (analyst_detail_072718.sas7bdat)",
+          "description": "A local IBES US detail candidate has the requested fields, but the dated forecast/actual coverage required by the RDQ window remains unverified.",
+          "evidence_ids": [
+            "E-ANALYSTDETAIL"
+          ],
+          "expected_fields": [
+            "ticker",
+            "measure",
+            "FPI",
+            "fpedats",
+            "anndats",
+            "value",
+            "estimator",
+            "analys",
+            "actual"
+          ],
+          "expected_period": "EPS FPI 6–9; forecast announcement dates strictly after prior RDQ and no later than prior RDQ + 30 days."
+        },
+        {
+          "id": "R-ANALYSTDETAIL-COMMON",
+          "type": "local",
+          "status": "unverified",
+          "location": "IBES.DET_EPSUS at ${ACCTREPL_SAS_ROOT}/ibes/det_epsus.sas7bdat",
+          "description": "Bounded probe confirms requested detail columns; required announcement and forecast-date history remain unverified.",
+          "evidence_ids": [
+            "E-PROBE-IBES-DETAIL",
+            "E-CATALOG-LOOKUPS"
+          ],
+          "expected_fields": [
+            "TICKER",
+            "MEASURE",
+            "FPI",
+            "FPEDATS",
+            "ANNDATS",
+            "VALUE",
+            "ESTIMATOR",
+            "ANALYS",
+            "ACTUAL"
+          ],
+          "expected_period": "EPS FPI 6–9 and announcement dates in the code’s RDQ-lag window; unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-IO",
+      "kind": "data",
+      "description": "Prepared WRDS institutional-ownership input joined to Compustat/CRSP quarter controls.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-IO-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS sample-code output (io_wrds.sas7bdat)",
+          "description": "Prepared WRDS institutional-ownership output is required. Source comment documents a WRDS construction from holdings; exact ratio, identifiers and history are not verified.",
+          "evidence_ids": [
+            "E-IO"
+          ],
+          "expected_fields": [
+            "permno",
+            "rdate",
+            "io"
+          ],
+          "expected_period": "Report month index satisfies current monthindex >= report monthindex > current monthindex−3; code forms one-quarter lag."
+        },
+        {
+          "id": "R-IO-13F-CANDIDATE",
+          "type": "local",
+          "status": "unverified",
+          "location": "TFN.S34 candidate at ${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat",
+          "description": "The frozen catalog lists 13F holdings fields including CUSIP, report dates, shares and ticker, but not the prepared PERMNO/io contract. Its bounded one-row probe timed out. The WRDS code and a validated identifier/ratio construction would be needed; the timeout is not an access barrier.",
+          "evidence_ids": [
+            "E-PROBE-13F",
+            "E-CATALOG-LOOKUPS",
+            "E-FROZEN-CATALOG"
+          ],
+          "expected_fields": [
+            "rdate",
+            "cusip",
+            "shares",
+            "shrout1",
+            "shrout2",
+            "ticker"
+          ],
+          "expected_period": "Holdings/report history and quarter-aligned ownership ratios required by code; unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-SEG",
+      "kind": "data",
+      "description": "Compustat segment-history input used for business/geographic segment counts.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-SEG-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS Compustat segment merged product (wrds_segmerged.sas7bdat)",
+          "description": "The local merged-segment candidate has requested columns; source-date selection, segment contents and current/prior fiscal-year history remain unverified.",
+          "evidence_ids": [
+            "E-SEG"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "stype",
+            "srcdate",
+            "sics1",
+            "sid"
+          ],
+          "expected_period": "Rows are summarized to fiscal year and joined to current and previous fiscal years."
+        },
+        {
+          "id": "R-SEG-COMMON",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMPSEG.WRDS_SEGMERGED at ${ACCTREPL_SAS_ROOT}/comp/d_seghist/wrds_segmerged.sas7bdat",
+          "description": "The bounded probe confirms GVKEY, DATADATE, STYPE, SRCDATE, SICS1 and SID; required segments and fiscal-year coverage are unverified.",
+          "evidence_ids": [
+            "E-PROBE-SEGMENTS",
+            "E-CATALOG-LOOKUPS"
+          ],
+          "expected_fields": [
+            "GVKEY",
+            "DATADATE",
+            "STYPE",
+            "SRCDATE",
+            "SICS1",
+            "SID"
+          ],
+          "expected_period": "Current and previous fiscal-year segment counts; unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-COMPA",
+      "kind": "data",
+      "description": "Compustat annual fundamentals used for litigation-risk inputs and incorporation state.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-COMPA-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS Compustat annual fundamentals (compustat_funda.sas7bdat)",
+          "description": "The code also filters consolidation/format/population source/currency. Common FUNDA has those accounting fields but lacks incorp/state; COMPANY supplies them, but a historical GVKEY/date mapping into annual rows is not established.",
+          "evidence_ids": [
+            "E-FUNDA"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "datadate",
+            "consol",
+            "indfmt",
+            "datafmt",
+            "popsrc",
+            "curcd",
+            "sich",
+            "at",
+            "sale",
+            "incorp",
+            "state"
+          ],
+          "expected_period": "Annual filter 1990–2012; sales/assets use prior-year lags and annual risk uses fiscal-year CRSP history; incorporation/state history unresolved."
+        },
+        {
+          "id": "R-COMPA-COMMON-PAIR",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.FUNDA plus COMP.COMPANY under ${ACCTREPL_SAS_ROOT}",
+          "description": "Bounded probes show annual accounting/filter fields and COMPANY incorporation/state fields separately. Joining state to dated annual records is ordinary preparation, but historical state values/coverage remain unverified.",
+          "evidence_ids": [
+            "E-PROBE-FUNDA",
+            "E-PROBE-COMPANY",
+            "E-FROZEN-CATALOG"
+          ],
+          "expected_fields": [
+            "GVKEY",
+            "FYEAR",
+            "DATADATE",
+            "CONSOL",
+            "INDFMT",
+            "DATAFMT",
+            "POPSRC",
+            "CURCD",
+            "SICH",
+            "AT",
+            "SALE",
+            "INCORP",
+            "STATE"
+          ],
+          "expected_period": "Annual construction from 1990–2012 with prior-year sales/assets and state histories used in the 1995–2010 sample; unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-CIG",
+      "kind": "data",
+      "description": "First Call guidance/earnings-warning input used to define warning news.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-CIG-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS First Call CIG product (cig.sas7bdat)",
+          "description": "Author-named CIG input is required by the supplied source and must supply GVKEY: the a1 CIG record is selected through the join, the IBES summary projection omits GVKEY, and later a3 joins to Compustat dates on a.gvkey. No crosswalk is supplied or inferred. The catalogued IBES.DET_GUIDANCE candidate does not establish this contract.",
+          "evidence_ids": [
+            "E-FIRSTCALL",
+            "E-CIG-PASS",
+            "E-ANALYST1-KEEP",
+            "E-CIG-SELECT",
+            "E-CIG-GVKEY-CONSUMER"
+          ],
+          "expected_fields": [
+            "cusipg",
+            "periodicity",
+            "fpe",
+            "anndate",
+            "data_type",
+            "CIGCODEQ",
+            "est_1",
+            "est_2",
+            "gvkey"
+          ],
+          "expected_period": "Quarterly guidance periods/announcement dates joined to summary forecasts and Compustat dates; vintage/history unresolved."
+        },
+        {
+          "id": "R-CIG-IBES-GUIDANCE-CANDIDATE",
+          "type": "local",
+          "status": "unverified",
+          "location": "IBES.DET_GUIDANCE at ${ACCTREPL_SAS_ROOT}/ibes/guidance/det_guidance.sas7bdat",
+          "description": "Frozen catalog lists guidance fields including ticker, pdicity, measure, range_desc, guidance_code, anndats, val_1, val_2, prd_yr and prd_mon, with related extension/ID tables. These do not establish the CIG contract: CUSIPG/GVKEY, FPE mapping, CIGCODEQ flag semantics, estimate-field mapping and historical coverage are unresolved. The WRDS/LSEG page is commercial product metadata, not a public dataset route.",
+          "evidence_ids": [
+            "E-IBES-GUIDANCE-CATALOG",
+            "E-IBES-GUIDANCE-PAGE"
+          ],
+          "expected_fields": [
+            "ticker",
+            "pdicity",
+            "measure",
+            "range_desc",
+            "guidance_code",
+            "anndats",
+            "val_1",
+            "val_2",
+            "prd_yr",
+            "prd_mon"
+          ],
+          "expected_period": "Guidance/forecast announcement and fiscal-period history needed for quarterly warning construction; coverage and mapping unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-IBSUM",
+      "kind": "data",
+      "description": "IBES US summary EPS forecasts used to classify good/bad news.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-IBSUM-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS IBES US summary EPS (analyst_usummary_eps.sas7bdat)",
+          "description": "Active IBES US summary EPS input; local STATSUM_EPSUS has the requested columns, while forecast-date coverage and field semantics remain unverified.",
+          "evidence_ids": [
+            "E-FIRSTCALL"
+          ],
+          "expected_fields": [
+            "cusip",
+            "ticker",
+            "cname",
+            "fiscalp",
+            "statpers",
+            "medest",
+            "meanest",
+            "stdev",
+            "fpedats"
+          ],
+          "expected_period": "STATPERS forecast records before First Call announcement for matching CUSIP/FPE/periodicity."
+        },
+        {
+          "id": "R-IBSUM-COMMON",
+          "type": "local",
+          "status": "unverified",
+          "location": "IBES.STATSUM_EPSUS at ${ACCTREPL_SAS_ROOT}/ibes/statsum_epsus.sas7bdat",
+          "description": "Bounded probe confirms summary forecast fields; required STATPERS history before First Call announcement dates remains unverified.",
+          "evidence_ids": [
+            "E-PROBE-IBES-SUMMARY",
+            "E-CATALOG-LOOKUPS"
+          ],
+          "expected_fields": [
+            "CUSIP",
+            "TICKER",
+            "CNAME",
+            "FISCALP",
+            "STATPERS",
+            "MEDEST",
+            "MEANEST",
+            "STDEV",
+            "FPEDATS"
+          ],
+          "expected_period": "Forecast STATPERS records before the First Call announcement date; unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-HEADER",
+      "kind": "data",
+      "description": "Augmented 10-X header CSV with incorporation, business-address state, report-period date and CIK.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-HEADER-SRAF",
+          "type": "public",
+          "status": "unverified",
+          "location": "Official SRAF 10-X Header Data page: https://sraf.nd.edu/sec-edgar-data/10-x-header-data/",
+          "description": "Official SRAF page advertises a current CSV. Current field names differ from some author names; field mapping, CIK selection, duplicate handling and coverage across the needed report dates remain unresolved. Local LM10X and SEC filings are not established substitutes.",
+          "evidence_ids": [
+            "E-SRAF-PUBLIC",
+            "E-HEADER",
+            "E-PROBE-LM10X",
+            "E-FROZEN-CATALOG"
+          ],
+          "expected_fields": [
+            "cik",
+            "state_of_incorp",
+            "ba_state",
+            "conf_per_rpt"
+          ],
+          "expected_period": "Historical header records for the author-named 1994–2017 product and annual intervals used in the 1995–2010 sample; mapping and history unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-CIKLINK",
+      "kind": "data",
+      "description": "Dated WRDS SEC Analytics Suite CIK–GVKEY crosswalk used to map header observations.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-CIKLINK-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS SEC Analytics GVKEY–CIK link (wrds_cik_gvkey_link_2017.sas7bdat)",
+          "description": "Code requires CIK/GVKEY and datadate1/datadate2 interval fields. Local WCIKLINK_GVKEY has CIK/GVKEY and SEC/link start/end fields instead; intended interval mapping and historical coverage cannot be inferred.",
+          "evidence_ids": [
+            "E-CIKLINK",
+            "E-DATASHEET"
+          ],
+          "expected_fields": [
+            "cik",
+            "gvkey",
+            "datadate1",
+            "datadate2"
+          ],
+          "expected_period": "2017-named dated link file; code requires links spanning historical filing dates; interval coverage/version unresolved."
+        },
+        {
+          "id": "R-CIKLINK-COMMON",
+          "type": "local",
+          "status": "unverified",
+          "location": "WRDSSEC.WCIKLINK_GVKEY at ${ACCTREPL_SAS_ROOT}/sec/common/wciklink_gvkey.sas7bdat",
+          "description": "The bounded probe confirms CIK, GVKEY and alternative SEC/link start/end date fields; the author’s datadate1/datadate2 mapping and historical date coverage remain unresolved.",
+          "evidence_ids": [
+            "E-PROBE-CIKLINK",
+            "E-CATALOG-LOOKUPS",
+            "E-FROZEN-CATALOG"
+          ],
+          "expected_fields": [
+            "CIK",
+            "GVKEY",
+            "SEC_START_DATE",
+            "SEC_END_DATE",
+            "LINK_START_DATE",
+            "LINK_END_DATE"
+          ],
+          "expected_period": "Dated links effective across the report periods in the author's 1994–2017 header input; date-pair interpretation and coverage unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-STATEVALID",
+      "kind": "data",
+      "description": "Author state-name validation lookup for SEC header fields.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-STATEVALID-WRDS",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author all_state_name_dummy.sas7bdat (not packaged; availability unknown)",
+          "description": "The active source requires this author lookup; bounded catalog lookup did not identify its alias, which does not establish unavailability. Exact rows/values remain required.",
+          "evidence_ids": [
+            "E-STATELOOKUP"
+          ],
+          "expected_fields": [
+            "state",
+            "dummy"
+          ],
+          "expected_period": "All state names used in header validation; author file/content and exact list unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-UDSTATE",
+      "kind": "data",
+      "description": "State/event-year lookup used to construct treatment and post indicators.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "R-UDSTATE-WRDS",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author ud_state_list.sas7bdat (not packaged; availability unknown)",
+          "description": "The active source requires this author lookup; bounded catalog lookup did not identify its alias, which does not establish unavailability. Exact rows/values remain required.",
+          "evidence_ids": [
+            "E-UDLIST"
+          ],
+          "expected_fields": [
+            "state",
+            "year"
+          ],
+          "expected_period": "Event years required for states in the 1990–2012 construction/final 1995–2010 sample; exact state/year rows unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW-SAS",
+      "name": "SAS",
+      "status": "unverified",
+      "description": "SAS 9.4 is required for active DATA/PROC SQL/SORT/MEANS/IMPORT/EXPORT and WINSOR. Existing path failed TKELS initialization; this does not prove a missing license.",
+      "evidence_ids": [
+        "E-ENV"
+      ]
+    },
+    {
+      "id": "SW-STATA",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 is available and required for the separate pscore stage; author release and DTA handoff behavior remain unverified.",
+      "evidence_ids": [
+        "E-ENV"
+      ]
+    },
+    {
+      "id": "SW-FFIND",
+      "name": "ffind",
+      "status": "available",
+      "description": "The pscore stage calls ffind; tiny probe finds it in Stata 18, with release behavior unverified.",
+      "evidence_ids": [
+        "E-PSCORE",
+        "E-SW-FFIND"
+      ]
+    },
+    {
+      "id": "SW-PSMATCH2",
+      "name": "psmatch2",
+      "status": "preparation_required",
+      "description": "psmatch2 is not found on checked default/shared adopaths; no installation or estimator run was attempted.",
+      "evidence_ids": [
+        "E-PSCORE",
+        "E-SW-PSMATCH2"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "I-INPUT-CONTRACT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "data_contract",
+      "description": "The 14 external reads D0001–D0014 remain unsupplied or unverified. Specific gaps: quarterly SIC (common FUNDQ lacks it), annual incorp/state (common FUNDA lacks them; COMPANY historical mapping is unknown), CRSP VWRETD (MSF lacks it; MSI join is unverified), CIK interval semantics, and author state lookups. History includes quarterly lags, prior 3–60 month ROA, current/prior quarter returns, annual prior-year/CRSP windows, current/prior segments and IO, RDQ analyst windows, and dated header links. Code filters selected construction to 1990–2012 and final sample to 1995–2010. The local IBES.DET_GUIDANCE candidate is a meaningful lead for CIG, but does not establish the author CUSIPG/FPE/CIGCODEQ/estimate contract. The prepared CIG table must also supply GVKEY: the forecast-summary projection omits it and the later Compustat-date join uses a.gvkey; no crosswalk is supplied.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E-COMPQ",
+        "E-CCM",
+        "E-CRSP",
+        "E-IBLINK",
+        "E-ANALYSTDETAIL",
+        "E-IO",
+        "E-SEG",
+        "E-FUNDA",
+        "E-FIRSTCALL",
+        "E-HEADER",
+        "E-CIKLINK",
+        "E-STATELOOKUP",
+        "E-UDLIST",
+        "E-ROA-HISTORY",
+        "E-IO-HISTORY",
+        "E-LITRISK-HISTORY",
+        "E-CATALOG-LOOKUPS",
+        "E-FROZEN-CATALOG",
+        "E-PROBE-COMPQ",
+        "E-PROBE-FUNDA",
+        "E-PROBE-COMPANY",
+        "E-PROBE-CRSP-MSF",
+        "E-PROBE-CRSP-MSI",
+        "E-PROBE-CIKLINK",
+        "E-IBES-GUIDANCE-CATALOG",
+        "E-IBES-GUIDANCE-PAGE",
+        "E-CIG-PASS",
+        "E-ANALYST1-KEEP",
+        "E-CIG-SELECT",
+        "E-CIG-GVKEY-CONSUMER"
+      ]
+    },
+    {
+      "id": "I-WINSOR",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_external_macro",
+      "description": "Active %INC requires the exact external winsor.SAS file and %WINSOR creates m3 from m2 by fyearq at PCTL=1 99. Macro source/behavior is not packaged; no substitute is supported.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E-WINSOR"
+      ]
+    },
+    {
+      "id": "I-PSCORE-HANDOFF",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "handoff_contract",
+      "description": "Stata pscore code is inside a SAS block comment and must run separately after merged_sample.dta export; it uses ffind/psmatch2 to save warn_pscore.dta, which active SAS PROC IMPORT consumes as p1. Shared working directory, DTA import/export and p1 columns remain to verify.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E-PSCORE",
+        "E-MATCHOUT",
+        "E-SW-FFIND",
+        "E-SW-PSMATCH2",
+        "E-ROOT"
+      ]
+    },
+    {
+      "id": "I-PATHS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "runtime_paths",
+      "description": "Libraries, header CSV, macro include and three DTA handoff/output paths use placeholders or Windows locations. Configure input/, output/ and support/ under a shared run root and update all producer/consumer references coherently.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E-ROOT",
+        "E-HEADER",
+        "E-WINSOR",
+        "E-PSCORE",
+        "E-MATCHOUT"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E-OVERVIEW",
+      "kind": "source",
+      "description": "SAS file describes a raw-to-final matched-sample workflow.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 4,
+      "line_end": 13,
+      "quote": "* Code for Huang, Li, Yu, and Zhou (2020): The Effect of Managerial Litigation Risk on Earnings Warnings: Evidence from a Natural Experiment\n\n* This code converts the raw data to the final matched sample used in the main analysis. The code shows how the raw data was transformed to produce the main sample used in the paper, which corresponds to the list of firms in the attached file labeled \"firm list\".\n\n* The code is comprised of several smaller parts, detailed as follows:\n\n\t(1) Construct control variables\n\t(2) Construct test variable\n\t(3) Construct ud law variables\n\t(4) Merge and construct the sample"
+    },
+    {
+      "id": "E-ROOT",
+      "kind": "source",
+      "description": "Both SAS libraries use machine-specific placeholder roots.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 18,
+      "line_end": 20,
+      "quote": "libname data 'location on computer';\n\nlibname final 'location on computer';"
+    },
+    {
+      "id": "E-COMPQ",
+      "kind": "source",
+      "description": "Quarterly Compustat source, filter and principal field contract.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 41,
+      "line_end": 48,
+      "quote": "***** Calculate lmv, bm, roa, loss;\ndata c1;\nset data.compustat_fundq;\nmonthindex=12*year(datadate)+month(datadate);\nqtrindex=4*year(datadate)+qtr(datadate);\nif fyearq>=1990 and fyearq<=2012;\nsic4=sic+0;\nkeep gvkey fyearq fqtr datadate monthindex qtrindex ibq atq sic4 prccq cshoq ceqq;"
+    },
+    {
+      "id": "E-CCM",
+      "kind": "source",
+      "description": "Dated Compustat-to-CRSP link contract and filters.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 82,
+      "line_end": 90,
+      "quote": "proc sql;\ncreate table qtr_control\nas select a.*, b.lpermno as permno\nfrom qtr_control as a \nleft join data.ccmxpf_linktable as b \non a.gvkey=b.gvkey \nand (a.datadate>=b.linkdt or b.linkdt=.B) and (a.datadate<=b.linkenddt or b.linkenddt=.E)\nand b.linktype in (\"LU\", \"LC\", \"LD\", \"LF\", \"LN\", \"LO\", \"LS\", \"LX\") and b.usedflag=1;\nquit;"
+    },
+    {
+      "id": "E-CRSP",
+      "kind": "source",
+      "description": "Monthly CRSP source and return fields; later annual litrisk construction also reads this table.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 105,
+      "line_end": 109,
+      "quote": "data r1;\nset data.crsp_msf;\nmonthindex=12*year(date)+month(date);\nkeep permno date monthindex ret vwretd;\nrun;"
+    },
+    {
+      "id": "E-IBLINK",
+      "kind": "source",
+      "description": "IBES–CRSP crosswalk source and fields.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 261,
+      "line_end": 264,
+      "quote": "data iclink;\nset data.link_ibes_crsp_2016;\nkeep ticker permno score;\nrun;"
+    },
+    {
+      "id": "E-ANALYSTDETAIL",
+      "kind": "source",
+      "description": "Dated analyst-detail estimates and actuals used for earnings surprise.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 290,
+      "line_end": 294,
+      "quote": "data analyst2;\nset data.analyst_detail_072718;\nif measure=\"EPS\" and (FPI=\"6\" or FPI=\"7\" or FPI=\"8\" or FPI=\"9\");\nkeep ticker fpedats anndats value estimator analys actual;\nrun;"
+    },
+    {
+      "id": "E-IO",
+      "kind": "source",
+      "description": "The code consumes a prepared WRDS institutional-ownership table; its upstream 13F recipe is not included.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 335,
+      "line_end": 340,
+      "quote": "***** Calculate io;\ndata io;set data.io_wrds;\nmonthindex=12*year(rdate)+month(rdate);\nrun;\n* io_wrds is obtained by running the code from wrds:https://wrds-www.wharton.upenn.edu/pages/support/applications/institutional-ownership-research/institutional-ownership-concentration-and-breadth-ratios/;"
+    },
+    {
+      "id": "E-SEG",
+      "kind": "source",
+      "description": "WRDS Compustat segment source.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 366,
+      "line_end": 369,
+      "quote": "***** Calculate seg;\ndata segment1;\nset data.wrds_segmerged;\nrun;"
+    },
+    {
+      "id": "E-FUNDA",
+      "kind": "source",
+      "description": "Annual Compustat source and fiscal-year filter.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 434,
+      "line_end": 439,
+      "quote": "***** Calculate litrisk;\ndata a1;set data.compustat_funda;\nif 1990<=fyear<=2012;\nmonthindex=12*year(datadate)+month(datadate);\nkeep gvkey fyear datadate sich monthindex;"
+    },
+    {
+      "id": "E-FIRSTCALL",
+      "kind": "source",
+      "description": "Active First Call and IBES summary reads.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 631,
+      "line_end": 644,
+      "quote": "** read in first call data;\ndata a1;\nset data.cig;\nrun;\n\n** define good/bad news by analysts forecasts;\ndata analyst1;\nset data.analyst_usummary_eps;\nif fiscalp=\"QTR\" then periodicity=\"Q\";\nelse if fiscalp=\"ANN\" then periodicity=\"A\";\nelse periodicity=\"\";\nif periodicity^=\"\";\nkeep cusip ticker cname periodicity statpers medest meanest stdev fpedats;\nrun;"
+    },
+    {
+      "id": "E-HEADER",
+      "kind": "source",
+      "description": "Required historic 10-X header columns and currently hard-coded Windows path.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 773,
+      "line_end": 782,
+      "quote": "** historical state from bill mcdonald's web *****;\nproc import out=hstate1 datafile=\"[redacted-path-fd26f62aece9]\" replace;\nrun;\n\ndata hstate1;\nset hstate1;\nhincorp=state_of_incorp;\nhdq=ba_state;\ndate=conf_per_rpt;\nkeep cik hincorp hdq date;run;"
+    },
+    {
+      "id": "E-CIKLINK",
+      "kind": "source",
+      "description": "Dated SEC Analytics CIK–GVKEY crosswalk input.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 796,
+      "line_end": 802,
+      "quote": "data link1;\nset data.wrds_cik_gvkey_link_2017;\nnumcik=input(cik,10.);\nformat datadate1 yymmddn8.;\nformat datadate2 yymmddn8.;\nkeep numcik gvkey datadate1 datadate2;\nrun;"
+    },
+    {
+      "id": "E-STATELOOKUP",
+      "kind": "source",
+      "description": "State-name validation lookup consumed by the historical header joins.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 817,
+      "line_end": 820,
+      "quote": "** drop invalid state names;\ndata all_state;\nset data.all_state_name_dummy;\nrun;"
+    },
+    {
+      "id": "E-UDLIST",
+      "kind": "source",
+      "description": "Treatment-state/event-year lookup consumed to create policy indicators.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 929,
+      "line_end": 939,
+      "quote": "data ud1;\nset data.ud_state_list;\nrun;\n\nproc sql;\ncreate table ud2\nas select a.*, b.year as event_year\nfrom cstate3 a \nleft join ud1 b \non a.incorp_adjust=b.state;\nquit;"
+    },
+    {
+      "id": "E-GENERATED",
+      "kind": "source",
+      "description": "The final.event_dummy SAS dataset is produced by the supplied SAS stage.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 949,
+      "line_end": 951,
+      "quote": "data final.event_dummy;\nset ud2;\nrun;"
+    },
+    {
+      "id": "E-MERGE",
+      "kind": "source",
+      "description": "The SAS merge consumes three earlier generated products by GVKEY/fiscal period.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 959,
+      "line_end": 973,
+      "quote": "** merge data;\nproc sql;\ncreate table m1 as select a.*, b.*\nfrom final.qtr_control a left join final.event_dummy b \non a.gvkey=b.gvkey \nand a.fyearq=b.fyear;\nquit;\n\nproc sql;\ncreate table m1 as select a.*, b.*\nfrom m1 a left join final.firstcall_forecast b \non a.gvkey=b.gvkey\nand a.fyearq=b.fyearq\nand a.fqtr=b.fqtr;\nquit;"
+    },
+    {
+      "id": "E-WINSOR",
+      "kind": "source",
+      "description": "The active WINSOR call depends on an external include; its code is not packaged.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 1005,
+      "line_end": 1018,
+      "quote": "** unmatched full sample;\ndata m2;set m1;\nif chtreat=\"\" and 1995<=fyearq<=2010 and incorp_adjust^=\"\";\nif nmiss(treat, post, io, abret, roa, loss, stdroa, lmv, bm, seg, earn_surprise, litrisk)=0;\nif nmiss(io_1, abret_1, roa_1, loss_1, stdroa, lmv_1, bm_1, seg_1, litrisk_1)=0;\nif stdroa_nmiss>=10;\nif ((sic4>=4000 and sic4<=4999) or (sic4>=6000 and sic4<=6999)) then delete ;\nif incorp_adjust in (\"GA\",\"MI\",\"FL\",\"WI\",\"MT\",\"VA\",\"UT\",\"NH\",\"MS\",\"NC\") then delete;\nif sic4^=. & hdq^=\"\";\nrun; \n\n%INC\"[redacted-path-db841ea12a90]\";\n%WINSOR(DSETIN=m2,DSETOUT=m3,BYVAR=fyearq,VARS=io_1 io abret_1 abret roa_1 roa stdroa lmv_1 lmv bm_1 bm seg_1 seg litrisk_1 litrisk earn_surprise,TYPE=winsor,PCTL=1 99);\nproc export data=m3 outfile=\"location on computer\\merged_sample.dta\" replace;run;"
+    },
+    {
+      "id": "E-PSCORE",
+      "kind": "source",
+      "description": "The supplied Stata code block produces the file read by the following active SAS import.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 1021,
+      "line_end": 1032,
+      "quote": "/** calculate pscore in STATA;\n\nuse \"location on computer\\merged_sample.dta\", clear\nffind sic4, newvar(ff) type(48)\nkeep if earn_surprise<=-0.01\nxi: psmatch2 treat lmv_1 bm_1 io_1 abret_1 roa_1 loss_1 earn_surprise stdroa seg_1 dma_1 litrisk_1, out(occur) logit noreplacement ate\nsave \"location on computer\\warn_pscore.dta\", replace\n\n*/\n\n** bad news matched sample;\nproc import out=p1 datafile=\"location on computer\\warn_pscore.dta\" replace;run;"
+    },
+    {
+      "id": "E-MATCHOUT",
+      "kind": "source",
+      "description": "Active SAS post-pscore matching branch and final Stata-format export.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 1031,
+      "line_end": 1096,
+      "quote": "** bad news matched sample;\nproc import out=p1 datafile=\"location on computer\\warn_pscore.dta\" replace;run;\n\ndata treat1;\nset p1;\nwhere treat=1;\nkeep gvkey datadate fyearq fqtr post ff _pscore event_year;\nrun;\n\ndata control1;\nset p1;\nwhere treat=0; \nkeep gvkey datadate fyearq fqtr post ff _pscore;\nrun;\n\nproc sql;\ncreate table match1\nas select a.*, b.gvkey as gvkey2, b._pscore as _pscore2\nfrom treat1 a \nleft join control1 b\non a.ff=b.ff\nand a.datadate=b.datadate;\nquit;\n\ndata match2;\nset match1;\ndiff=abs(_pscore-_pscore2);\nif diff^=. ;\nif diff<=0.05;\nrun;\n\nproc sort data=match2 nodup;\nby gvkey datadate diff;\nrun;\n\nproc sort data=match2 nodupkey;\nby gvkey datadate;\nrun;\n\ndata treat2;\nset match2;\ntreat=1;\nkeep gvkey datadate fyearq fqtr treat post event_year;\nrun;\n\ndata control2;\nset match2;\ngvkey=gvkey2;\ntreat=0;\nkeep gvkey datadate fyearq fqtr treat post event_year;\nrun;\n\ndata match3;\nset treat2 control2;\nrun;\n\nproc sql;\ncreate table match4\nas select a.*, b.*\nfrom match3 a \nleft join p1 b \non a.gvkey=b.gvkey\nand a.datadate=b.datadate;\nquit; \n\nproc export data=match4 outfile=\"location on computer\\match_sample.dta\" replace;run;"
+    },
+    {
+      "id": "E-DATASHEET",
+      "kind": "source",
+      "description": "Datasheet describes dated source products and a broader collection/analysis narrative; some elements do not appear as active inputs in the supplied SAS source.",
+      "file": "HLYZ Datasheet.pdf",
+      "line_begin": 28,
+      "line_end": 67,
+      "quote": "Ying Huang and Xiaolu Zhou retrieved Compustat, CRSP, Thomson Reuters, IBES, and\nAuditAnalytics from WRDS, and the 10-K header information from Professor Bill McDonald’s\nwebsite (https://sraf.nd.edu/data/augmented-10-x-header-data/). Ningzhong Li obtained First Call\ndata from WRDS. Xiaolu Zhou followed the steps below to merge the above data to create the\nfinal dataset for the analyses of the manuscript.\n\nStep 1: In SAS, Xiaolu Zhou downloaded the Compustat annual and quarterly financial data and\nsegment datafile.\n\nStep 2: Xiaolu Zhou used the Compustat GVKEY and WRDS’ CCMXPF linking table\ndownloaded on 07/27/2018 to merge data from Step 1 with CRSP daily stock return data\ndownloaded on 12/01/2018 and CRSP monthly stock return data downloaded on 07/29/2018.\n\nStep 3: Xiaolu Zhou used the GVKEY-CIK linking file from WRDS SEC Analytics Suite\ndownloaded on 07/27/2018 to merge the Audit Analytics lawsuit data downloaded on 11/19/2018\nto the data in Step 2.\n\n\n\n                                                1\n\nStep 4: Xiaolu Zhou downloaded the 10-K header data from Professor Bill McDonald’s website\non 04/17/2018 and used the GVKEY-CIK linking file in Step3 to merge the lawsuit data to the\ndata in Step 3.\n\nStep 5: Xiaolu Zhou used the IBES-CRSP linking file created using the WRDS sample code on\n03/17/2016 to merge data in Step 4 to IBES data downloaded on 07/27/2018.\n\nStep 6: Xiaolu Zhou used the CUSIP identifier to merge data in Step 5 with the institutional\nownership data generated from Thomas Reuters institutional holding data and the WRDS sample\ncode downloaded on 08/01/2018.\n\nStep 7: Xiaolu Zhou used the CUSIP identifier to merge data in Step 6 with the beta data generated\nusing CRSP monthly data and the WRDS sample code downloaded on 07/27/2018.\n\nStep 8: Xiaolu Zhou used the GVKEY identifier to link the First Call, Compustat, and IBES data\nmerged by Ying Huang on 06/28/2016 with the data in Step 7.\n\nStep 9: Xiaolu Zhou exported the SAS data set to Stata and conducted the main statistical analyses\nin Stata."
+    },
+    {
+      "id": "E-FIRMLIST",
+      "kind": "probe",
+      "description": "Existing bounded package probe: Firm List.xlsx is readable but has only a narrative/blank raw header row and does not establish a full analysis panel.",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "f92ee465512f338bf61fa6c5bdf5d69f973b4479a52cc9e96554dfa6abefa3b0"
+    },
+    {
+      "id": "E-ENV",
+      "kind": "probe",
+      "description": "Existing environment probe: Stata 18 is verified; SAS failed TKELS initialization and remains unverified, not proven unlicensed.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "E-ROA-HISTORY",
+      "kind": "source",
+      "description": "Monthly-index self-join for the prior 3–60 month ROA dispersion window.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 203,
+      "line_end": 210,
+      "quote": "proc sql;\ncreate table s2\nas select a.*, b.roa as roa2, b.monthindex as monthindex2 \nfrom s1 a \nleft join copy b \non a.gvkey=b.gvkey \nand a.monthindex-b.monthindex>=3\nand a.monthindex-b.monthindex<=60;* past five years starting from one quarter prior to current quarter;"
+    },
+    {
+      "id": "E-IO-HISTORY",
+      "kind": "source",
+      "description": "Institutional ownership is attached using a report-date window and lagged by one quarter.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 335,
+      "line_end": 362,
+      "quote": "***** Calculate io;\ndata io;set data.io_wrds;\nmonthindex=12*year(rdate)+month(rdate);\nrun;\n* io_wrds is obtained by running the code from wrds:https://wrds-www.wharton.upenn.edu/pages/support/applications/institutional-ownership-research/institutional-ownership-concentration-and-breadth-ratios/;\n\nproc sql;create table qtr_control\nas select a.*, b.io\nfrom qtr_control a left join io b\non a.permno=b.permno\nand a.monthindex>=b.monthindex>a.monthindex-3;\nquit;\n\nproc sort data=qtr_control nodupkey;\nby gvkey monthindex;\nrun;\n\ndata qtr_control;\nset qtr_control;\nby gvkey monthindex;\nio_1=lag(io);\nif gvkey^=lag(gvkey) or monthindex^=lag(monthindex)+3 then io_1=.;\nrun;\n\ndata qtr_control;\nset qtr_control;\nif io=. then io=0;\nif io_1=. then io_1=0;"
+    },
+    {
+      "id": "E-LITRISK-HISTORY",
+      "kind": "source",
+      "description": "Annual litigation-risk construction requires prior-year Compustat observations and CRSP fiscal-year histories.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 511,
+      "line_end": 545,
+      "quote": "data a3b;\nset data.compustat_funda;\nif at<=0 then at=.;\nlat=log(at);\nkeep gvkey fyear datadate lat sale at;run;\n\nproc sort data=a3b nodup;\nby gvkey fyear;\nrun;\n\ndata a3b;set a3b;\nby gvkey fyear;\nsg=(sale-lag(sale))/lag(at);\nif gvkey^=lag(gvkey) or fyear^=lag(fyear)+1 or lag(at)<=0 then sg=.;\nrun;\n\nproc sql;create table a3\nas select a.*, b.*\nfrom a3 a left join a3b b \non a.gvkey=b.gvkey\nand a.fyear=b.fyear;\nquit;\n\nproc sort data=a3 nodup;\nby gvkey fyear;\nrun;\n\ndata a3;set a3;\nby gvkey fyear;\nend=datadate;\nbeg=lag(datadate);\nif gvkey^=lag(gvkey) or fyear^=lag(fyear)+1 \nthen beg=intnx(\"month\",datadate,-12,\"end\");\nformat beg end yymmddn8.;\nrun;"
+    },
+    {
+      "id": "E-QTR-PRODUCER",
+      "kind": "source",
+      "description": "Earlier SAS code writes the final quarterly-control dataset consumed by the later merge.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 619,
+      "line_end": 621,
+      "quote": "data final.qtr_control;\nset qtr_control;\nrun;"
+    },
+    {
+      "id": "E-FIRSTCALL-PRODUCER",
+      "kind": "source",
+      "description": "Earlier SAS code writes the first-call forecast dataset consumed by the later merge.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 749,
+      "line_end": 751,
+      "quote": "data final.firstcall_forecast;\nset a6;\nrun;"
+    },
+    {
+      "id": "E-COMP-A-FILTER",
+      "kind": "source",
+      "description": "Annual Compustat rows are filtered by consolidation, format, population source, currency and fiscal year.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 435,
+      "line_end": 439,
+      "quote": "data a1;set data.compustat_funda;\nif 1990<=fyear<=2012;\nmonthindex=12*year(datadate)+month(datadate);\nkeep gvkey fyear datadate sich monthindex;\nrun;"
+    },
+    {
+      "id": "E-STATE-HISTORY",
+      "kind": "source",
+      "description": "Dated header records are linked to GVKEY through the code's author-named date interval fields.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 793,
+      "line_end": 815,
+      "quote": "format datadate yymmddn8.;\nrun;\n\ndata link1;\nset data.wrds_cik_gvkey_link_2017;\nnumcik=input(cik,10.);\nformat datadate1 yymmddn8.;\nformat datadate2 yymmddn8.;\nkeep numcik gvkey datadate1 datadate2;\nrun;\n\nproc sort data=link1 nodupkey;\nby numcik gvkey;\nrun;\n\nproc sql;\ncreate table hstate3\nas select a.*, b.gvkey\nfrom hstate2 a \nleft join link1 b \non a.cik=b.numcik\nand b.datadate1<=a.datadate<=b.datadate2;\nquit;"
+    },
+    {
+      "id": "E-CATALOG-LOOKUPS",
+      "kind": "inspection",
+      "description": "Bounded lookups in the frozen workspace catalog identify common product candidates; misses are not evidence of absence.",
+      "artifact_path": "probes/catalog_lookups_v1.json",
+      "sha256": "a916c03a1084794e8af032d5e7c26a12350d7a6c69808a8f1497ad1cbe203246"
+    },
+    {
+      "id": "E-FROZEN-CATALOG",
+      "kind": "catalog",
+      "description": "Frozen workspace resource catalog only; the catalog file points to a separate common/data_description copy, which is not cited here.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "E-PROBE-COMPQ",
+      "kind": "probe",
+      "description": "Bounded one-row COMP.FUNDQ probe: requested quarterly variables are readable; the frozen catalog shows SIC is absent.",
+      "artifact_path": "probes/common_fundq.json",
+      "sha256": "9e335a1f847df18a86d7b245d898b87652007ef04fb881d8b3587b8134a6ea68"
+    },
+    {
+      "id": "E-PROBE-FUNDA",
+      "kind": "probe",
+      "description": "Bounded one-row COMP.FUNDA probe: requested annual fields are readable; catalog metadata shows required incorp/state are absent.",
+      "artifact_path": "probes/common_funda.json",
+      "sha256": "2348d9dc6f7e77af8728e27c3aed796c4be9a18cc444c0e25703598543ebbb0b"
+    },
+    {
+      "id": "E-PROBE-COMPANY",
+      "kind": "probe",
+      "description": "Bounded one-row COMP.COMPANY probe: GVKEY, SIC, incorporation state and state are readable; historical values are unverified.",
+      "artifact_path": "probes/common_company.json",
+      "sha256": "28ac2345b4d7978dd0314d85a8de3598625a0a433cf0e1818744435487d56f82"
+    },
+    {
+      "id": "E-PROBE-CCM",
+      "kind": "probe",
+      "description": "Bounded one-row CRSP.CCMXPF_LINKTABLE probe: expected dated link columns including case-insensitive USEDFLAG are readable.",
+      "artifact_path": "probes/common_ccm.json",
+      "sha256": "fb7848a17b9a6d983e5c03f2f7889469c705a78d5a9091b8789733ccf148bdc9"
+    },
+    {
+      "id": "E-PROBE-CRSP-MSF",
+      "kind": "probe",
+      "description": "Bounded one-row CRSP.MSF probe: stock-return and annual-risk fields are readable, but VWRETD is absent.",
+      "artifact_path": "probes/common_crsp_msf.json",
+      "sha256": "473b5bad0386c0d0b51eb320ebdfe40489ca74804bab511940b5ff315f49791b"
+    },
+    {
+      "id": "E-PROBE-CRSP-MSI",
+      "kind": "probe",
+      "description": "Bounded one-row CRSP.MSI probe: DATE and VWRETD are readable; a join to MSF is unverified.",
+      "artifact_path": "probes/common_crsp_msi.json",
+      "sha256": "d3bc2f7de31333b9226ee8daaf9ce35257851c7888e379505d455a7d8bef2e7d"
+    },
+    {
+      "id": "E-PROBE-IBLINK",
+      "kind": "probe",
+      "description": "Bounded one-row WRDSAPPS.IBCRSPHIST probe: ticker, PERMNO and score plus sdate/edate are readable; author-version coverage is unverified.",
+      "artifact_path": "probes/common_ibes_crsp_link.json",
+      "sha256": "5e05cc2f7390e9b9c0447eecb7cdc263f544b325f38a4e40bdf3f1f9dd604541"
+    },
+    {
+      "id": "E-PROBE-IBES-DETAIL",
+      "kind": "probe",
+      "description": "Bounded one-row IBES.DET_EPSUS probe: requested detail EPS forecast and actual fields are readable; period coverage is unverified.",
+      "artifact_path": "probes/common_ibes_detail.json",
+      "sha256": "304b36d82f3b75878ff60d4268d3f0c73f196abc4204007aad3215e52afab449"
+    },
+    {
+      "id": "E-PROBE-IBES-SUMMARY",
+      "kind": "probe",
+      "description": "Bounded one-row IBES.STATSUM_EPSUS probe: requested summary EPS fields are readable; period coverage is unverified.",
+      "artifact_path": "probes/common_ibes_summary.json",
+      "sha256": "0b07b28b0f209c817e4806b36263104c3224fc296326a3dfb02be2f3e78097d4"
+    },
+    {
+      "id": "E-PROBE-SEGMENTS",
+      "kind": "probe",
+      "description": "Bounded one-row COMPSEG.WRDS_SEGMERGED probe: requested segment-history columns are readable; required fiscal-year history is unverified.",
+      "artifact_path": "probes/common_segments.json",
+      "sha256": "be681b5c6ea2c5e651a4d029064fb4eea98f1f87a46736e59b2890ad20d51d2b"
+    },
+    {
+      "id": "E-PROBE-CIKLINK",
+      "kind": "probe",
+      "description": "Bounded one-row WRDSSEC.WCIKLINK_GVKEY probe: CIK/GVKEY and alternative effective-date fields are readable, but author datadate1/datadate2 columns are not present.",
+      "artifact_path": "probes/common_cik_gvkey.json",
+      "sha256": "ce031a193e1bd314027b934802fc1bd8ca830926b2d9c464e6f15bdd8fb2d057"
+    },
+    {
+      "id": "E-PROBE-13F",
+      "kind": "probe",
+      "description": "Bounded TFN.S34 read timed out; this does not establish absence or access failure. Catalog fields do not directly provide the prepared PERMNO/io contract.",
+      "artifact_path": "probes/common_13f.json",
+      "sha256": "701849482c0bd221afda2eaceaab132de6da4c60cc6aeb73ef181291ef875853"
+    },
+    {
+      "id": "E-PROBE-LM10X",
+      "kind": "probe",
+      "description": "Bounded documented LM10X check confirms only that the root directory exists; no listing or equivalence to the SRAF header CSV was established.",
+      "artifact_path": "probes/local_lm10x_root.json",
+      "sha256": "0d192221f8a27d079640d5161f4b712021d36ee4034150f432001983d671dcea"
+    },
+    {
+      "id": "E-SW-FFIND",
+      "kind": "probe",
+      "description": "Tiny Stata software probe found ffind in Stata 18; package/version compatibility remains unverified.",
+      "artifact_path": "probes/software_ffind.json",
+      "sha256": "8cecbb2d252c48a1efbb66b61d396f5d99673496f74341c44c15370a0f4d6d2b"
+    },
+    {
+      "id": "E-SW-PSMATCH2",
+      "kind": "probe",
+      "description": "Tiny Stata software probe did not find psmatch2 on checked default/shared paths (which return code 111); no installation was attempted.",
+      "artifact_path": "probes/software_psmatch2.json",
+      "sha256": "67dc02999ac3031fb084047c280e6167f5dfc8fcb3371a98f1047c988aa72954"
+    },
+    {
+      "id": "E-SRAF-PUBLIC",
+      "kind": "public",
+      "description": "Official SRAF augmented 10-X header page advertises a CSV product and current 1993–2025 data; the old author field map, CIK choice, duplicates and historical vintage remain unresolved.",
+      "url": "https://sraf.nd.edu/sec-edgar-data/10-x-header-data/",
+      "checked_at": "2026-11-09",
+      "authority": "repository",
+      "quote": "Download the data (1993-2025)"
+    },
+    {
+      "id": "E-WORKFLOW-TRACE",
+      "kind": "inspection",
+      "description": "Ordered full workflow trace derived from the complete cached SAS source; v3 corrects the recorded source SHA to match work_item.json.",
+      "artifact_path": "probes/workflow_trace_v3.json",
+      "sha256": "20dd74122b7927d17a588d0292c122ec6cce7679514c8c464c7dd11ca8ba293b"
+    },
+    {
+      "id": "E-IBES-GUIDANCE-CATALOG",
+      "kind": "catalog",
+      "description": "Frozen catalog lists IBES.DET_GUIDANCE and related guidance tables under ${ACCTREPL_SAS_ROOT}; their CIG field and identifier mappings are not established.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "E-IBES-GUIDANCE-PAGE",
+      "kind": "public",
+      "description": "Official WRDS/LSEG vendor metadata lists I/B/E/S Guidance as a product; this does not establish public data access or a compatible input.",
+      "url": "https://wrds-www.wharton.upenn.edu/pages/about/data-vendors/lseg/",
+      "checked_at": "2026-11-09",
+      "authority": "official",
+      "quote": "I/B/E/S Guidance"
+    },
+    {
+      "id": "E-WORKFLOW-TRACE-V4",
+      "kind": "inspection",
+      "description": "Ordered workflow trace v4 adds the bounded frozen-catalog IBES guidance candidate while retaining the correct complete SAS source hash.",
+      "artifact_path": "probes/workflow_trace_v4.json",
+      "sha256": "c0d48e84774a6ffea3aff171d95cd1302dcc9a9c45abe253346648a4a8537d6f"
+    },
+    {
+      "id": "E-CIG-PASS",
+      "kind": "source",
+      "description": "The CIG source is copied into a1 before the forecast merge.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 631,
+      "line_end": 634,
+      "quote": "** read in first call data;\ndata a1;\nset data.cig;\nrun;"
+    },
+    {
+      "id": "E-ANALYST1-KEEP",
+      "kind": "source",
+      "description": "The analyst summary projection does not retain GVKEY.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 637,
+      "line_end": 644,
+      "quote": "data analyst1;\nset data.analyst_usummary_eps;\nif fiscalp=\"QTR\" then periodicity=\"Q\";\nelse if fiscalp=\"ANN\" then periodicity=\"A\";\nelse periodicity=\"\";\nif periodicity^=\"\";\nkeep cusip ticker cname periodicity statpers medest meanest stdev fpedats;\nrun;"
+    },
+    {
+      "id": "E-CIG-SELECT",
+      "kind": "source",
+      "description": "The CIG-side a1 record passes through SELECT * while the IBES summary joins by CUSIP/date keys.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 650,
+      "line_end": 659,
+      "quote": "proc sql;\ncreate table a2\nas select *\nfrom a1 a \nleft join analyst1 b \non a.cusipg=b.cusip \nand a.periodicity=b.periodicity\nand a.fpe=b.fpedats\nand a.anndate>b.statpers;\nquit;"
+    },
+    {
+      "id": "E-CIG-GVKEY-CONSUMER",
+      "kind": "source",
+      "description": "The later date join consumes a.gvkey from the First Call-side record.",
+      "file": "HLYZ Codes.sas",
+      "line_begin": 719,
+      "line_end": 724,
+      "quote": "proc sql;\ncreate table a4\nas select a.*, b.*\nfrom a3 a left join date b \non a.gvkey=b.gvkey \nand a.fpe=b.datadate;"
+    },
+    {
+      "id": "E-WORKFLOW-TRACE-V5",
+      "kind": "inspection",
+      "description": "Ordered workflow trace v5 records the required GVKEY field in prepared data.cig and its producer-to-consumer chain.",
+      "artifact_path": "probes/workflow_trace_v5.json",
+      "sha256": "8c643eb96191129f6b11dfa7361377796dff9a5acfeb93e0e7e5a59be3e0a369"
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-COMPQ"
+      ],
+      "evidence_ids": [
+        "E-COMPQ"
+      ],
+      "description": "Active quarterly Compustat read; its code-filtered source and additional lag/rolling history remain unverified."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-CCM"
+      ],
+      "evidence_ids": [
+        "E-CCM"
+      ],
+      "description": "Active dated CCM link-table read for GVKEY–PERMNO matching."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-CRSP"
+      ],
+      "evidence_ids": [
+        "E-CRSP"
+      ],
+      "description": "Active CRSP monthly input used in quarterly and annual construction."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-IBLINK"
+      ],
+      "evidence_ids": [
+        "E-IBLINK"
+      ],
+      "description": "Active IBES–CRSP link input."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-ANALYSTDETAIL"
+      ],
+      "evidence_ids": [
+        "E-ANALYSTDETAIL"
+      ],
+      "description": "Active dated analyst-detail input."
+    },
+    {
+      "dependency_id": "D0006",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-IO"
+      ],
+      "evidence_ids": [
+        "E-IO"
+      ],
+      "description": "Active prepared institutional-ownership input; upstream WRDS recipe is noted but not supplied."
+    },
+    {
+      "dependency_id": "D0007",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-SEG"
+      ],
+      "evidence_ids": [
+        "E-SEG"
+      ],
+      "description": "Active merged Compustat segment input."
+    },
+    {
+      "dependency_id": "D0008",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-COMPA"
+      ],
+      "evidence_ids": [
+        "E-FUNDA"
+      ],
+      "description": "Active annual Compustat input."
+    },
+    {
+      "dependency_id": "D0009",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-CIG"
+      ],
+      "evidence_ids": [
+        "E-FIRSTCALL"
+      ],
+      "description": "Active First Call CIG input."
+    },
+    {
+      "dependency_id": "D0010",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-IBSUM"
+      ],
+      "evidence_ids": [
+        "E-FIRSTCALL"
+      ],
+      "description": "Active IBES US summary EPS input."
+    },
+    {
+      "dependency_id": "D0011",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-HEADER"
+      ],
+      "evidence_ids": [
+        "E-HEADER"
+      ],
+      "description": "Active historic 10-X header CSV import."
+    },
+    {
+      "dependency_id": "D0012",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-CIKLINK"
+      ],
+      "evidence_ids": [
+        "E-CIKLINK"
+      ],
+      "description": "Active dated CIK–GVKEY crosswalk read."
+    },
+    {
+      "dependency_id": "D0013",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-STATEVALID"
+      ],
+      "evidence_ids": [
+        "E-STATELOOKUP"
+      ],
+      "description": "Active state-name validation lookup read."
+    },
+    {
+      "dependency_id": "D0014",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-UDSTATE"
+      ],
+      "evidence_ids": [
+        "E-UDLIST"
+      ],
+      "description": "Active state/event-year lookup read."
+    },
+    {
+      "dependency_id": "D0015",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E-QTR-PRODUCER",
+        "E-MERGE"
+      ],
+      "description": "final.qtr_control is generated earlier in the supplied SAS source from quarterly and annual-linked inputs before the merge consumer."
+    },
+    {
+      "dependency_id": "D0016",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E-GENERATED",
+        "E-HEADER",
+        "E-CIKLINK",
+        "E-STATELOOKUP",
+        "E-UDLIST",
+        "E-MERGE"
+      ],
+      "description": "Generated as final.event_dummy from annual company state, historical SRAF headers, dated CIK–GVKEY links, state validation and state/event-year lookups before the merge."
+    },
+    {
+      "dependency_id": "D0017",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E-FIRSTCALL",
+        "E-FIRSTCALL-PRODUCER",
+        "E-MERGE"
+      ],
+      "description": "Generated as final.firstcall_forecast from First Call CIG, IBES summary EPS and quarterly Compustat date/RDQ history before the merge. A documented 2016 prepared bundle is only an alternative if the output contract is confirmed."
+    },
+    {
+      "dependency_id": "D0018",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E-PSCORE",
+        "E-MATCHOUT",
+        "E-SW-FFIND",
+        "E-SW-PSMATCH2"
+      ],
+      "description": "Produced only by running the embedded Stata pscore block between SAS exports merged_sample.dta and the active SAS import of warn_pscore.dta; this order and all three file paths must be shared across runtimes."
+    }
+  ],
+  "actions": [
+    {
+      "id": "A-INPUTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R-COMPQ",
+        "R-CCM",
+        "R-CRSP",
+        "R-IBLINK",
+        "R-ANALYSTDETAIL",
+        "R-IO",
+        "R-SEG",
+        "R-COMPA",
+        "R-CIG",
+        "R-IBSUM",
+        "R-HEADER",
+        "R-CIKLINK",
+        "R-STATEVALID",
+        "R-UDSTATE"
+      ],
+      "kind": "data_acquisition",
+      "description": "Resolve a compatible route for each active input while preserving exact fields, identifiers, history and construction. Local one-row candidates are leads only; WRDS provenance by itself is not an access barrier.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E-OVERVIEW",
+        "E-DATASHEET",
+        "E-CATALOG-LOOKUPS",
+        "E-FROZEN-CATALOG",
+        "E-PROBE-COMPQ",
+        "E-PROBE-FUNDA",
+        "E-PROBE-COMPANY",
+        "E-PROBE-CCM",
+        "E-PROBE-CRSP-MSF",
+        "E-PROBE-CRSP-MSI",
+        "E-PROBE-IBLINK",
+        "E-PROBE-IBES-DETAIL",
+        "E-PROBE-IBES-SUMMARY",
+        "E-PROBE-SEGMENTS",
+        "E-PROBE-CIKLINK",
+        "E-PROBE-13F",
+        "E-SRAF-PUBLIC",
+        "E-PROBE-LM10X",
+        "E-IBES-GUIDANCE-CATALOG",
+        "E-IBES-GUIDANCE-PAGE",
+        "E-CIG-PASS",
+        "E-ANALYST1-KEEP",
+        "E-CIG-SELECT",
+        "E-CIG-GVKEY-CONSUMER"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm exact fields, identifiers, product version and date history for all 14 external inputs; keep independent merge inputs separate.",
+        "Resolve COMP.FUNDQ SIC, COMP.FUNDA incorporation/state history, CRSP VWRETD source, CIK-link interval mapping and the two author state lookup tables.",
+        "Request exact author CIG and prepared io_wrds contracts where needed. The TFN.S34 holdings candidate is not the prepared PERMNO/io output; its one-row probe timed out and author WRDS construction/identifier semantics remain required.",
+        "Treat a compatible 2016 author-prepared First Call/Compustat/IBES bundle as a primary alternative only if it supplies the final.firstcall_forecast contract; do not require it in addition to raw components.",
+        "Verify SRAF CSV field mapping, CIK choice, duplicate-filer handling and historical coverage. Local LM10X and SEC filing corpora are not demonstrated substitutes for the augmented-header input.",
+        "For each route, validate temporal coverage and transformations beyond one-row readability; do not infer missing data or licenses from catalog misses.",
+        "Assess catalogued IBES.DET_GUIDANCE and related guidance tables as a CIG candidate; request mapping for CUSIP/GVKEY, FPE, CIGCODEQ and estimates, and retain its required history as unresolved. The product page is metadata, not public access.",
+        "Verify that prepared data.cig itself contains GVKEY and passes it from a1 through the First Call merge; IBES analyst1's KEEP projection drops GVKEY and no crosswalk producer is supplied."
+      ],
+      "validation": [
+        "Compare exact fields, identifiers, date ranges and construction history for every staged source; one-row probes do not establish population/history fidelity.",
+        "After separately authorized staging, verify the 1990–2012 construction history, rolling/lag windows, dated link intervals and 1995–2010 output sample without synthetic substitutions.",
+        "Confirm data.cig supplies GVKEY and that the a.gvkey key survives into a3 for the Compustat date join; do not infer or invent a crosswalk."
+      ]
+    },
+    {
+      "id": "A-SOFTWARE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW-SAS",
+        "SW-STATA",
+        "SW-FFIND",
+        "SW-PSMATCH2"
+      ],
+      "kind": "software_setup",
+      "description": "Verify SAS startup/format support and the Stata 18 commands used by the separate pscore stage before any separately authorized execution.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E-ENV",
+        "E-SW-FFIND",
+        "E-SW-PSMATCH2",
+        "E-PSCORE"
+      ],
+      "edits": [],
+      "steps": [
+        "Stata 18 and ffind are available by bounded checks; verify release behavior and SAS/Stata DTA handoff compatibility only in a future authorized run.",
+        "Configure psmatch2 on the selected Stata adopath; the command is absent on checked paths. No installation is performed in this assessment.",
+        "SAS 9.4 failed TKELS initialization; verify runtime and DTA import/export support later without inferring license status."
+      ],
+      "validation": [
+        "Confirm required SAS/Stata commands and DTA format support in the selected runtime; retain software versions and command locations.",
+        "Verify shared working directory and pscore variable/identifier preservation in an authorized future execution."
+      ]
+    },
+    {
+      "id": "A-GAPS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I-INPUT-CONTRACT",
+        "I-WINSOR",
+        "I-PSCORE-HANDOFF",
+        "I-PATHS"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the exact missing macro, confirm the Stata/SAS handoff contract, and reconcile datasheet-only inputs/stages without inventing branches.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E-WINSOR",
+        "E-PSCORE",
+        "E-ROOT",
+        "E-HEADER",
+        "E-DATASHEET"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain the exact author winsor.SAS file and implementation, then stage that file at support/winsor.SAS; do not replace its behavior.",
+        "Confirm that the embedded Stata pscore block runs after merged_sample.dta export and before active SAS import of warn_pscore.dta, including the exact DTA columns.",
+        "Ask whether Audit Analytics, CRSP beta generation and the 2016 prepared merge describe provenance or omitted author stages; do not make them extra live requirements until supported.",
+        "If a prepared First Call/Compustat/IBES bundle is supplied, compare its fields and dates to final.firstcall_forecast before using it as a primary alternative."
+      ],
+      "validation": [
+        "Verify final.qtr_control, final.event_dummy and final.firstcall_forecast producers and keys before their merge.",
+        "Verify the exact order SAS m2 → WINSOR m3 → merged_sample.dta → Stata ffind/psmatch2 → warn_pscore.dta → SAS PROC IMPORT → match_sample.dta.",
+        "Compare final identifiers with Firm List.xlsx only as an identifier reference, not an analysis panel."
+      ]
+    },
+    {
+      "id": "A-PATH-EDIT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I-PATHS",
+        "I-PSCORE-HANDOFF"
+      ],
+      "kind": "source_edit",
+      "description": "Proposed relative paths use one run root containing input/, output/ and support/; launch both SAS and Stata with that root as their current directory. Preserve all processing logic and stage order.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E-ROOT",
+        "E-HEADER",
+        "E-WINSOR",
+        "E-PSCORE",
+        "E-MATCHOUT",
+        "E-OVERVIEW"
+      ],
+      "edits": [
+        {
+          "file": "HLYZ Codes.sas",
+          "sha256": "61ddb8ce3a1a2215c14290e21e3b793a81748871fe3115b92f5bc8b13d638dd4",
+          "line_begin": 18,
+          "line_end": 18,
+          "before": "libname data 'location on computer';",
+          "after": "libname data 'input';",
+          "reason": "Set the active input library under the shared run root."
+        },
+        {
+          "file": "HLYZ Codes.sas",
+          "sha256": "61ddb8ce3a1a2215c14290e21e3b793a81748871fe3115b92f5bc8b13d638dd4",
+          "line_begin": 20,
+          "line_end": 20,
+          "before": "libname final 'location on computer';",
+          "after": "libname final 'output';",
+          "reason": "Set the generated/output library under the shared run root."
+        },
+        {
+          "file": "HLYZ Codes.sas",
+          "sha256": "61ddb8ce3a1a2215c14290e21e3b793a81748871fe3115b92f5bc8b13d638dd4",
+          "line_begin": 774,
+          "line_end": 774,
+          "before": "proc import out=hstate1 datafile=\"[redacted-path-fd26f62aece9]\" replace;",
+          "after": "proc import out=hstate1 datafile=\"input/LM_EDGAR_10X_Header_1994_2017.csv\" replace;",
+          "reason": "Stage the confirmed compatible SRAF CSV under input/."
+        },
+        {
+          "file": "HLYZ Codes.sas",
+          "sha256": "61ddb8ce3a1a2215c14290e21e3b793a81748871fe3115b92f5bc8b13d638dd4",
+          "line_begin": 1016,
+          "line_end": 1016,
+          "before": "%INC\"[redacted-path-db841ea12a90]\";",
+          "after": "%INC\"support/winsor.SAS\";",
+          "reason": "Stage the exact author macro under support/; this edit does not supply or replace its body."
+        },
+        {
+          "file": "HLYZ Codes.sas",
+          "sha256": "61ddb8ce3a1a2215c14290e21e3b793a81748871fe3115b92f5bc8b13d638dd4",
+          "line_begin": 1018,
+          "line_end": 1018,
+          "before": "proc export data=m3 outfile=\"location on computer\\merged_sample.dta\" replace;run;",
+          "after": "proc export data=m3 outfile=\"output/merged_sample.dta\" replace;run;",
+          "reason": "Export the SAS producer into the shared output directory."
+        },
+        {
+          "file": "HLYZ Codes.sas",
+          "sha256": "61ddb8ce3a1a2215c14290e21e3b793a81748871fe3115b92f5bc8b13d638dd4",
+          "line_begin": 1023,
+          "line_end": 1023,
+          "before": "use \"location on computer\\merged_sample.dta\", clear",
+          "after": "use \"output/merged_sample.dta\", clear",
+          "reason": "Have Stata consume the SAS export from the same run root."
+        },
+        {
+          "file": "HLYZ Codes.sas",
+          "sha256": "61ddb8ce3a1a2215c14290e21e3b793a81748871fe3115b92f5bc8b13d638dd4",
+          "line_begin": 1027,
+          "line_end": 1027,
+          "before": "save \"location on computer\\warn_pscore.dta\", replace",
+          "after": "save \"output/warn_pscore.dta\", replace",
+          "reason": "Have Stata write the pscore handoff where SAS will import it."
+        },
+        {
+          "file": "HLYZ Codes.sas",
+          "sha256": "61ddb8ce3a1a2215c14290e21e3b793a81748871fe3115b92f5bc8b13d638dd4",
+          "line_begin": 1032,
+          "line_end": 1032,
+          "before": "proc import out=p1 datafile=\"location on computer\\warn_pscore.dta\" replace;run;",
+          "after": "proc import out=p1 datafile=\"output/warn_pscore.dta\" replace;run;",
+          "reason": "Have SAS import the Stata-produced handoff from output/."
+        },
+        {
+          "file": "HLYZ Codes.sas",
+          "sha256": "61ddb8ce3a1a2215c14290e21e3b793a81748871fe3115b92f5bc8b13d638dd4",
+          "line_begin": 1096,
+          "line_end": 1096,
+          "before": "proc export data=match4 outfile=\"location on computer\\match_sample.dta\" replace;run;",
+          "after": "proc export data=match4 outfile=\"output/match_sample.dta\" replace;run;",
+          "reason": "Write the supplied workflow's final matched sample under output/."
+        }
+      ],
+      "steps": [
+        "Prepare one host-visible run root with input/, output/ and support/ directories; place only compatible inputs in input/ and the exact supplied winsor.SAS macro in support/.",
+        "Apply all listed source edits together, then start SAS and Stata from the same run root so the cross-language DTA handoff is consistent."
+      ],
+      "validation": [
+        "Before any author-code execution, inspect the proposed source text to confirm every input/output/include reference uses the shared run-root layout.",
+        "After a separately authorized run, verify each producer/consumer file exists at the shared path and retains the required identifiers and fields."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Target: supplied SAS raw-to-matched-sample workflow, retaining its separate embedded Stata pscore stage between merged_sample.dta export and active SAS import of warn_pscore.dta.",
+    "All 18 frozen dependency IDs are classified: D0001–D0014 active external requirements, D0015–D0017 generated SAS intermediates, D0018 Stata-generated handoff.",
+    "Firm List.xlsx is an identifier list, not an analysis panel; no analysis_only scope. Paper-wide Stata estimators are contextual because that code is not supplied.",
+    "One-row probes establish only fields/readability; routes remain unverified for unresolved vintage, period history, identifier mapping or construction. Commercial WRDS provenance is not an access barrier.",
+    "No author code/study data was executed; no shared helper, catalog, source or package was modified. execution_verified remains false.",
+    "Process records are separate: unauthorized_external_read_report.json and addendum note truncated output and unknown physical extent; evidence is excluded. temporary_helper_cleanup_report.json records seven lost helper bodies; they were not reconstructed or used.",
+    "Datasheet-only Audit Analytics, beta-generation and paper-wide Stata analyses are contextual for this supplied SAS transformation; no separate execution requirement is added. A prepared First Call bundle is considered only as a compatible primary alternative.",
+    "The unauthorized external catalog read report/addendum and seven-helper cleanup report remain unchanged and are excluded from data-route support.",
+    "Failed expansion writer history is in failed_expansion_writer_v1_capture.json plus failed_expansion_writer_v1_addendum.json. The original inline source was not persisted and is not reconstructed; the addendum corrects that the first expanded draft/checkpoint was saved before the trace-construction error.",
+    "Unauthorized external catalog read and temporary-helper cleanup reports remain unchanged and are excluded from source/route support."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "d9c432ffbee89d3b5681c15a559c679192770db3914ff55d40503cf8e062bb0b",
+    "applied": false
+  }
+}

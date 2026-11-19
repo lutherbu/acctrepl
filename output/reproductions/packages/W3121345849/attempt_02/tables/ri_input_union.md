@@ -1,0 +1,17 @@
+
+|                      |          (1) |              |              |              |              |          (2) |              |              |              |              |          (3) |              |              |              |              |
+|                      |          h=1 |              |              |              |              |          h=2 |              |              |              |              |          h=3 |              |              |              |              |
+|                      |        count |         mean |           sd |           p1 |          p99 |        count |         mean |           sd |           p1 |          p99 |        count |         mean |           sd |           p1 |          p99 |
+| -------------------- | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: |
+| y                    |       296384 |        5.351 |       65.817 |       -6.130 |       71.067 |       268326 |        5.250 |       55.588 |       -6.990 |       81.068 |       243085 |        5.321 |       57.366 |       -7.340 |       93.167 |
+| NegE: negative earnings indicator |       296384 |        0.306 |        0.461 |        0.000 |        1.000 |       268326 |        0.293 |        0.455 |        0.000 |        1.000 |       243085 |        0.280 |        0.449 |        0.000 |        1.000 |
+| E: current earnings per share (USD) |       296384 |        5.626 |       75.030 |       -5.087 |       67.882 |       268326 |        5.663 |       75.365 |       -4.938 |       62.634 |       243085 |        5.694 |       75.171 |       -4.558 |       63.601 |
+| NegE x E: interaction |       296384 |       -0.268 |        1.121 |       -5.087 |        0.000 |       268326 |       -0.254 |        1.093 |       -4.938 |        0.000 |       243085 |       -0.237 |        1.036 |       -4.558 |        0.000 |
+| B: book value per share (USD) |       296384 |       52.682 |      611.281 |       -8.043 |      664.625 |       268326 |       52.331 |      609.571 |       -6.892 |      624.434 |       243085 |       52.369 |      611.404 |       -6.070 |      551.731 |
+| TACC: accruals per share (USD) |       296384 |        0.634 |        4.127 |       -9.602 |       15.881 |       268326 |        0.642 |        4.084 |       -9.527 |       15.142 |       243085 |        0.656 |        4.027 |       -9.315 |       14.902 |
+| Unique rows in window union |       296384 |              |              |              |              |       268326 |              |              |              |              |       243085 |              |              |              |              |
+
+Sample is unique GVKEY-by-availability-year input rows appearing in at least one native full-rank annual training window for the model and horizon.<br>
+Rows are complete for the model outcome and regressors; N counts unique inputs, not expanded/repeated fit rows or the annual-fit coefficient summary.<br>
+RI h=3 begins at T=1970 because native full-rank checking rejects T=1969; base-year union endpoints and counts are logged. Statistics reflect annual 1/99 winsorization.
+

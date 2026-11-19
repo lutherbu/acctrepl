@@ -1,0 +1,222 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "The Relation between Analysts' Forecasts of Long‐Term Earnings Growth and Stock Price Performance Following Equity Offerings*",
+  "doi": "10.1111/j.1911-3846.2000.tb00908.x",
+  "route": "reconstruction",
+  "paper_id": "W3125018794",
+  "years": 5,
+  "sources_checked": [
+    "SDC.WRDS_NI_DETAILS, ${ACCTREPL_SAS_ROOT}/tfn/sdc_ni/wrds_ni_details.sas7bdat, catalog last modified 2025-12-04: selected common-share/U.S.-public candidate pool has 12,317 unique offers and valid CUSIP6s from 1981-01-06 to 1995-12-27, including 5,203 offers in 1991-1995; BFO is missing for all 12,317.",
+    "IBES.DET_EPSUS, ${ACCTREPL_SAS_ROOT}/ibes/det_epsus.sas7bdat, catalog last modified 2026-07-25: FPI=0/MEASURE=EPS rows with nonmissing value and CUSIP have announce dates 1980-01-28 to 2026-05-14; 16,794 qualifying rows are dated in 1996, covering the forecast-window end 1996-03-31.",
+    "COMP.FUNDA, ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat, catalog last modified 2026-07-22: under the accepted INDL/consolidated/domestic/standard screen, FY1981-2000 has 204,855 rows; FY2000 has 12,093 rows and 11,160 with nonmissing IB and CURCD. No qualified GVKEY/FYEAR duplicate keys occur in FY1991-2000.",
+    "COMP.SEC_IDHIST, ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_idhist.sas7bdat, catalog last modified 2026-08-14: 131,864 CUSIP-item rows; event-date mappings are counted in the native build, which links 9,452 offers uniquely to one GVKEY across the pooled period.",
+    "CRSP.CCMXPF_LINKTABLE, ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat, catalog last modified 2026-08-14: 92,711 rows, effective dates observed through 2026-01-30, including 14,750 missing LINKENDDT open ends that the accepted code retains.",
+    "CRSP.MSENAMES, ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat, catalog last modified 2025-12-06: common-share code 10/11 name history spans 1925-12-31 to 2024-12-31; actual pooled offer-date links are resolved in the native build.",
+    "CRSP.MSF, ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat, catalog last modified 2025-12-06: nonmissing returns span 1926-01-30 to 2024-12-31, with 199,183 nonmissing security-month returns in 2000-2001; catalog sort is PERMNO/DATE with NODUPKEY.",
+    "CRSP.MSI, ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msi.sas7bdat, catalog last modified 2025-12-06: nonmissing value-weighted returns span 1926-01-30 to 2024-12-31, with all 12 months available in both 2000 and 2001."
+  ],
+  "changes": [
+    "Extended the SDC calendar-year offer window from 1981-1990 through 1995, keeping the original 1981 start and rebuilding the full pooled period from current local source vintages.",
+    "Shifted dependent source bounds only as required by the accepted construction: I/B/E/S ANNDATS through 1996-03-31, Compustat FYEAR through 2000, and CRSP MSF/MSI monthly dates through 2001-03-31. The -9/+3-month forecast window, offer-year-to-offer-year+5 earnings fit, +4 through +63 CRSP month offsets, complete-case intersection, estimator and system restrictions are unchanged.",
+    "Added native counts from the active Stata e(sample), using offer_year retained in the SAS-to-Stata handoff. The sample declaration was frozen at 1981-1995 before the controller run."
+  ],
+  "limitations": [
+    "The SDC BFO underwriting indicator is missing on all 7,114 U.S. Public Common Shares candidates in the original 1981-1990 period and on all 5,203 added-period candidates. The 12,317-offer pooled source universe therefore remains a public/common-share best effort; the paper’s original-period starting pool is 7,636 offers and local records do not establish an underwriting or rights-offering screen.",
+    "The original-period complete-case sample remains 818 offers versus the paper’s Table 7 N=1,179. The fresh pooled sample has 1,630 offers, comprising 818 original-period and 812 added-period complete cases; the inherited discrepancy is not resolved by the extension.",
+    "The paper does not report the equation-error covariance or weighting matrix. The accepted reconstruction uses a direct Gaussian mlexp likelihood with separate variances and independent equation errors to identify the recursive system; treat the Table 7 structural estimates and LR tests as best effort under that assumption.",
+    "The realized-growth start-year description conflicts between physical pp. 14 and 26. The accepted code follows the Table 7 note and uses offer year through offer year+5. The paper also omits the exact log base and slope-to-annualized-growth conversion.",
+    "The paper specifies five-year buy-and-hold market-adjusted return starting three months after issue but not a monthly endpoint convention. The retained construction uses 60 consecutive CRSP monthly periods at offsets +4 through +63 and requires a nonmissing stock and value-weighted market return in every period.",
+    "Local SEC_IDHIST contains date-formatted special open-bound sentinels; these were not interpreted as literal history dates. Date-effective identifier matches and resulting offer counts are measured by the fresh native build."
+  ],
+  "analyses": [
+    {
+      "scope_id": "table7_all_deals_forecast_error / table7_panel_a_all_deals_forecast_error",
+      "key": "s1",
+      "label": "Table 7 Panel A all-deals forecast-error equation, jointly estimated with abnormal returns",
+      "sample_ids": [
+        "equity_offerings"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh pooled Gaussian ML fit completed on 1,630 offers, with 818 offers from 1981-1990 and 812 added offers from 1991-1995; the active estimation sample contributes through 1995. Current exact-source coverage supports the full requested horizon, including forecasts through 1996-03-31, realized earnings through FY2000 and CRSP monthly outcomes through March 2001. The accepted forecast-error equation and joint sample are unchanged.",
+      "source_evidence": [
+        "Paper: physical pp. 12, 22, 26; Equation (7), Table 7 Panel A and mean per-offer forecast definition. Sample record: output/samples/records/W3125018794.json, sample_period and Table 1 text (physical p. 13).",
+        "Accepted construction and time logic: work/design.md sections “Source definition,” “Forecast window,” and “Stock outcome”; work/build.sas lines 13-34, 170-209, 297-319, 344-378, 512-533; Stata joint fit cell 6756ee91 in work/stata.ipynb.",
+        "Current-source coverage: work/audit/source_coverage.json. Native construction diagnostics: work/runtime/20261118T103217987226Z/build.lst (final rows by offer year and 1,630-row handoff); work/runtime/20261118T103217987226Z/cell_6756ee91.log (active-e(sample) EXT_SAMPLE line).",
+        "Prior accepted result: output/reproductions/packages/W3125018794/attempt_02/tables/table7_joint_system.csv, original N=818."
+      ],
+      "original_begin": "1981",
+      "original_end": "1990",
+      "requested_end": "1995",
+      "supported_end": "1995",
+      "last_added": "1995",
+      "count_unit": "one complete-case firm-offering row in the pooled Table 7 joint-system e(sample)",
+      "original_n": 818,
+      "added_n": 812,
+      "artifacts": [
+        "results/tables/table7_joint_system.csv"
+      ],
+      "comparison": "Forecast-error growth slope a1, decimal forecast error per decimal forecast growth: accepted 1981-1990 result -0.607 (output/reproductions/packages/W3125018794/attempt_02/tables/table7_joint_system.csv) versus pooled 1981-1995 result -0.527 (work/tables/table7_joint_system.csv). Like-for-like accepted joint Gaussian ML specification.",
+      "native_evidence": {
+        "path": "urn:sha256:6a5f08ec567814dc7a57b45d688d76bdb2a68408fb89598e0e0c0c94c18cbcbd",
+        "sha256": "6a5f08ec567814dc7a57b45d688d76bdb2a68408fb89598e0e0c0c94c18cbcbd",
+        "marker": "EXT_SAMPLE s1 818 812 1995"
+      }
+    },
+    {
+      "scope_id": "table7_all_deals_abnormal_returns / table7_panel_a_all_deals_abnormal_returns",
+      "key": "s2",
+      "label": "Table 7 Panel A all-deals abnormal-return equation, jointly estimated with forecast errors",
+      "sample_ids": [
+        "equity_offerings"
+      ],
+      "status": "extended_full",
+      "reason": "The abnormal-return equation was freshly estimated in the same pooled Gaussian ML system and on the same 1,630-offer active sample; 812 later offers from 1991-1995 contribute, with the last actual contributing offer year equal to 1995. The current exact-source CRSP monthly market and stock return series cover the required +4 through +63 intervals through March 2001; the accepted equation and complete-case screen are unchanged.",
+      "source_evidence": [
+        "Paper: physical pp. 12, 14, 26; Equation (7), Table 7 Panel A and five-year market-adjusted buy-and-hold return definition. Sample record: output/samples/records/W3125018794.json (physical p. 13).",
+        "Accepted return construction: work/design.md section “Stock outcome”; work/build.sas lines 344-439, 512-533; Stata joint fit cell 6756ee91 in work/stata.ipynb.",
+        "Current-source coverage: work/audit/source_coverage.json (CRSP MSF/MSI month coverage and exact source vintages). Native evidence: work/runtime/20261118T103217987226Z/build.lst (complete return and final sample counts); work/runtime/20261118T103217987226Z/cell_6756ee91.log (active-e(sample) EXT_SAMPLE line).",
+        "Prior accepted result: output/reproductions/packages/W3125018794/attempt_02/tables/table7_joint_system.csv, original N=818."
+      ],
+      "original_begin": "1981",
+      "original_end": "1990",
+      "requested_end": "1995",
+      "supported_end": "1995",
+      "last_added": "1995",
+      "count_unit": "one complete-case firm-offering row in the pooled Table 7 joint-system e(sample)",
+      "original_n": 818,
+      "added_n": 812,
+      "artifacts": [
+        "results/tables/table7_joint_system.csv"
+      ],
+      "comparison": "Abnormal-return equation slope b1, decimal abnormal return per decimal forecast error: accepted 1981-1990 result 3.480 (output/reproductions/packages/W3125018794/attempt_02/tables/table7_joint_system.csv) versus pooled 1981-1995 result 4.592 (work/tables/table7_joint_system.csv). Like-for-like accepted joint Gaussian ML specification.",
+      "native_evidence": {
+        "path": "urn:sha256:6a5f08ec567814dc7a57b45d688d76bdb2a68408fb89598e0e0c0c94c18cbcbd",
+        "sha256": "6a5f08ec567814dc7a57b45d688d76bdb2a68408fb89598e0e0c0c94c18cbcbd",
+        "marker": "EXT_SAMPLE s2 818 812 1995"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 2
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ee27-17fd-7ef1-9668-da0457c3ceaf",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3125018794.json",
+    "models": "output/models/records/W3125018794.json",
+    "predecessor": "output/reproductions/packages/W3125018794/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3125018794.json"
+  },
+  "input_hashes": {
+    "sample": "3fe3135f2311faca436b7dca68a310dbf49e50aa3d8f8a757a149c4fa0c5a5c9",
+    "models": "fb7489289782442bba0bdb6aaa2783a2a01503b97553630d6948b922d9eb7b67",
+    "predecessor": "512d1823bce93243b9775e0bf7ebc977b1224fa045d5efb1ae50bc7f2190bade",
+    "feasibility": "7bc37954d31c16784e7887397b2c91fc20561f259a18a7aae4df648355df70c8"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:1cc42111cec275cd5cb1b7ec02b4df12c1d50c1f4216ac8093b2eb590fe36bd2",
+    "sha256": "1cc42111cec275cd5cb1b7ec02b4df12c1d50c1f4216ac8093b2eb590fe36bd2",
+    "ok": true,
+    "state_sha256": "98521c7306aa053702e77cf88f75de0117ee749d60295639fddcae01fbde6769",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "SDC.WRDS_NI_DETAILS",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/sdc_ni/wrds_ni_details.sas7bdat",
+        "bytes": 7341342720,
+        "mtime_ns": 1764861743774602888
+      },
+      {
+        "dataset": "IBES.DET_EPSUS",
+        "path": "${ACCTREPL_SAS_ROOT}/ibes/det_epsus.sas7bdat",
+        "bytes": 6376652800,
+        "mtime_ns": 1784977292832777993
+      },
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.SEC_IDHIST",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_idhist.sas7bdat",
+        "bytes": 55508992,
+        "mtime_ns": 1786704738522227827
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.MSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764951124879997292
+      },
+      {
+        "dataset": "CRSP.MSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+        "bytes": 868417536,
+        "mtime_ns": 1764951132644186578
+      },
+      {
+        "dataset": "CRSP.MSI",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msi.sas7bdat",
+        "bytes": 262144,
+        "mtime_ns": 1764951142316422381
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "8ea48426c593383531d10796882aa5d8ea3ebf383a202401df032d1a06a4422c",
+      "work/stata.ipynb": "2e189c6b22c8a4b5a5c22927c52069202d12b4baa1e8d379eef111cce4d38bc5",
+      "work/submission.json": "2b8fd4a986c5ac64f9c66e33f8efff7111d888cdf642396729614319468f4e22"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "a7260052f0152330d6e19a0d9bed706e765ffda55be35b2438987e8fea33993e",
+      "predecessor": "output/reproductions/packages/W3125018794/attempt_02/build.sas",
+      "predecessor_sha256": "b4f92e3ef18541630a18160f7c81976077d64437b81c7cfc653a0e838b0f58b3",
+      "executed_sha256": "8ea48426c593383531d10796882aa5d8ea3ebf383a202401df032d1a06a4422c",
+      "historical_predecessor_sha256": "cb3ebcaf22b1eba4a6448bd24dc81ad05fac4552f55b2a262d89c60fa438d2a9"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "2e189c6b22c8a4b5a5c22927c52069202d12b4baa1e8d379eef111cce4d38bc5",
+      "predecessor": "output/reproductions/packages/W3125018794/attempt_02/stata.ipynb",
+      "predecessor_sha256": "48e5da8ebb466b5862bf8a8b55cf0a7bf282afe353fb513df555cc7ee3566db9",
+      "historical_predecessor_sha256": "e41a45d3610628f9eaf265c063f544803c68122d033d11bf6564978162d19110"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "2b8fd4a986c5ac64f9c66e33f8efff7111d888cdf642396729614319468f4e22",
+      "predecessor": "output/reproductions/packages/W3125018794/attempt_02/submission.json",
+      "predecessor_sha256": "644f7cf977136f7881472bd88eb5dcddbbcd8ef3ed48b6f7ada0de2d61205f14"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "f2f48d57fe6c32125bee09cad739c9b85e722f203b87a89c2d5b546f06aaefaa",
+    "predecessor": "67e2dbde562e84a6b99f6838c226d1fba74b32c0453eaaf1fd23c68c733fdc1f",
+    "feasibility": "062188c3cb88230b8d76fc29aca9ac4c80e9e25944b0b5a1acb8dfde2506cd33"
+  }
+}

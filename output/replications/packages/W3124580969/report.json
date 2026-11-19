@@ -1,0 +1,196 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Separating Winners from Losers among LowBook-to-Market Stocks using Financial Statement Analysis",
+  "doi": "10.1007/s11142-005-1526-4",
+  "route": "reconstruction",
+  "paper_id": "W3124580969",
+  "years": 5,
+  "sources_checked": [
+    "COMP.FUNDA — ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat, mtime 2026-07-22 UTC; catalog metadata reports 941,340 observations. Under the accepted INDL/C/D/STD screen, bounded dates span 1950-06-30 to 2026-06-30; 10,891 screened annual source rows have 2006 dates, with IB/CEQ/OANCF/CAPX and other required fields observed.",
+    "COMP.FUNDQ — ${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat, mtime 2026-07-22 UTC; catalog metadata reports 2,130,133 observations. Under INDL/C/D/STD, bounded dates span 1961-03-31 to 2026-06-30; 44,118 screened rows date to 2006, including 10,860 October–December anchor-period records with the required quarterly/YTD financial fields available.",
+    "COMP.G_EXRT_DLY — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat, mtime 2026-08-14 UTC; catalog metadata reports 2,221,564 observations and source dates 1982-02-01 to 2026-07-19. Among the accepted GBP-source quote rows, the 2006 check found 62,578 positive quote rows, 365 positive GBP-to-USD dates, and no duplicate date/currency keys.",
+    "CRSP.MSF — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat, mtime 2025-12-05 UTC; catalog metadata reports 5,153,763 observations spanning 1925-12-31 to 2024-12-31. December 2006 has 7,081 security-month rows and 6,852 with valid price/share inputs; all 12 months from 2007-05 through 2008-04 have nonmissing ordinary-return records (83,013 across the full source month window).",
+    "CRSP.MSENAMES — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat, mtime 2025-12-05 UTC; catalog metadata reports 117,830 observations and name dates spanning 1925-12-31 to 2024-12-31. 6,984 name intervals cover 2006-12-31.",
+    "CRSP.MSEDELIST — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msedelist.sas7bdat, mtime 2025-12-05 UTC; catalog metadata reports 38,843 observations and delisting dates spanning 1926-02-24 to 2024-12-31. The May 2007–April 2008 holding window contains 588 dated delisting records, all with code and DLRET fields observed.",
+    "CRSP.MSIX — ${ACCTREPL_SAS_ROOT}/crsp/a_indexes/msix.sas7bdat, mtime 2025-02-08 UTC; catalog metadata reports 1,189 monthly observations spanning 1925-12-31 to 2024-12-31. Each of the 12 months from 2007-05 through 2008-04 has all ten capitalization-decile return fields.",
+    "CRSP.CCMXPF_LINKTABLE — ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat, mtime 2026-08-14 UTC; catalog metadata reports 92,711 observations. Link start/end dates span 1946-01-01–2025-12-31 and 1950-05-30–2026-01-30; 5,811 eligible primary LC/LU link intervals cover 2006-12-31."
+  ],
+  "changes": [
+    "Extended only the existing SAS end bounds: Compustat annual/quarterly records, daily FX, and December CRSP market-cap formation data now include 2006; MSF, MSEDELIST, and MSIX monthly inputs now include returns through 2008-04-30. The pooled reconstruction retains the original period start, sources, screens, units, transformations, four-year history, lag/lead rules, and return definitions.",
+    "Kept the accepted annual OLS and asreg Fama–MacBeth Newey–West lag-1 estimator. Updated the annual fit check to 28 years, recalculated the separate Bernard finite-sample factor over the observed annual coefficient series, and counted original/added observations from active e(sample)s. The native marker records 3,781 original-period and 1,273 added-period observations, last added year 2006.",
+    "The current pooled build contains 22,965 low-BM firm-years and 5,054 Table 7 complete cases. Added-year complete-case counts are 144 (2002), 420 (2003), 243 (2004), 230 (2005), and 236 (2006). All 28 annual fits are rank 7 with positive residual degrees of freedom; annual N ranges from 77 to 420.",
+    "The longer construction window reports 0 annual duplicate keys, 486 GVKEY/fiscal-quarter duplicate keys, and 848 same-date tie keys (1,696 rows) after the fiscal-quarter exclusions; existing ambiguity exclusions were retained. FX duplicate keys, primary-link mapping ambiguities, return duplicate months, delisting duplicate months, and final GVKEY/year duplicate keys are all 0."
+  ],
+  "limitations": [
+    "The paper leaves the underlying estimator and precise autocorrelation correction underdescribed. The reconstruction uses annual OLS and asreg Fama–MacBeth Newey–West lag 1 for main coefficient p-values; this is not Bernard (1995). The separate GSCORE statistic uses the printed AR(1) finite-sample factor with Pearson lag-one correlation over 27 adjacent annual coefficient pairs (n=28).",
+    "Table 7-specific raw BM and raw MOM definitions follow its note despite conflicting §4.4 log-BM and size-adjusted-MOM prose.",
+    "The current Compustat/CRSP vintage, source-field coverage, quarterly same-date ambiguity exclusions, historical SIC-source overlap, exact-date FX availability, common-share company aggregation, and December size-decile assignment affect sample size. Source coverage supports the requested endpoint, but these construction/data limits remain.",
+    "Quarterly XAD is absent in FUNDQ. The accepted build uses the latest same-currency annual XAD record available by the selected quarterly date and leaves missing amounts missing.",
+    "The paper’s pre-1988 CFO footnote does not state the WCAPC sign conversion by SCF format or specify early-adopter SCF 7 use of direct OANCF. The codebook sign mapping and SCF 7 direct-measurement exception remain documented assumptions.",
+    "Table 2 default-zero language could be broader than the explicit G4/G5 missing-history rule. The construction leaves unavailable current R&D, capex, and advertising inputs missing, so GSCORE completeness may differ.",
+    "The paper does not detail portfolio decile breakpoint methodology. Annual primary-security size ranks are matched to the source-native CRSP MSIX decile return series.",
+    "The current original-period rebuild differs from the saved accepted attempt_02 by one firm-year in formation year 2001: current low-BM count 927 vs 928 previously, and complete-case count 239 vs 240. The original-period complete-case totals are 3,781 in this pooled rebuild and 3,782 in the saved run. The exact source/construction reason is unresolved; this difference is not attributed to vintage. The 2002–2006 fit still contributes 1,273 complete observations.",
+    "The original-period low-BM sample remains materially below the paper’s reported 21,724 firm-years and its 21,253 Table 7 complete observations; the accepted attempt_02 had 18,509 low-BM firm-years and 3,782 complete observations, versus 18,508 and 3,781 in the pooled rebuild’s original window. The extended 28-year total of 5,054 is not a like-for-like comparison with the paper’s 23-year total."
+  ],
+  "analyses": [
+    {
+      "scope_id": "table7_full_controls / table7_col2_full_controls",
+      "key": "s1",
+      "label": "Table 7, column (2): annual SRET1 regression with GSCORE and full controls",
+      "sample_ids": [
+        "low_bm_firm_years"
+      ],
+      "status": "extended_full",
+      "reason": "The pooled current-vintage reconstruction produced full-rank annual fits for every formation year from 1979 through 2006. The native controller log verifies 3,781 original-period and 1,273 added-period firm-year observations in the annual OLS e(samples), with 2006 as the last contributing formation year. Bounded coverage checks establish the required 2006 accounting/market inputs and the 2007-05 through 2008-04 return windows.",
+      "source_evidence": [
+        "Paper/sample evidence: output/samples/records/W3124580969.json, §3.1 and sample-period evidence (printed pp. 140–141; PDF text pp. 8–10) sets formation years 1979–2001 and Compustat 1978–2001. output/models/records/W3124580969.json maps table7_full_controls / table7_col2_full_controls to Table 7 column (2), printed p. 158 (PDF page 26), with 23 annual fits; §3.2 and the Table 7 note (printed pp. 141 and 158) define SRET1 and its May-through-April return horizon.",
+        "Accepted predecessor evidence: output/reproductions/packages/W3124580969/attempt_02/outcome.json marks the assigned table7-fmb scope executed. Its accepted build.sas and stata.ipynb at output/reproductions/packages/W3124580969/attempt_02/ are the construction and estimator source; work_item.json in that attempt maps the Table 7 scope. The rebuilt job copy retains year and source_date in work/build.sas:1032 and estimates by year in Stata cell table7-fmb.",
+        "Current-source coverage evidence: the report’s sources_checked array records exact local file paths and vintages; work/design.md, “Five-year pooled replay preflight,” summarizes bounded date/field coverage and usable 2006/2008 windows. Catalog snapshot output/feasibility_reproduction/resources/catalog.json was generated 2026-10-27.",
+        "Native construction evidence: work/runtime/20261118T095626958093Z/build.lst reports the current pooled annual/quarterly duplicate-key checks, the 2002–2006 annual complete-case counts, and zero return/delisting duplicate months. work/runtime/20261118T095626958093Z/build.log records the 22,965-row output and zero final GVKEY/year duplicate keys.",
+        "Native estimation evidence: work/runtime/20261118T095626958093Z/cell_table7-fmb.log contains “EXT_SAMPLE s1 3781 1273 2006”, 28/28 full-rank fits, and the 5,054-observation pooled fit. Fresh aggregate results are in work/tables/table7_col2_fmb.md and .csv."
+      ],
+      "original_begin": "1979",
+      "original_end": "2001",
+      "requested_end": "2006",
+      "supported_end": "2006",
+      "last_added": "2006",
+      "count_unit": "Firm-year observations summed over the annual OLS first-stage e(samples); the Fama–MacBeth second stage averages 28 annual coefficient observations.",
+      "original_n": 3781,
+      "added_n": 1273,
+      "artifacts": [
+        "results/tables/table7_col2_fmb.md",
+        "results/tables/table7_col2_fmb.csv"
+      ],
+      "comparison": "The saved accepted Table 7 column (2) table at output/reproductions/packages/W3124580969/attempt_02/tables/table7_col2_fmb.md reports GSCORE b=0.013 and Newey–West Fama–MacBeth p=0.124, with separate Bernard-adjusted t=1.57. The fresh pooled result at work/tables/table7_col2_fmb.md reports GSCORE b=0.012, p=0.115, and separate Bernard-adjusted t=1.64. Both coefficients are decimal SRET1 return per one GSCORE point; p-values and t-statistics are dimensionless and table coefficients are rounded to three decimals. The saved original fit had N=3,782; the pooled current rebuild has 3,781 observations from 1979–2001 plus 1,273 from 2002–2006. Its 2001 low-BM count is one lower than the accepted run (927 vs 928), with the exact source/construction reason unresolved. Table 7 itself reports GSCORE b=0.034 and autocorrelation-adjusted t=5.53 (printed p. 158).",
+      "native_evidence": {
+        "path": "urn:sha256:31eb5cffa15f66f8891210db9d2e369035ccce3140340c4fa9c1659b5a8d921d",
+        "sha256": "31eb5cffa15f66f8891210db9d2e369035ccce3140340c4fa9c1659b5a8d921d",
+        "marker": "EXT_SAMPLE s1 3781 1273 2006"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 1
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ee06-23e8-7f33-b87a-f07c091efc0e",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3124580969.json",
+    "models": "output/models/records/W3124580969.json",
+    "predecessor": "output/reproductions/packages/W3124580969/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3124580969.json"
+  },
+  "input_hashes": {
+    "sample": "92aabf72ab3a461e5ebf82524a07fc9667abd79cf4ab69b1f04b998c85a83357",
+    "models": "c1526af0fd40f3caf0c61caae89728360f12d5027e818109849cf40c5d5b92c5",
+    "predecessor": "351d19b61057129fc43c009c4a6675c24a65dd093549d2ffe2cba30a8a064021",
+    "feasibility": "570d811ade10306d03e843c015cfd648c10c006f1c8435f315204c6081ea12b6"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:3eb843f7ea51d1a1857564a3110e76a9aca333155d84aae79d2b47f6767093c1",
+    "sha256": "3eb843f7ea51d1a1857564a3110e76a9aca333155d84aae79d2b47f6767093c1",
+    "ok": true,
+    "state_sha256": "b01c969232c16bff253f7db939e917d38ca6fe5682a3cae87522bf08fcc6d9f6",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.FUNDQ",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+        "bytes": 11168514048,
+        "mtime_ns": 1784706315462178578
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "CRSP.MSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+        "bytes": 868417536,
+        "mtime_ns": 1764951132644186578
+      },
+      {
+        "dataset": "CRSP.MSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764951124879997292
+      },
+      {
+        "dataset": "CRSP.MSEDELIST",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msedelist.sas7bdat",
+        "bytes": 6094848,
+        "mtime_ns": 1764951124659991929
+      },
+      {
+        "dataset": "CRSP.MSIX",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_indexes/msix.sas7bdat",
+        "bytes": 524288,
+        "mtime_ns": 1738978046470322077
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "16231ead53ed3c6b8ff7f2cd87674d6a2c645ced03657226c83e3608a1fa9100",
+      "work/stata.ipynb": "9bdcd4ae07aa593f8b1a3a8a6ab42e7666599a785facac7ea24ef312bdc3cab7",
+      "work/submission.json": "ca466ef6771b6d3916146bf056fe8e8ed1234081689f6c9f7ffca255e661ed25"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "a8a781cac61ddb6d68bbdac25907d87c9ee8753206864249ed2b2919e0861102",
+      "predecessor": "output/reproductions/packages/W3124580969/attempt_02/build.sas",
+      "predecessor_sha256": "bc68d757a8fd807c66226a8cfad83c9de28ddb1974bd374294a0fac631dc1311",
+      "executed_sha256": "16231ead53ed3c6b8ff7f2cd87674d6a2c645ced03657226c83e3608a1fa9100",
+      "historical_predecessor_sha256": "6106cf453004247f78425c3ccee22ccf3ae2a7e8e8c0433e51ad04cee8b03db5"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "79f1838547969cfd752b9949d8c4b56456b47ca69483a3e571b3d8eddbd0c3e3",
+      "predecessor": "output/reproductions/packages/W3124580969/attempt_02/stata.ipynb",
+      "predecessor_sha256": "1552486ca7ccc4553296e35da54145678b76d72d215be16db22a796736fcf21a",
+      "executed_sha256": "9bdcd4ae07aa593f8b1a3a8a6ab42e7666599a785facac7ea24ef312bdc3cab7",
+      "historical_predecessor_sha256": "e1644768f6a16888daa4a3873ce77588e6be9b98465a2b857dbb85de9fd8b1c1"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "ca466ef6771b6d3916146bf056fe8e8ed1234081689f6c9f7ffca255e661ed25",
+      "predecessor": "output/reproductions/packages/W3124580969/attempt_02/submission.json",
+      "predecessor_sha256": "0d04c76e232ce5d5c3490f341e818d7828e92679f4fbb252b311ad27be9cddec"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "73e4efabf0d399ab8c513b5bd3cf7c356f17a38653b5dab169b0e41ebb8b7766",
+    "predecessor": "0fe6c28e0689a9e1f120d9baffbe597977e4df939c9bd0369df7c8e36e64169f",
+    "feasibility": "3362ddd303620dd3c78613e1c526f507ca8b6a46afd8052acd9ef4e3cbf2d102"
+  }
+}

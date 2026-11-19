@@ -1,0 +1,1215 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-c855386e4486",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 63/Issue 5/12624 - ESG-Rating-Competition-and-Rating-Quality/cdf-datasheet-code-identifiers-and-log-files.zip",
+        "sha256": "4d35149ab0b4587fcaad1d417cda7663e80ac7ac3104a14102b0d15f2977da11"
+      },
+      {
+        "path": "JAR-Volume 63/Issue 5/12624 - ESG-Rating-Competition-and-Rating-Quality/cdf-online-appendix.pdf",
+        "sha256": "1d3b9759aad4c19be3c34e0338aebc1d6405e948cec3942656cbc4cef9b52aea"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "b44d1ab3b3d5f005fd9723448386ffc9b76b241e68a80d5269fd5d92afff49a5",
+    "work_item_sha256": "391d06c0bf0448e3771a8268d4d2901746f8788a78e3cd5ba5cf37bca693c259"
+  },
+  "title": "ESG Rating Competition and Rating Quality",
+  "doi": "10.1111/1475-679X.12624",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Complete supplied R workflow: code1 prepares the samples, code2 runs the main difference-in-differences analyses, and code3 runs the additional, staggered, stacked, cross-sectional, and real-activity analyses in the same session.",
+      "entry_points": [
+        "code/code1_data cleaning.R",
+        "code/code2_main DiD.R",
+        "code/code3_additional.R"
+      ],
+      "requirement_ids": [
+        "REQ_compustat_fundamentals",
+        "REQ_compustat_security",
+        "REQ_sic_by_firm_year",
+        "REQ_sic_ffi48",
+        "REQ_asset4_core",
+        "REQ_kld_core",
+        "REQ_sustan_history",
+        "REQ_asset4_details",
+        "REQ_kld_details",
+        "REQ_reprisk_news",
+        "REQ_ibes_analyst_following",
+        "REQ_thomson_ownership",
+        "REQ_bbg_disclosure",
+        "REQ_corporate_report",
+        "REQ_violation_counts",
+        "REQ_trucost_emissions",
+        "REQ_ratingcomponent_manual",
+        "REQ_return_variable"
+      ],
+      "software_ids": [
+        "SW_R",
+        "SW_dplyr",
+        "SW_matrixStats",
+        "SW_lfe",
+        "SW_ebalance",
+        "SW_Winsorize"
+      ],
+      "issue_ids": [
+        "ISSUE_upstream_construction",
+        "ISSUE_manual_crosswalk",
+        "ISSUE_R_packages"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_README_ORDER",
+        "E_DATASHEET_SOURCES",
+        "E_DATASHEET_DATES",
+        "E_DATASHEET_MANUAL",
+        "E_DATASHEET_WORKFLOW",
+        "E_CODE1_BASE_JOINS",
+        "E_CODE1_CONTROLS",
+        "E_CODE1_IO_ANALYST",
+        "E_CODE1_SIC_FF48",
+        "E_CODE1_TREATMENT",
+        "E_CODE1_KLD_SCORE",
+        "E_CODE1_CROSSWALK",
+        "E_CODE1_METRIC_OUTPUTS",
+        "E_CODE1_RRNEWS_FILTER",
+        "E_CODE1_RRNEWS_LEAD",
+        "E_CODE2_ANALYSIS",
+        "E_CODE3_STAGGERED",
+        "E_CODE3_IO_CXS",
+        "E_CODE3_REAL_INPUTS",
+        "E_CODE3_SUSTAN_INPUT",
+        "E_IDENTIFIER_PROBE",
+        "E_ENV_REGISTERED",
+        "E_R_PACKAGE_METADATA",
+        "E_CODE2_REGSUMMARY",
+        "E_CODE3_REGSUMMARY"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ_compustat_fundamentals",
+      "kind": "data",
+      "description": "Annual Compustat fundamentals for the firm-year panel. The code uses GVKEY, fiscal year, assets, equity, shares, current/long-term debt, income, sales, and fiscal-year price to form market capitalization, market-to-book, leverage, and ROE; ROE needs a one-year lag of equity. The supplied COMP.FUNDA candidate has a one-row field/readability check, but full history, return data, and construction of ceq_lag are not established.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_comp_funda",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat (catalog candidate COMP.FUNDA)",
+          "description": "The catalog and bounded probe support the named annual fundamentals file and the listed source columns. The one-row probe does not establish 2007–2017 coverage or the prior-year history and ceq_lag construction needed by the code.",
+          "evidence_ids": [
+            "E_CAT_COMP_FUNDA",
+            "E_PROBE_COMP_FUNDA"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "at",
+            "ceq",
+            "csho",
+            "dlc",
+            "dltt",
+            "ib",
+            "sale",
+            "prcc_f"
+          ],
+          "expected_period": "Annual firm-years covering the supplied analyses (2007–2017), plus at least one prior fiscal year for ceq_lag; complete coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_compustat_security",
+      "kind": "data",
+      "description": "Historical security-to-GVKEY identity fields for the code's ISIN, CUSIP, ticker, and GVKEY joins. A current field/readability probe is not evidence that historical links and selection rules match the sample years.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_comp_security",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/security.sas7bdat (catalog candidate COMP.SECURITY)",
+          "description": "The bounded probe confirms the file is readable and sampled fields tic, gvkey, iid, CUSIP, and ISIN are present. Historical effective dates, link selection, and alignment with the annual panel remain unverified.",
+          "evidence_ids": [
+            "E_CAT_COMP_SECURITY",
+            "E_PROBE_COMP_SECURITY"
+          ],
+          "expected_fields": [
+            "tic",
+            "gvkey",
+            "iid",
+            "CUSIP",
+            "ISIN"
+          ],
+          "expected_period": "Historical identity mappings needed for 2007–2017; date-effective coverage and selection rules unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_sic_by_firm_year",
+      "kind": "data",
+      "description": "The pre-existing sic_US firm-year object joined on GVKEY and fiscal year supplies SIC and is used to exclude selected industries. Its product, fields, history, and construction are not identified by the supplied sources.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_sic_ffi48",
+      "kind": "data",
+      "description": "The sic_ffi crosswalk must map SIC to ffi_48 for regression clusters and industry-year groups; code3 also consumes ffi_12. No compatible crosswalk source, version, or producer is identified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_asset4_core",
+      "kind": "data",
+      "description": "Annual ASSET4 coverage and overall-score panel consumed as asset4, including ISIN and year joins and overall_score for the rating and treatment samples. The ASSET4 product/table and field mapping are not established by the local metadata candidates.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_asset4_core",
+          "type": "local",
+          "status": "unverified",
+          "location": "WRDS/SAS catalog candidates: ASSET4 and TRESG table families",
+          "description": "The catalog lists ASSET4/TRESG metadata, including company information and ESG-related table families, but does not identify the exact annual coverage and overall-score source, fields, or author transformation for object asset4.",
+          "evidence_ids": [
+            "E_CAT_ASSET4",
+            "E_CAT_TRESG"
+          ],
+          "expected_period": "Annual coverage/scores needed for the supplied analyses (including 2007–2017); compatible history unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_kld_core",
+      "kind": "data",
+      "description": "Annual KLD rating panel consumed as kld, joined by CUSIP and year and used to construct the net rating index. The local KLD.HISTORY probe only confirms a readable candidate and sampled year/CUSIP fields; score fields, transformations, and coverage are not verified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_kld_core",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/kld/history.sas7bdat (catalog candidate KLD.HISTORY)",
+          "description": "The catalog and bounded probe support a KLD historical file with sampled year and CUSIP fields. The detailed score/concern fields, author filtering, and complete analysis-year coverage remain unresolved.",
+          "evidence_ids": [
+            "E_CAT_KLD",
+            "E_PROBE_KLD"
+          ],
+          "expected_fields": [
+            "year",
+            "CUSIP"
+          ],
+          "expected_period": "Annual KLD observations needed for 2007–2017; complete coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_sustan_history",
+      "kind": "data",
+      "description": "Sustainalytics objects historical_score_weighted and sustan_2009 provide first-coverage treatment timing and 2009 total_esg_score. The data sheet dates a legacy shared sample to September 2019 but supplies no file, source schema, mapping, or complete historical coverage evidence.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_sustan_legacy",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Sustainalytics legacy shared sample described in the CDF datasheet (September 2019)",
+          "description": "A legacy shared sample is documented, but the assigned package contains no compatible panel and its source fields, firm identifiers, annual history, entitlement, and object-construction mapping are unverified.",
+          "evidence_ids": [
+            "E_DATASHEET_DATES",
+            "E_CODE1_TREATMENT",
+            "E_CODE3_STAGGERED",
+            "E_CODE3_SUSTAN_INPUT"
+          ],
+          "expected_period": "Historical coverage through the earliest observed coverage and the 2009 score; full history and sample coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_asset4_details",
+      "kind": "data",
+      "description": "ASSET4 detail, output, and concern objects (asset4_detail, as4_output, asset4_con) are used to calculate populated/input/output metrics and concern ratings. Their exact input tables, identifiers, year keys, fields, and construction are not supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_asset4_details",
+          "type": "local",
+          "status": "unverified",
+          "location": "WRDS/SAS TRESG metadata candidates",
+          "description": "ASSET4/TRESG table families are catalogued, but the detailed-score/concern fields and mapping to asset4_detail, as4_output, and asset4_con are not identified.",
+          "evidence_ids": [
+            "E_CAT_TRESG",
+            "E_CODE1_METRIC_OUTPUTS",
+            "E_CODE1_DETAIL_CONCERNS"
+          ],
+          "expected_period": "Annual metric and concern records required for the supplied analysis samples; exact history unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_kld_details",
+      "kind": "data",
+      "description": "KLD detailed concern/net and populated/output objects (kld_CC, kld_simple, KLD_output) are separately consumed to construct net and concern scores and input/output metric counts. Required score/category fields and producer steps are not identified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_kld_details",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/kld/history.sas7bdat (candidate KLD.HISTORY)",
+          "description": "The KLD historical file is a local metadata candidate, but the code-specific concern/category and output fields and their construction are not confirmed by the two-field probe.",
+          "evidence_ids": [
+            "E_CAT_KLD",
+            "E_PROBE_KLD",
+            "E_CODE1_KLD_SCORE",
+            "E_CODE1_METRIC_OUTPUTS",
+            "E_CODE1_DETAIL_CONCERNS"
+          ],
+          "expected_fields": [
+            "year",
+            "CUSIP"
+          ],
+          "expected_period": "Annual records required for the supplied analysis samples; exact historical coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_reprisk_news",
+      "kind": "data",
+      "description": "Raw RepRisk news object RRnews must provide incident_date, novelty, and primary_isin; the code filters novel items, counts by firm/year, and derives one- and two-year leads before joining news outcomes. Exact aggregation/input mapping is absent.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_reprisk_news",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/reprisk/pm/pm_news_data.sas7bdat (catalog candidate REPRISK.PM_NEWS_DATA)",
+          "description": "RepRisk catalog entries include a news-data candidate, but the required incident, novelty, ISIN fields and mapping to RRnews are not verified. Failed field probes are not treated as evidence of absence.",
+          "evidence_ids": [
+            "E_CAT_REPRISK",
+            "E_CODE1_RRNEWS_FILTER",
+            "E_CODE1_RRNEWS_LEAD"
+          ],
+          "expected_period": "News years needed by the analysis and up to two subsequent annual observations for t+2 lead construction; complete history unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_ibes_analyst_following",
+      "kind": "data",
+      "description": "I/B/E/S analyst-following data must support the analystnum and analyst_log columns merged through compustat_io on GVKEY and fiscal year. The downloaded product, identifiers, annual aggregation, and construction are not specified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_ibes_candidates",
+          "type": "local",
+          "status": "unverified",
+          "location": "WRDS/SAS catalog: IBES.STATSUMU and IBES.STATSUM summary-statistic table families are candidates",
+          "description": "The catalog has I/B/E/S summary-statistic candidates; no exact analyst-following field, GVKEY mapping, period conversion, or analystnum/analyst_log producer is confirmed.",
+          "evidence_ids": [
+            "E_CAT_IBES",
+            "E_DATASHEET_DATES",
+            "E_CODE1_IO_ANALYST"
+          ],
+          "expected_period": "Annual observations aligned with the supplied firm-year analyses; date conversion and coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_thomson_ownership",
+      "kind": "data",
+      "description": "Thomson Reuters institutional ownership input must support io_perc and the separate io_cxs.IO_n firm/year measure used in cross-sectional splits. Exact holdings aggregation, firm identity mapping, and annual-period definitions are unknown.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_tfn_holdings",
+          "type": "local",
+          "status": "unverified",
+          "location": "WRDS/SAS catalog candidate TFN.S34 (13F holdings)",
+          "description": "The catalog identifies a holdings candidate, but does not verify the authors' ownership percentage/count fields or GVKEY/ISIN-year aggregation into io_perc and IO_n.",
+          "evidence_ids": [
+            "E_CAT_THOMSON",
+            "E_DATASHEET_DATES",
+            "E_CODE1_IO_ANALYST",
+            "E_CODE3_IO_CXS"
+          ],
+          "expected_period": "Annual ownership measures aligned to the firm-year panel; exact period rules and coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_bbg_disclosure",
+      "kind": "data",
+      "description": "Bloomberg ESG Disclosure score input BBG must provide ticker, year, and ESG_dis_score for the code's annual join. The local product route and input mapping are not verified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_bbg",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Bloomberg ESG Disclosure score, described as downloaded in May 2021",
+          "description": "The datasheet records this historical source, but no compatible file, current access path, source fields, ticker/year mapping, or coverage is present in the package or established by the local catalog query.",
+          "evidence_ids": [
+            "E_DATASHEET_DATES",
+            "E_CAT_BBG",
+            "E_CODE1_EXTRA_JOINS"
+          ],
+          "expected_period": "Annual disclosure score data needed for the supplied analysis years; coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_corporate_report",
+      "kind": "data",
+      "description": "Corporate Register report indicator input CSR_Report must support Symbol, year2, and Report for the code's ticker/year join. The report data, year parsing from report titles, and prepared indicator construction are absent.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_corporate_register",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Corporate Register data described as purchased in May 2020",
+          "description": "The datasheet identifies a historical purchase, but no compatible file, access route, symbol/year/Report schema, or report-title year construction is verified in the assigned package or local catalog query.",
+          "evidence_ids": [
+            "E_DATASHEET_DATES",
+            "E_CAT_CORPORATE_REGISTER",
+            "E_CODE1_EXTRA_JOINS"
+          ],
+          "expected_period": "Annual report indicators needed for the supplied analysis years; source coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_violation_counts",
+      "kind": "data",
+      "description": "The VT_exist input must supply ISIN, penalty year, and violation count for the code's annual merge. The authors say violation data were obtained from Good Jobs First as of 11 January 2022; a compatible snapshot, fields, and firm/year mapping are not established.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_vt_public",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://violationtracker.goodjobsfirst.org/pages/user-guide",
+          "description": "The official guide snippet says search/display are free but downloading results and viewing several fields are limited to subscribers. It does not verify the authors' January 2022 extract, required fields, exact history, or a compatible permitted acquisition method; no query or data were accessed.",
+          "evidence_ids": [
+            "E_PUBLIC_VT_GUIDE",
+            "E_PUBLIC_VT_PERIOD",
+            "E_DATASHEET_DATES",
+            "E_CODE3_REAL_INPUTS"
+          ],
+          "expected_period": "Good Jobs First input described as current through 11 January 2022; annual coverage and match to the code's window unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_trucost_emissions",
+      "kind": "data",
+      "description": "The truecost input must contain GVKEY, fiscalyear, di_319407, and di_319408 for the emission intensity calculation. Catalog metadata confirms candidate Trucost measures and fiscalyear, but the firm-key mapping, complete source schema, and construction are not verified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_trucost",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/trucost/environment/wrds_environment.sas7bdat (catalog candidate TRUCOST.WRDS_ENVIRONMENT)",
+          "description": "Catalog metadata supports the Trucost environment table and labels the two requested metric IDs as GHG Scope 1 and Scope 2 location-based, with fiscalyear. The GVKEY-to-Trucost mapping and author-prepared truecost producer remain unverified; the failed field probe is not treated as absence.",
+          "evidence_ids": [
+            "E_CAT_TRUCOST",
+            "E_CAT_TRUCOST_S1",
+            "E_CAT_TRUCOST_S2",
+            "E_CAT_TRUCOST_YEAR",
+            "E_CODE3_REAL_INPUTS"
+          ],
+          "expected_fields": [
+            "fiscalyear",
+            "di_319407",
+            "di_319408"
+          ],
+          "expected_period": "Fiscal years aligned with the supplied firm-year analyses; identifier mapping and history unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_ratingcomponent_manual",
+      "kind": "data",
+      "description": "The manually matched ASSET4–KLD detailed-metric crosswalk embodied in ratingcomponent is joined on ISIN and fiscal-year keys and provides matched rating variables. The data sheet identifies this sole manual procedure; the crosswalk and its match rules are not present in the supplied files.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_return_variable",
+      "kind": "data",
+      "description": "The firm-year return variable is required in the sample completeness filter and multiple regressions, but the supplied files do not identify its provider, raw field, return definition, fiscal/calendar-year mapping, or producer.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW_R",
+      "name": "R",
+      "status": "available",
+      "description": "The registered safe environment projection reports R 4.5.0 available. The author package does not pin its R version, so exact version reproducibility remains unspecified.",
+      "evidence_ids": [
+        "E_ENV_REGISTERED"
+      ]
+    },
+    {
+      "id": "SW_dplyr",
+      "name": "R package dplyr",
+      "status": "preparation_required",
+      "description": "The supplied code uses dplyr joins/grouping/reshaping verbs, with some explicit dplyr:: calls and other unqualified calls. Metadata inspection reports dplyr absent from the current R library; the project must configure a compatible package version and attach or qualify it before running.",
+      "evidence_ids": [
+        "E_CODE1_BASE_JOINS",
+        "E_CODE1_RRNEWS_FILTER",
+        "E_R_PACKAGE_METADATA"
+      ]
+    },
+    {
+      "id": "SW_matrixStats",
+      "name": "R package matrixStats",
+      "status": "preparation_required",
+      "description": "code1 explicitly loads matrixStats and uses rowSds. Metadata inspection reports matrixStats absent from the current R library.",
+      "evidence_ids": [
+        "E_CODE1_MATRIXSTATS",
+        "E_R_PACKAGE_METADATA"
+      ]
+    },
+    {
+      "id": "SW_lfe",
+      "name": "R package lfe (felm function)",
+      "status": "preparation_required",
+      "description": "The main and additional models call felm. Metadata inspection reports lfe absent from the current R library; the scripts do not include package setup or a pinned version.",
+      "evidence_ids": [
+        "E_CODE2_ANALYSIS",
+        "E_R_PACKAGE_METADATA"
+      ]
+    },
+    {
+      "id": "SW_ebalance",
+      "name": "R function ebalance and its package provider",
+      "status": "unverified",
+      "description": "The supplied preparation code calls ebalance for entropy balancing, but does not identify the exporting package/version. The checked ebal package name is absent from the current R library, which does not by itself establish the function's provider.",
+      "evidence_ids": [
+        "E_CODE1_BASE_JOINS",
+        "E_R_PACKAGE_METADATA",
+        "E_CODE1_EBALANCE"
+      ]
+    },
+    {
+      "id": "SW_Winsorize",
+      "name": "R function Winsorize and its package provider",
+      "status": "unverified",
+      "description": "The supplied code calls Winsorize but does not identify its exporting package/version. The checked DescTools package name is absent from the current R library, which does not by itself establish the function's provider.",
+      "evidence_ids": [
+        "E_CODE1_CONTROLS",
+        "E_R_PACKAGE_METADATA"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "ISSUE_upstream_construction",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_upstream_data_construction",
+      "description": "All three scripts operate on pre-existing in-memory objects. The README describes the stage sequence, but the package lacks the input loaders/object constructors and the product-to-field/key/date mappings needed to reconstruct those objects. Several required outputs also depend on unspecified one-year equity lag, annual identity crosswalks, and a two-year RepRisk lead window. A full prepared analysis panel is absent, so no analysis_only scope is supported.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_README_ORDER",
+        "E_DATASHEET_SOURCES",
+        "E_DATASHEET_DATES",
+        "E_DATASHEET_WORKFLOW",
+        "E_CODE1_BASE_JOINS",
+        "E_CODE1_CONTROLS",
+        "E_CODE1_EXTRA_JOINS",
+        "E_CODE1_IO_ANALYST",
+        "E_CODE1_SIC_FF48",
+        "E_CODE1_TREATMENT",
+        "E_CODE1_KLD_SCORE",
+        "E_CODE1_METRIC_OUTPUTS",
+        "E_CODE1_RRNEWS_FILTER",
+        "E_CODE1_RRNEWS_LEAD",
+        "E_CODE3_STAGGERED",
+        "E_CODE3_IO_CXS",
+        "E_CODE3_REAL_INPUTS",
+        "E_CODE3_SUSTAN_INPUT",
+        "E_IDENTIFIER_PROBE",
+        "E_CODE2_REGSUMMARY",
+        "E_CODE3_REGSUMMARY"
+      ]
+    },
+    {
+      "id": "ISSUE_manual_crosswalk",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_manual_matching_input",
+      "description": "The documented manual ASSET4–KLD detailed-metric match is required to create the ratingcomponent object consumed in code1, but its matched rows and matching rules are not included.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_DATASHEET_MANUAL",
+        "E_CODE1_CROSSWALK"
+      ]
+    },
+    {
+      "id": "ISSUE_R_packages",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "R_package_setup",
+      "description": "The R analysis calls dplyr verbs, rowSds from matrixStats, felm, ebalance, and Winsorize. R 4.5.0 is available, but a metadata-only installed-package check found dplyr, matrixStats, lfe, ebal, and DescTools absent. The package-provider/version setup for ebalance and Winsorize is not pinned in the supplied scripts.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_CODE1_MATRIXSTATS",
+        "E_CODE1_BASE_JOINS",
+        "E_CODE2_ANALYSIS",
+        "E_CODE1_CONTROLS",
+        "E_R_PACKAGE_METADATA",
+        "E_ENV_REGISTERED"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_README_ORDER",
+      "kind": "source",
+      "file": "code/readme.txt",
+      "line_begin": 1,
+      "line_end": 5,
+      "quote": "“code1_data cleaning” - construct the difference-in-difference samples from the initial datasets including company fundamentals and ESG ratings of the incumbents. Three samples are constructed: one for the rating disagreement test, one for the news predictability test, and one for the rating metrics test. The corresponding entropy balanced samples are also constructed.\r\n\r\n\"code2_main DiD\" - after running the first part, this part conducts the basic Difference-in-Difference analyses, where only the initial coverage by Sustainalytics is used as the shock.\r\n\r\n\"code3_additional\" - this part covers all the other tests, including staggered and stacked DID, cross-sectional tests, and other additional tests.",
+      "description": "README states code1 constructs samples, code2 runs the main difference-in-differences analyses, and code3 runs additional tests."
+    },
+    {
+      "id": "E_DATASHEET_SOURCES",
+      "kind": "source",
+      "file": "CDF datasheet.pdf",
+      "line_begin": 18,
+      "line_end": 20,
+      "quote": "   •   In this paper, we obtain data from the following sources: Compustat, ASSET4, KLD,\n       RepRisk, Sustainalytics, I/B/E/S, Thomson Reuters, Corporate Register, Bloomberg\n       ESG Disclosure score.",
+      "description": "Datasheet lists the study's source families."
+    },
+    {
+      "id": "E_DATASHEET_DATES",
+      "kind": "source",
+      "file": "CDF datasheet.pdf",
+      "line_begin": 22,
+      "line_end": 40,
+      "quote": "   •   Most of the data are directly downloaded from WRDS via our schools’ subscriptions.\n       Svenja Dube obtained the following databases while being an Assistant Professor at\n       Fordham University: Corporate Register, Sustainalytics (legacy), Bloomberg ESG\n       Disclosure score.\n\n   •   All the ESG related data (i.e., ASSET4, KLD, RepRisk, Trucost) and financial data\n       from Compustat are downloaded by Cai Chen on July 19, 2022.\n\n   •   I/B/E/S data on analysts following and Thomson Reuters data on institutional\n       ownership were downloaded by Cai Chen in October 2022.\n\n   •   The Corporate Register data was purchased from Corporate Register in May 2020.\n\n   •   The Sustainalytics data was purchased by Fordham University prior to Svenja Dube\n       joining the university. The shared sample is dated September 2019.\n\n   •   The Bloomberg Disclosure score was downloaded from Bloomberg in May 2021.\n\n   •   The violation data was obtained from Good Jobs First as of 11 Jan 2022.",
+      "description": "Datasheet documents acquisition dates and source history."
+    },
+    {
+      "id": "E_DATASHEET_MANUAL",
+      "kind": "source",
+      "file": "CDF datasheet.pdf",
+      "line_begin": 76,
+      "line_end": 78,
+      "quote": "All manipulation of the data is done via computer programs provided in part 6. The only\nmanual procedure is the manual matching between ASSET4 and KLD detailed metrics. But\nall the variables created after the matching was also done by computer programs.",
+      "description": "Datasheet identifies manual matching between ASSET4 and KLD detailed metrics."
+    },
+    {
+      "id": "E_DATASHEET_WORKFLOW",
+      "kind": "source",
+      "file": "CDF datasheet.pdf",
+      "line_begin": 99,
+      "line_end": 110,
+      "quote": "The “Code Package” contains the required codes to convert different sets of raw data\ninto the final datasets used in the analysis. The “code1_data cleaning” contains procedures of\nconverting raw data into the datasets used in the main difference-in-difference analyses.\n\n\n                                                 2\n\n“code2_main DiD” contains the steps of the main difference-in-difference analyses.\n“code3_additional” contains the steps of additional analyses including staggered difference-\nin-difference, stacked difference-in-difference, and cross-sectional analyses. The excel file\n“identifers” provides the firm identifiers (i.e., GVKEY) for the final sample of our main\nanalysis.",
+      "description": "Datasheet describes the code-package stages and the identifier spreadsheet."
+    },
+    {
+      "id": "E_CODE1_BASE_JOINS",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 3,
+      "line_end": 6,
+      "quote": "initialsample=left_join(compustat,asset4,by=c(\"ISIN\"=\"isin\",\"year\")) ## coverage data\r\ninitialsample=left_join(initialsample,kld,by=c(\"ncusip\"=\"CUSIP\",\"year\"))\r\n\r\ninitialsample=left_join(initialsample,sic_US[,c(\"gvkey\",\"fyear\",\"sic\")],by=c(\"gvkey\",\"fyear\"))",
+      "description": "code1 joins Compustat, ASSET4, KLD, and firm-year SIC inputs into the initial sample."
+    },
+    {
+      "id": "E_CODE1_EXTRA_JOINS",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 30,
+      "line_end": 37,
+      "quote": "initialsample=left_join(initialsample,BBG[,c('ticker','year','ESG_dis_score')],by=c('tic'='ticker','year'))\r\n\r\ninitialsample=left_join(initialsample,CSR_Report,by=c('tic'='Symbol','year'='year2')) ## year2 is the original year variable supplemented by year information from report title\r\nsum(is.na(initialsample$Report))\r\n\r\ninitialsample$Report=ifelse(is.na(initialsample$Report),0,initialsample$Report)\r\n\r\ninitialsample=left_join(initialsample,compustat_io[,c('gvkey','fyear','io_perc')],by=c('gvkey','fyear'))",
+      "description": "code1 joins Bloomberg, Corporate Register, and Compustat IO objects to the sample."
+    },
+    {
+      "id": "E_CODE1_RRNEWS_FILTER",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 188,
+      "line_end": 192,
+      "quote": "RRnews$year=substr(RRnews$incident_date,1,4)\r\nRRnews$year=as.numeric(RRnews$year)\r\n\r\nRRnews_novel=subset(RRnews,novelty==2)\r\nRRnews_novel=RRnews_novel %>% group_by(primary_isin,year) %>% mutate(newscount=n())",
+      "description": "code1 filters RepRisk records to novel incidents and counts incidents by firm-year."
+    },
+    {
+      "id": "E_CODE1_RRNEWS_LEAD",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 197,
+      "line_end": 201,
+      "quote": "RRnews_novel=RRnews_novel %>% group_by(primary_isin) %>% arrange(year) %>% \r\n  mutate(newscount_lead=dplyr::lead(newscount,1),\r\n         newscount_lead2=dplyr::lead(newscount,2))\r\n\r\nnews_sample=left_join(metrics_sample,RRnews_novel,by=c('ISIN'='primary_isin','year'))",
+      "description": "code1 constructs one-year and two-year RepRisk count leads and merges them by ISIN/year."
+    },
+    {
+      "id": "E_CODE2_ANALYSIS",
+      "kind": "source",
+      "file": "code/code2_main DiD.R",
+      "line_begin": 17,
+      "line_end": 21,
+      "quote": "## Disagreement test ##\r\ndid11=felm(disagree~treat+post+treat:post+rating+mktcap+mtb+leverage+roe+Report+io_perc+analyst_log+return|0|0|ffi_48,\r\n           data=disagree_sample[disagree_sample$preexist>0&disagree_sample$postexist>0&\r\n                                  disagree_sample$year>=2007&disagree_sample$year<=2012,])\r\nregsummary(did11)",
+      "description": "code2 runs the main disagreement difference-in-differences model and calls regsummary."
+    },
+    {
+      "id": "E_CODE3_STAGGERED",
+      "kind": "source",
+      "file": "code/code3_additional.R",
+      "line_begin": 4,
+      "line_end": 18,
+      "quote": "## Sustainalytics treat years\r\ntreatment_stag=historical_score_weighted %>% group_by(isin_filled) %>% mutate(earliest=min(year,na.rm=T))\r\ntreatment_stag=subset(treatment_stag,year==earliest)\r\ntreatment_stag=treatment_stag %>% distinct(isin_filled,year)\r\ntreatment_stag$treat_stag=1\r\ntreatment_stag$treatyear=treatment_stag$year+1 ## treatyear contains the first treat year for the treated firm\r\ntreatment_stag=subset(treatment_stag,!is.na(isin_filled))\r\ntreatment_stag=treatment_stag %>% distinct(isin_filled,.keep_all = T)\r\n\r\n#### staggered DID sample ####\r\nstagdid=subset(initialsample, year>=2007&year<=2017)\r\nstagdid=subset(stagdid,!is.na(kld_net)|!is.na(overall_score))\r\n\r\n# define treatment\r\nstagdid=left_join(stagdid,treatment_stag[,c('isin_filled','treat_stag','treatyear')],by=c('ISIN'='isin_filled'))",
+      "description": "code3 derives first Sustainalytics treatment year and constructs a staggered sample through 2017."
+    },
+    {
+      "id": "E_CODE3_REAL_INPUTS",
+      "kind": "source",
+      "file": "code/code3_additional.R",
+      "line_begin": 301,
+      "line_end": 309,
+      "quote": "############################## Real Activities ############################\r\n\r\n## violation count\r\nnews_sample=left_join(news_sample,VT_exist[,c('ISIN','pen_year','viocount')],by=c('ISIN','year'='pen_year'))\r\nnews_sample$viocount=ifelse(is.na(news_sample$viocount),0,news_sample$viocount)\r\n\r\n## emission intensity\r\nnews_sample=left_join(news_sample,truecost[,c('gvkey','fiscalyear','di_319407','di_319408')],by=c('gvkey','fyear'='fiscalyear'))\r\nnews_sample$scope12_in=news_sample$di_319407+news_sample$di_319408",
+      "description": "code3 joins violation and Trucost inputs for its real-activity analyses."
+    },
+    {
+      "id": "E_CODE3_SUSTAN_INPUT",
+      "kind": "source",
+      "file": "code/code3_additional.R",
+      "line_begin": 314,
+      "line_end": 320,
+      "quote": "## sustainability cut\r\ntreatment=subset(news_sample,year<2010)\r\n\r\ntreatment=left_join(treatment,sustan_2009[,c('isin_filled','total_esg_score')],\r\n                    by=c('ISIN'='isin_filled'))\r\n\r\ntreatment=subset(treatment,!is.na(total_esg_score))",
+      "description": "code3 joins the 2009 Sustainalytics total ESG score for a treatment cut."
+    },
+    {
+      "id": "E_IDENTIFIER_PROBE",
+      "kind": "probe",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "e03d5c077e12d85032cb7d3b34cfc0adc179b1ba66411e28c04a7fd923635b0f",
+      "description": "Registered bounded probe for identifiers.csv: readable, with an empty header and gvkey column; one row sampled and full coverage unverified."
+    },
+    {
+      "id": "E_ENV_REGISTERED",
+      "kind": "probe",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00",
+      "description": "Original registered environment probe. The pinned safe projection reports R 4.5.0 available; raw nested diagnostic/log fields were not displayed."
+    },
+    {
+      "id": "E_CODE1_CONTROLS",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 12,
+      "line_end": 27,
+      "description": "Source formulae and one-year lag required for the Compustat controls.",
+      "quote": "initialsample$mktcap=log(initialsample$csho*initialsample$prcc_f+1)\r\ninitialsample$mktcap=Winsorize(initialsample$mktcap,probs=c(0.01,0.99),na.rm=T)\r\nsummary(initialsample$mktcap)\r\n\r\ninitialsample$mtb=initialsample$csho*initialsample$prcc_f/initialsample$ceq\r\ninitialsample=subset(initialsample,!is.na(ceq)&ceq!=0)\r\ninitialsample$mtb=Winsorize(initialsample$mtb,probs=c(0.01,0.99),na.rm=T)\r\nsummary(initialsample$mtb)\r\n\r\ninitialsample$leverage=(initialsample$dlc+initialsample$dltt)/initialsample$at\r\ninitialsample$leverage=Winsorize(initialsample$leverage,probs=c(0.01,0.99),na.rm=T)\r\nsummary(initialsample$leverage)\r\n\r\ninitialsample$roe=initialsample$ib/initialsample$ceq_lag\r\ninitialsample$roe=ifelse(initialsample$roe<(-1),(-1),initialsample$roe)\r\ninitialsample$roe=Winsorize(initialsample$roe,probs=c(0.01,0.99),na.rm=T)"
+    },
+    {
+      "id": "E_CODE1_IO_ANALYST",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 37,
+      "line_end": 47,
+      "description": "Annual institutional ownership and analyst measures joined to the firm-year sample and required return filter.",
+      "quote": "initialsample=left_join(initialsample,compustat_io[,c('gvkey','fyear','io_perc')],by=c('gvkey','fyear'))\r\n\r\nsummary(initialsample$io_perc)\r\n\r\ninitialsample=left_join(initialsample,compustat_io[,c('gvkey','fyear','analystnum','analyst_log')],by=c('gvkey','fyear'))\r\n\r\ninitialsample$analystnum=ifelse(is.na(initialsample$analystnum),0,initialsample$analystnum)\r\ninitialsample$analyst_log=ifelse(is.na(initialsample$analyst_log),0,initialsample$analyst_log)\r\nsummary(initialsample$analyst_log)\r\n\r\ninitialsample=subset(initialsample,!is.na(mktcap)&!is.na(mtb)&!is.na(leverage)&!is.na(roe)&!is.na(return))"
+    },
+    {
+      "id": "E_CODE1_SIC_FF48",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 63,
+      "line_end": 69,
+      "description": "SIC-to-FF48 mapping input and resulting industry-year group.",
+      "quote": "## Define ffi_48 industry\r\nsic_ffi=sic_ffi %>% distinct(sic,ffi_48)\r\nsic_ffi=subset(sic_ffi,!is.na(sic))\r\nsic_ffi$sic=as.character(sic_ffi$sic)\r\n\r\ninitialsample=left_join(initialsample,sic_ffi,by=c('sic'))\r\ninitialsample$indyear_48=initialsample %>% group_by(ffi_48,year) %>% group_indices() ## industry*year indicator"
+    },
+    {
+      "id": "E_CODE1_TREATMENT",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 49,
+      "line_end": 69,
+      "description": "Treatment is based on initial Sustainalytics coverage and the SIC-to-FF48 input.",
+      "quote": "## Define treatment as initial sustainalytics coverage in 2009 ##\r\ntreatment=subset(historical_score_weighted,year==2009)\r\ntreatment=treatment %>% distinct(isin_filled)\r\ntreatment$sustan=1\r\ntreatment=subset(treatment,!is.na(isin_filled))\r\n\r\ninitialsample=left_join(initialsample,treatment,by=c(\"ISIN\"=\"isin_filled\")) \r\n\r\ntreatment=subset(initialsample,sustan==1)\r\n\r\ntreat=unique(treatment$gvkey)\r\n\r\ninitialsample$treat=ifelse(initialsample$gvkey %in% treat,1,0)\r\n\r\n## Define ffi_48 industry\r\nsic_ffi=sic_ffi %>% distinct(sic,ffi_48)\r\nsic_ffi=subset(sic_ffi,!is.na(sic))\r\nsic_ffi$sic=as.character(sic_ffi$sic)\r\n\r\ninitialsample=left_join(initialsample,sic_ffi,by=c('sic'))\r\ninitialsample$indyear_48=initialsample %>% group_by(ffi_48,year) %>% group_indices() ## industry*year indicator"
+    },
+    {
+      "id": "E_CODE1_KLD_SCORE",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 77,
+      "line_end": 84,
+      "description": "KLD category net-score fields and the annual ESG rating comparison sample.",
+      "quote": "initialsample=left_join(initialsample,kld_CC[,c('year','CUSIP','envnet','comnet','humnet','empnet','divnet','govnet')],\r\n                        by=c('year',\"ncusip\"=\"CUSIP\")) ## KLD indices net\r\n\r\n\r\ninitialsample$kld_net=initialsample$envnet+initialsample$comnet+initialsample$humnet+initialsample$empnet+initialsample$divnet+initialsample$govnet\r\n\r\nlibrary(matrixStats)\r\ndisagree_sample=subset(initialsample,!is.na(kld_net)&!is.na(overall_score)&year>=2007&year<=2012)"
+    },
+    {
+      "id": "E_CODE1_MATRIXSTATS",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 83,
+      "line_end": 90,
+      "description": "Explicit matrixStats load and rowSds dependency.",
+      "quote": "library(matrixStats)\r\ndisagree_sample=subset(initialsample,!is.na(kld_net)&!is.na(overall_score)&year>=2007&year<=2012)\r\n\r\ndisagree_sample$kld_scale=(max(disagree_sample$kld_net)-disagree_sample$kld_net)/(max(disagree_sample$kld_net)-min(disagree_sample$kld_net))\r\n\r\ndisagree_sample$overall_scale=(max(disagree_sample$overall_score)-disagree_sample$overall_score)/(max(disagree_sample$overall_score)-min(disagree_sample$overall_score))\r\n\r\ndisagree_sample$disagree=rowSds(as.matrix(disagree_sample[,c('kld_scale','overall_scale')]))"
+    },
+    {
+      "id": "E_CODE1_CROSSWALK",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 99,
+      "line_end": 101,
+      "description": "The manual-match result ratingcomponent is consumed by code1.",
+      "quote": "# disagreement decomposition #\r\ndisagree_sample=left_join(disagree_sample,ratingcomponent,by=c('ISIN'='Isin','fyear'='fisyear'))\r\nsummary(disagree_sample$matchrating_AS4)"
+    },
+    {
+      "id": "E_CODE1_METRIC_OUTPUTS",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 147,
+      "line_end": 167,
+      "description": "ASSET4 and KLD detail/output inputs used for populated input/output calculations.",
+      "quote": "## merge with rating metrics details ##\r\nmetrics_sample=left_join(metrics_sample,asset4_detail,\r\n                         by=c('year'='fisyear',\"ISIN\"=\"Isin\"))\r\n\r\nmetrics_sample=metrics_sample %>% rename(populate_as4=populated)\r\n\r\nmetrics_sample=left_join(metrics_sample,as4_output[,c('fisyear','Isin','populated_output')],\r\n                         by=c('year'='fisyear',\"ISIN\"=\"Isin\"))\r\n\r\nmetrics_sample$populate_input=metrics_sample$populate_as4-metrics_sample$populated_output ## ASSET4 input and output metrics\r\n\r\n\r\nmetrics_sample=left_join(metrics_sample,kld_simple[,c('year','CUSIP','populated')],\r\n                         by=c('year',\"ncusip\"=\"CUSIP\"))\r\n\r\nmetrics_sample=metrics_sample %>% rename(populate_kld=populated)\r\n\r\nmetrics_sample=left_join(metrics_sample,KLD_output[,c(\"CUSIP\",\"year\",\"populated_output_KLD\")],\r\n                         by=c('year',\"ncusip\"=\"CUSIP\"))\r\n\r\nmetrics_sample$populated_input_KLD=metrics_sample$populate_kld-metrics_sample$populated_output_KLD"
+    },
+    {
+      "id": "E_CODE1_DETAIL_CONCERNS",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 206,
+      "line_end": 214,
+      "description": "KLD and ASSET4 concern-detail inputs consumed in the news sample.",
+      "quote": "## merge with KLD and ASSET4 concern rating ##\r\nkld_CC$kld_con=kld_CC$envconindice+kld_CC$humconindice+kld_CC$empconindice+kld_CC$divconindice+kld_CC$comconindice+kld_CC$govconindice\r\n\r\nnews_sample=left_join(news_sample,kld_CC[,c('year','CUSIP','kld_con')],\r\n                      by=c('year',\"ncusip\"=\"CUSIP\"))\r\n\r\nnews_sample=left_join(news_sample,asset4_con,by=c('year'='fisyear','ISIN'='Isin'))\r\n\r\nnews_sample$overall_con_sum2=(-1)*news_sample$overall_con_sum ## sum of controversies score*(-1)"
+    },
+    {
+      "id": "E_CODE3_IO_CXS",
+      "kind": "source",
+      "file": "code/code3_additional.R",
+      "line_begin": 206,
+      "line_end": 223,
+      "description": "Separate io_cxs input and IO_n use in cross-sectional splits.",
+      "quote": "disagree_sample$IO_n=NULL\r\ndisagree_sample=left_join(disagree_sample,io_cxs[,c('ISIN','year','IO_n')],by=c('ISIN','year'))\r\ntemp=disagree_sample[disagree_sample$year==2009&disagree_sample$treat==1,]\r\ntemp=temp %>% group_by(ffi_12) %>% mutate(cutoff=quantile(IO_n,0.75,na.rm=T))\r\ntreat_highIO=unique(temp[temp$IO_n>=temp$cutoff,]$gvkey)\r\ntreat_lowIO=unique(temp[temp$IO_n<temp$cutoff,]$gvkey)\r\ndisagree_sample$treat_highIO=ifelse(disagree_sample$gvkey %in% treat_highIO,1,0 )\r\ndisagree_sample$treat_lowIO=ifelse(disagree_sample$gvkey %in% treat_lowIO,1,0 )\r\n\r\n\r\nmetrics_sample$IO_n=NULL\r\nmetrics_sample=left_join(metrics_sample,io_cxs[,c('ISIN','year','IO_n')],by=c('ISIN','year'))\r\ntemp=metrics_sample[metrics_sample$year==2009&metrics_sample$treat_as4==1,]\r\ntemp=temp %>% group_by(ffi_12) %>% mutate(cutoff=quantile(IO_n,0.75,na.rm=T))\r\ntreat_highIO=unique(temp[temp$IO_n>=temp$cutoff,]$gvkey)\r\ntreat_lowIO=unique(temp[temp$IO_n<temp$cutoff,]$gvkey)\r\nmetrics_sample$treat_highIO=ifelse(metrics_sample$gvkey %in% treat_highIO,1,0 )\r\nmetrics_sample$treat_lowIO=ifelse(metrics_sample$gvkey %in% treat_lowIO,1,0 )"
+    },
+    {
+      "id": "E_CAT_COMP_FUNDA",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_comp_funda.json",
+      "sha256": "1e1b2ce031e0252ca7e0db5713c78f000e92fa7d2ec1b05565f35cd0b6ef90a0",
+      "description": "Frozen local catalog direct dataset-leaf candidate COMP.FUNDA; metadata only."
+    },
+    {
+      "id": "E_CAT_COMP_SECURITY",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_inspection_comp_security.json",
+      "sha256": "386292bda61f30d25d6ac03792b9a8812f47518a0fb93c760923713b01deaddd",
+      "description": "Frozen local catalog candidate COMP.SECURITY; metadata only."
+    },
+    {
+      "id": "E_CAT_ASSET4",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_asset4.json",
+      "sha256": "a59569bc304823148deb6cf094be797097a6c047866d0850f8391664358537cb",
+      "description": "Frozen catalog ASSET4 query includes company-info metadata; it does not establish the annual score panel."
+    },
+    {
+      "id": "E_CAT_TRESG",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_inspection_tresg_full.json",
+      "sha256": "908bc58aa5d6bf9bfc6be8011360249fa69d59df8c36b256d3b723f69e8e156e",
+      "description": "Frozen catalog inspection of TRESG ESG-related table families; exact author product mapping is unresolved."
+    },
+    {
+      "id": "E_CAT_KLD",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_kld.json",
+      "sha256": "2f66165d0a7e648dc6c60b915a324f66e6e263f7b828f9e70aad093f72067c3b",
+      "description": "Frozen local catalog KLD.HISTORY candidate; metadata only."
+    },
+    {
+      "id": "E_CAT_REPRISK",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_reprisk.json",
+      "sha256": "8c4fec4ce67eefde8c15d4721abb91028d169568d56e63be50314e93c7506395",
+      "description": "Frozen RepRisk catalog includes candidate PM_NEWS_DATA and other tables; no prepared RRnews mapping is established."
+    },
+    {
+      "id": "E_CAT_SUSTAN",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_sustainalytics.json",
+      "sha256": "023d2e29b3b32d995407070d4e70611b0e780380241f1f8b02bee0a5e1feb91a",
+      "description": "Frozen catalog Sustainalytics query returned no dataset leaves; this is not evidence of source unavailability."
+    },
+    {
+      "id": "E_CAT_IBES",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_inspection_ibes_full.json",
+      "sha256": "e03640f34a62c1a811aecbeb4c62c3461278d42e7dc9585e8d5e08a8fe13a07c",
+      "description": "Frozen I/B/E/S catalog candidate families include summary-statistic tables; exact analyst-following mapping is unknown."
+    },
+    {
+      "id": "E_CAT_THOMSON",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_thomson.json",
+      "sha256": "d39ff198fd52c2c0029df35820f96105f0da62ce1f850f5b6a990fe5b75fe089",
+      "description": "Frozen Thomson Reuters catalog candidate TFN.S34; metadata does not establish author ownership aggregates."
+    },
+    {
+      "id": "E_CAT_BBG",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_bloomberg.json",
+      "sha256": "6e7ea88a149deea453375982701eade916e44b50ece4763221f707b64251d219",
+      "description": "Frozen Bloomberg catalog query returned no dataset leaves; this is not evidence of no access or source absence."
+    },
+    {
+      "id": "E_CAT_CORPORATE_REGISTER",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_corporate_register.json",
+      "sha256": "fec93f0771ecb7442160498c5e16110dc794f13b4dfb9081039f37b82377b002",
+      "description": "Frozen Corporate Register catalog query returned no dataset leaves; this is not evidence of no access or source absence."
+    },
+    {
+      "id": "E_CAT_TRUCOST",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_trucost.json",
+      "sha256": "5773b963c927ae8ad2a70e25692b08374111f92ab28245d6ee36d96f6331bcff",
+      "description": "Frozen Trucost catalog candidate TRUCOST.WRDS_ENVIRONMENT; metadata only."
+    },
+    {
+      "id": "E_CAT_TRUCOST_S1",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_inspection_di_319407.json",
+      "sha256": "cf27bf03370821d7cd0b482be97d30697edf1253a8ee67ce35da620ed3a981bc",
+      "description": "Catalog label for di_319407 identifies quantitative-per-revenue GHG Scope 1."
+    },
+    {
+      "id": "E_CAT_TRUCOST_S2",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_inspection_di_319408.json",
+      "sha256": "e22c2709e54a6456e5fe26b646cddae71e3b370bd6d7b0b3ebe541df6778ee16",
+      "description": "Catalog label for di_319408 identifies quantitative-per-revenue GHG Scope 2 location-based."
+    },
+    {
+      "id": "E_CAT_TRUCOST_YEAR",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_inspection_trucost_fiscalyear.json",
+      "sha256": "b697003d293a7bc8072f1252f9c9b65d44db11233eece765c795716c4d070988",
+      "description": "Catalog metadata confirms a fiscalyear field in the Trucost candidate."
+    },
+    {
+      "id": "E_CAT_FF",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_direct_fama_french.json",
+      "sha256": "609b149ba6f8be58712f62255c4cb3e53bd0325ed63d4de6ea44394d0bba4da5",
+      "description": "Frozen Fama-French catalog query finds factor datasets, not a verified SIC-to-FF48 crosswalk."
+    },
+    {
+      "id": "E_CAT_FFI48",
+      "kind": "catalog",
+      "artifact_path": "probes/catalog_inspection_ffi48.json",
+      "sha256": "c424c94d2c3873b4e0d37b1fc6178220b99d14c18cb038ef677baf69ad3b7c91",
+      "description": "Frozen catalog ffi_48 lookup returned no matching dataset leaves; it does not prove no compatible crosswalk exists."
+    },
+    {
+      "id": "E_PROBE_COMP_FUNDA",
+      "kind": "probe",
+      "artifact_path": "probes/probe_comp_funda_fields_v2.json",
+      "sha256": "9024e6cafa7f5e36c1d797b91f29aec91281f9b7de54ead3afc37e51d9e7b4d3",
+      "description": "Successful bounded one-row COMP.FUNDA probe: readable and contains the listed sampled source fields; full coverage unverified."
+    },
+    {
+      "id": "E_PROBE_COMP_SECURITY",
+      "kind": "probe",
+      "artifact_path": "probes/probe_comp_security.json",
+      "sha256": "f9299febe4c7e510b1e9c7065f5685f77c6853df35b99b3eb99e79b783754690",
+      "description": "Successful bounded one-row COMP.SECURITY probe: readable and contains the listed sampled security identifiers; historical linkage unverified."
+    },
+    {
+      "id": "E_PROBE_KLD",
+      "kind": "probe",
+      "artifact_path": "probes/probe_kld_history.json",
+      "sha256": "eb21bc438386e5b864914beb6acdb127bdd8f84aa53153b532451a871d16aeb9",
+      "description": "Successful bounded one-row KLD.HISTORY probe: readable and contains sampled year/CUSIP fields; score fields and coverage unverified."
+    },
+    {
+      "id": "E_PUBLIC_VT_GUIDE",
+      "kind": "public",
+      "url": "https://violationtracker.goodjobsfirst.org/pages/user-guide",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "access_barrier": true,
+      "quote": "Searching and displaying search results can be done free of charge, but downloading search results and viewing several data fields are limited to subscribers.",
+      "description": "Official guide search-snippet confirms a subscription limit for the download/view-fields delivery method; it does not rule out another permitted or author-provided route."
+    },
+    {
+      "id": "E_PUBLIC_VT_PERIOD",
+      "kind": "public",
+      "url": "https://goodjobsfirst.org/comparison-of-violation-tracker-versions/",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "access_barrier": false,
+      "quote": "2000 to present",
+      "description": "Official comparison-page search snippet gives a current US tracker period, but version and compatibility with the authors' 2022 extract remain unverified."
+    },
+    {
+      "id": "E_R_PACKAGE_METADATA",
+      "kind": "probe",
+      "artifact_path": "probes/r_packages_metadata.json",
+      "sha256": "f3b9c8c2053ed2d2e36aa363216ee7dc2f1b8616dc9b070b18a7e71fa1d82647",
+      "description": "Saved metadata-only R installed.packages() probe: dplyr, matrixStats, lfe, ebal, and DescTools are not installed; no package was loaded."
+    },
+    {
+      "id": "E_CODE1_EBALANCE",
+      "kind": "source",
+      "file": "code/code1_data cleaning.R",
+      "line_begin": 248,
+      "line_end": 248,
+      "description": "Code1 calls ebalance in the entropy-balancing preparation.",
+      "quote": "eb <- ebalance(D, X_num)"
+    },
+    {
+      "id": "E_CODE2_REGSUMMARY",
+      "kind": "source",
+      "file": "code/code2_main DiD.R",
+      "line_begin": 3,
+      "line_end": 15,
+      "description": "code2 defines the regsummary helper function that the additional analysis uses.",
+      "quote": "regsummary <- function(model) {\r\n  model_summary <- summary(model)\r\n  \r\n  \r\n  n_obs <- nobs(model) \r\n  \r\n  cat(\"Coefficients:\\n\")\r\n  print(model_summary$coefficients)\r\n  \r\n  cat(\"\\nR-squared:\", model_summary$r.squared, \"\\n\")\r\n  cat(\"Adjusted R-squared:\", model_summary$adj.r.squared, \"\\n\")\r\n  cat(\"Number of Observations:\", n_obs, \"\\n\")\r\n}"
+    },
+    {
+      "id": "E_CODE3_REGSUMMARY",
+      "kind": "source",
+      "file": "code/code3_additional.R",
+      "line_begin": 95,
+      "line_end": 95,
+      "description": "code3 calls the helper defined in code2.",
+      "quote": "regsummary(did11)"
+    }
+  ],
+  "dependency_review": [],
+  "actions": [
+    {
+      "id": "ACT_author_inputs",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "REQ_compustat_fundamentals",
+        "REQ_compustat_security",
+        "REQ_sic_by_firm_year",
+        "REQ_sic_ffi48",
+        "REQ_asset4_core",
+        "REQ_kld_core",
+        "REQ_sustan_history",
+        "REQ_asset4_details",
+        "REQ_kld_details",
+        "REQ_reprisk_news",
+        "REQ_ibes_analyst_following",
+        "REQ_thomson_ownership",
+        "REQ_bbg_disclosure",
+        "REQ_corporate_report",
+        "REQ_violation_counts",
+        "REQ_trucost_emissions",
+        "REQ_return_variable",
+        "ISSUE_upstream_construction"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the authors' prepared input tables or missing object-loading/preparation steps, with a provider-to-object schema for every code-consumed input. For each source, identify the exact release/file, fields, identifiers and link rules, annual key, period/history, and construction into the named objects. Treat catalog entries as candidates until those mappings and compatible coverage are confirmed. After inputs and software setup are resolved, run the supplied R stages in the documented same-session order.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_README_ORDER",
+        "E_DATASHEET_SOURCES",
+        "E_DATASHEET_DATES",
+        "E_CODE1_BASE_JOINS",
+        "E_CODE1_CONTROLS",
+        "E_CODE1_IO_ANALYST",
+        "E_CODE1_SIC_FF48",
+        "E_CODE1_TREATMENT",
+        "E_CODE1_KLD_SCORE",
+        "E_CODE1_METRIC_OUTPUTS",
+        "E_CODE1_DETAIL_CONCERNS",
+        "E_CODE1_RRNEWS_FILTER",
+        "E_CODE1_RRNEWS_LEAD",
+        "E_CODE3_STAGGERED",
+        "E_CODE3_IO_CXS",
+        "E_CODE3_REAL_INPUTS",
+        "E_CODE3_SUSTAN_INPUT",
+        "E_CAT_COMP_FUNDA",
+        "E_PROBE_COMP_FUNDA",
+        "E_CAT_COMP_SECURITY",
+        "E_PROBE_COMP_SECURITY",
+        "E_CAT_ASSET4",
+        "E_CAT_TRESG",
+        "E_CAT_KLD",
+        "E_PROBE_KLD",
+        "E_CAT_REPRISK",
+        "E_CAT_IBES",
+        "E_CAT_THOMSON",
+        "E_CAT_BBG",
+        "E_CAT_CORPORATE_REGISTER",
+        "E_PUBLIC_VT_GUIDE",
+        "E_PUBLIC_VT_PERIOD",
+        "E_CAT_TRUCOST",
+        "E_CAT_TRUCOST_S1",
+        "E_CAT_TRUCOST_S2",
+        "E_CAT_TRUCOST_YEAR",
+        "E_CAT_FF",
+        "E_CAT_FFI48",
+        "E_IDENTIFIER_PROBE",
+        "E_CODE2_REGSUMMARY",
+        "E_CODE3_REGSUMMARY"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask for the exact author-prepared firm-year panel and other named source/derived objects, or the omitted loaders and transformations that create them; a GVKEY identifier list alone is insufficient.",
+        "For Compustat, confirm the 2007–2017 fundamentals, historical GVKEY/security links, and prior-year equity used for ceq_lag; identify the separate source and definition of return.",
+        "Identify the firm-year SIC input and the SIC-to-ffi_48/ffi_12 crosswalk and versions.",
+        "Map the exact ASSET4 and KLD overall-score, detailed metric, concern, net-score, and populated/output inputs to the named objects; preserve the stated ASSET4–KLD match as a separate manual prerequisite.",
+        "Specify the Sustainalytics coverage history and 2009 score inputs; RepRisk incident/novelty/ISIN mapping and two-year lead history; I/B/E/S analyst-count annualization; Thomson Reuters ownership and IO_n aggregation; Bloomberg score and Corporate Register report schemas; Good Jobs First snapshot/matching fields; and Trucost GVKEY link, fiscal year, and requested measures.",
+        "Once these inputs are loaded and the required package providers are pinned, run code/code1_data cleaning.R, then code/code2_main DiD.R and code/code3_additional.R in the same R session, preserving code1/code2 objects needed downstream."
+      ],
+      "validation": [
+        "Before the ordered run, confirm every consumed object and field exists with the documented GVKEY/ISIN/CUSIP/ticker keys and compatible annual dates; verify the lag and t+2 history explicitly.",
+        "After the ordered run, confirm the three scripts complete without missing-object/function errors and reconcile outputs to the documented sample windows and analyses; no execution has been verified in this assessment."
+      ]
+    },
+    {
+      "id": "ACT_manual_crosswalk",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "REQ_ratingcomponent_manual",
+        "ISSUE_manual_crosswalk"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the author-created detailed ASSET4–KLD match or the exact matching instructions and source inputs. The supplied code consumes ratingcomponent by ISIN and fiscal year, and the datasheet identifies this as the workflow's manual step.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DATASHEET_MANUAL",
+        "E_CODE1_CROSSWALK",
+        "E_CODE1_METRIC_OUTPUTS"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the versioned ratingcomponent match table and the manual match rules, including the exact output fields and the Isin/fisyear key normalization.",
+        "If the authors supply instructions instead of the table, have them perform and document the original match before running the dependent analysis stages; do not infer matches from vendor metadata."
+      ],
+      "validation": [
+        "Confirm the matched table contains the fields consumed after the code1 join and covers the sample's required firm/year rows before the ordered R run."
+      ]
+    },
+    {
+      "id": "ACT_R_environment",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW_dplyr",
+        "SW_matrixStats",
+        "SW_lfe",
+        "SW_ebalance",
+        "SW_Winsorize",
+        "ISSUE_R_packages"
+      ],
+      "kind": "software_setup",
+      "description": "Prepare an R project library with the missing required packages and resolve the exporting packages and versions for ebalance and Winsorize from the authors' setup. Do not substitute functions or estimators.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_ENV_REGISTERED",
+        "E_R_PACKAGE_METADATA",
+        "E_CODE1_MATRIXSTATS",
+        "E_CODE1_BASE_JOINS",
+        "E_CODE2_ANALYSIS",
+        "E_CODE1_CONTROLS",
+        "E_CODE1_EBALANCE"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the author's R/package version manifest or startup instructions, especially the exporters of ebalance and Winsorize.",
+        "Install/configure the confirmed compatible dplyr, matrixStats, lfe, and entropy-balancing/Winsorize providers in an isolated R project library; record versions and required attachment/namespace setup."
+      ],
+      "validation": [
+        "In the prepared project environment, verify each required function resolves from the pinned package setup before loading data, then use the documented same-session script order."
+      ]
+    }
+  ],
+  "review_notes": [
+    "The frozen dependency checklist is empty. Dependencies were traced manually through all three supplied R scripts; no dependency IDs were invented.",
+    "The packaged identifiers.csv probe sampled an identifier list (GVKEY only), not a prepared firm-year analysis panel. No analysis_only scope is supported by the supplied inputs.",
+    "Catalog results are candidates only, and successful one-row probes establish sampled readability/fields rather than historical coverage or entitlement. The initial Compustat probe requested a field absent from the catalog; the corrected bounded probe is cited instead. Failed RepRisk/Trucost field probes and the official-site 403 open attempts are process history only, not evidence that data are absent. Violation Tracker public snippets support a restriction on one download method only; the public route remains unverified.",
+    "The registered safe environment projection reports R 4.5.0. R package availability was checked from installed-package metadata only. No author code, data analysis, or statistical model was executed; execution_verified remains false."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "a40159c52d11dd15d21b78c4864d06701ee5999df8c23638b32847a788d99a39",
+    "applied": false
+  }
+}

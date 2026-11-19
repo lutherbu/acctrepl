@@ -1,0 +1,2668 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-16f47f8318db",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 58/Issue 1/12298 - Disclosure-Regulation-and-Corporate-Acquisitions/bdo-datasheet-and-files.zip",
+        "sha256": "a7468278c334563d23dddd5b5cec1c8f21c7c9b7ca55a490192492edda848085"
+      },
+      {
+        "path": "JAR-Volume 58/Issue 1/12298 - Disclosure-Regulation-and-Corporate-Acquisitions/bdo-online-appendix.pdf",
+        "sha256": "8630f1e8ae8795f4cb190743a55cc58527b11eebdcc65b290952a6033ec6722b"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "aaa2d7f7de316e1272ee34cf598e5efc87d83b265b3d2b086b9d6a55f1d91a45"
+  },
+  "title": "Disclosure Regulation and Corporate Acquisitions",
+  "doi": "10.1111/1475-679X.12298",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Prepare every supplied Stata branch A–E, including SDC/country-month samples, separate 50% and 30% premium variants, and public, private and non-EU acquirer returns. Main paper-wide table estimators are contextual; the daily market-model regression used to create return variables stays in scope.",
+      "entry_points": [
+        "BDO.do"
+      ],
+      "requirement_ids": [
+        "R_SDC_MAIN",
+        "R_SDC_ADDON",
+        "R_FX",
+        "R_POLICY_DATES",
+        "R_ACQ_TECH",
+        "R_GERMAN",
+        "R_AIM",
+        "R_PUBLIC_STATUS",
+        "R_FILL",
+        "R_LISTED",
+        "R_MKT_CONTROL",
+        "R_GOV_BOND",
+        "R_GDP",
+        "R_GFCF",
+        "R_CONS",
+        "R_ANTI",
+        "R_INST",
+        "R_OWN",
+        "R_TARGET_RET",
+        "R_LIST50",
+        "R_TYPE50",
+        "R_PAYMENT",
+        "R_OTHER50",
+        "R_TOE50",
+        "R_LIST30",
+        "R_TYPE30",
+        "R_OTHER30",
+        "R_TOE30",
+        "R_ACQ_RET",
+        "R_NON_EU_RET",
+        "R_TYPE_PRIVATE"
+      ],
+      "software_ids": [
+        "SW_STATA",
+        "SW_WINSOR"
+      ],
+      "issue_ids": [
+        "ISSUE_MONTH_LIFETIME",
+        "ISSUE_FX_LINE",
+        "ISSUE_INPUT_CLOSURE",
+        "ISSUE_VARIANTS",
+        "ISSUE_RETURN_HISTORY",
+        "ISSUE_INTL_CONTRACT",
+        "ISSUE_PATHS"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "EV_BRANCH",
+        "EV_DOC_SOURCES",
+        "EV_DOC_COUNTRY",
+        "EV_SDC",
+        "EV_FX_LINE",
+        "EV_TARGET_PRICE",
+        "EV_CAR",
+        "EV_STATA_PROBE",
+        "EV_WINSOR_PROBE",
+        "EV_SDC_PROBE",
+        "EV_DS_RI_PROBE",
+        "EV_CATALOG"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "blocked",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_SDC_MAIN",
+      "kind": "data",
+      "description": "SDC transaction workbook imported from excel file/M&A master EU RA.xlsx; downstream code needs deal keys, stakes, status, countries, SIC and ISIN identifiers. Author extract vintage, population and lower date bound are not supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_SDC_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/sdc_ma/wrds_ma_details.sas7bdat",
+          "description": "Catalog-listed SDC MA Details is a product candidate; one-row probe reads relevant deal, stake, CUSIP, status, nation and SIC fields, but does not establish author extract, ISINs, exact fields or history.",
+          "evidence_ids": [
+            "EV_SDC_PROBE",
+            "EV_CATALOG",
+            "EV_DOC_SOURCES"
+          ],
+          "expected_fields": [
+            "DATEANN",
+            "ACUSIP",
+            "MASTER_CUSIP",
+            "PSOUGHTOWN",
+            "PSOUGHT",
+            "STATUS",
+            "ANATION",
+            "TNATION",
+            "TPUBLIC",
+            "TSICP"
+          ],
+          "expected_period": "Author says October 2016 SDC extract; code retains dates through 2011-12-31 with no lower bound."
+        },
+        {
+          "id": "RT_SDC_VENDOR",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "SDC Platinum Worldwide M&A",
+          "description": "Author-reported SDC product; current entitlement, extract filters, identifiers, fields and historical coverage remain unknown; no access barrier is established.",
+          "evidence_ids": [
+            "EV_DOC_SOURCES"
+          ],
+          "expected_period": "October 2016 author extract; announcement dates through 2011-12-31, lower bound unspecified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_SDC_ADDON",
+      "kind": "data",
+      "description": "swap_deals_new var.dta adds bidder count and transaction values to SDC rows using CUSIP pair and announcement date. Its producer and schema are absent.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_SDC_ADDON",
+          "type": "local",
+          "status": "unverified",
+          "location": "swap_deals_new var.dta under author data root",
+          "description": "Author-prepared supplement named in code but absent; no producer or field dictionary supplied.",
+          "evidence_ids": [
+            "EV_SDC_EXTRA"
+          ],
+          "expected_fields": [
+            "Acquiror_CUSIP",
+            "Target__CUSIP",
+            "Date_Announced",
+            "Number_of_Bidders",
+            "value",
+            "value_USD"
+          ],
+          "expected_period": "Matching SDC rows through 2011-12-31; lower bound unspecified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_FX",
+      "kind": "data",
+      "description": "Monthly currency factors join on curcd/year/month; code maps DKK, GBP, SEK and EUR by target country. The factor column, units/direction and a malformed code line remain unresolved.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_FX_FRED",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://fred.stlouisfed.org/series/DEXUSEU",
+          "description": "FRED page confirms a euro-rate candidate only; the code also needs three additional currency series, monthly alignment and a conversion convention.",
+          "evidence_ids": [
+            "EV_PUB_FRED",
+            "EV_FX"
+          ],
+          "expected_fields": [
+            "curcd",
+            "year",
+            "month"
+          ],
+          "expected_period": "All retained SDC announcement months through 2011-12-31; lower bound unknown; author vintage October 2016."
+        },
+        {
+          "id": "RT_FX_FILE",
+          "type": "local",
+          "status": "unverified",
+          "location": "exchange_rate/currency_file.dta under author data root",
+          "description": "Exact author monthly conversion file absent; actual rate variable and factor convention are unknown.",
+          "evidence_ids": [
+            "EV_FX",
+            "EV_FX_LINE"
+          ],
+          "expected_fields": [
+            "curcd",
+            "year",
+            "month"
+          ],
+          "expected_period": "All retained announcement months; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_POLICY_DATES",
+      "kind": "data",
+      "description": "swap_disc_regulation_update.dta supplies country-specific directive start dates consumed by B/C/D/E, including exact datadate_start_date* fields in the source.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_POLICY",
+          "type": "local",
+          "status": "unverified",
+          "location": "swap_disc_regulation_update.dta under author data root",
+          "description": "Prepared country implementation-date table absent; EUR-Lex legal text alone does not establish the country-level dates and coding.",
+          "evidence_ids": [
+            "EV_POLICY",
+            "EV_PUB_EURLEx",
+            "EV_DOC_SOURCES"
+          ],
+          "expected_fields": [
+            "country",
+            "datadate_start_dateTD1",
+            "datadate_start_dateCSD",
+            "datadate_start_date_treshold",
+            "datadate_start_datemad",
+            "datadate_start_date_mifid",
+            "datadate_start_date_prospectus",
+            "datadate_start_date_sh_right",
+            "datadate_start_date_a_takeover"
+          ],
+          "expected_period": "Eligible-country policy dates; author source vintage October 2016; exact country set unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_ACQ_TECH",
+      "kind": "data",
+      "description": "Acquisition_Technique_cleaned.dta classifies matched transactions and gates the included deal sample.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_TECH",
+          "type": "local",
+          "status": "unverified",
+          "location": "Acquisition_Technique_cleaned.dta under author data root",
+          "description": "Prepared transaction crosswalk absent, with no producer or source classification dictionary.",
+          "evidence_ids": [
+            "EV_TECH"
+          ],
+          "expected_fields": [
+            "Target__CUSIP",
+            "Acquiror_CUSIP",
+            "Date_Announced",
+            "Acquisition_Technique_Cleaned"
+          ],
+          "expected_period": "SDC transaction dates through 2011-12-31; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_GERMAN",
+      "kind": "data",
+      "description": "german neu market.dta identifies targets on the German Neuer Markt by ISIN.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_GERMAN",
+          "type": "local",
+          "status": "unverified",
+          "location": "german neu market.dta under author data root",
+          "description": "Prepared listing eligibility crosswalk absent; history and listing-date method unspecified.",
+          "evidence_ids": [
+            "EV_GERMAN"
+          ],
+          "expected_fields": [
+            "tar_isin"
+          ],
+          "expected_period": "All relevant target listing history; exact date bounds unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_AIM",
+      "kind": "data",
+      "description": "AIM_def.dta identifies AIM targets by ISIN and Date_Announced.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_AIM",
+          "type": "local",
+          "status": "unverified",
+          "location": "AIM_def.dta under author data root",
+          "description": "Prepared date-specific listing crosswalk absent; no source/history producer supplied.",
+          "evidence_ids": [
+            "EV_AIM"
+          ],
+          "expected_fields": [
+            "isin",
+            "Date_Announced"
+          ],
+          "expected_period": "Relevant target announcements through 2011-12-31; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PUBLIC_STATUS",
+      "kind": "data",
+      "description": "EU_public_firms.dta classifies target public status by ISIN/year; code comment says Datastream merged with BvD.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PUBLIC",
+          "type": "local",
+          "status": "unverified",
+          "location": "EU_public_firms.dta under author data root",
+          "description": "Prepared Datastream+BvD public-firm-year table absent; exact listing universe and ISIN history unknown.",
+          "evidence_ids": [
+            "EV_PUBLIC",
+            "EV_DOC_SOURCES",
+            "EV_CATALOG"
+          ],
+          "expected_fields": [
+            "isin",
+            "year",
+            "target_public"
+          ],
+          "expected_period": "Target years used by sample; exact lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_FILL",
+      "kind": "data",
+      "description": "filling obs_new.dta adds the country/year/month/target_public grid before fillin.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_FILL",
+          "type": "local",
+          "status": "unverified",
+          "location": "filling obs_new.dta under author data root",
+          "description": "Prepared panel grid absent; producer, schema, countries and month coverage undocumented.",
+          "evidence_ids": [
+            "EV_FILL"
+          ],
+          "expected_fields": [
+            "country",
+            "year_date_announced",
+            "month_date_announced",
+            "target_public"
+          ],
+          "expected_period": "Full country-month universe for B/C; no lower bound in code."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_LISTED",
+      "kind": "data",
+      "description": "number_listed firms.dta supplies country/year listed-firm counts used in the pre-TD scaling denominator.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_LISTED",
+          "type": "local",
+          "status": "unverified",
+          "location": "number_listed firms.dta under author data root",
+          "description": "Annual prepared country series absent; product source and definition of listed firms unspecified.",
+          "evidence_ids": [
+            "EV_LISTED"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "number_listed_firms"
+          ],
+          "expected_period": "All sample years through 2011; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_MKT_CONTROL",
+      "kind": "data",
+      "description": "mkt_control_.dta provides market size and return-volatility controls by country/month.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_MKT",
+          "type": "local",
+          "status": "unverified",
+          "location": "mkt_control_.dta under author data root",
+          "description": "Prepared Datastream-based monthly country controls absent; market population, transformations, units and producer are unspecified.",
+          "evidence_ids": [
+            "EV_MKT",
+            "EV_DOC_SOURCES",
+            "EV_CATALOG",
+            "EV_DS_RI_PROBE",
+            "EV_DS_MAP_PROBE",
+            "EV_DS_INDEX_PROBE"
+          ],
+          "expected_fields": [
+            "country",
+            "month_year",
+            "Stock_Market_Size",
+            "Returns_Volatility"
+          ],
+          "expected_period": "All sample months through 2011; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_GOV_BOND",
+      "kind": "data",
+      "description": "gov_bond_10y.dta supplies a country/month ten-year government yield control attributed to FRED.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_BOND",
+          "type": "local",
+          "status": "unverified",
+          "location": "interest rate/gov_bond_10y.dta under author data root",
+          "description": "Prepared country-specific yield file absent; exact sovereign series IDs, units and monthly aggregation unknown.",
+          "evidence_ids": [
+            "EV_BOND",
+            "EV_DOC_SOURCES"
+          ],
+          "expected_fields": [
+            "country",
+            "month_year",
+            "Gov_Bond_10yr"
+          ],
+          "expected_period": "All sample months through 2011; lower bound unknown."
+        },
+        {
+          "id": "RT_BOND_FRED",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://fred.stlouisfed.org/",
+          "description": "Authors name FRED, but exact country-specific series, maturity/units and monthly aggregation remain unverified.",
+          "evidence_ids": [
+            "EV_DOC_SOURCES"
+          ],
+          "expected_fields": [
+            "country",
+            "month_year"
+          ],
+          "expected_period": "Author vintage October 2016; all sample months."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_GDP",
+      "kind": "data",
+      "description": "gdp_per_capita.dta contains country/year gdp_capita, which the code logs.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_GDP_WB",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD",
+          "description": "World Bank has a GDP-per-capita candidate; the author’s exact indicator, units, country mapping and transformation remain unknown.",
+          "evidence_ids": [
+            "EV_PUB_WB",
+            "EV_GDP",
+            "EV_DOC_SOURCES"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "gdp_capita"
+          ],
+          "expected_period": "Annual sample years through 2011; lower bound unknown; author vintage October 2016."
+        },
+        {
+          "id": "RT_GDP_FILE",
+          "type": "local",
+          "status": "unverified",
+          "location": "gdp_per_capita.dta under author data root",
+          "description": "Exact prepared country-year file absent.",
+          "evidence_ids": [
+            "EV_GDP"
+          ],
+          "expected_fields": [
+            "country",
+            "year",
+            "gdp_capita"
+          ],
+          "expected_period": "All transaction years."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_GFCF",
+      "kind": "data",
+      "description": "Gross capital formation.dta is merged quarterly; the datasheet calls the investment measure gross fixed capital formation, leaving the exact family unresolved.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_GFCF_EUROSTAT",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://ec.europa.eu/eurostat/databrowser/product/view/namq_10_gdp",
+          "description": "Eurostat quarterly accounts are a candidate; exact P.5/P.51g series, units, adjustment and country names need confirmation.",
+          "evidence_ids": [
+            "EV_PUB_EUROSTAT",
+            "EV_GFCF",
+            "EV_DOC_SOURCES"
+          ],
+          "expected_fields": [
+            "country",
+            "year_date_announced",
+            "quarter_s"
+          ],
+          "expected_period": "Quarterly sample values through 2011; lower bound unknown."
+        },
+        {
+          "id": "RT_GFCF_FILE",
+          "type": "local",
+          "status": "unverified",
+          "location": "Gross capital formation.dta under author data root",
+          "description": "Prepared Eurostat file absent; no field dictionary or producer.",
+          "evidence_ids": [
+            "EV_GFCF"
+          ],
+          "expected_fields": [
+            "country",
+            "year_date_announced",
+            "quarter_s"
+          ],
+          "expected_period": "All sample quarters."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CONS",
+      "kind": "data",
+      "description": "final consumption expenditures.dta supplies the country/year/quarter consumption control.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CONS_EUROSTAT",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://ec.europa.eu/eurostat/databrowser/product/view/namq_10_gdp",
+          "description": "Eurostat quarterly accounts are a candidate; exact final-consumption component, units, adjustment and mapping are unknown.",
+          "evidence_ids": [
+            "EV_PUB_EUROSTAT",
+            "EV_CONS",
+            "EV_DOC_SOURCES"
+          ],
+          "expected_fields": [
+            "country",
+            "year_date_announced",
+            "quarter_s"
+          ],
+          "expected_period": "Quarterly sample values through 2011; lower bound unknown."
+        },
+        {
+          "id": "RT_CONS_FILE",
+          "type": "local",
+          "status": "unverified",
+          "location": "final consumption expenditures.dta under author data root",
+          "description": "Prepared Eurostat file absent; no field dictionary or producer.",
+          "evidence_ids": [
+            "EV_CONS"
+          ],
+          "expected_fields": [
+            "country",
+            "year_date_announced",
+            "quarter_s"
+          ],
+          "expected_period": "All sample quarters."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_ANTI",
+      "kind": "data",
+      "description": "anti_takeover country level.dta supplies regulatory quality, anti-takeover provisions and shareholder-identification controls; datasheet lineage spans EC, Kaufmann, Christensen and ECB sources.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_ANTI",
+          "type": "local",
+          "status": "unverified",
+          "location": "anti_takeover country level.dta under author data root",
+          "description": "Prepared cross-source country controls absent; exact field-to-source mapping, coding and date treatment unspecified.",
+          "evidence_ids": [
+            "EV_ANTI",
+            "EV_DOC_COUNTRY"
+          ],
+          "expected_fields": [
+            "country"
+          ],
+          "expected_period": "Country-level controls used by B/C; observation date and country universe unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_INST",
+      "kind": "data",
+      "description": "inst _ inv.dta supplies country-level institutional ownership; datasheet reports FactSet/LionShares May 2017.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_FACTSET",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "FactSet/LionShares institutional ownership",
+          "description": "Commercial route reported by authors; current entitlement, product, population and aggregation unknown, with no access barrier evidence.",
+          "evidence_ids": [
+            "EV_INST",
+            "EV_DOC_COUNTRY",
+            "EV_CATALOG"
+          ],
+          "expected_fields": [
+            "country"
+          ],
+          "expected_period": "Country-level summary reported as downloaded May 2017."
+        },
+        {
+          "id": "RT_INST_FILE",
+          "type": "local",
+          "status": "unverified",
+          "location": "inst _ inv.dta under author data root",
+          "description": "Prepared country-level input absent.",
+          "evidence_ids": [
+            "EV_INST"
+          ],
+          "expected_fields": [
+            "country"
+          ],
+          "expected_period": "No time dimension appears in the supplied merge."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_OWN",
+      "kind": "data",
+      "description": "own conc country level.dta supplies country ownership structure; datasheet reports Amadeus/BvD October 2016.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_BVD",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Amadeus/Bureau van Dijk ownership data",
+          "description": "Commercial route reported by authors; current entitlement, product, measure and population unknown, with no access barrier evidence.",
+          "evidence_ids": [
+            "EV_OWN",
+            "EV_DOC_COUNTRY",
+            "EV_CATALOG"
+          ],
+          "expected_fields": [
+            "country"
+          ],
+          "expected_period": "Country-level summary reported as obtained October 2016."
+        },
+        {
+          "id": "RT_OWN_FILE",
+          "type": "local",
+          "status": "unverified",
+          "location": "own conc country level.dta under author data root",
+          "description": "Prepared country-level input absent.",
+          "evidence_ids": [
+            "EV_OWN"
+          ],
+          "expected_fields": [
+            "country"
+          ],
+          "expected_period": "No time dimension appears in the supplied merge."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_TARGET_RET",
+      "kind": "data",
+      "description": "price_file.dta supplies target daily returns and market returns for event-study construction. Code requires exact announcement-date match, t−253…−127 estimation, and CAR windows through t+126 plus shorter −63/−41 windows.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_TARGET_PRICE",
+          "type": "local",
+          "status": "unverified",
+          "location": "price_file.dta under author data root",
+          "description": "Prepared target daily return file absent; Datastream source candidates are not a verified substitute for its ISIN mapping, market return, event coverage or author vintage.",
+          "evidence_ids": [
+            "EV_TARGET_PRICE",
+            "EV_EVENT_DATE",
+            "EV_EST",
+            "EV_CAR",
+            "EV_CATALOG",
+            "EV_DS_RI_PROBE",
+            "EV_DS_MAP_PROBE",
+            "EV_DS_INDEX_PROBE"
+          ],
+          "expected_fields": [
+            "isin",
+            "datadate",
+            "rit",
+            "rmt"
+          ],
+          "expected_period": "Each event needs exact date match, pre-event t−253…−127 and daily observations through t+126; announcement cutoff 2011-12-31, lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_LIST50",
+      "kind": "data",
+      "description": "target_list_to_merge 50 50.dta supplies public 50% premium-branch membership; BDO.do only writes target_list_tomerge.dta.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_LIST50",
+          "type": "local",
+          "status": "unverified",
+          "location": "target_list_to_merge 50 50.dta under author data root",
+          "description": "Distinct 50% sample alias absent; no producer/schema proves equivalence to the common target list.",
+          "evidence_ids": [
+            "EV_LIST50",
+            "EV_PROD3"
+          ],
+          "expected_fields": [
+            "Date_Announced",
+            "isin",
+            "Acquiror_CUSIP"
+          ],
+          "expected_period": "Public 50% branch dates through 2011; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_TYPE50",
+      "kind": "data",
+      "description": "type_50_50.dta gates the public 50% premium sample by a matched-only merge.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_TYPE50",
+          "type": "local",
+          "status": "unverified",
+          "location": "type_50_50.dta under author data root",
+          "description": "Branch-specific type/membership input absent; definition and producer unknown.",
+          "evidence_ids": [
+            "EV_TYPE50"
+          ],
+          "expected_fields": [
+            "Acquiror_CUSIP",
+            "isin",
+            "Date_Announced"
+          ],
+          "expected_period": "Public 50% branch through 2011; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PAYMENT",
+      "kind": "data",
+      "description": "swap_deals_payment.dta supplies CASH, STOCK and MIXED variables in public 50%, 30% and private branches.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PAYMENT",
+          "type": "local",
+          "status": "unverified",
+          "location": "swap_deals_payment.dta under author data root",
+          "description": "Deal-level payment classification absent; source lineage and coding rules unspecified.",
+          "evidence_ids": [
+            "EV_PAYMENT"
+          ],
+          "expected_fields": [
+            "Acquiror_CUSIP",
+            "Target__CUSIP",
+            "Date_Announced",
+            "CASH",
+            "STOCK",
+            "MIXED"
+          ],
+          "expected_period": "All included deal branches through 2011; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_OTHER50",
+      "kind": "data",
+      "description": "other_bidders_toehold SEP 50 50.dta is a distinct required matched input in the public 50% branch.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_OTHER50",
+          "type": "local",
+          "status": "unverified",
+          "location": "other_bidders_toehold SEP 50 50.dta under author data root",
+          "description": "Other-bidder toehold input absent; non-key fields and sample definition unknown.",
+          "evidence_ids": [
+            "EV_OTHER50"
+          ],
+          "expected_fields": [
+            "Acquiror_CUSIP",
+            "isin",
+            "Date_Announced"
+          ],
+          "expected_period": "50% branch dates; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_TOE50",
+      "kind": "data",
+      "description": "toehold 50 50.dta is a second distinct required matched input in the public 50% branch.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_TOE50",
+          "type": "local",
+          "status": "unverified",
+          "location": "toehold 50 50.dta under author data root",
+          "description": "Toehold input absent; non-key fields and sample definition unknown.",
+          "evidence_ids": [
+            "EV_TOE50"
+          ],
+          "expected_fields": [
+            "Acquiror_CUSIP",
+            "isin",
+            "Date_Announced"
+          ],
+          "expected_period": "50% branch dates; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_LIST30",
+      "kind": "data",
+      "description": "target_list_to_merge 30 30.dta supplies public 30% premium-branch membership; BDO.do only writes target_list_tomerge.dta.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_LIST30",
+          "type": "local",
+          "status": "unverified",
+          "location": "target_list_to_merge 30 30.dta under author data root",
+          "description": "Distinct 30% sample alias absent; no producer/schema proves equivalence to the common or 50% list.",
+          "evidence_ids": [
+            "EV_LIST30",
+            "EV_PROD3"
+          ],
+          "expected_fields": [
+            "Date_Announced",
+            "isin",
+            "Acquiror_CUSIP"
+          ],
+          "expected_period": "Public 30% branch dates through 2011; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_TYPE30",
+      "kind": "data",
+      "description": "type_30_30.dta gates the public 30% premium sample by a matched-only merge.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_TYPE30",
+          "type": "local",
+          "status": "unverified",
+          "location": "type_30_30.dta under author data root",
+          "description": "Branch-specific type/membership input absent; definition and producer unknown.",
+          "evidence_ids": [
+            "EV_TYPE30"
+          ],
+          "expected_fields": [
+            "Acquiror_CUSIP",
+            "isin",
+            "Date_Announced"
+          ],
+          "expected_period": "Public 30% branch through 2011; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_OTHER30",
+      "kind": "data",
+      "description": "other_bidders_toehold SEP 30 30.dta is a distinct required matched input in the public 30% branch.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_OTHER30",
+          "type": "local",
+          "status": "unverified",
+          "location": "other_bidders_toehold SEP 30 30.dta under author data root",
+          "description": "Other-bidder toehold input absent; non-key fields and sample definition unknown.",
+          "evidence_ids": [
+            "EV_OTHER30"
+          ],
+          "expected_fields": [
+            "Acquiror_CUSIP",
+            "isin",
+            "Date_Announced"
+          ],
+          "expected_period": "30% branch dates; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_TOE30",
+      "kind": "data",
+      "description": "toehold 30 30.dta is a second distinct required matched input in the public 30% branch.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_TOE30",
+          "type": "local",
+          "status": "unverified",
+          "location": "toehold 30 30.dta under author data root",
+          "description": "Toehold input absent; non-key fields and sample definition unknown.",
+          "evidence_ids": [
+            "EV_TOE30"
+          ],
+          "expected_fields": [
+            "Acquiror_CUSIP",
+            "isin",
+            "Date_Announced"
+          ],
+          "expected_period": "30% branch dates; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_ACQ_RET",
+      "kind": "data",
+      "description": "price_file_acq_returns.dta supplies public-acquirer daily returns for public-target and private-target branches.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_ACQ_PRICE",
+          "type": "local",
+          "status": "unverified",
+          "location": "price_file_acq_returns.dta under author data root",
+          "description": "Separate prepared acquirer daily return/index file absent; schema, issuer population, market mapping and producer unknown.",
+          "evidence_ids": [
+            "EV_ACQ_PRICE",
+            "EV_PRIVATE_PRICE",
+            "EV_EST",
+            "EV_CAR"
+          ],
+          "expected_fields": [
+            "isin",
+            "datadate",
+            "rit",
+            "rmt"
+          ],
+          "expected_period": "Exact event date match; t−253…t−127 estimation and observations through t+126; announcement cutoff 2011-12-31, lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_NON_EU_RET",
+      "kind": "data",
+      "description": "acq new returns/acq new returns.dta supplies a separate non-EU acquirer return panel; code uses group_isin over a 224-event loop.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_NON_EU_PRICE",
+          "type": "local",
+          "status": "unverified",
+          "location": "acq new returns/acq new returns.dta under author data root",
+          "description": "Distinct non-EU return file in required subdirectory absent; producer, issuer/country universe, ISIN handoff and history unknown.",
+          "evidence_ids": [
+            "EV_NON_EU",
+            "EV_EST",
+            "EV_CAR"
+          ],
+          "expected_fields": [
+            "isin",
+            "group_isin",
+            "datadate",
+            "rit",
+            "rmt"
+          ],
+          "expected_period": "224-event non-EU branch, same event windows; cutoff 2011-12-31, lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_TYPE_PRIVATE",
+      "kind": "data",
+      "description": "type_private.dta gates the private-target/acquirer-return branch through a matched-only merge.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_TYPE_PRIVATE",
+          "type": "local",
+          "status": "unverified",
+          "location": "type_private.dta under author data root",
+          "description": "Private-target type/membership input absent; meaning, fields and producer unknown.",
+          "evidence_ids": [
+            "EV_TYPE_PRIVATE"
+          ],
+          "expected_fields": [
+            "Acquiror_CUSIP",
+            "isin",
+            "Date_Announced"
+          ],
+          "expected_period": "Private branch through 2011; lower bound unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW_STATA",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 is present; the three author startup settings were accepted in a self-written empty session.",
+      "evidence_ids": [
+        "EV_STATA_PROBE",
+        "EV_SETTINGS_PROBE"
+      ]
+    },
+    {
+      "id": "SW_WINSOR",
+      "name": "winsor",
+      "status": "available",
+      "description": "The exact user-written winsor command invoked in B/C is available in the checked Stata 18 environment.",
+      "evidence_ids": [
+        "EV_WINSOR_PROBE"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "ISSUE_MONTH_LIFETIME",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "source_defect",
+      "description": "Section A constructs the original month from announcement-date text at line 57; month_b is an abbreviation used only in the date string at line 88. Line 78 drops the original month before line 90 renames it, and line 114 renames it back before the currency merge at line 121. Preserve the original variable through this sequence; its external key type/encoding is not documented.",
+      "severity": "blocking",
+      "evidence_ids": [
+        "EV_MONTH_DROP",
+        "EV_MONTH_RENAME",
+        "EV_MONTH_DATE",
+        "EV_MONTH_RESTORE",
+        "EV_FX"
+      ]
+    },
+    {
+      "id": "ISSUE_FX_LINE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "source_syntax",
+      "description": "Line 124 combines rate multiplication and destring text on one Stata source line. The actual conversion-factor field and direction are unknown, so the intended replacement cannot be guessed.",
+      "severity": "blocking",
+      "evidence_ids": [
+        "EV_FX_LINE",
+        "EV_FX"
+      ]
+    },
+    {
+      "id": "ISSUE_INPUT_CLOSURE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_inputs",
+      "description": "Many direct source files and manual/prepared joins are absent. Requirements record each consumed filename and its actual keys/fields; authors must supply matching files or exact producers and field/history dictionaries.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "EV_DOC_SOURCES",
+        "EV_DOC_COUNTRY",
+        "EV_SDC",
+        "EV_POLICY",
+        "EV_TARGET_PRICE"
+      ]
+    },
+    {
+      "id": "ISSUE_VARIANTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_handoff",
+      "description": "The script writes target_list_tomerge.dta but consumes distinct 50% and 30% target-list aliases; no producer is shown for these aliases, type_50_50/type_30_30/type_private, or the branch-specific toehold files. Preserve each branch until same-key and population compatibility is documented.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "EV_PROD3",
+        "EV_LIST50",
+        "EV_LIST30",
+        "EV_TYPE50",
+        "EV_TYPE30",
+        "EV_TYPE_PRIVATE",
+        "EV_OTHER50",
+        "EV_TOE50",
+        "EV_OTHER30",
+        "EV_TOE30"
+      ]
+    },
+    {
+      "id": "ISSUE_RETURN_HISTORY",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_history",
+      "description": "Daily target/acquirer event inputs need exact event-date matches, t−253…t−127 estimation observations and returns through t+126. Prepared files, event population and lower date bound are not supplied; catalog probes read one row only.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "EV_TARGET_PRICE",
+        "EV_ACQ_PRICE",
+        "EV_NON_EU",
+        "EV_EVENT_DATE",
+        "EV_EST",
+        "EV_CAR",
+        "EV_DS_RI_PROBE",
+        "EV_DS_MAP_PROBE",
+        "EV_DS_INDEX_PROBE"
+      ]
+    },
+    {
+      "id": "ISSUE_INTL_CONTRACT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_population_contract",
+      "description": "The SDC base is worldwide but treatment country, lower history bound, market/exchange population and SDC-to-ISIN handoffs are unspecified. Datastream price/index definitions and Amadeus/BvD and FactSet/LionShares country aggregates remain separate, unverified source contracts; local probes/catalog metadata do not prove entitlement or coverage.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "EV_DOC_SOURCES",
+        "EV_DOC_COUNTRY",
+        "EV_DATE_CAP",
+        "EV_SDC",
+        "EV_PUBLIC",
+        "EV_SDC_PROBE",
+        "EV_DS_RI_PROBE",
+        "EV_CATALOG"
+      ]
+    },
+    {
+      "id": "ISSUE_PATHS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "runtime_configuration",
+      "description": "BDO.do hardcodes a Windows G: root and backslash subdirectories. A host-visible relative execution root and consistent paths across all read/write calls are needed; preserve exchange_rate, interest rate and acq new returns subdirectories.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "EV_ROOT",
+        "EV_FX",
+        "EV_BOND",
+        "EV_NON_EU"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV_BRANCH",
+      "kind": "source",
+      "description": "BDO.do lists preparation branches A through E.",
+      "file": "BDO.do",
+      "line_begin": 8,
+      "line_end": 8,
+      "quote": "**********        -- A: Cleaning SDC DATA\t \t \t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t                 ******"
+    },
+    {
+      "id": "EV_SDC",
+      "kind": "source",
+      "description": "Code imports the SDC workbook with first row as variable names.",
+      "file": "BDO.do",
+      "line_begin": 32,
+      "line_end": 32,
+      "quote": "import excel \"excel file\\M&A master EU RA.xlsx\", sheet(\"M&A master EU RA\") firstrow"
+    },
+    {
+      "id": "EV_SDC_KEYS",
+      "kind": "source",
+      "description": "SDC deals are identified by acquirer, target and announcement date.",
+      "file": "BDO.do",
+      "line_begin": 40,
+      "line_end": 40,
+      "quote": "duplicates tag Acquiror_CUSIP Target__CUSIP Date_Announced, gen(flag)"
+    },
+    {
+      "id": "EV_SDC_EXTRA",
+      "kind": "source",
+      "description": "Code says the supplemental file adds bidder count and transaction values.",
+      "file": "BDO.do",
+      "line_begin": 97,
+      "line_end": 97,
+      "quote": "// import the following variables: Number_of_Bidders, value in local currency, value_USD"
+    },
+    {
+      "id": "EV_FX",
+      "kind": "source",
+      "description": "The currency table is joined by curcd, year and the restored original month variable.",
+      "file": "BDO.do",
+      "line_begin": 121,
+      "line_end": 121,
+      "quote": "merge m:1 curcd year month using \"exchange_rate\\currency_file.dta\" // currency exchange ra"
+    },
+    {
+      "id": "EV_FX_LINE",
+      "kind": "source",
+      "description": "Rate multiplication and destring text share one malformed source line.",
+      "file": "BDO.do",
+      "line_begin": 124,
+      "line_end": 124,
+      "quote": "replace value = value*ratedestring value_USD, replace force"
+    },
+    {
+      "id": "EV_POLICY",
+      "kind": "source",
+      "description": "Country-level directive dates are merged into the sample.",
+      "file": "BDO.do",
+      "line_begin": 162,
+      "line_end": 162,
+      "quote": "merge m:1 country using \"swap_disc_regulation_update.dta\", gen(_merge_dir)"
+    },
+    {
+      "id": "EV_TECH",
+      "kind": "source",
+      "description": "Acquisition technique classifications gate the transaction sample.",
+      "file": "BDO.do",
+      "line_begin": 169,
+      "line_end": 169,
+      "quote": "merge 1:1 Target__CUSIP Acquiror_CUSIP Date_Announced using \"Acquisition_Technique_cleaned"
+    },
+    {
+      "id": "EV_GERMAN",
+      "kind": "source",
+      "description": "German Neuer Markt targets are identified using an ISIN lookup.",
+      "file": "BDO.do",
+      "line_begin": 194,
+      "line_end": 194,
+      "quote": "merge m:1 tar_isin using \"german neu market.dta\", gen(_merge_german_check)"
+    },
+    {
+      "id": "EV_AIM",
+      "kind": "source",
+      "description": "AIM targets use an ISIN and announcement-date lookup.",
+      "file": "BDO.do",
+      "line_begin": 199,
+      "line_end": 199,
+      "quote": "merge m:1 isin Date_Announced using \"AIM_def.dta\", gen(_merge_uk_check)"
+    },
+    {
+      "id": "EV_PUBLIC",
+      "kind": "source",
+      "description": "Target public status is matched by ISIN and year; comment names Datastream+BvD.",
+      "file": "BDO.do",
+      "line_begin": 213,
+      "line_end": 213,
+      "quote": "merge m:1 isin year using \"EU_public_firms.dta\", gen(_check_publicD) // public firms by fi"
+    },
+    {
+      "id": "EV_FILL",
+      "kind": "source",
+      "description": "A country/year/month/publicness grid is merged before fillin.",
+      "file": "BDO.do",
+      "line_begin": 219,
+      "line_end": 219,
+      "quote": "merge m:1 country year_date_announced month_date_announced target_public using \"filling ob"
+    },
+    {
+      "id": "EV_LISTED",
+      "kind": "source",
+      "description": "Annual listed-firm counts are merged by country and year.",
+      "file": "BDO.do",
+      "line_begin": 323,
+      "line_end": 323,
+      "quote": "merge m:1 country year using \"number_listed firms.dta\""
+    },
+    {
+      "id": "EV_MKT",
+      "kind": "source",
+      "description": "Market-size and return-volatility controls are merged by country-month.",
+      "file": "BDO.do",
+      "line_begin": 332,
+      "line_end": 332,
+      "quote": "merge m:1 country month_year using \"mkt_control_.dta\""
+    },
+    {
+      "id": "EV_BOND",
+      "kind": "source",
+      "description": "Government bond controls are merged by country-month.",
+      "file": "BDO.do",
+      "line_begin": 337,
+      "line_end": 337,
+      "quote": "merge m:1 country month_year using \"interest rate\\gov_bond_10y.dta\", gen(_merge_i)"
+    },
+    {
+      "id": "EV_GDP",
+      "kind": "source",
+      "description": "GDP per capita is merged by country-year and logged.",
+      "file": "BDO.do",
+      "line_begin": 342,
+      "line_end": 342,
+      "quote": "merge m:1 country year using \"gdp_per_capita.dta\", gen(_merge_gdp)"
+    },
+    {
+      "id": "EV_GFCF",
+      "kind": "source",
+      "description": "Investment is merged on country, year and quarter.",
+      "file": "BDO.do",
+      "line_begin": 348,
+      "line_end": 348,
+      "quote": "merge m:1 country year_date_announced quarter_s using \"Gross capital formation.dta\", gen(_"
+    },
+    {
+      "id": "EV_CONS",
+      "kind": "source",
+      "description": "Consumption is merged on country, year and quarter.",
+      "file": "BDO.do",
+      "line_begin": 353,
+      "line_end": 353,
+      "quote": "merge m:1 country year_date_announced quarter_s using \"final consumption expenditures.dta\""
+    },
+    {
+      "id": "EV_ANTI",
+      "kind": "source",
+      "description": "Country-level regulatory/anti-takeover/shareholder-identification controls are merged.",
+      "file": "BDO.do",
+      "line_begin": 358,
+      "line_end": 358,
+      "quote": "merge m:1 country using \"anti_takeover country level.dta\""
+    },
+    {
+      "id": "EV_INST",
+      "kind": "source",
+      "description": "Institutional ownership is merged at country level.",
+      "file": "BDO.do",
+      "line_begin": 362,
+      "line_end": 362,
+      "quote": "merge m:1 country using \"inst _ inv.dta\""
+    },
+    {
+      "id": "EV_OWN",
+      "kind": "source",
+      "description": "Ownership structure is merged at country level.",
+      "file": "BDO.do",
+      "line_begin": 367,
+      "line_end": 367,
+      "quote": "merge m:1 country using \"own conc country level.dta\""
+    },
+    {
+      "id": "EV_DATE_CAP",
+      "kind": "source",
+      "description": "Code imposes an upper announcement-date cutoff and shows no lower cutoff here.",
+      "file": "BDO.do",
+      "line_begin": 104,
+      "line_end": 104,
+      "quote": "keep if Date_Announced <= d(31dec2011)"
+    },
+    {
+      "id": "EV_TARGET_PRICE",
+      "kind": "source",
+      "description": "Target premium construction reads price_file.dta by ISIN.",
+      "file": "BDO.do",
+      "line_begin": 730,
+      "line_end": 730,
+      "quote": "capture merge 1:m isin using \"price_file.dta\", force"
+    },
+    {
+      "id": "EV_EVENT_DATE",
+      "kind": "source",
+      "description": "Event time starts at an exact announcement-date match to datadate.",
+      "file": "BDO.do",
+      "line_begin": 734,
+      "line_end": 734,
+      "quote": "capture g event=ind if Date_Announced==datadate & id_deal==`y'"
+    },
+    {
+      "id": "EV_EST",
+      "kind": "source",
+      "description": "Market model estimation uses observations from -253 through -127.",
+      "file": "BDO.do",
+      "line_begin": 738,
+      "line_end": 738,
+      "quote": "capture g estwindow = 1 if dif>=-253 & dif<=-127"
+    },
+    {
+      "id": "EV_CAR",
+      "kind": "source",
+      "description": "Target return code builds event windows ending through +126 and shorter alternatives.",
+      "file": "BDO.do",
+      "line_begin": 744,
+      "line_end": 744,
+      "quote": "capture bysort isin: egen car_01`y'=total(ar`y') if -64<dif & dif<127"
+    },
+    {
+      "id": "EV_LIST50",
+      "kind": "source",
+      "description": "The 50% premium branch reads a distinct target-list alias.",
+      "file": "BDO.do",
+      "line_begin": 796,
+      "line_end": 796,
+      "quote": "merge 1:1 Date_Announced isin Acquiror_CUSIP using \"target_list_to_merge 50 50.dta\", gen(_"
+    },
+    {
+      "id": "EV_TYPE50",
+      "kind": "source",
+      "description": "The 50% public branch requires a match to its type file.",
+      "file": "BDO.do",
+      "line_begin": 963,
+      "line_end": 963,
+      "quote": "merge 1:1 Acquiror_CUSIP isin Date_Announced using \"type_50_50.dta\", gen(_merge_t)"
+    },
+    {
+      "id": "EV_PAYMENT",
+      "kind": "source",
+      "description": "Payment indicators are merged by transaction key.",
+      "file": "BDO.do",
+      "line_begin": 965,
+      "line_end": 965,
+      "quote": "merge m:1 Acquiror_CUSIP Target__CUSIP Date_Announced using \"swap_deals_payment.dta\", gen("
+    },
+    {
+      "id": "EV_OTHER50",
+      "kind": "source",
+      "description": "Other-bidder toeholds are a separate matched input for the 50% branch.",
+      "file": "BDO.do",
+      "line_begin": 972,
+      "line_end": 972,
+      "quote": "merge 1:1 Acquiror_CUSIP isin Date_Announced using \"other_bidders_toehold SEP 50 50.dta\", "
+    },
+    {
+      "id": "EV_TOE50",
+      "kind": "source",
+      "description": "A second toehold file is required in the 50% branch.",
+      "file": "BDO.do",
+      "line_begin": 974,
+      "line_end": 974,
+      "quote": "merge 1:1 Acquiror_CUSIP isin Date_Announced using \"toehold 50 50.dta\", gen(_merge_toehold"
+    },
+    {
+      "id": "EV_LIST30",
+      "kind": "source",
+      "description": "The 30% premium branch reads a distinct target-list alias.",
+      "file": "BDO.do",
+      "line_begin": 1013,
+      "line_end": 1013,
+      "quote": "merge 1:1 Date_Announced isin Acquiror_CUSIP using \"target_list_to_merge 30 30.dta\", gen(_"
+    },
+    {
+      "id": "EV_TYPE30",
+      "kind": "source",
+      "description": "The 30% public branch requires a match to its type file.",
+      "file": "BDO.do",
+      "line_begin": 1180,
+      "line_end": 1180,
+      "quote": "merge 1:1 Acquiror_CUSIP isin Date_Announced using \"type_30_30.dta\", gen(_merge_t)"
+    },
+    {
+      "id": "EV_OTHER30",
+      "kind": "source",
+      "description": "Other-bidder toeholds are a separate matched input for the 30% branch.",
+      "file": "BDO.do",
+      "line_begin": 1189,
+      "line_end": 1189,
+      "quote": "merge 1:1 Acquiror_CUSIP isin Date_Announced using \"other_bidders_toehold SEP 30 30.dta\", "
+    },
+    {
+      "id": "EV_TOE30",
+      "kind": "source",
+      "description": "A second toehold file is required in the 30% branch.",
+      "file": "BDO.do",
+      "line_begin": 1191,
+      "line_end": 1191,
+      "quote": "merge 1:1 Acquiror_CUSIP isin Date_Announced using \"toehold 30 30.dta\", gen(_merge_toehold"
+    },
+    {
+      "id": "EV_ACQ_PRICE",
+      "kind": "source",
+      "description": "Acquirer returns use a separate daily file keyed by acquirer ISIN.",
+      "file": "BDO.do",
+      "line_begin": 1337,
+      "line_end": 1337,
+      "quote": "capture merge 1:m isin using \"price_file_acq_returns.dta\""
+    },
+    {
+      "id": "EV_NON_EU",
+      "kind": "source",
+      "description": "Non-EU acquirers use another return file under a named subdirectory.",
+      "file": "BDO.do",
+      "line_begin": 1442,
+      "line_end": 1442,
+      "quote": "merge 1:m isin using \"acq new returns\\acq new returns.dta\", gen(_merge_deal)"
+    },
+    {
+      "id": "EV_ALL_LIST",
+      "kind": "source",
+      "description": "Private-target processing starts from a separate all-variable deal list.",
+      "file": "BDO.do",
+      "line_begin": 1522,
+      "line_end": 1522,
+      "quote": "use \"acq_list_tomerge_ALL_VAR.dta\", clear"
+    },
+    {
+      "id": "EV_PRIVATE_PRICE",
+      "kind": "source",
+      "description": "The private-target branch reads the acquirer daily-return file.",
+      "file": "BDO.do",
+      "line_begin": 1539,
+      "line_end": 1539,
+      "quote": "capture merge 1:m isin using \"price_file_acq_returns.dta\", force"
+    },
+    {
+      "id": "EV_TYPE_PRIVATE",
+      "kind": "source",
+      "description": "Private-target output requires a separate type file.",
+      "file": "BDO.do",
+      "line_begin": 1778,
+      "line_end": 1778,
+      "quote": "merge 1:1 Acquiror_CUSIP isin Date_Announced using \"type_private.dta\", gen(_merge_t)"
+    },
+    {
+      "id": "EV_MONTH_DROP",
+      "kind": "source",
+      "description": "Section A drops the original month after mapping month_b for date-string construction.",
+      "file": "BDO.do",
+      "line_begin": 78,
+      "line_end": 78,
+      "quote": "drop month"
+    },
+    {
+      "id": "EV_MONTH_RENAME",
+      "kind": "source",
+      "description": "The existing line-90 rename expects the original numeric-text month, which line 114 later renames back for the currency merge.",
+      "file": "BDO.do",
+      "line_begin": 90,
+      "line_end": 90,
+      "quote": "rename month month_date_announced"
+    },
+    {
+      "id": "EV_ROOT",
+      "kind": "source",
+      "description": "The author code hardcodes a Windows working root.",
+      "file": "BDO.do",
+      "line_begin": 30,
+      "line_end": 30,
+      "quote": "global location \"[redacted-path-ce57d062a4f5]\""
+    },
+    {
+      "id": "EV_DOC_SOURCES",
+      "kind": "source",
+      "description": "Datasheet names SDC, Datastream, Amadeus/BvD, FRED, World Bank and Eurostat sources/vintages.",
+      "file": "BDO Datasheet.pdf",
+      "line_begin": 29,
+      "line_end": 29,
+      "quote": "1. Data on M&A transactions were obtained from the SDC Platinum Worldwide Mergers"
+    },
+    {
+      "id": "EV_DOC_COUNTRY",
+      "kind": "source",
+      "description": "Datasheet names EC legal study, Amadeus/BvD, FactSet/LionShares, Kaufmann, Christensen and ECB sources.",
+      "file": "BDO Datasheet.pdf",
+      "line_begin": 49,
+      "line_end": 49,
+      "quote": "9. Data on the control-enhancing mechanisms available in a country have been collected"
+    },
+    {
+      "id": "EV_DOC_CUSIP",
+      "kind": "source",
+      "description": "Datasheet says the CUSIP workbook identifies final sample target firms.",
+      "file": "BDO Datasheet.pdf",
+      "line_begin": 103,
+      "line_end": 103,
+      "quote": "We use Stata to convert the raw data into the final datasets and to perform all statistica"
+    },
+    {
+      "id": "EV_DOC_PROPRIETARY",
+      "kind": "source",
+      "description": "Authors report proprietary handling as not applicable; that is not current entitlement evidence.",
+      "file": "BDO Datasheet.pdf",
+      "line_begin": 74,
+      "line_end": 74,
+      "quote": "Not applicable since we do not use data from an organization on a proprietary basis."
+    },
+    {
+      "id": "EV_PROD1",
+      "kind": "source",
+      "description": "Section A saves cleaned SDC deal intermediate.",
+      "file": "BDO.do",
+      "line_begin": 100,
+      "line_end": 100,
+      "quote": "save \"swap_deals_cleaned_def.dta\""
+    },
+    {
+      "id": "EV_PROD2",
+      "kind": "source",
+      "description": "Section A saves converted transaction table used downstream.",
+      "file": "BDO.do",
+      "line_begin": 135,
+      "line_end": 135,
+      "quote": "save \"swap_deals_cleaned_to_use.dta\""
+    },
+    {
+      "id": "EV_PROD3",
+      "kind": "source",
+      "description": "Premium branch saves a common target list.",
+      "file": "BDO.do",
+      "line_begin": 724,
+      "line_end": 724,
+      "quote": "save \"target_list_tomerge.dta\""
+    },
+    {
+      "id": "EV_PROD4",
+      "kind": "source",
+      "description": "Premium loop saves dynamic per-deal outputs.",
+      "file": "BDO.do",
+      "line_begin": 766,
+      "line_end": 766,
+      "quote": "capture save \"premium_`y'.dta\", replace"
+    },
+    {
+      "id": "EV_PROD5",
+      "kind": "source",
+      "description": "Premium loop saves reduced per-deal outputs.",
+      "file": "BDO.do",
+      "line_begin": 773,
+      "line_end": 773,
+      "quote": "save  \"premium_`i'_d.dta\""
+    },
+    {
+      "id": "EV_PROD6",
+      "kind": "source",
+      "description": "Premium output is appended into premium_def.dta.",
+      "file": "BDO.do",
+      "line_begin": 783,
+      "line_end": 783,
+      "quote": "save \"premium_def.dta\""
+    },
+    {
+      "id": "EV_PROD7",
+      "kind": "source",
+      "description": "Public acquirer event list is saved.",
+      "file": "BDO.do",
+      "line_begin": 1331,
+      "line_end": 1331,
+      "quote": "save \"acq_list_tomerge.dta\", replace"
+    },
+    {
+      "id": "EV_PROD8",
+      "kind": "source",
+      "description": "Public acquirer loop saves per-deal files.",
+      "file": "BDO.do",
+      "line_begin": 1376,
+      "line_end": 1376,
+      "quote": "capture save \"acq_`y'.dta\", replace"
+    },
+    {
+      "id": "EV_PROD9",
+      "kind": "source",
+      "description": "Reduced public acquirer files are saved for append.",
+      "file": "BDO.do",
+      "line_begin": 1384,
+      "line_end": 1384,
+      "quote": "save \"acq_`i'_d.dta\", replace"
+    },
+    {
+      "id": "EV_PROD10",
+      "kind": "source",
+      "description": "Public acquirer returns are assembled.",
+      "file": "BDO.do",
+      "line_begin": 1402,
+      "line_end": 1402,
+      "quote": "save \"acq ret_final.dta\""
+    },
+    {
+      "id": "EV_PROD11",
+      "kind": "source",
+      "description": "Non-EU acquirer list is saved.",
+      "file": "BDO.do",
+      "line_begin": 1437,
+      "line_end": 1437,
+      "quote": "save \"acq_to_add.dta\""
+    },
+    {
+      "id": "EV_PROD12",
+      "kind": "source",
+      "description": "Non-EU per-deal returns are saved in their subdirectory.",
+      "file": "BDO.do",
+      "line_begin": 1481,
+      "line_end": 1481,
+      "quote": "capture save \"acq new returns\\acq_`y'NEW.dta\""
+    },
+    {
+      "id": "EV_PROD13",
+      "kind": "source",
+      "description": "Reduced non-EU per-deal returns are saved.",
+      "file": "BDO.do",
+      "line_begin": 1490,
+      "line_end": 1490,
+      "quote": "capture save \"acq new returns\\acq_`y'_dNEW.dta\""
+    },
+    {
+      "id": "EV_PROD14",
+      "kind": "source",
+      "description": "All-variable acquisition list is saved.",
+      "file": "BDO.do",
+      "line_begin": 1321,
+      "line_end": 1321,
+      "quote": "save \"acq_list_tomerge_ALL_VAR.dta\", replace"
+    },
+    {
+      "id": "EV_PROD15",
+      "kind": "source",
+      "description": "Private-target list is saved.",
+      "file": "BDO.do",
+      "line_begin": 1533,
+      "line_end": 1533,
+      "quote": "save \"acq_list_tomerge_private.dta\""
+    },
+    {
+      "id": "EV_PROD16",
+      "kind": "source",
+      "description": "Private-target event loop saves per-deal returns.",
+      "file": "BDO.do",
+      "line_begin": 1579,
+      "line_end": 1579,
+      "quote": "capture save \"acq_`y'_private.dta\", replace"
+    },
+    {
+      "id": "EV_PROD17",
+      "kind": "source",
+      "description": "Reduced private-target returns are saved.",
+      "file": "BDO.do",
+      "line_begin": 1588,
+      "line_end": 1588,
+      "quote": "save \"acq_`y'_d_private.dta\""
+    },
+    {
+      "id": "EV_PROD18",
+      "kind": "source",
+      "description": "Private-target final file is assembled.",
+      "file": "BDO.do",
+      "line_begin": 1609,
+      "line_end": 1609,
+      "quote": "save \"acqDEF_final_private.dta\""
+    },
+    {
+      "id": "EV_PUB_FRED",
+      "kind": "public",
+      "description": "Official FRED page identifies a daily euro spot-rate candidate only; code also requires DKK, GBP and SEK conversion series.",
+      "url": "https://fred.stlouisfed.org/series/DEXUSEU",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "quote": "U.S. Dollars to One Euro"
+    },
+    {
+      "id": "EV_PUB_WB",
+      "kind": "public",
+      "description": "World Bank exposes a GDP-per-capita candidate; the author’s exact indicator, unit and country mapping remain unspecified.",
+      "url": "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "quote": "GDP per capita (current US$)"
+    },
+    {
+      "id": "EV_PUB_EUROSTAT",
+      "kind": "public",
+      "description": "Eurostat quarterly national-accounts data are a public candidate; exact capital-formation/consumption series and units remain unverified.",
+      "url": "https://ec.europa.eu/eurostat/databrowser/product/view/namq_10_gdp",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "quote": "Time frequency: Quarterly"
+    },
+    {
+      "id": "EV_PUB_EURLEx",
+      "kind": "public",
+      "description": "EUR-Lex exposes directive text and an EU-level effect date; this does not establish the author’s full country implementation-date crosswalk.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/ALL/?uri=CELEX:32004L0109",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "quote": "Date of effect: 20/01/2005"
+    },
+    {
+      "id": "EV_CUSIP_PROBE",
+      "kind": "probe",
+      "description": "Bounded workbook probe found separate >=50% and >=30% sheets; coverage is explicitly unverified.",
+      "artifact_path": "urn:sha256:1a60ba0ee983145d6647c388b0407c5bd3539b1c9a704c418a74848e6b84d68c",
+      "sha256": "1a60ba0ee983145d6647c388b0407c5bd3539b1c9a704c418a74848e6b84d68c"
+    },
+    {
+      "id": "EV_STATA_PROBE",
+      "kind": "probe",
+      "description": "Frozen environment probe reports Stata 18 available and did not run author code.",
+      "artifact_path": "urn:sha256:52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "EV_WINSOR_PROBE",
+      "kind": "probe",
+      "description": "A bounded Stata which probe confirms the exact winsor command is available.",
+      "artifact_path": "urn:sha256:d07ba39f41444d8759479d7d9fc86c3f59187ee5da71bc41833100cd350ab641",
+      "sha256": "d07ba39f41444d8759479d7d9fc86c3f59187ee5da71bc41833100cd350ab641"
+    },
+    {
+      "id": "EV_SETTINGS_PROBE",
+      "kind": "probe",
+      "description": "Self-written empty-session probe accepted the three author startup settings; matsize produced only an informational message.",
+      "artifact_path": "urn:sha256:4c9c241c4dd0d0182e20a9ac5f435606b4053675d16e8a59e3bb2f776d3a21a0",
+      "sha256": "4c9c241c4dd0d0182e20a9ac5f435606b4053675d16e8a59e3bb2f776d3a21a0"
+    },
+    {
+      "id": "EV_SDC_PROBE",
+      "kind": "probe",
+      "description": "One-row SDC.WRDS_MA_DETAILS read succeeded for selected deal/ownership/country fields; population and history unverified.",
+      "artifact_path": "urn:sha256:fb938aa6ef96fbe1b1741f964757ac7276e8c1d03539fa88ad9bb6049efd153a",
+      "sha256": "fb938aa6ef96fbe1b1741f964757ac7276e8c1d03539fa88ad9bb6049efd153a"
+    },
+    {
+      "id": "EV_DS_RI_PROBE",
+      "kind": "probe",
+      "description": "One-row Datastream primary return-index read succeeded; history and coverage unverified.",
+      "artifact_path": "urn:sha256:bd0e9de59e59f8053d014ab1d6670d8837d2551ff8e8db4117d93d22d670a882",
+      "sha256": "bd0e9de59e59f8053d014ab1d6670d8837d2551ff8e8db4117d93d22d670a882"
+    },
+    {
+      "id": "EV_DS_MAP_PROBE",
+      "kind": "probe",
+      "description": "One-row Datastream ISIN/name mapping read succeeded; validity and population unverified.",
+      "artifact_path": "urn:sha256:261363d53779bc3de868abfb67e15900ca627b5e3605610c47e8126a1c363a00",
+      "sha256": "261363d53779bc3de868abfb67e15900ca627b5e3605610c47e8126a1c363a00"
+    },
+    {
+      "id": "EV_DS_INDEX_PROBE",
+      "kind": "probe",
+      "description": "One-row Datastream index-return read succeeded; market index choice and alignment unverified.",
+      "artifact_path": "urn:sha256:4075e7f93c9b87e01df1689ea289033dffe71c971e56c18df54f7308f23f4a61",
+      "sha256": "4075e7f93c9b87e01df1689ea289033dffe71c971e56c18df54f7308f23f4a61"
+    },
+    {
+      "id": "EV_CATALOG",
+      "kind": "catalog",
+      "description": "Frozen catalog names SDC.WRDS_MA_DETAILS and Datastream return/mapping/index candidates; it is not evidence of license entitlement, population or compatibility.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "EV_MONTH_DATE",
+      "kind": "source",
+      "description": "The abbreviated month_b is used to construct the announcement-date string.",
+      "file": "BDO.do",
+      "line_begin": 88,
+      "line_end": 88,
+      "quote": "g datadate_date_announced = day + month_b + year"
+    },
+    {
+      "id": "EV_MONTH_RESTORE",
+      "kind": "source",
+      "description": "After the date-field rename, the original month variable is restored for the currency join.",
+      "file": "BDO.do",
+      "line_begin": 114,
+      "line_end": 114,
+      "quote": "rename month_date_announced month"
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD1"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD2"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD3"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD4"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD5"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0006",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD6"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0007",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD7"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0008",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD8"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0009",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD9"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0010",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD10"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0011",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD11"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0012",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD12"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0013",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD13"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0014",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD14"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0015",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD15"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0016",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD16"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0017",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD17"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0018",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROD18"
+      ],
+      "description": "Intermediate is written by the supplied BDO.do workflow; it is a generated handoff, not an external source requirement."
+    },
+    {
+      "dependency_id": "D0019",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_SDC_MAIN"
+      ],
+      "evidence_ids": [
+        "EV_SDC",
+        "EV_DOC_SOURCES"
+      ],
+      "description": "The SDC workbook imported in Section A is a required source input. The delivered CUSIP identifier workbook and catalog candidate do not establish a compatible replacement."
+    }
+  ],
+  "actions": [
+    {
+      "id": "ACT_MONTH_LIFETIME",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_MONTH_LIFETIME",
+        "R_SDC_MAIN",
+        "R_FX"
+      ],
+      "kind": "source_edit",
+      "description": "Keep the original month variable alive across Section A’s existing rename and restore sequence. month_b is used only to compose datadate_date_announced; its encoding is not a supported substitute for the FX month key.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "EV_MONTH_DROP",
+        "EV_MONTH_RENAME",
+        "EV_MONTH_DATE",
+        "EV_MONTH_RESTORE",
+        "EV_FX"
+      ],
+      "edits": [
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 78,
+          "line_end": 78,
+          "before": "drop month",
+          "after": "* preserve original month for its existing rename and currency join",
+          "reason": "The original month is renamed at line 90 and restored at line 114 for the currency merge. The separate abbreviation month_b is used to build the date string."
+        }
+      ],
+      "steps": [
+        "Retain the original month value while leaving the line-90 rename and line-114 restoration intact.",
+        "Keep month_b solely for the authored date-string construction."
+      ],
+      "validation": [
+        "After compatible inputs are staged, confirm the original month survives through the rename/restoration and compare its type and value encoding with the currency table key."
+      ]
+    },
+    {
+      "id": "ACT_FX_LINE_CLARIFICATION",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_FX_LINE",
+        "R_FX",
+        "R_SDC_ADDON"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the malformed line 124 using a validated conversion contract before editing; seek author clarification only if the factor field, units, direction or expression remain unknown.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "EV_FX_LINE",
+        "EV_FX",
+        "EV_SDC_EXTRA",
+        "EV_DOC_SOURCES"
+      ],
+      "edits": [],
+      "steps": [
+        "Establish the factor field, units, date alignment, direction and value_USD formula from the input schema, metadata and documented construction; seek author clarification only for any remaining ambiguity.",
+        "Keep the CUSIP-pair/announcement-date add-on fields distinct from the FX table’s curcd/year/month join keys.",
+        "Apply the expression supported by the validated field, units and direction; do not guess a rate variable or invert the factor."
+      ],
+      "validation": [
+        "Check the corrected statements against the supplied field dictionary and a bounded matched example; then validate value_USD construction and missing merge rates before running all branches."
+      ]
+    },
+    {
+      "id": "ACT_TRANSACTION_INPUTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_INPUT_CLOSURE",
+        "ISSUE_INTL_CONTRACT",
+        "R_SDC_MAIN",
+        "R_SDC_ADDON",
+        "R_FX",
+        "R_POLICY_DATES",
+        "R_ACQ_TECH"
+      ],
+      "kind": "data_acquisition",
+      "description": "Stage compatible transaction and policy inputs, preserving their separate merge keys, source populations and histories.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "EV_SDC",
+        "EV_SDC_EXTRA",
+        "EV_FX",
+        "EV_POLICY",
+        "EV_TECH",
+        "EV_DOC_SOURCES",
+        "EV_CATALOG",
+        "EV_SDC_PROBE"
+      ],
+      "edits": [],
+      "steps": [
+        "Supply an SDC transaction workbook or a demonstrably compatible extract, with actual query/extract filters, deal population, identifier mappings, exact field dictionary and required history. October 2016 is the documented vintage; a different-vintage extract is usable when its population, fields, history and transformations are shown compatible. If a required contract remains unknown, use clarification to resolve it; a demonstrated compatible extract need not match the original vintage.",
+        "Obtain swap_deals_new var.dta or its documented producer with Acquiror_CUSIP, Target__CUSIP and Date_Announced keys, bidder count, value and value_USD fields.",
+        "Provide the FX table with DKK, GBP, SEK and EUR coverage, its conversion-factor field, units, direction, month encoding and source vintage.",
+        "Provide swap_disc_regulation_update.dta and Acquisition_Technique_cleaned.dta with their country/date and transaction keys, field definitions and covered periods.",
+        "Treat SDC.WRDS_MA_DETAILS as a local product candidate only; its one-row probe does not establish extract population, history, ISIN coverage or field compatibility. Assess those properties from the actual extract and its metadata/transformation contract; author clarification may resolve a remaining gap but is not a prerequisite when compatibility is demonstrated."
+      ],
+      "validation": [
+        "Check each file’s stated keys, fields, types, uniqueness and period against the corresponding merges before preparing the downstream branches."
+      ]
+    },
+    {
+      "id": "ACT_COUNTRY_CROSSWALKS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_INPUT_CLOSURE",
+        "ISSUE_INTL_CONTRACT",
+        "R_GERMAN",
+        "R_AIM",
+        "R_PUBLIC_STATUS",
+        "R_FILL",
+        "R_LISTED",
+        "R_MKT_CONTROL",
+        "R_GOV_BOND",
+        "R_GDP",
+        "R_GFCF",
+        "R_CONS",
+        "R_ANTI",
+        "R_INST",
+        "R_OWN"
+      ],
+      "kind": "data_acquisition",
+      "description": "Supply the consumed country, listing, public-status, regulation, ownership and macro-control tables together with the manual/public/commercial handoffs that produced them.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "EV_GERMAN",
+        "EV_AIM",
+        "EV_PUBLIC",
+        "EV_FILL",
+        "EV_LISTED",
+        "EV_MKT",
+        "EV_BOND",
+        "EV_GDP",
+        "EV_GFCF",
+        "EV_CONS",
+        "EV_ANTI",
+        "EV_INST",
+        "EV_OWN",
+        "EV_DOC_SOURCES",
+        "EV_DOC_COUNTRY",
+        "EV_CATALOG",
+        "EV_PUB_WB",
+        "EV_PUB_EUROSTAT"
+      ],
+      "edits": [],
+      "steps": [
+        "Provide the author-compatible german neu market.dta, AIM_def.dta, EU_public_firms.dta and filling obs_new.dta, including ISIN/country/date/year keys and the exact public-status and monthly-grid rules.",
+        "Provide number_listed firms.dta, mkt_control_.dta and interest rate/gov_bond_10y.dta with country/year or country/month keys, units and underlying population.",
+        "Provide gdp_per_capita.dta, Gross capital formation.dta and final consumption expenditures.dta with exact World Bank/Eurostat series identifiers, country codes, calendar/fiscal-year definitions, quarter labels, units and adjustment conventions.",
+        "Provide anti_takeover country level.dta, inst _ inv.dta and own conc country level.dta with country mapping, source-to-country crosswalk, field dictionary, aggregation rules and vintages. The datasheet cites EC, Amadeus/BvD, FactSet/LionShares, Kaufmann, Christensen and ECB inputs; it does not establish current entitlement or compatible coverage.",
+        "Use the exact prepared author tables if available; otherwise request their manual lookup/crosswalk and preparation handoff. Do not substitute a one-row catalog candidate or assume a public series is the author’s exact measure."
+      ],
+      "validation": [
+        "Reconcile ISO/country names, ISIN validity periods, month/year/quarter keys, units, missing-value rules and join cardinality against each merge before running the sample."
+      ]
+    },
+    {
+      "id": "ACT_EVENT_RETURN_INPUTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_INPUT_CLOSURE",
+        "ISSUE_RETURN_HISTORY",
+        "ISSUE_INTL_CONTRACT",
+        "R_TARGET_RET",
+        "R_ACQ_RET",
+        "R_NON_EU_RET"
+      ],
+      "kind": "data_acquisition",
+      "description": "Obtain compatible target, public-acquirer and non-EU-acquirer return panels and the identifier/index handoffs needed to construct the authored event windows.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "EV_TARGET_PRICE",
+        "EV_ACQ_PRICE",
+        "EV_NON_EU",
+        "EV_EVENT_DATE",
+        "EV_EST",
+        "EV_CAR",
+        "EV_CUSIP_PROBE",
+        "EV_DOC_CUSIP",
+        "EV_DOC_SOURCES",
+        "EV_DS_RI_PROBE",
+        "EV_DS_MAP_PROBE",
+        "EV_DS_INDEX_PROBE",
+        "EV_CATALOG"
+      ],
+      "edits": [],
+      "steps": [
+        "Provide price_file.dta, price_file_acq_returns.dta and acq new returns/acq new returns.dta or the author-defined Datastream extraction and transformation contracts for these distinct target, public-acquirer and non-EU panels.",
+        "Specify ISIN/security mapping validity, event populations, primary/listing-market choice, daily return and price fields, market-index series, currency/adjustment rules and lower history bound. Preserve the separate non-EU group_isin handoff and subdirectory.",
+        "Retain the exact event-date match, estimation observations t−253 through t−127, CAR coverage through t+126, and the authored shorter windows beginning at −63 and −41; the code has an upper event cutoff of 2011-12-31 but no lower bound.",
+        "Use cusip_TARGET.xlsx only as the supplied identifier list it is; its two stake sheets and bounded sample do not establish daily return coverage or a Datastream-to-ISIN history."
+      ],
+      "validation": [
+        "Verify exact event-date anchors and available observations at each required relative day for every in-scope event; separately check market-index alignment and non-EU/security mapping."
+      ]
+    },
+    {
+      "id": "ACT_BRANCH_HANDOFFS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_INPUT_CLOSURE",
+        "ISSUE_VARIANTS",
+        "R_LIST50",
+        "R_TYPE50",
+        "R_PAYMENT",
+        "R_OTHER50",
+        "R_TOE50",
+        "R_LIST30",
+        "R_TYPE30",
+        "R_OTHER30",
+        "R_TOE30",
+        "R_TYPE_PRIVATE"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the missing producer and exact sample contracts for the separate public 50%, public 30% and private-target handoffs without collapsing their aliases or membership rules.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "EV_PROD3",
+        "EV_LIST50",
+        "EV_LIST30",
+        "EV_TYPE50",
+        "EV_TYPE30",
+        "EV_TYPE_PRIVATE",
+        "EV_PAYMENT",
+        "EV_OTHER50",
+        "EV_TOE50",
+        "EV_OTHER30",
+        "EV_TOE30"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the producer and exact keys/population for target_list_to_merge 50 50.dta and target_list_to_merge 30 30.dta; BDO.do writes only target_list_tomerge.dta, so do not assume a rename or common membership.",
+        "Obtain type_50_50.dta, type_30_30.dta and type_private.dta, plus the distinct 50% and 30% other-bidder/toehold files and swap_deals_payment.dta, with field definitions and matched-only merge behavior.",
+        "Preserve each 50%, 30%, private/public and payment branch as supplied, including Acquiror_CUSIP, Target__CUSIP, isin and Date_Announced key alignment."
+      ],
+      "validation": [
+        "Compare the producer output schemas and sample membership separately for each branch before appending or merging; confirm no alias points to a file from a different population."
+      ]
+    },
+    {
+      "id": "ACT_PORTABLE_PATHS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_PATHS",
+        "R_SDC_MAIN",
+        "R_FX",
+        "R_GOV_BOND",
+        "R_NON_EU_RET"
+      ],
+      "kind": "configuration",
+      "description": "Replace the hard-coded Windows data root with the configured working root and normalize every source read/write path separator across BDO.do.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "EV_ROOT",
+        "EV_SDC",
+        "EV_FX",
+        "EV_BOND",
+        "EV_NON_EU"
+      ],
+      "edits": [
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 30,
+          "line_end": 30,
+          "before": "global location \"[redacted-path-ce57d062a4f5]\"",
+          "after": "global location \".\"",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 32,
+          "line_end": 32,
+          "before": "import excel \"excel file\\M&A master EU RA.xlsx\", sheet(\"M&A master EU RA\") firstrow",
+          "after": "import excel \"excel file/M&A master EU RA.xlsx\", sheet(\"M&A master EU RA\") firstrow",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 121,
+          "line_end": 121,
+          "before": "merge m:1 curcd year month using \"exchange_rate\\currency_file.dta\" // currency exchange rates by currency-year-month from the Federal Reserve of Saint Louis - FRED Database",
+          "after": "merge m:1 curcd year month using \"exchange_rate/currency_file.dta\" // currency exchange rates by currency-year-month from the Federal Reserve of Saint Louis - FRED Database",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 337,
+          "line_end": 337,
+          "before": "merge m:1 country month_year using \"interest rate\\gov_bond_10y.dta\", gen(_merge_i)",
+          "after": "merge m:1 country month_year using \"interest rate/gov_bond_10y.dta\", gen(_merge_i)",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 573,
+          "line_end": 573,
+          "before": "merge m:1 country month_year using \"interest rate\\gov_bond_10y.dta\", gen(_merge_i)",
+          "after": "merge m:1 country month_year using \"interest rate/gov_bond_10y.dta\", gen(_merge_i)",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 940,
+          "line_end": 940,
+          "before": "merge m:1 country month_year using \"interest rate\\gov_bond_10y.dta\"",
+          "after": "merge m:1 country month_year using \"interest rate/gov_bond_10y.dta\"",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1157,
+          "line_end": 1157,
+          "before": "merge m:1 country month_year using \"interest rate\\gov_bond_10y.dta\"",
+          "after": "merge m:1 country month_year using \"interest rate/gov_bond_10y.dta\"",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1442,
+          "line_end": 1442,
+          "before": "\t\t\t\t\t merge 1:m isin using \"acq new returns\\acq new returns.dta\", gen(_merge_deal)",
+          "after": "\t\t\t\t\t merge 1:m isin using \"acq new returns/acq new returns.dta\", gen(_merge_deal)",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1481,
+          "line_end": 1481,
+          "before": "\t\t\t\t\t capture save \"acq new returns\\acq_`y'NEW.dta\"",
+          "after": "\t\t\t\t\t capture save \"acq new returns/acq_`y'NEW.dta\"",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1488,
+          "line_end": 1488,
+          "before": "\t\t\t\tcapture use \"acq new returns\\acq_`y'NEW.dta\", clear",
+          "after": "\t\t\t\tcapture use \"acq new returns/acq_`y'NEW.dta\", clear",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1490,
+          "line_end": 1490,
+          "before": "\t\t\t\tcapture save \"acq new returns\\acq_`y'_dNEW.dta\"",
+          "after": "\t\t\t\tcapture save \"acq new returns/acq_`y'_dNEW.dta\"",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1494,
+          "line_end": 1494,
+          "before": "use \"acq new returns\\acq_1_dNEW.dta\", clear",
+          "after": "use \"acq new returns/acq_1_dNEW.dta\", clear",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1496,
+          "line_end": 1496,
+          "before": "\t\t\t\tappend using \"acq new returns\\acq_`y'_dNEW.dta\"",
+          "after": "\t\t\t\tappend using \"acq new returns/acq_`y'_dNEW.dta\"",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1500,
+          "line_end": 1500,
+          "before": "save \"acq new returns\\acq ret_nonEU.dta\"",
+          "after": "save \"acq new returns/acq ret_nonEU.dta\"",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1507,
+          "line_end": 1507,
+          "before": "append using \"acq new returns\\acq ret_nonEU.dta\"",
+          "after": "append using \"acq new returns/acq ret_nonEU.dta\"",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        },
+        {
+          "file": "BDO.do",
+          "sha256": "5a6fc58e8097744e0d838086a00b3236a16c45aa014467322dc898b6e38b3926",
+          "line_begin": 1756,
+          "line_end": 1756,
+          "before": "merge m:1 country month_year using \"interest rate\\gov_bond_10y.dta\"",
+          "after": "merge m:1 country month_year using \"interest rate/gov_bond_10y.dta\"",
+          "reason": "Use the configured working root and consistent host-independent separators while preserving the authored subdirectory and filename."
+        }
+      ],
+      "steps": [
+        "Run Stata with the working directory set to the directory that contains the staged author inputs and the excel file, exchange_rate, interest rate and acq new returns subdirectories.",
+        "Set global location to the relative working root and convert every affected backslash in BDO.do to a forward slash; keep all authored subdirectories and filenames unchanged."
+      ],
+      "validation": [
+        "Before running, check each read and write path resolves beneath the chosen root, including repeated bond merges and all non-EU loop reads/writes."
+      ]
+    },
+    {
+      "id": "ACT_POST_STAGE_RUN",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_INPUT_CLOSURE",
+        "ISSUE_MONTH_LIFETIME",
+        "ISSUE_FX_LINE",
+        "ISSUE_VARIANTS",
+        "ISSUE_RETURN_HISTORY",
+        "ISSUE_PATHS"
+      ],
+      "kind": "run_procedure",
+      "description": "After compatible inputs, producer handoffs and supported source corrections are available, attempt the complete supplied A–E Stata workflow and inspect each saved branch output.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "EV_BRANCH",
+        "EV_STATA_PROBE",
+        "EV_SETTINGS_PROBE",
+        "EV_WINSOR_PROBE",
+        "EV_PROD1",
+        "EV_PROD3",
+        "EV_PROD10",
+        "EV_PROD18"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the available Stata 18 environment and start from the configured data root with all required input files and subdirectories staged.",
+        "Apply the supported month-lifetime edit, the FX expression supported by the validated field/units/direction contract, and the complete path configuration before running BDO.do. Clarify with the authors only if the FX contract remains unresolved.",
+        "Run the supplied sections in their authored order; retain all 50%, 30%, public, non-EU and private branches. Capture a Stata log and inspect commands wrapped in capture as well as the generated output files.",
+        "Do not consume unsupported target-list/type/toehold aliases until their exact producers and sample compatibility are supplied."
+      ],
+      "validation": [
+        "Check each expected generated file exists at the next consumer, inspect keys, row counts and merge outcomes, and verify target/acquirer event history against the required relative windows. Record execution status only after that run; this assessment does not execute author code."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Full BDO.do, datasheet and online appendix were read. The CUSIP workbook is identifiers in separate final-stake sheets; its bounded probe does not establish full-data coverage.",
+    "Only the exact SDC and Datastream local catalog candidates were inspected with bounded one-row reads; no US dataset was substituted. These probes do not establish full coverage, license entitlement or author compatibility.",
+    "The code imposes an upper announcement cutoff of 2011-12-31 but no lower date bound. History requirements are stated relative to each event where the code supports them.",
+    "The 19 frozen dependency edges are all dispositioned; the draft also enumerates direct source/prepared inputs and producer handoffs beyond those edges, with linked actions.",
+    "Month-key review: month_b is used only in the announcement-date string; preserve the original numeric-text month through its existing rename/restore and FX-merge sequence. External key type/encoding remains unverified."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "9d65bf9cc44e22eb82ebb67802eaa43f8b1da4326d60f14377737f06c6a35468",
+    "applied": false
+  }
+}

@@ -1,0 +1,1699 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-b2e8bb843056",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 56/Issue 3/12191 - Shareholder-Litigation-and-Corporate-Disclosure-Evidence-from-Derivative-Lawsuits/blw-datasheet-and-code.zip",
+        "sha256": "3d1aa3a018a44fcc207cd6a57ceba2b65d6cb9deb9156a3c5a48d26ed7e34fcb"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "55be0367c16b62cb64b0e9a015ef9c7ef208af857b1ce7a126d497d0df5d6eda"
+  },
+  "title": "Shareholder Litigation and Corporate Disclosure: Evidence from Derivative Lawsuits",
+  "doi": "10.1111/1475-679X.12191",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Complete author-documented workflow: controls.sas preparation, blw_jar_code.sas panel construction, and the reported downstream Stata analyses. The author package supplies two substantive SAS programs and a GVKEY/year identifier CSV, but no complete analysis dataset or Stata stage.",
+      "entry_points": [
+        "controls.sas",
+        "blw_jar_code.sas"
+      ],
+      "requirement_ids": [
+        "R-COMPUSTAT",
+        "R-CRSP-CCM",
+        "R-CRSP-STOCKNAMES",
+        "R-CRSP-MSF",
+        "R-CRSP-ERMPORT1",
+        "R-CRSP-MSI",
+        "R-SEC-LINK",
+        "R-HEADER-10K",
+        "R-8K-ITEMS",
+        "R-MDA-LENGTH",
+        "R-FIRSTCALL",
+        "R-THOMSON-OWNERSHIP",
+        "R-AUDIT-LAWSUITS",
+        "R-UDLAWS"
+      ],
+      "software_ids": [
+        "SW-SAS",
+        "SW-STATA"
+      ],
+      "issue_ids": [
+        "I-ANALYSIS-STAGE",
+        "I-AUDIT-PRODUCER",
+        "I-UDLAWS-PRODUCER",
+        "I-OWNERSHIP-PRODUCER",
+        "I-SEC-LINK-SCHEMA"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E-DOC-STATA",
+        "E-DOC-WINDOW-MF",
+        "E-DOC-WINDOW-MDA8K",
+        "E-SAS-OUTPUT",
+        "E-WORKFLOW-TRACE",
+        "E-WORKITEM-INVENTORY",
+        "E-PACKAGED-GVKEY",
+        "E-ENV"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R-COMPUSTAT",
+      "kind": "data",
+      "description": "Compustat fundamentals for the main panel and controls. Main filter: 1985-2011; controls filter: 1980-2011, with up to ten prior fiscal years and at least five prior nonmissing ROA observations.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-COMP",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat (COMP.FUNDA)",
+          "description": "Local current Compustat file is readable with requested fields; equivalence to the author-specific compustat_1985_2015 file and full historical coverage are unverified.",
+          "evidence_ids": [
+            "C-COMPUSTAT",
+            "E-PROBE-COMP",
+            "E-SAS-COMP",
+            "E-CTRL-FUNDA",
+            "E-CTRL-YEARS",
+            "E-CTRL-EARNVOL"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "sich",
+            "cusip",
+            "cik",
+            "prcc_f",
+            "csho",
+            "ajex",
+            "at",
+            "ceq",
+            "ib",
+            "oancf",
+            "sale",
+            "indfmt",
+            "datafmt",
+            "popsrc",
+            "consol"
+          ],
+          "expected_period": "1980-2011 controls filter; 1985-2011 main filter"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-CRSP-CCM",
+      "kind": "data",
+      "description": "Historical CCM GVKEY-PERMNO link rows at fiscal-year dates; needed in both supplied SAS programs.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-CCM",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+          "description": "The readable local CRSP CCMXPF_LINKTABLE matches the standard link-history product and required GVKEY, LPERMNO, LINKTYPE, USEDFLAG, LINKDT and LINKENDDT fields/types. Exact author-vintage identity is not required; routine date-specific valid-link checks use the SAS link filters.",
+          "evidence_ids": [
+            "C-CRSP",
+            "E-PROBE-CCM",
+            "E-SAS-CCM",
+            "E-CTRL-CCM"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "lpermno",
+            "linktype",
+            "USEDFLAG",
+            "linkdt",
+            "linkenddt"
+          ],
+          "expected_period": "1980-2011 controls; 1985-2011 main input"
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R-CRSP-STOCKNAMES",
+      "kind": "data",
+      "description": "CUSIP/NCUSIP-to-PERMNO stock names crosswalk for First Call forecast/actual records.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-STOCKNAMES",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/stocknames.sas7bdat",
+          "description": "The readable local CRSP STOCKNAMES contains the required PERMNO, CUSIP and NCUSIP crosswalk fields. The supplied code combines CUSIP/NCUSIP and deduplicates by security; exact 2013-vintage identity is not required, with normal match-rate and date-window QA during execution.",
+          "evidence_ids": [
+            "C-CRSP",
+            "E-PROBE-STOCK",
+            "E-SAS-STOCKNAMES"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "CUSIP",
+            "NCUSIP"
+          ],
+          "expected_period": "Forecast FPE years 1994-2010; target test years 1998-2007"
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R-CRSP-MSF",
+      "kind": "data",
+      "description": "CRSP monthly stock returns, volume and shares outstanding for prior-year control construction.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-MSF",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+          "description": "The readable local standard CRSP MSF contains PERMNO, DATE, RET, VOL and SHROUT with compatible numeric source fields. The twelve-month lag windows remain part of the code; confirm realized date coverage and nonmissing values during ordinary execution QA.",
+          "evidence_ids": [
+            "C-CRSP",
+            "E-PROBE-MSF",
+            "E-CTRL-MSF",
+            "E-CTRL-12MONTH"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "DATE",
+            "RET",
+            "VOL",
+            "SHROUT"
+          ],
+          "expected_period": "12 months before fiscal-year end for controls; target outcomes 1995-2007"
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R-CRSP-ERMPORT1",
+      "kind": "data",
+      "description": "Legacy CRSP ERMPORT1 monthly return/capitalization source used for SRET and turnover.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-ERMPORT1",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-09864dc5caff]",
+          "description": "No exact catalog entry or local probe was found; no replacement product or field alias is assumed. Availability, product version and required fields decret/capn remain unverified.",
+          "evidence_ids": [
+            "C-CRSP",
+            "E-CTRL-ERP"
+          ],
+          "expected_period": "Prior 12-month CRSP construction for target years"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-CRSP-MSI",
+      "kind": "data",
+      "description": "CRSP market-index monthly VWRETD observations for market-adjusted controls.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-MSI",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msi.sas7bdat",
+          "description": "The readable local standard CRSP MSI contains numeric DATE and VWRETD fields required by the controls code. Confirm the required monthly dates and observed index returns during ordinary execution QA.",
+          "evidence_ids": [
+            "C-CRSP",
+            "E-PROBE-MSI",
+            "E-CTRL-MSI"
+          ],
+          "expected_fields": [
+            "DATE",
+            "vwretd"
+          ],
+          "expected_period": "Prior 12 months before fiscal-year ends for controls"
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R-SEC-LINK",
+      "kind": "data",
+      "description": "Historical CIK-GVKEY links to merge header and 8-K records into the firm panel.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-SEC-LINK-LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/sec/common/wciklink_gvkey.sas7bdat (WRDSSEC.WCIKLINK_GVKEY)",
+          "description": "Current local table is readable but has sec/link start/end and source/name fields instead of the code’s legacy FLAG/FNDATE/LNDATE/CONM; field mapping and period compatibility are unverified.",
+          "evidence_ids": [
+            "C-SEC",
+            "E-PROBE-WCIK",
+            "E-SAS-WCIK",
+            "E-SAS-WCIK-DATES"
+          ],
+          "expected_fields": [
+            "cik",
+            "gvkey",
+            "source",
+            "link_desc",
+            "sec_company_name",
+            "link_company_name",
+            "sec_start_date",
+            "sec_end_date",
+            "link_start_date",
+            "link_end_date"
+          ],
+          "expected_period": "Historical links for 1995-2007 merges"
+        },
+        {
+          "id": "RT-SEC-LINK-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS SEC Analytics Suite",
+          "description": "WRDS SEC Analytics Suite is an alternate official CIK-GVKEY link route and requires a subscription; this assessment did not verify whether the replicator has entitlement.",
+          "evidence_ids": [
+            "E-PUB-WRDS-ACCESS"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-HEADER-10K",
+      "kind": "data",
+      "description": "10-K header fields for CIK, company name, incorporation/business state, filing date and report period for 1995-2007 tests.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-HEADER-SRAF",
+          "type": "public",
+          "status": "verified",
+          "location": "https://sraf.nd.edu/sec-edgar-data/10-x-header-data/ (10-X Header Data CSV)",
+          "description": "SRAF offers public 1993-2025 10-K/Q header data with filer CIK, company name, incorporation and business state, filing/report dates and form type; transform/filter to author SAS schema and 10-K variants.",
+          "evidence_ids": [
+            "E-PUB-HEADER",
+            "E-PUB-HEADER-PERIOD"
+          ],
+          "expected_fields": [
+            "filer_cik",
+            "cd_company_conformed_name",
+            "cd_state_of_incorporation",
+            "ba_state",
+            "g_filed_as_of_date",
+            "g_conformed_period_of_report",
+            "fv_form_type"
+          ],
+          "expected_period": "1995-2007 tests; source page covers 1993-2025"
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R-8K-ITEMS",
+      "kind": "data",
+      "description": "8-K item records with CIK, filing date and NITEM codes; complete item population for the 1995-2007 test window is required.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-8K-LOCAL",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/sec/items8k.sas7bdat",
+          "description": "The readable local WRDSSEC.ITEMS8K has FDATE, CIK and character NITEM fields matching the SAS consumer; the official WRDS product page documents 8-K item records back to 1994, covering the 1995-2007 tests. The author extract’s identical vintage/bytes are not required; run normal period/population and item-code checks before use.",
+          "evidence_ids": [
+            "C-SEC",
+            "E-PROBE-ITEMS8K",
+            "E-SAS-8K"
+          ],
+          "expected_fields": [
+            "fdate",
+            "cik",
+            "nitem"
+          ],
+          "expected_period": "1995-2007 tests; author input filename ek_19942016"
+        },
+        {
+          "id": "RT-8K-RAW",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_RAW}",
+          "description": "Documented raw SEC root exists, but no listing, complete 8-K coverage or item-extraction check was made; candidate only pending exact extraction contract.",
+          "evidence_ids": [
+            "C-SEC-LOCAL",
+            "E-PROBE-RAW"
+          ],
+          "expected_period": "1995-2007 complete 8-K item population"
+        },
+        {
+          "id": "RT-8K-PARSED",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_PARSED}",
+          "description": "Parsed SEC root exists, but no listing or complete 8-K item coverage was checked; do not treat exhibits-only files as the full item population.",
+          "evidence_ids": [
+            "C-SEC-LOCAL",
+            "E-PROBE-PARSED"
+          ],
+          "expected_period": "1995-2007 complete 8-K item population"
+        },
+        {
+          "id": "RT-8K-WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS SEC Analytics Suite",
+          "description": "WRDS SEC Analytics Suite is an alternate official 8-K Items route and requires a subscription; this assessment did not verify whether the replicator has entitlement.",
+          "evidence_ids": [
+            "E-PUB-WRDS-8K",
+            "E-PUB-WRDS-ACCESS"
+          ]
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R-MDA-LENGTH",
+      "kind": "data",
+      "description": "Brown MD&A length table aggregated by GVKEY/year from num_words for 1995-2007 tests.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-BROWN-AUTHOR",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://www.stephenvbrown.com/publications/papers/annual-mda-modifications/",
+          "description": "Author page exposes a Data link for a 2011 MD&A-modification paper, but archive contents were not fetched and equivalence to Brown.bmda GVKEY/datadate/num_words is unverified.",
+          "evidence_ids": [
+            "E-PUB-BROWN",
+            "E-DOC-MDA",
+            "E-SAS-MDA"
+          ],
+          "expected_period": "1995-2007 tests"
+        },
+        {
+          "id": "RT-MDA-SEC",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_RAW}",
+          "description": "Raw full 10-K files are a discovery candidate only; MD&A segmentation, word-count rules, filing coverage and GVKEY/date mapping are unverified. Do not substitute full-10-K text.",
+          "evidence_ids": [
+            "C-SEC-LOCAL",
+            "E-PROBE-RAW",
+            "E-SAS-MDA"
+          ],
+          "expected_period": "1995-2007 MD&A years"
+        },
+        {
+          "id": "RT-MDA-LM10X",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_LM10X}",
+          "description": "Cleaned 10-X root is a 10-K/Q candidate, not an MD&A-only word-count input; section/count compatibility and period coverage unverified.",
+          "evidence_ids": [
+            "C-SEC-LOCAL",
+            "E-PROBE-LM10X",
+            "E-SAS-MDA"
+          ],
+          "expected_period": "1995-2007 MD&A years"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-FIRSTCALL",
+      "kind": "data",
+      "description": "First Call CIG annual/quarterly forecasts and actual EPS records with CUSIP, announcement/FPE dates, EPS type, estimates/actual, CIG codes and split factors. Code filters FPE years 1994-2010; tests use 1998-2007.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-FIRSTCALL",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-23bcb0a466f9]",
+          "description": "No exact First Call/FC.CIG/FC.ACTUALS catalog entry or probe was found. Product fields, author vintage, local access and history are unresolved; IBES is not assumed equivalent.",
+          "evidence_ids": [
+            "C-FIRSTCALL",
+            "E-SAS-CIG-A",
+            "E-SAS-CIG-Q",
+            "E-SAS-ACT-A",
+            "E-SAS-ACT-Q",
+            "E-DOC-OWNERSHIP"
+          ],
+          "expected_fields": [
+            "cusip",
+            "anndate",
+            "periodicity",
+            "fpe",
+            "data_type",
+            "cig_est",
+            "est_1",
+            "est_2",
+            "cigcodeq",
+            "value",
+            "csplfac",
+            "actdate"
+          ],
+          "expected_period": "Code FPE filter 1994-2010; test window 1998-2007"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-THOMSON-OWNERSHIP",
+      "kind": "data",
+      "description": "Thomson Reuters institutional-ownership input is named in the datasheet but no supplied SAS source read, field construction or resulting control variable is shown.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-TFN-S34",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat (TFN.S34)",
+          "description": "Cataloged Thomson Reuters 13F holdings are a candidate only; one-row probe timed out, and required ownership measure/fields/history are unspecified.",
+          "evidence_ids": [
+            "C-TFN",
+            "E-PROBE-TFN",
+            "E-DOC-OWNERSHIP"
+          ],
+          "expected_period": "Main tests 1995-2007; exact construction window unknown"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-AUDIT-LAWSUITS",
+      "kind": "data",
+      "description": "Audit Analytics derivative-lawsuit input is named in the datasheet; date range, required fields, company mapping and merge producer are absent from the delivered SAS.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT-AUDIT-LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/audit/corp_legal/{feed13_legal_case_feed,feed14_company_legal_party_feed}.sas7bdat",
+          "description": "Local legal-case and company-party feeds are readable one row and are plausible candidates; authors’ derivative-case selection, identifier mapping, population and date coverage are unverified.",
+          "evidence_ids": [
+            "C-AUDIT",
+            "E-PROBE-AUDIT13",
+            "E-PROBE-AUDIT14",
+            "E-DOC-AUDIT"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R-UDLAWS",
+      "kind": "data",
+      "description": "Appel UD Laws/Table 1 data named by the datasheet, with one Appel (2016) mention and another Appel (2015) Table 1 mention; no file, layout, identifier mapping or producer is supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW-SAS",
+      "name": "SAS",
+      "status": "unverified",
+      "description": "The frozen environment probe did not establish SAS 9.4 startup and records a TKELS Launch Service load failure; no version is confirmed. The probe also says this is not evidence of missing licensing; no further startup retry is authorized.",
+      "evidence_ids": [
+        "E-ENV"
+      ]
+    },
+    {
+      "id": "SW-STATA",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 is available in the frozen environment probe. The author release is unspecified; the missing Stata source prevents a package-specific compatibility check.",
+      "evidence_ids": [
+        "E-ENV"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "I-ANALYSIS-STAGE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_downstream_analysis",
+      "description": "The datasheet requires exporting the SAS panel to Stata and conducting the main analyses there, but this package contains no Stata source, export/import procedure or analysis input schema. The SAS code ends with two WORK subsets; paper-described state fallback/exclusions and forecast/8-K zero-filling cannot be assigned to a supplied stage.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E-DOC-STATA",
+        "E-SAS-OUTPUT",
+        "E-DOC-STATE",
+        "E-DOC-ZERO-CIG",
+        "E-DOC-ZERO-8K",
+        "E-WORKITEM-INVENTORY"
+      ]
+    },
+    {
+      "id": "I-AUDIT-PRODUCER",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_documented_input_producer",
+      "description": "The datasheet requires Audit Analytics derivative-lawsuit data, but neither supplied SAS file reads a lawsuit table or shows its firm mapping/merge. The current local Audit Analytics legal-case/company-party feeds are candidates only; author-specific population, date and identifier rules remain unknown.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E-DOC-AUDIT",
+        "E-WORKFLOW-TRACE",
+        "C-AUDIT",
+        "E-PROBE-AUDIT13",
+        "E-PROBE-AUDIT14"
+      ]
+    },
+    {
+      "id": "I-UDLAWS-PRODUCER",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_documented_input_producer",
+      "description": "The datasheet describes merging Appel UD Laws data but the supplied SAS code does not read that input. It cites Appel (2016) in the data-handling section and Appel (2015) Table 1 in the workflow steps; exact source/table, layout and GVKEY merge are unresolved.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E-DOC-APP16",
+        "E-DOC-APP15",
+        "E-WORKFLOW-TRACE"
+      ]
+    },
+    {
+      "id": "I-OWNERSHIP-PRODUCER",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_control_construction",
+      "description": "The datasheet names Thomson Reuters institutional ownership as a control input, but controls.sas has no visible Thomson/TFN read or ownership measure construction. TFN.S34 is only a catalog candidate and its bounded probe timed out; the required measure/fields remain unspecified.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E-DOC-OWNERSHIP",
+        "E-WORKFLOW-TRACE",
+        "C-TFN",
+        "E-PROBE-TFN"
+      ]
+    },
+    {
+      "id": "I-SEC-LINK-SCHEMA",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "schema_compatibility",
+      "description": "The supplied SAS expects FLAG values and FNDATE/LNDATE/CONM from wciklink_gvkey. The current local WRDSSEC.WCIKLINK_GVKEY candidate exposes source/link dates and names instead; no field/status mapping is established. Do not rename or substitute fields without the release-specific definitions.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E-SAS-WCIK",
+        "E-SAS-WCIK-DATES",
+        "E-PROBE-WCIK",
+        "C-SEC"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E-DOC-APP16",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 13,
+      "line_end": 13,
+      "quote": "UD Laws data from Appel (2016)",
+      "description": "The datasheet identifies Appel (2016) for UD Laws data."
+    },
+    {
+      "id": "E-DOC-APP15",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 49,
+      "line_end": 50,
+      "quote": "UD Laws data from Table 1 of Appel (2015)",
+      "description": "A later step instead cites Appel (2015), Table 1."
+    },
+    {
+      "id": "E-DOC-AUDIT",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 46,
+      "line_end": 48,
+      "quote": "derivative lawsuit data from Audit Analytics downloaded on 01/03/2011",
+      "description": "The datasheet identifies Audit Analytics derivative lawsuit data."
+    },
+    {
+      "id": "E-DOC-OWNERSHIP",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 64,
+      "line_end": 67,
+      "quote": "institutional ownership from Thomson Reuters, analyst forecasts and reported actual earnings from the First Call, and stock price from CRSP.",
+      "description": "The datasheet identifies Thomson Reuters ownership, First Call forecasts/actuals, and CRSP controls."
+    },
+    {
+      "id": "E-DOC-8K",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 38,
+      "line_end": 40,
+      "quote": "obtained 8-K filings from WRDS SEC Analytics Suite downloaded on 13/07/2017",
+      "description": "The datasheet identifies the WRDS SEC 8-K item source."
+    },
+    {
+      "id": "E-DOC-MDA",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 41,
+      "line_end": 44,
+      "quote": "length of Managerial Discussion and Analysis section in 10-K filings data from Stephen V. Brown’s website",
+      "description": "The datasheet identifies Brown’s MD&A length source."
+    },
+    {
+      "id": "E-DOC-STATA",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 51,
+      "line_end": 51,
+      "quote": "exported the SAS data set to Stata and conducted the main statistical analyses in Stata.",
+      "description": "The datasheet documents a downstream Stata analysis stage."
+    },
+    {
+      "id": "E-DOC-WINDOW-MF",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 58,
+      "line_end": 60,
+      "quote": "management earnings forecasts over the sample period of 1998-2007",
+      "description": "The datasheet gives the forecast test window."
+    },
+    {
+      "id": "E-DOC-WINDOW-MDA8K",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 59,
+      "line_end": 60,
+      "quote": "length of MD&A or frequency of 8-K filings over the period of 1995-2007",
+      "description": "The datasheet gives the MD&A/8-K test window."
+    },
+    {
+      "id": "E-DOC-STATE",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 60,
+      "line_end": 63,
+      "quote": "most recent record in Compustat if the historical location is missing",
+      "description": "The datasheet describes the historical incorporation-state fallback."
+    },
+    {
+      "id": "E-DOC-ZERO-CIG",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 67,
+      "line_end": 69,
+      "quote": "set the number of management earnings forecasts as zero during 1998-2007",
+      "description": "The datasheet documents forecast zero-filling."
+    },
+    {
+      "id": "E-DOC-ZERO-8K",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 69,
+      "line_end": 70,
+      "quote": "set the number of 8-K filings as zero during 1995-2007",
+      "description": "The datasheet documents 8-K zero-filling."
+    },
+    {
+      "id": "E-DOC-GVKEY",
+      "kind": "source",
+      "file": "BLW Datasheet.pdf",
+      "line_begin": 76,
+      "line_end": 76,
+      "quote": "The text file “gvkey.csv” provides the company identifiers of the firms in the final dataset.",
+      "description": "The datasheet says gvkey.csv is an identifier list."
+    },
+    {
+      "id": "E-SAS-COMP",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 16,
+      "line_end": 24,
+      "quote": "set wrds.compustat_1985_2015;",
+      "description": "The main SAS script creates udlaws from Compustat, not a lawsuit file."
+    },
+    {
+      "id": "E-SAS-CCM",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 32,
+      "line_end": 38,
+      "quote": "from udlaws as a left join crsp1.ccmxpf_linktable as b",
+      "description": "The main SAS script joins the CRSP/Compustat link table."
+    },
+    {
+      "id": "E-SAS-WCIK",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 58,
+      "line_end": 62,
+      "quote": "set sec_a.wciklink_gvkey;",
+      "description": "The main SAS script reads the historical CIK-GVKEY link table and filters FLAG."
+    },
+    {
+      "id": "E-SAS-WCIK-DATES",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 75,
+      "line_end": 83,
+      "quote": "b.FNDATE <= a.filedate <= b.LNDATE",
+      "description": "The main script consumes legacy CIK-link date fields."
+    },
+    {
+      "id": "E-SAS-HEADERS",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 65,
+      "line_end": 73,
+      "quote": "set bmc.headers10k;",
+      "description": "The main script reads header data and derives filing/report years."
+    },
+    {
+      "id": "E-SAS-8K",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 104,
+      "line_end": 106,
+      "quote": "set ek.ek_19942016;",
+      "description": "The main script reads CIK, FDATE and NITEM from 8-K item data."
+    },
+    {
+      "id": "E-SAS-MDA",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 200,
+      "line_end": 208,
+      "quote": "set brown.bmda;",
+      "description": "The main script reads num_words and aggregates by GVKEY-year."
+    },
+    {
+      "id": "E-SAS-STOCKNAMES",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 225,
+      "line_end": 233,
+      "quote": "proc sort data=crsp.stocknames(keep=permno cusip)",
+      "description": "The main script reads CRSP stocknames for CUSIP/PERMNO matching."
+    },
+    {
+      "id": "E-SAS-CIG-A",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 247,
+      "line_end": 258,
+      "quote": "set fc.cig;",
+      "description": "Annual forecast construction reads First Call CIG."
+    },
+    {
+      "id": "E-SAS-CIG-Q",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 431,
+      "line_end": 442,
+      "quote": "set fc.cig;",
+      "description": "Quarterly forecast construction reads First Call CIG."
+    },
+    {
+      "id": "E-SAS-ACT-A",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 343,
+      "line_end": 351,
+      "quote": "set fc.actuals;",
+      "description": "Annual actual EPS values are read from First Call actuals."
+    },
+    {
+      "id": "E-SAS-ACT-Q",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 529,
+      "line_end": 537,
+      "quote": "set fc.actuals;",
+      "description": "Quarterly actual EPS values are read from First Call actuals."
+    },
+    {
+      "id": "E-SAS-CONTROLS",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 615,
+      "line_end": 631,
+      "quote": "from udlaws1 as a left join controls as b",
+      "description": "Main SAS consumes the controls table created separately."
+    },
+    {
+      "id": "E-SAS-OUTPUT",
+      "kind": "source",
+      "file": "blw_jar_code.sas",
+      "line_begin": 634,
+      "line_end": 642,
+      "quote": "data udlawsmf; set udlaws11; if 1998<=cyear<=2007; run;",
+      "description": "Main SAS ends with two WORK period subsets, without a Stata export."
+    },
+    {
+      "id": "E-CTRL-FUNDA",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 23,
+      "line_end": 30,
+      "quote": "set comp.funda (keep= &vars);",
+      "description": "Supporting controls program reads Compustat annual fundamentals."
+    },
+    {
+      "id": "E-CTRL-CCM",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 82,
+      "line_end": 88,
+      "quote": "from controls as a left join crsp1.ccmxpf_linktable as b",
+      "description": "Supporting controls program reads CCM history."
+    },
+    {
+      "id": "E-CTRL-MACRO",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 131,
+      "line_end": 134,
+      "quote": "set &dsin;",
+      "description": "FF30 macro reads its dsin argument."
+    },
+    {
+      "id": "E-CTRL-MACRO-CALL",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 171,
+      "line_end": 171,
+      "quote": "%ff30(dsin=controls, dsout=controls, sicvar=sicn, varname=ff30);",
+      "description": "The FF30 macro call resolves dsin to the generated controls table."
+    },
+    {
+      "id": "E-CTRL-YEARS",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 17,
+      "line_end": 30,
+      "quote": "%let fyear1= 1980; %let fyear2= 2011;",
+      "description": "Supporting controls program filters Compustat to fiscal years 1980-2011."
+    },
+    {
+      "id": "E-CTRL-EARNVOL",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 186,
+      "line_end": 209,
+      "quote": "0<a.fyear-b.fyear<=10",
+      "description": "Controls program uses up to ten prior fiscal years for earnings volatility."
+    },
+    {
+      "id": "E-CTRL-MSF",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 215,
+      "line_end": 228,
+      "quote": "intck('month',a.begfyr,b.date) between -12 and -1",
+      "description": "Controls use the preceding 12 CRSP months."
+    },
+    {
+      "id": "E-CTRL-ERP",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 230,
+      "line_end": 235,
+      "quote": "from mret as a, crsp.ERMPORT1 as b",
+      "description": "Controls require CRSP.ERMPORT1 for SRET and capitalization."
+    },
+    {
+      "id": "E-CTRL-MSI",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 237,
+      "line_end": 242,
+      "quote": "from mret as a, crsp.msi as b",
+      "description": "Controls also use CRSP monthly market returns."
+    },
+    {
+      "id": "E-CTRL-12MONTH",
+      "kind": "source",
+      "file": "controls.sas",
+      "line_begin": 259,
+      "line_end": 280,
+      "quote": "having count(*)=12",
+      "description": "CRSP return aggregates require exactly 12 monthly observations."
+    },
+    {
+      "id": "E-WORKFLOW-TRACE",
+      "kind": "inspection",
+      "description": "JSON static trace of all visible external SAS reads, FF30 macro call, same-session WORK.controls handoff, final outputs, package files and missing documented sources.",
+      "artifact_path": "probes/workflow_trace.json",
+      "sha256": "626dd67cd4a0ce4b1aacad24e89c116aa1ffbfdb9c0df4d104d64e0c06a5f184"
+    },
+    {
+      "id": "E-WORKITEM-INVENTORY",
+      "kind": "inspection",
+      "description": "Frozen work-item package inventory lists datasheet, two SAS programs, and gvkey.csv; no Stata program or analysis dataset.",
+      "artifact_path": "work_item.json",
+      "sha256": "55be0367c16b62cb64b0e9a015ef9c7ef208af857b1ce7a126d497d0df5d6eda"
+    },
+    {
+      "id": "E-PACKAGED-GVKEY",
+      "kind": "probe",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "46aca84e7dff5abbd4a8719bedf6c7a8d814b8cca9f87e4521e02b898cee85a0",
+      "description": "One-row CSV probe shows gvkey/cyear only; no coverage sweep."
+    },
+    {
+      "id": "E-ENV",
+      "kind": "probe",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00",
+      "description": "Environment probe reports Stata 18 available and SAS unverified after TKELS startup failure."
+    },
+    {
+      "id": "E-PROBE-COMP",
+      "kind": "probe",
+      "artifact_path": "probes/local_comp_funda.json",
+      "sha256": "77067060e9fc2fb366584a002b8c21414c3a1c424b48eb4882f54ee709ee52c0",
+      "description": "One-row COMP.FUNDA probe reads requested fields."
+    },
+    {
+      "id": "E-PROBE-CCM",
+      "kind": "probe",
+      "artifact_path": "probes/local_ccm_linktable.json",
+      "sha256": "609027bed88ecc3a178db4bb2c843c75e1a6044f7ae1cc9f0604c8e28fc8938c",
+      "description": "One-row CCM probe reads link fields."
+    },
+    {
+      "id": "E-PROBE-STOCK",
+      "kind": "probe",
+      "artifact_path": "probes/local_stocknames.json",
+      "sha256": "e311b140bd0f2a4ed73e2f41e10393ed4038ce268ff7b7345131cecfd6cdbef4",
+      "description": "One-row CRSP STOCKNAMES probe reads PERMNO/CUSIP/NCUSIP."
+    },
+    {
+      "id": "E-PROBE-MSF",
+      "kind": "probe",
+      "artifact_path": "probes/local_msf.json",
+      "sha256": "25cc83c624db6c7a05842a1d2db47a67495f26aa7cea671c58065a4ebcf257d8",
+      "description": "One-row CRSP MSF probe reads PERMNO/DATE/RET/VOL/SHROUT."
+    },
+    {
+      "id": "E-PROBE-MSI",
+      "kind": "probe",
+      "artifact_path": "probes/local_msi.json",
+      "sha256": "2c0bc51877ec2490fe4104e2b5dc374167a9e8bc043c92ff9757922139c2a6d5",
+      "description": "One-row CRSP MSI probe reads DATE/VWRETD."
+    },
+    {
+      "id": "E-PROBE-WCIK",
+      "kind": "probe",
+      "artifact_path": "probes/local_wciklink_gvkey.json",
+      "sha256": "fa3a7b5babe63eadd638ffb8897ba3cd118d1c4d667be606328995ef54c0a929",
+      "description": "One-row current WRDS SEC link table is readable; columns differ from legacy SAS names."
+    },
+    {
+      "id": "E-PROBE-ITEMS8K",
+      "kind": "probe",
+      "artifact_path": "probes/local_items8k.json",
+      "sha256": "9810ffe7a808bc7260d079d26a916359480e3e9504a0424cd87f94769cdc1002",
+      "description": "One-row WRDS SEC ITEMS8K probe reads FDATE/CIK/NITEM."
+    },
+    {
+      "id": "E-PROBE-AUDIT13",
+      "kind": "probe",
+      "artifact_path": "probes/local_audit_feed13.json",
+      "sha256": "8bd9149fd32323d7367dc2eb4000273358e41e06f00bef6ac8895e24fd1c9ddd",
+      "description": "One-row Audit Analytics legal case feed is readable; coverage and mapping unverified."
+    },
+    {
+      "id": "E-PROBE-AUDIT14",
+      "kind": "probe",
+      "artifact_path": "probes/local_audit_feed14.json",
+      "sha256": "616f8c3384300c1e65b18b80e47c7ae083961b4df6ed21fbe6ef4c78163e4658",
+      "description": "One-row Audit Analytics company legal-party feed is readable; coverage and mapping unverified."
+    },
+    {
+      "id": "E-PROBE-TFN",
+      "kind": "probe",
+      "artifact_path": "probes/local_tfn_s34.json",
+      "sha256": "4a44f1527f35a3d4e78e8c4ab0ffe71e64cf6940c5e02ef0d46472ef5ab36e57",
+      "description": "One-row TFN.S34 probe timed out; not evidence of absence or licensing."
+    },
+    {
+      "id": "E-PROBE-RAW",
+      "kind": "probe",
+      "artifact_path": "probes/local_sec_raw_root.json",
+      "sha256": "5f336f79ca1e1da32a1702942420f33b41c5124cefdf6127a796ceb91de46952",
+      "description": "Bounded stat confirms documented SEC raw root directory exists; no listing/coverage."
+    },
+    {
+      "id": "E-PROBE-PARSED",
+      "kind": "probe",
+      "artifact_path": "probes/local_sec_parsed_root.json",
+      "sha256": "7d930c0583bc91daac48cf1c2cf355df57f3de0a5435dd6ad41564ff1c32d4ed",
+      "description": "Bounded stat confirms documented parsed SEC root exists; no listing/coverage."
+    },
+    {
+      "id": "E-PROBE-LM10X",
+      "kind": "probe",
+      "artifact_path": "probes/local_lm10x_root.json",
+      "sha256": "1d9180d43246e8937ab7cda6924aa4ba8615e5e475b39db0d91dcede18a6943a",
+      "description": "Bounded stat confirms cleaned 10-X root exists; no listing/coverage."
+    },
+    {
+      "id": "C-COMPUSTAT",
+      "kind": "catalog",
+      "description": "Frozen catalog lists COMP.FUNDA with fields used by controls, but not the author-specific compustat_1985_2015 alias; snapshot is metadata, not history or license."
+    },
+    {
+      "id": "C-CRSP",
+      "kind": "catalog",
+      "description": "Frozen catalog lists CRSP CCMXPF_LINKTABLE, STOCKNAMES, MSF, MSI; no exact CRSP.ERMPORT1 entry was found."
+    },
+    {
+      "id": "C-FIRSTCALL",
+      "kind": "catalog",
+      "description": "Product and author-filename lookups found no FirstCall/First Call, FC.CIG or FC.ACTUALS entry; IBES is not credited as an equivalent and a catalog miss does not prove absence."
+    },
+    {
+      "id": "C-SEC",
+      "kind": "catalog",
+      "description": "Catalog lists WRDSSEC.ITEMS8K and WRDSSEC.WCIKLINK_GVKEY; current link schema differs from legacy FLAG/FNDATE/LNDATE/CONM; EXHIBITS is a separate table."
+    },
+    {
+      "id": "C-AUDIT",
+      "kind": "catalog",
+      "description": "Catalog lists local Audit Analytics FEED13 legal-case and FEED14 company-party feeds; compatibility, lawsuit population, linkage and dates remain unverified."
+    },
+    {
+      "id": "C-TFN",
+      "kind": "catalog",
+      "description": "Catalog aliases list Thomson Reuters 13F holdings and TFN.S34; this does not establish the exact institutional-ownership field construction."
+    },
+    {
+      "id": "C-SEC-LOCAL",
+      "kind": "catalog",
+      "description": "Frozen common catalog records documented SEC raw, parsed and LM10X roots as discovery candidates, not complete or compatible data routes."
+    },
+    {
+      "id": "E-PUB-HEADER",
+      "kind": "public",
+      "url": "https://sraf.nd.edu/sec-edgar-data/10-x-header-data/",
+      "checked_at": "2026-11-08",
+      "quote": "This dataset captures all of the information in the header section of 10-K/Qs (and all variants) filed on EDGAR.",
+      "description": "SRAF repository describes the 10-K/Q header-data product and its header fields.",
+      "authority": "repository"
+    },
+    {
+      "id": "E-PUB-HEADER-PERIOD",
+      "kind": "public",
+      "url": "https://sraf.nd.edu/sec-edgar-data/10-x-header-data/",
+      "checked_at": "2026-11-08",
+      "quote": "Download the data (1993-2025)",
+      "description": "SRAF states a downloadable 1993-2025 header dataset, covering the 1995-2007 test window.",
+      "authority": "repository"
+    },
+    {
+      "id": "E-PUB-WRDS-8K",
+      "kind": "public",
+      "url": "https://wrds-www.wharton.upenn.edu/pages/analytics/sec-analytics-suite-wrds/",
+      "checked_at": "2026-11-08",
+      "quote": "Access information about Form 8-K triggering events for all companies that filed 8-K, from as far back as 1994.",
+      "description": "WRDS official SEC product describes item-trigger records dating to 1994.",
+      "authority": "official"
+    },
+    {
+      "id": "E-PUB-WRDS-ACCESS",
+      "kind": "public",
+      "url": "https://wrds-www.wharton.upenn.edu/pages/analytics/sec-analytics-suite-wrds/",
+      "checked_at": "2026-11-08",
+      "quote": "Requires subscription to WRDS SEC Analytics Suite.",
+      "description": "WRDS official page states a subscription is required; it establishes the product access condition, not whether this replicator has entitlement.",
+      "authority": "official",
+      "access_barrier": true
+    },
+    {
+      "id": "E-PUB-BROWN",
+      "kind": "public",
+      "url": "https://www.stephenvbrown.com/publications/papers/annual-mda-modifications/",
+      "checked_at": "2026-11-08",
+      "quote": "Data",
+      "description": "Current Brown author page exposes a Data link for a 2011 MD&A-modification study; its archive was not fetched and is not verified as the requested bmda num_words input.",
+      "authority": "author"
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-COMPUSTAT"
+      ],
+      "evidence_ids": [
+        "E-SAS-COMP",
+        "C-COMPUSTAT",
+        "E-PROBE-COMP"
+      ],
+      "description": "The main Compustat annual source is a mandatory input; a current local COMP.FUNDA route is only a candidate until vintage and history are confirmed."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-CRSP-CCM"
+      ],
+      "evidence_ids": [
+        "E-SAS-CCM",
+        "C-CRSP",
+        "E-PROBE-CCM"
+      ],
+      "description": "The main program requires historical CCM links at Compustat dates."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-SEC-LINK"
+      ],
+      "evidence_ids": [
+        "E-SAS-WCIK",
+        "E-SAS-WCIK-DATES",
+        "C-SEC",
+        "E-PROBE-WCIK"
+      ],
+      "description": "The 10-K and 8-K merges require historical CIK-GVKEY link fields; current local schema mapping remains unresolved."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-HEADER-10K"
+      ],
+      "evidence_ids": [
+        "E-SAS-HEADERS",
+        "E-PUB-HEADER",
+        "E-PUB-HEADER-PERIOD"
+      ],
+      "description": "The author header file is mandatory; a verified public 10-X header route can be converted to the legacy SAS fields."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-8K-ITEMS"
+      ],
+      "evidence_ids": [
+        "E-SAS-8K",
+        "E-PROBE-ITEMS8K",
+        "E-PUB-WRDS-8K"
+      ],
+      "description": "The 8-K item source is mandatory. The local standard WRDSSEC.ITEMS8K product has matching readable fields/types, and WRDS documents item records back to 1994; ordinary input-period and item-code validation remains."
+    },
+    {
+      "dependency_id": "D0006",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-MDA-LENGTH"
+      ],
+      "evidence_ids": [
+        "E-SAS-MDA",
+        "E-DOC-MDA",
+        "E-PUB-BROWN"
+      ],
+      "description": "The Brown MD&A word-count table is a mandatory input; the current author-site data link is not verified as the same table."
+    },
+    {
+      "dependency_id": "D0007",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-CRSP-STOCKNAMES"
+      ],
+      "evidence_ids": [
+        "E-SAS-STOCKNAMES",
+        "E-PROBE-STOCK"
+      ],
+      "description": "The CRSP stocknames crosswalk is mandatory for CUSIP/PERMNO links."
+    },
+    {
+      "dependency_id": "D0008",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-FIRSTCALL"
+      ],
+      "evidence_ids": [
+        "E-SAS-CIG-A",
+        "E-SAS-CIG-Q",
+        "C-FIRSTCALL"
+      ],
+      "description": "The annual and quarterly forecast programs require First Call CIG; no exact local product route is verified."
+    },
+    {
+      "dependency_id": "D0009",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-FIRSTCALL"
+      ],
+      "evidence_ids": [
+        "E-SAS-ACT-A",
+        "E-SAS-ACT-Q",
+        "C-FIRSTCALL"
+      ],
+      "description": "The annual and quarterly width programs require First Call actual EPS records; no exact local product route is verified."
+    },
+    {
+      "dependency_id": "D0010",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-COMPUSTAT"
+      ],
+      "evidence_ids": [
+        "E-CTRL-FUNDA",
+        "C-COMPUSTAT",
+        "E-PROBE-COMP"
+      ],
+      "description": "The separate control-preparation program also reads Compustat FUNDA with its 1980-2011 filter."
+    },
+    {
+      "dependency_id": "D0011",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R-CRSP-CCM"
+      ],
+      "evidence_ids": [
+        "E-CTRL-CCM",
+        "C-CRSP",
+        "E-PROBE-CCM"
+      ],
+      "description": "The controls program separately uses the CCM link table for its Compustat rows."
+    },
+    {
+      "dependency_id": "D0012",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E-CTRL-MACRO",
+        "E-CTRL-MACRO-CALL"
+      ],
+      "description": "The dynamic &dsin read resolves at the visible macro call to the controls table built immediately earlier in controls.sas; this is generated WORK data, not an unresolved external path."
+    }
+  ],
+  "actions": [
+    {
+      "id": "A-HEADER",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R-HEADER-10K"
+      ],
+      "kind": "data_acquisition",
+      "description": "Acquire and convert the verified SRAF 10-X header dataset for the header input.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E-PUB-HEADER",
+        "E-PUB-HEADER-PERIOD",
+        "E-SAS-HEADERS"
+      ],
+      "edits": [],
+      "steps": [
+        "After data-acquisition authorization, obtain the SRAF 1993-2025 header CSV from the cited repository page.",
+        "Filter the author-required 10-K variants and 1995-2007 report years; map filer_cik, company name, incorporation state, business state, filed date and conformed report period to the SAS header schema without substituting submission CIK for filer CIK.",
+        "Preserve duplicates/multiple filer rows until the author’s deduplication and historical CIK-link rules are confirmed."
+      ],
+      "validation": [
+        "Check the downloaded CSV metadata and required source columns, then validate 1995-2007 10-K coverage, period/date mappings and state-field missingness before conversion into the legacy SAS input."
+      ]
+    },
+    {
+      "id": "A-COMPUSTAT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R-COMPUSTAT"
+      ],
+      "kind": "data_preparation",
+      "description": "Validate the local Compustat candidate against both author SAS input contracts and required history.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "C-COMPUSTAT",
+        "E-PROBE-COMP",
+        "E-SAS-COMP",
+        "E-CTRL-FUNDA",
+        "E-CTRL-YEARS",
+        "E-CTRL-EARNVOL"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm whether local COMP.FUNDA can reproduce the author-specific wrds.compustat_1985_2015 input and its field types/identifier conventions.",
+        "Verify fyear 1980-2011 coverage for controls and 1985-2011 for the main panel; retain the ten-year prior-ROA window and five-observation rule.",
+        "Do not infer full-period coverage from the one-row probe or catalog observation metadata."
+      ],
+      "validation": [
+        "Check the required columns and historical fiscal-year coverage using a future authorized bounded metadata/date-coverage procedure; then validate derived control inputs for target years."
+      ]
+    },
+    {
+      "id": "A-CRSP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R-CRSP-CCM",
+        "R-CRSP-STOCKNAMES",
+        "R-CRSP-MSF",
+        "R-CRSP-ERMPORT1",
+        "R-CRSP-MSI"
+      ],
+      "kind": "data_preparation",
+      "description": "Use the verified local standard CRSP CCM, STOCKNAMES, MSF and MSI routes; resolve the separate legacy ERMPORT1 source.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "C-CRSP",
+        "E-PROBE-CCM",
+        "E-PROBE-STOCK",
+        "E-PROBE-MSF",
+        "E-PROBE-MSI",
+        "E-CTRL-MSF",
+        "E-CTRL-ERP",
+        "E-CTRL-MSI",
+        "E-CTRL-12MONTH"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the matching standard local CCM, STOCKNAMES, MSF and MSI products; exact author download-vintage identity is not required. During routine execution QA, check date-specific CCM links, CUSIP/NCUSIP match rates and the code-required twelve-month windows for actual control rows.",
+        "Identify the exact CRSP.ERMPORT1 source or author-confirmed equivalent and its decret/capn fields; do not guess a replacement table.",
+        "Preserve the code’s historical CUSIP/NCUSIP matching and exact twelve-month prior-return construction."
+      ],
+      "validation": [
+        "Run standard field/format and required-date checks for the readable local products as ordinary input QA; confirm ERMPORT1 field provenance before building controls."
+      ]
+    },
+    {
+      "id": "A-SEC-8K",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R-SEC-LINK",
+        "R-8K-ITEMS",
+        "I-SEC-LINK-SCHEMA"
+      ],
+      "kind": "clarification",
+      "description": "Use the supported local 8-K item product and resolve the separate legacy CIK-GVKEY link-schema gap.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "C-SEC",
+        "E-PROBE-WCIK",
+        "E-PROBE-ITEMS8K",
+        "E-PUB-WRDS-8K",
+        "E-PUB-WRDS-ACCESS",
+        "E-SAS-WCIK",
+        "E-SAS-WCIK-DATES",
+        "E-SAS-8K"
+      ],
+      "edits": [],
+      "steps": [
+        "Use readable local WRDSSEC.ITEMS8K as the verified standard source for the 1995-2007 tests. Confirm its test-period slice and the supplied NITEM categorization in ordinary input QA; identical bytes to the 2017 extract are not required.",
+        "The alternate WRDS SEC Analytics Suite routes require subscription, but the replicator’s entitlement is unknown; do not treat them as blocked absent an actual denial or evidence of absent access.",
+        "Ask the authors to specify how legacy FLAG values 2/3 and FNDATE/LNDATE/CONM map to current CIK-GVKEY link fields before changing any SAS code.",
+        "If local raw SEC filings are considered for 8-K construction, obtain the exact form/item extraction and identifier-link rules before treating that route as compatible."
+      ],
+      "validation": [
+        "Perform normal input checks for the 1995-2007 8-K item slice and NITEM treatment. Resolve CIK-GVKEY link-key/date/flag semantics against the SAS consumer before running; do not require byte identity to the author extract."
+      ]
+    },
+    {
+      "id": "A-MDA",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R-MDA-LENGTH"
+      ],
+      "kind": "clarification",
+      "description": "Obtain a compatible Brown MD&A length input or its exact author construction contract.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E-DOC-MDA",
+        "E-SAS-MDA",
+        "E-PUB-BROWN",
+        "C-SEC-LOCAL",
+        "E-PROBE-RAW",
+        "E-PROBE-LM10X"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask for the exact Brown.bmda release with GVKEY, datadate and num_words fields, date coverage and preprocessing description.",
+        "The current Brown page’s 2011 Data link is not verified as this input; do not assume it matches.",
+        "If considering local SEC/LM 10-K text, first obtain the author’s MD&A section boundary, cleaning and word-count rules; do not use whole-10-K text as MD&A."
+      ],
+      "validation": [
+        "Verify the source fields and 1995-2007 coverage, then confirm that MD&A-only word counts and GVKEY/date joins match the author’s specification."
+      ]
+    },
+    {
+      "id": "A-FIRSTCALL",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R-FIRSTCALL"
+      ],
+      "kind": "clarification",
+      "description": "Identify the exact First Call CIG and actuals extract required by the supplied forecast construction.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "C-FIRSTCALL",
+        "E-SAS-CIG-A",
+        "E-SAS-CIG-Q",
+        "E-SAS-ACT-A",
+        "E-SAS-ACT-Q",
+        "E-DOC-OWNERSHIP"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask for the exact First Call CIG and actuals release, field definitions, local access route and history; do not treat I/B/E/S as an equivalent without author confirmation.",
+        "Confirm CUSIP and split-factor fields, FPE/announcement dates, periodicity, EPS type, estimate codes and values used by the code.",
+        "Retain FPE filter years 1994-2010 separately from the 1998-2007 test window."
+      ],
+      "validation": [
+        "Verify required columns, product vintage and period coverage for annual and quarterly forecast and actual records before constructing forecast counts/widths."
+      ]
+    },
+    {
+      "id": "A-CUSTOM-INPUTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R-THOMSON-OWNERSHIP",
+        "R-AUDIT-LAWSUITS",
+        "R-UDLAWS",
+        "I-OWNERSHIP-PRODUCER",
+        "I-AUDIT-PRODUCER",
+        "I-UDLAWS-PRODUCER"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the undocumented Thomson Reuters ownership, Audit Analytics derivative-lawsuit and Appel UD Laws branches.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E-DOC-OWNERSHIP",
+        "E-DOC-AUDIT",
+        "E-DOC-APP15",
+        "E-DOC-APP16",
+        "E-WORKFLOW-TRACE",
+        "C-AUDIT",
+        "C-TFN",
+        "E-PROBE-AUDIT13",
+        "E-PROBE-AUDIT14",
+        "E-PROBE-TFN"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the authors for each input’s exact release/file, required fields, sample/history, identifiers and merge producer; the current local TFN and Audit Analytics tables are discovery candidates only.",
+        "Confirm whether and how Thomson Reuters institutional ownership enters the control set, since no ownership read or construction is visible in controls.sas.",
+        "Confirm the derivative-case selection/linkage from Audit Analytics and whether current FEED13/FEED14 records are compatible.",
+        "Resolve the Appel (2015) versus Appel (2016) citation and identify the precise UD Laws table/layout and GVKEY/firm-year merge; do not reconstruct the state/laws dataset independently."
+      ],
+      "validation": [
+        "After the author contracts are supplied, compare fields, identifiers, periods and producer schemas to the actual SAS consumers; retain unresolved items until then."
+      ]
+    },
+    {
+      "id": "A-ANALYSIS-STAGE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I-ANALYSIS-STAGE"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the missing downstream Stata analysis and handoff materials.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E-DOC-STATA",
+        "E-SAS-OUTPUT",
+        "E-DOC-STATE",
+        "E-DOC-ZERO-CIG",
+        "E-DOC-ZERO-8K",
+        "E-WORKITEM-INVENTORY"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the Stata analysis program(s), SAS export/import instructions, expected dataset path/schema, and mapping from final SAS tables to paper tables/figures.",
+        "Confirm where the datasheet’s state fallback/exclusions, nonmissing-control sample restriction, forecast tests, and forecast/8-K zero-fills are implemented.",
+        "Do not create an analysis_only scope from gvkey.csv; its probe shows only identifiers and year."
+      ],
+      "validation": [
+        "Trace each named table/figure to supplied executable Stata entry points and confirm its input schema and analysis window before any run."
+      ]
+    },
+    {
+      "id": "A-SAS-RUNTIME",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW-SAS"
+      ],
+      "kind": "software_setup",
+      "description": "Resolve the captured SAS runtime startup failure without changing or running author code.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E-ENV"
+      ],
+      "edits": [],
+      "steps": [
+        "Have the SAS runtime environment administrator review the recorded TKELS Launch Service load failure and establish a working SAS 9.4 command/runtime.",
+        "After the environment is repaired, perform a version/runtime-only check; do not retry author programs as part of this assessment."
+      ],
+      "validation": [
+        "Record a successful SAS 9.4 runtime/version check and preserve the author-version compatibility question if the authors specify a different release."
+      ]
+    },
+    {
+      "id": "A-SAS-ORDER",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [],
+      "kind": "run_procedure",
+      "description": "Run the supplied controls producer before the main SAS program in the same session so WORK.controls persists.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E-CTRL-FUNDA",
+        "E-CTRL-MACRO-CALL",
+        "E-SAS-CONTROLS",
+        "E-WORKFLOW-TRACE"
+      ],
+      "edits": [],
+      "steps": [
+        "Once required inputs and SAS runtime are ready, run controls.sas first and blw_jar_code.sas second within the same SAS session; both programs use the default WORK controls table, and the main script reads it.",
+        "A separate SAS session between these programs would lose WORK.controls."
+      ],
+      "validation": [
+        "Confirm WORK.controls is produced before blw_jar_code.sas consumes it and that the final WORK.udlawsmf and WORK.udlaws8kmda tables are created; this does not establish the missing Stata handoff or execution success."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Only full_pipeline is assessed. gvkey.csv is a one-row-probed gvkey/cyear identifier list, not a complete analysis dataset; no analysis_only route is established.",
+    "The work-item checklist omits visible controls.sas reads of CRSP.MSF, CRSP.ERMPORT1 and CRSP.MSI; these are manually included as separate data requirements.",
+    "The documented author workflow cites Audit Analytics, Appel UD Laws and Thomson Reuters ownership, but the complete supplied SAS code has no corresponding read/producer; these remain unresolved rather than independently reconstructed.",
+    "The local SEC/LM roots were checked only by bounded directory stat. No recursive listing or population coverage was examined. LM 10-X and parsed/exhibits paths were not treated as complete 8-K or MD&A-only inputs.",
+    "The supported visible producer order is controls.sas then blw_jar_code.sas in the same SAS session because the consumer reads the WORK.controls table. The later Stata analysis/export is absent.",
+    "Local one-row probes establish bounded readability/columns, not complete history/population. The exact standard CRSP products and WRDSSEC.ITEMS8K match the supplied source contracts and required fields/types, so the local routes are treated as compatible; required-date, match-rate, format and population checks are ordinary future input QA, not a demand for a full-data sweep or identical author vintage. The official WRDS subscription condition does not establish this replicator’s entitlement or lack. Catalog misses and the TFN probe timeout are not proof that data or licenses are absent.",
+    "Execution was not verified. No author SAS/Stata program was run, no dataset was downloaded, no author code was changed, and no restricted service was accessed.",
+    "Validation checkpoint retained at draft.checkpoint.finalizer-error.json. The first controller finalization found R-CRSP-ERMPORT1 expected_period had been placed in expected_fields; this field assignment was corrected without changing the unresolved evidence claim.",
+    "A second controller validation checkpoint is retained at draft.checkpoint.finalizer-error-2.json; two remaining positional helper arguments placed period descriptions in expected_fields and were corrected into expected_period.",
+    "Pre-acceptance correction snapshot saved under archive/pre_acceptance_20261107T202957Z. Compustat FUNDA remains unverified for the author-specific main compustat_1985_2015 input even where it matches the controls read; the SEC-link FLAG/FNDATE/LNDATE/CONM mapping, missing Audit Analytics/UD Laws/ownership producers, missing Stata analysis/export, First Call and ERMPORT1 contracts remain unresolved."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "ca2ee319ba17f2351e3ef9dd34ca997b042ba5e5c5cb530a26f6c9edf5c82121",
+    "applied": false
+  }
+}

@@ -1,0 +1,741 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-4b89ab1a9628",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 59/Issue 3/12352 - Short-Term-Institutions-Analyst-Recommendations-and-Mispricing-The-Role-of-Higher-Order-Beliefs/cps-datasheet-code-and-identifiers.zip",
+        "sha256": "00f088198873ab464b2bc5e40de6efb5d9c91845c96a74481e271a7c9adf6b67"
+      },
+      {
+        "path": "JAR-Volume 59/Issue 3/12352 - Short-Term-Institutions-Analyst-Recommendations-and-Mispricing-The-Role-of-Higher-Order-Beliefs/cps-online-appendix.pdf",
+        "sha256": "9e95054e27cce70ab18b0402bcbc81d7a49ddeb6ad55dc027c0ccfd256bbe637"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "b27a13e5107ad64aa7d573bd0d83eddda9fef42731cdc1c8d8677c1738fa296f",
+    "work_item_sha256": "a604f429fe27061226e7b52f7e8872b0b0ed48347d5c1e6b35500ad2f4f16103"
+  },
+  "title": "Short-Term Institutions, Analyst Recommendations, and Mispricing: The Role of Higher-Order Beliefs",
+  "doi": "10.1111/1475-679X.12352",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Author-supplied SAS data-construction workflow that creates the final dataset; it does not include the paper-wide regression/portfolio analysis programs.",
+      "entry_points": [
+        "CPS_finaldataset_code.sas"
+      ],
+      "requirement_ids": [
+        "R_CRSP_MONTHLY",
+        "R_13F_HOLDINGS",
+        "R_CHARS",
+        "R_IDIORISKFF",
+        "R_BUSHEE_VARIABLES",
+        "R_FUND_TURNOVER_LTSTIO",
+        "R_IBES_SUMMARY",
+        "R_EARNVOL",
+        "R_HERDING",
+        "R_RDSALE"
+      ],
+      "software_ids": [
+        "S_SAS"
+      ],
+      "issue_ids": [
+        "I_MISSING_PRODUCERS",
+        "I_LIBREF_CONFIG",
+        "I_SAS_RUNTIME",
+        "I_FINAL_OUTPUT"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_DOC_CODE",
+        "E_CRSP",
+        "E_HOLDINGS",
+        "E_CHARS",
+        "E_IDIORISK",
+        "E_BUSHEE",
+        "E_FUND_STIO",
+        "E_IBES",
+        "E_EARNVOL",
+        "E_HERDING",
+        "E_RDSALE",
+        "E_FINAL_FILTER",
+        "E_APPENDIX_EARNVOL",
+        "E_ID_LIST",
+        "E_FROZEN_CATALOG",
+        "E_CATALOG_SEARCH",
+        "E_IBES_CATALOG",
+        "E_PROBE_CRSP_MSF",
+        "E_PROBE_CRSP_MSENAMES",
+        "E_PROBE_TFN_S34",
+        "E_PROBE_COMP_FUNDA",
+        "E_ENV"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_CRSP_MONTHLY",
+      "kind": "data",
+      "description": "Monthly CRSP input read as crsp.crspdata. The code expects cusip, permno, date, shrcd, prc, ret and shrout, and uses March/June/September/December rows in its turnover construction. A local monthly securities candidate has every expected field except SHRCD; a name-history join may supply it, but the code's author-shaped product, identifier history, quarter coverage and required construction history remain unverified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "L_CRSP_MSF",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+          "description": "CRSP.MSF is a readable monthly-stock candidate with CUSIP, PERMNO, DATE, PRC, RET and SHROUT. It does not include SHRCD; catalog-listed CRSP.MSENAMES has SHRCD, PERMNO, CUSIP and validity dates, but an as-of join and author-compatible history have not been established.",
+          "evidence_ids": [
+            "E_PROBE_CRSP_MSF",
+            "E_PROBE_CRSP_MSENAMES",
+            "E_CATALOG_SEARCH"
+          ],
+          "expected_fields": [
+            "CUSIP",
+            "PERMNO",
+            "DATE",
+            "PRC",
+            "RET",
+            "SHROUT"
+          ],
+          "expected_period": "Quarter-end months March, June, September and December; full required CRSP history and coverage remain unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_13F_HOLDINGS",
+      "kind": "data",
+      "description": "Institutional 13F holdings input read as Holdings.Holdings_type. The code uses permno, rdate, mgrno, shares and cusip to create quarterly fund holdings. The frozen catalog lists the Thomson-Reuters S34 13F table as a product candidate, but its catalog fields do not show PERMNO and its one-row probe timed out; identifier linkage, reporting periods and coverage remain unverified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "L_TFN_S34",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat",
+          "description": "The frozen catalog identifies TFN.S34 as Thomson-Reuters 13F Holdings and lists manager number, report date, CUSIP and shares. A bounded one-row check timed out, so local readability and fields were not verified by the probe; the product needs a time-valid PERMNO linkage and author-compatible reporting history before it can supply Holdings_type.",
+          "evidence_ids": [
+            "E_FROZEN_CATALOG",
+            "E_CATALOG_SEARCH",
+            "E_PROBE_TFN_S34"
+          ],
+          "expected_period": "Quarterly and semiannual holdings report dates mapped to quarter-end; exact covered history unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CHARS",
+      "kind": "data",
+      "description": "Prepared quarterly chars dataset merged into the final dataset. The comment identifies mcap, bmratio, io, avgdailyturnover, mom12, cusip, permno, siccd, qtrno2 and fyear; the later final filter also consumes prc. Its producer, history and schema are not supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IDIORISKFF",
+      "kind": "data",
+      "description": "Prepared idioriskff dataset with qtrno2, permno and idioriskff, merged into finaldataset. Its producer, return/factor definition, identifiers and history are not supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_BUSHEE_VARIABLES",
+      "kind": "data",
+      "description": "Prepared bushee_variables dataset with year, qtr, permno, io_tra and io; the code derives qtrno2 and transientpct=io_tra/io before merging by qtrno2 and permno. Its construction and mapping are not supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_FUND_TURNOVER_LTSTIO",
+      "kind": "data",
+      "description": "Prepared fundturnover_ltstio dataset with year, qtr, permno, stio_fundturn and ltio_fundturn. The comment says these are calculated from fund turnover and institution holdings, but this source creates fundturnover_inst and stock_fundturnover, not fundturnover_ltstio.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IBES_SUMMARY",
+      "kind": "data",
+      "description": "IBES recommendation-summary input read as ibesrecosummary. The code uses cusip, statpers, meanrec and numrec, reverses the recommendation scale, and keeps the last statpers in each CUSIP-quarter; compatible IBES table, identifiers and history remain to be verified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_EARNVOL",
+      "kind": "data",
+      "description": "Prepared jointmz.earnvol input with cusip, fyear and earnvol. Its annual Compustat producer is absent. The appendix describes a five-fiscal-year standard deviation of deflated earnings with a minimum of three years. A readable North American annual-fundamentals candidate contains cusip, fyear, at and ib, but the producer, date coverage, earnings mapping and history remain unverified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "L_COMP_FUNDA_EARNVOL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "COMP.FUNDA is a readable North American annual-fundamentals candidate with cusip, fyear, datadate, at and ib columns. It could be used to construct the prepared earnvol table if the omitted recipe, sample period and fiscal-year/CUSIP mapping are confirmed; the one-row sample does not establish nonmissing values or history.",
+          "evidence_ids": [
+            "E_PROBE_COMP_FUNDA",
+            "E_APPENDIX_EARNVOL",
+            "E_CATALOG_SEARCH"
+          ],
+          "expected_fields": [
+            "cusip",
+            "fyear",
+            "datadate",
+            "at",
+            "ib"
+          ],
+          "expected_period": "Five fiscal years for the rolling construction, requiring at least three years; target-period bounds remain unspecified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_HERDING",
+      "kind": "data",
+      "description": "Prepared herdingmeasures_final2 input merged by qtrno2 and permno. The source does not state output measure names, construction, history or raw source mapping; no producer is supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_RDSALE",
+      "kind": "data",
+      "description": "Prepared rddata input with rdsale, cusip and fyear. The producer, fiscal-year matching and ratio definition are not supplied. A readable COMP.FUNDA candidate contains cusip, fyear, xrd and sale columns, but those underlying fields do not verify the prepared ratio or its construction.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "L_COMP_FUNDA_RDSALE",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "COMP.FUNDA is a readable North American annual-fundamentals candidate with cusip, fyear, xrd and sale columns. A producer must establish the author's rdsale definition, units, fiscal-year mapping and sample history before this source can supply rddata.",
+          "evidence_ids": [
+            "E_PROBE_COMP_FUNDA",
+            "E_CATALOG_SEARCH",
+            "E_RDSALE"
+          ],
+          "expected_fields": [
+            "cusip",
+            "fyear",
+            "xrd",
+            "sale"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "S_SAS",
+      "name": "SAS",
+      "status": "unverified",
+      "description": "SAS is required for the supplied DATA-step, PROC SORT, PROC MEANS and PROC RANK workflow. The frozen environment probe did not initialize SAS; this is unresolved runtime availability, not evidence of missing entitlement.",
+      "evidence_ids": [
+        "E_ENV"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "I_MISSING_PRODUCERS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_prepared_input_producers",
+      "description": "The supplied source consumes chars, idioriskff, bushee_variables, fundturnover_ltstio, herdingmeasures_final2 and rddata without producing them. It also consumes jointmz.earnvol without its stated annual Compustat producer. Source-level field names/keys are visible, but definitions, upstream order, histories and compatible inputs are not supplied. The datasheet's vendor/source inventory does not provide these producer programs or datasets.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_DOC_RAW",
+        "E_CHARS",
+        "E_IDIORISK",
+        "E_BUSHEE",
+        "E_FUND_STIO",
+        "E_EARNVOL",
+        "E_HERDING",
+        "E_RDSALE"
+      ]
+    },
+    {
+      "id": "I_LIBREF_CONFIG",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "library_and_workspace_configuration",
+      "description": "The SAS source does not assign LIBNAMEs or define a working-directory/import setup for crsp, Holdings, jointmz or the unqualified prepared datasets. The frozen parser flags the three qualified datasets as dynamic. Required path and staging configuration remain unspecified.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_CRSP",
+        "E_HOLDINGS",
+        "E_EARNVOL"
+      ]
+    },
+    {
+      "id": "I_SAS_RUNTIME",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "runtime_availability",
+      "description": "SAS runtime availability is unverified because the frozen bounded startup probe failed to initialize TKELS. Do not infer absent licensing; runtime initialization must be resolved before a future authorized run.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_ENV"
+      ]
+    },
+    {
+      "id": "I_FINAL_OUTPUT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "final_dataset_handoff",
+      "description": "The supplied source ends after filtering the SAS WORK table finaldataset and does not document a persistent output library, export format or downstream consumer. A durable output location/name can be configured during preparation; the remaining paper-wide analysis workflow is not supplied and is outside this data-construction target.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_FINAL_FILTER",
+        "E_DOC_CODE"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_DOC_RAW",
+      "kind": "source",
+      "file": "CPS datasheet.pdf",
+      "line_begin": 26,
+      "line_end": 48,
+      "quote": "We do not use experimental or survey data.\nWe use the following datasets (datasets 1 to 11 downloaded through the Wharton Research Data\nServices (WRDS) website):\n1) IBES Recommendations Summary Statistics (Consensus Recommendations): Downloaded on\n   November 7, 2018\n2) IBES Recommendations Detail File: Downloaded on January 30, 2019\n3) IBES Recommendations Stopped File: Downloaded on May 8, 2018\n4) IBES Summary History- Summary Statistics: Downloaded on May 16, 2018\n5) IBES Detail History- Detail File with Actuals: Downloaded on January 20, 2019\n6) CRSP Monthly Stock Return Database: Downloaded on September 12, 2018\n7) CRSP Daily Stock Return Data and Size Decile Returns (CRSP Returns + Decile Assignments File):\n   Downloaded on November 6, 2018\n8) Thomson Reuters Institutional (13f) Holdings: Downloaded on September 1, 2018\n9) Compustat North America- Fundamentals Annual: Downloaded on September 15, 2018\n10) Computstat Global: Fundamentals Annual and Security Daily databases- Downloaded on January\n    12, 2019\n11) Fama French Factors and Pastor-Stambaugh Liquidity Factors: Downloaded on September 23,\n    2018\n12) Institutional Investor Classification data from Brian Bushee’s website\n    (http://acct.wharton.upenn.edu/faculty/bushee/IIclass.html): Downloaded on September 2, 2018\n\n13) Daily Institutional Flow data from Tarun Ramadorai’s website\n    (http://www.tarunramadorai.com/Data/Flows.xlsx): Downloaded on September 18, 2019",
+      "description": "Datasheet identifies the vendor datasets and dated acquisitions, the Bushee classification source, and Ramadorai daily flows."
+    },
+    {
+      "id": "E_DOC_CODE",
+      "kind": "source",
+      "file": "CPS datasheet.pdf",
+      "line_begin": 65,
+      "line_end": 85,
+      "quote": "We have described the data collection procedure in the Section 3.1 of the paper and define all\nvariables in the appendix of the paper. The steps necessary to process the data are described in the\ncomputer programs referred to in part 5 of this Data Description Sheet.\n\n5. The computer programs or code used to convert the raw data into the final dataset used in the\nanalysis plus a brief description that enables other researchers to use this program. The purpose of\nthis requirement is to facilitate replication and to help other researchers understand in detail how\nthe raw data were processed, the final sample was formed, variables were defined, outliers were\ntreated, etc. This code or programming is in most circumstances not proprietary. However, we\nrecognize that some parts of the code or data generation process may be proprietary, including from\nthe authors’ perspective. Therefore, instead of the code or program, researchers can provide a\ndetailed step-by-step description of the code or the relevant parts of the code such that it enables\nother researchers to arrive at the same final dataset used in the analysis. In such cases, the authors\nshould inform the editors upon initial submission, so that the editors can consider an exemption\nfrom the code sharing requirement. Whenever feasible, authors should also provide the identifiers\n(e.g., CIK, CUSIP) for their final sample. Authors should consult our FAQ Sheet on the JAR website for\nfurther details.\nComputer programs to convert the raw data into the dataset used in the analysis and a brief\ndescription that enables other researchers to use this program are provided in the file\nCPS_finaldataset_code.sas. Identifier (CUSIPs) of firms in the final sample are provided in the file\nCPS_Final Sample_Identifiers.txt.",
+      "description": "Datasheet says the program converts raw data into the final dataset, names CPS_finaldataset_code.sas, and identifies the supplied file as final-sample CUSIPs."
+    },
+    {
+      "id": "E_CRSP",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 9,
+      "line_end": 20,
+      "quote": "/* STEP 1a: Use Institutional Investor 13F Holdings data file from WRDS named “Holdings_type” */\n\n/* Require monthly CRSP Returns data file named “crspdata” from WRDS with cusip permno date shrcd prc ret shrout, where shrcd is the share code, prc is the stock price, ret is the monthly holding period return and shrout is the number of shares outstanding (in thousands) */\n\ndata crsp; set crsp.crspdata;\nmonth=month(date);\nif month(date)=3 or month(date)=6 or month(date)=9 or month(date)=12;\nrqdate = intnx('quarter',date,0,'end');\nif SHRCD=10 or SHRCD=11; \nif ret >-1;    \t    /*Delete observations with return less than -100%*/\nif prc=. then delete; /*Delete observations with missing or negative price*/\nif prc le 0 then delete;",
+      "description": "Step 1 names 13F holdings and specifies the monthly CRSP fields and filters used for the turnover construction."
+    },
+    {
+      "id": "E_CRSP_REPEAT",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 146,
+      "line_end": 152,
+      "quote": "data crsp; set crsp.crspdata;\nqtrno2=(year(date)-1980)*4+qtr(date);\nif month(date)=3 or month(date)=6 or month(date)=9 or month(date)=12;\nkeep qtrno2 permno prc;\nif prc>=0;\nif prc~=.;\nrun;",
+      "description": "The SAS program directly reads crsp.crspdata again to produce quarter-indexed CRSP prices."
+    },
+    {
+      "id": "E_HOLDINGS",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 23,
+      "line_end": 25,
+      "quote": "data test; set Holdings.Holdings_type;\nrqdate = intnx('quarter',rdate,0,'end');\nrun;",
+      "description": "The SAS program reads Holdings.Holdings_type and constructs a quarter-end date from rdate."
+    },
+    {
+      "id": "E_TURNOVER",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 144,
+      "line_end": 175,
+      "quote": "/* STEP 1g: Calculate turnover at the institution level (here: fundturnover_inst) as an input to later calculate fund turnover */\n\t\ndata crsp; set crsp.crspdata;\nqtrno2=(year(date)-1980)*4+qtr(date);\nif month(date)=3 or month(date)=6 or month(date)=9 or month(date)=12;\nkeep qtrno2 permno prc;\nif prc>=0;\nif prc~=.;\nrun;\n\nproc sort data=testinst; by qtrno2 permno; run;\nproc sort data=crsp; by qtrno2 permno; run;\ndata testinst;\nmerge testinst(in=in1) crsp(in=in2);\nby qtrno2 permno;\nif in1=1 and in2=1;\nrun;\n\ndata testinst; set testinst;\nnum = (abs(shares-shares2))*prc;\nden = (1000000*(value+value2))/2;\nrun;\n\nproc sort data=testinst; by fundno qtrno2 semiannual; run;\nproc means data=testinst noprint;\nby fundno qtrno2 semiannual;\noutput out=fundturnover_inst sum(num)=sumnum sum(den)=sumden;\nrun;\ndata fundturnover_inst; set fundturnover_inst;\nfundturnover = sumnum/sumden;\nkeep qtrno2 fundno fundturnover semiannual;\nrun;",
+      "description": "The program derives institution-level quarterly turnover from held shares and CRSP price, then computes the quarterly fundturnover measure."
+    },
+    {
+      "id": "E_FUND_TURNOVER_OUTPUT",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 220,
+      "line_end": 252,
+      "quote": "/* STEP 1g: Calculate fund turnover at the stock level (here: fundturnlen, in the paper: FUNTURNOVER) */\n\ndata testinst2; set testinst;\nkeep qtrno2 permno fundno shares;\nrun;\n\nproc sort data=fundturnover_inst; by qtrno2 fundno; run;\nproc sort data= testinst2; by qtrno2 fundno; run;\ndata testinst2;\nmerge testinst2(in=in1) fundturnover_inst(in=in2);\nby qtrno2 fundno;\nif in1=1 and in2=1;\nrun;\n\ndata testinst2; set testinst2;\nfundturnshares = meanfundturn*shares;\nkeep qtrno2 fundno permno fundturnshares shares;\nrun;\n\nproc sort data=testinst2; by qtrno2 permno; run;\nproc means data=testinst2 noprint;\nby qtrno2 permno;\noutput out=stock_fundturnover sum(fundturnshares)=fundturnshares sum(shares)=sumshares;\nrun;\n\ndata stock_fundturnover; set stock_fundturnover;\nfundturnlen = fundturnshares/sumshares;\nkeep qtrno2 permno fundturnlen;\nrun;\n\ndata stock_fundturnover; set stock_fundturnover;\nif fundturnlen~=.;\nrun;",
+      "description": "The program weights institution turnover by shares and creates the stock-quarter fundturnlen measure."
+    },
+    {
+      "id": "E_CHARS",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 254,
+      "line_end": 275,
+      "quote": "/* STEP 2: Merge fund turnover data with analyst recommendations data from IBES, stock characteristics data from CRSP, accounting data from COMPUSTAT, and 13F institutional holdings data from WRDS to get the Final Dataset */\n \n/* Chars is a data file that includes the following stock characteristics calculated at the quarterly frequency using CRSP, COMPUSTAT and 13F data:\n\n1. Market Cap (here: mcap, in the paper: MCAP)\n2. Book to Market Ratio (here: bmratio, in the paper: BMRATIO)\n3. Institutional Ownership(here: io, in the paper: IO)\n4. Average Daily Turnover (here: avgdailyturnover, in the paper: TURNOVER)\n5. Past 12 month returns (here: MOM12, in the paper: MOM12)\nThe dataset is at the quarterly frequency and also includes cusip, permno, sic code (siccd), a quarter index (qtrno2), and the fiscal year (fyear)*/\n \ndata temp; set stock_fundturnover;\nkeep qtrno2 permno fundturnlen;\nrun;\n\nproc sort data=chars; by qtrno2 permno; run;\nproc sort data= temp; by qtrno2 permno; run;\ndata finaldataset;\nmerge chars(in=in1) temp(in=in2);\nby qtrno2 permno;\nif in1=1;\nrun;",
+      "description": "The program describes chars as a quarterly prepared characteristics file, then merges it with the generated stock fund-turnover output."
+    },
+    {
+      "id": "E_IDIORISK",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 277,
+      "line_end": 285,
+      "quote": "/* STEP 3: Merge idiosyncratic risk variable (here: idioriskff, in the paper: IDIORISK) */\n\nproc sort data=finaldataset; by qtrno2 permno; run;\nproc sort data=idioriskff; by qtrno2 permno; run;\ndata finaldataset;\nmerge finaldataset(in=in1) idioriskff(in=in2);\nby qtrno2 permno;\nif in1=1;\nrun;",
+      "description": "The program reads idioriskff and left-merges it by qtrno2 and permno."
+    },
+    {
+      "id": "E_BUSHEE",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 287,
+      "line_end": 302,
+      "quote": "/* STEP 4: Merge and create transient institutional ownership variable (here: transientpct, in the paper: TRANSIENT IO) from Brian Bushee’s webpage */\n\ndata temp; set bushee_variables;\nqtrno2=(year-1980)*4+qtr;\nkeep qtrno2 permno transientpct io_tra;\ntransientpct=io_tra/io;\nrun;\n\n\nproc sort data=finaldataset; by qtrno2 permno; run;\nproc sort data=temp; by qtrno2 permno; run;\ndata finaldataset;\nmerge finaldataset(in=in1) temp(in=in2);\nby qtrno2 permno;\nif in1=1;\nrun;",
+      "description": "The program reads bushee_variables, constructs qtrno2 and transientpct, then merges by qtrno2 and permno."
+    },
+    {
+      "id": "E_FUND_STIO",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 304,
+      "line_end": 317,
+      "quote": "/* STEP 5: Merge short-term ownership variable (here: stio_fundturn, in the paper STIO) and long-term ownership variable (here: ltio_fundturn, in the paper: LTIO). These variables are calculated using (i) the institution level average fund turnover variable calculated above (meanfundturn,)and (ii) the institution holding file(testinst)*/\n\ndata temp; set fundturnover_ltstio;\nqtrno2=(year-1980)*4+qtr;\nkeep qtrno2 permno stio_fundturn ltio_fundturn;\nrun;\n\nproc sort data=finaldataset; by qtrno2 permno; run;\nproc sort data= temp; by qtrno2 permno; run;\ndata finaldataset;\nmerge finaldataset(in=in1) temp(in=in2);\nby qtrno2 permno;\nif in1=1;\nrun;",
+      "description": "The program reads fundturnover_ltstio and merges its short- and long-term ownership fields by quarter and permno."
+    },
+    {
+      "id": "E_IBES",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 319,
+      "line_end": 346,
+      "quote": "/* STEP 6: Merge analyst consensus recommendations (here: meanrec, in the paper: MEANREC) and number of analysts covering a firm (here: numrec, in the paper: NUMREC) from the IBES Recommendation Summary data*/\n\ndata temp; set ibesrecosummary;\nqtrno2=(year(statpers)-1980)*4+qtr(statpers);\nrename meanrec=meanrec_ibes;\nrun;\n\ndata temp; set temp;\nmeanrec=6-meanrec_ibes;\nrun;\n\nproc sort data=temp; by cusip qtrno2 statpers; run;\ndata temp; set temp;\nby cusip qtrno2 statpers;\nif last.qtrno2;\nrun;\n\ndata temp; set temp;\nkeep cusip qtrno2 meanrec numrec;\nrun;\n\nproc sort data=temp; by qtrno2 cusip; run;\nproc sort data=finaldataset; by qtrno2 cusip; run;\ndata finaldataset;\nmerge finaldataset(in=in1) temp(in=in2);\nby qtrno2 cusip;\nif in1=1;\nrun;",
+      "description": "The program reads IBES recommendation summaries, transforms meanrec, retains the last statpers per quarter and CUSIP, and merges by qtrno2 and CUSIP."
+    },
+    {
+      "id": "E_EARNVOL",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 348,
+      "line_end": 360,
+      "quote": "/* STEP 7: Merge earnings volatility variable (here: earnvol). We use data from COMPUSTAT annual to calculate earnings volatility */\n\ndata temp; set jointmz.earnvol;\nkeep cusip fyear earnvol;\nrun;\n\nproc sort data=temp; by fyear cusip; run;\nproc sort data=finaldataset; by fyear cusip; run;\ndata finaldataset;\nmerge finaldataset(in=in1) temp(in=in2);\nby fyear cusip;\nif in1=1;\nrun;",
+      "description": "The program reads jointmz.earnvol with cusip, fyear and earnvol, then merges by fiscal year and CUSIP."
+    },
+    {
+      "id": "E_HERDING",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 362,
+      "line_end": 370,
+      "quote": "/* STEP 8: Merge buy and sell herding measures (in the paper: BHM, SHM) */\n\nproc sort data=finaldataset; by qtrno2 permno; run;\nproc sort data=herdingmeasures_final2; by qtrno2 permno; run;\ndata finaldataset;\nmerge finaldataset(in=in1) herdingmeasures_final2(in=in2);\nby qtrno2 permno;\nif in1=1;\nrun;",
+      "description": "The program reads herdingmeasures_final2 and merges it by qtrno2 and permno."
+    },
+    {
+      "id": "E_RDSALE",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 372,
+      "line_end": 384,
+      "quote": "/* STEP 9: Calculate and merge R&D to sale variable (here: rdsale)*/\n\ndata temp; set rddata;\nkeep rdsale cusip fyear;\nrun;\n\nproc sort data=temp; by cusip fyear; run;\nproc sort data=finaldataset; by cusip fyear; run;\ndata finaldataset;\nmerge finaldataset(in=in1) temp(in=in2);\nby cusip fyear;\nif in1=1;\nrun;",
+      "description": "The program reads rddata and carries rdsale by CUSIP and fiscal year; no producer appears in the supplied SAS source."
+    },
+    {
+      "id": "E_FINAL_FILTER",
+      "kind": "source",
+      "file": "CPS_finaldataset_code.sas",
+      "line_begin": 386,
+      "line_end": 408,
+      "quote": "/* STEP 10: Define intangible industries (here intangible)*/\n\ndata finaldataset; set finaldataset;\nif 2821<=siccd<=2829 then intangible=1;\nif 2831<=siccd<=2839 then intangible=1;\nif 3571<=siccd<=3579 then intangible=1;\nif 3671<=siccd<=3679 then intangible=1;\nif 4801<=siccd<=4899 then intangible=1;\nif 7301<=siccd<=7399 then intangible=1;\nif 8701<=siccd<=8799 then intangible=1;\nrun;\n\ndata finaldataset; set finaldataset;\nif intangible=. then intangible =0;\nrun;\n\n/* STEP 11: /*Keep observations with nonmissing FUNDTURNOVER, nonmissing MEANREC, and stock prices greater than $1*/  \n\ndata finaldataset; set finaldataset;\nif fundturnlen~=.;\nif meanrec~=.;\nif prc>=1;\nrun;",
+      "description": "The program defines intangible from siccd and retains observations with fundturnlen, meanrec and prc at least one dollar."
+    },
+    {
+      "id": "E_APPENDIX_EARNVOL",
+      "kind": "source",
+      "file": "_audit_supplements/cps-online-appendix.pdf",
+      "line_begin": 282,
+      "line_end": 292,
+      "quote": "    This table reports average three‐day cumulative abnormal stock returns (CARs) around analyst recommendation announcements made during the past four\n(left half) and next four (right half) quarters from the portfolio formation date. We separate the announcements based on whether fundamental uncertainty is\nhigh or low. We use the following proxies: (i) earnings volatility (panel A); (ii) the ratio of R&D expenses to sales (panel B); and (iii) whether firms operate in an\n“intangibles industry” (panel C). Earnings volatility is calculated as the standard deviation of deflated earnings (Income before Extraordinary Items/((Assets (t)+\nAssets (t‐1))/2) over the last five fiscal years. We require a minimum of the last three years of data; otherwise earnings volatility is missing. Following\nBalakrishnan, Schrand, and Vashishtha [2020], intangibles industries are SIC codes 282 (plastics and synthetic materials), 283 (drugs), 357 (computer and office\nequipment), 367 (electronic components and accessories), 48 (communications), 73 (business services), 87 (engineering, accounting, R&D, and management\nrelated services); the remaining industries are “tangible industries.” CARs are constructed as in Table 5. FUNDTURNOVER is the weighted average of the portfolio\nturnover of a firm’s institutional investors (in % per quarter). MEANREC is a stock’s mean (consensus) analyst recommendation, coded on a scale from 1 (sell) to\n5 (strong buy). We report results for the extreme groups only. t‐statistics are reported in parentheses. 5% significance levels are denoted in bold. Variables are\ndefined in the Data Appendix.",
+      "description": "The supplied online appendix states a five-fiscal-year earnings-volatility window, at least three years of data, and the fundturnover and MEANREC definitions."
+    },
+    {
+      "id": "E_ENV",
+      "kind": "probe",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00",
+      "description": "Frozen environment probe reports SAS runtime initialization failed at TKELS; it does not establish missing entitlement or absence."
+    },
+    {
+      "id": "E_FROZEN_CATALOG",
+      "kind": "catalog",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "description": "The assigned frozen workspace resource catalog used for product discovery; its recorded catalog JSON hash matches work_item.json."
+    },
+    {
+      "id": "E_CATALOG_SEARCH",
+      "kind": "inspection",
+      "artifact_path": "probes/catalog_candidates_02.stdout.json",
+      "sha256": "af72f40424ce02b8028063425773e2d4b226cbe7187f41429e1827f33f4021f2",
+      "description": "A narrowed search of the 959-dataset frozen catalog found CRSP.MSF/MSENAMES, Thomson-Reuters TFN.S34 13F holdings, and COMP.FUNDA annual fundamentals; no IBES recommendation-summary table candidate matched the expected product/field contract. The catalog candidate is not proof of live compatibility."
+    },
+    {
+      "id": "E_ID_LIST",
+      "kind": "inspection",
+      "artifact_path": "probes/identifier_list_inspection.json",
+      "sha256": "35ef2bfc9a28436841b8376f201da5987b7013a224e2a233d50e0ddaec3f72ee",
+      "description": "Bounded inspection confirms the packaged large TXT is a CUSIP/year/qtr identifier list (289,684 data lines), not the full analysis dataset or a program. Only header, first/last rows, streaming line count and byte hash were inspected."
+    },
+    {
+      "id": "E_PROBE_CRSP_MSF",
+      "kind": "probe",
+      "artifact_path": "probes/probe_crsp_msf.json",
+      "sha256": "dbfab667b5a5a63bc7a4fd3f022fd0e7e8aad34704e4da3e414db011b98b9fd1",
+      "description": "One-row bounded read of catalog-listed CRSP.MSF succeeded at the recorded location with CUSIP, PERMNO, DATE, PRC, RET and SHROUT columns. The probe does not establish population or history; some fields are missing in its first sampled row."
+    },
+    {
+      "id": "E_PROBE_CRSP_MSENAMES",
+      "kind": "probe",
+      "artifact_path": "probes/probe_crsp_msenames.json",
+      "sha256": "44f4181c8350b58ed061e49cce1bfdfc28ecfab18e273b97e82f61a515492857",
+      "description": "One-row bounded read of catalog-listed CRSP.MSENAMES succeeded with PERMNO, NAMEDT, NAMEENDT, SHRCD and CUSIP; this is a name-history candidate, not a verified author-compatible merge."
+    },
+    {
+      "id": "E_PROBE_TFN_S34",
+      "kind": "probe",
+      "artifact_path": "probes/probe_tfn_s34.json",
+      "sha256": "9b341b542c9eaf67d4af753141d9c882b974f8112fbc0ce3a0ebfd1d27b39b5f",
+      "description": "The one-row bounded read of catalog-listed TFN.S34 timed out; its probe is unverified and does not establish absent data or licensing."
+    },
+    {
+      "id": "E_PROBE_COMP_FUNDA",
+      "kind": "probe",
+      "artifact_path": "probes/probe_comp_funda.json",
+      "sha256": "da644b5782bcbed8c50d109ef5738b131e5781c5936d3aabc8e46e1d97e85c46",
+      "description": "One-row bounded read of catalog-listed COMP.FUNDA succeeded at the recorded North American annual-fundamentals location with cusip, fyear, datadate, at, ib, sale and xrd columns. The sample row has missing at/xrd, and this does not establish full history or a prepared-variable producer."
+    },
+    {
+      "id": "E_IBES_CATALOG",
+      "kind": "inspection",
+      "artifact_path": "probes/ibes_catalog_field_lookup.json",
+      "sha256": "8c2f10ed9028013a4be846ba0cf27aee65698c7971c4d0344903e747175c67a7",
+      "description": "Exact queries for the author-required MEANREC and NUMREC fields and the recsum table term returned no frozen-catalog candidate. This is a bounded discovery miss, not a licensing or global absence conclusion."
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_CRSP_MONTHLY"
+      ],
+      "evidence_ids": [
+        "E_CRSP",
+        "E_CRSP_REPEAT"
+      ],
+      "description": "The code reads crsp.crspdata twice. Both reads use the same monthly CRSP source requirement, so the dependency is mapped to the single CRSP requirement."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_13F_HOLDINGS"
+      ],
+      "evidence_ids": [
+        "E_HOLDINGS"
+      ],
+      "description": "The code reads Holdings.Holdings_type to build quarterly holdings rows used in fund-turnover construction."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_EARNVOL"
+      ],
+      "evidence_ids": [
+        "E_EARNVOL",
+        "E_APPENDIX_EARNVOL"
+      ],
+      "description": "The code directly consumes jointmz.earnvol as a prepared input joined by CUSIP and fiscal year; its Compustat producer is not supplied."
+    }
+  ],
+  "actions": [
+    {
+      "id": "A_INPUTS_AND_PRODUCERS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_CRSP_MONTHLY",
+        "R_13F_HOLDINGS",
+        "R_CHARS",
+        "R_IDIORISKFF",
+        "R_BUSHEE_VARIABLES",
+        "R_FUND_TURNOVER_LTSTIO",
+        "R_IBES_SUMMARY",
+        "R_EARNVOL",
+        "R_HERDING",
+        "R_RDSALE",
+        "I_MISSING_PRODUCERS"
+      ],
+      "kind": "clarification",
+      "description": "Stage compatible direct inputs and resolve the missing preparation handoffs without changing the authors' formulas, filters, joins or variable definitions.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_RAW",
+        "E_CRSP",
+        "E_HOLDINGS",
+        "E_CHARS",
+        "E_IDIORISK",
+        "E_BUSHEE",
+        "E_FUND_STIO",
+        "E_IBES",
+        "E_EARNVOL",
+        "E_HERDING",
+        "E_RDSALE",
+        "E_APPENDIX_EARNVOL",
+        "E_FROZEN_CATALOG",
+        "E_CATALOG_SEARCH",
+        "E_IBES_CATALOG",
+        "E_PROBE_CRSP_MSF",
+        "E_PROBE_CRSP_MSENAMES",
+        "E_PROBE_TFN_S34",
+        "E_PROBE_COMP_FUNDA",
+        "E_ID_LIST"
+      ],
+      "edits": [],
+      "steps": [
+        "Prepare the author-shaped crsp.crspdata input. CRSP.MSF is readable with CUSIP, PERMNO, DATE, PRC, RET and SHROUT, while CRSP.MSENAMES is readable with PERMNO, CUSIP, SHRCD and name-validity dates; confirm a date-valid join supplies the required share code and the author's period/product before treating the pair as compatible.",
+        "Treat catalog-listed TFN.S34 only as a 13F candidate: its label and catalog metadata identify Thomson-Reuters 13F holdings, but the bounded probe timed out and the catalog fields do not include PERMNO. Resolve readability and the time-valid CUSIP-to-PERMNO handoff before using it as Holdings.Holdings_type.",
+        "Locate compatible prepared chars, idioriskff, bushee_variables, fundturnover_ltstio, ibesrecosummary, jointmz.earnvol, herdingmeasures_final2 and rddata inputs, or obtain the omitted producer programs and their exact input/output contracts.",
+        "For chars, confirm the listed stock-quarter fields and prc consumed by the final filter; for the Bushee input, confirm year, qtr, permno, io_tra and io; for IBES, confirm CUSIP/statpers/meanrec/numrec; preserve the source's distinct year, qtrno2 and fyear keys.",
+        "Obtain the missing fundturnover_ltstio producer or exact prepared table; preserve the source comment's link to fundturnover_inst and testinst and resolve how stio_fundturn/ltio_fundturn are constructed.",
+        "COMP.FUNDA is readable with cusip, fyear, datadate, at, ib, sale and xrd columns, but the one-row probe does not establish history or nonmissing values. Obtain the omitted earnvol producer and confirm its five-fiscal-year deflated-earnings window/minimum-three rule; obtain the exact rdsale recipe and herding definitions rather than substituting guessed aliases.",
+        "The assigned frozen catalog returned no exact MEANREC/NUMREC or recsum candidate for ibesrecosummary. Confirm the author-compatible IBES recommendation-summary product and its history/identifier mapping; do not replace it with an EPS summary table.",
+        "The packaged CPS_Final Sample_Identifiers.txt is only a CUSIP/year/qtr list; it does not bypass the missing direct inputs or supply the final dataset. After staging compatible inputs, perform bounded metadata checks and later validate required keys, fields and join coverage during an authorized execution."
+      ],
+      "validation": [
+        "Confirm all required source columns and key types in the staged tables.",
+        "After an authorized run, inspect merge counts and verify finaldataset contains the documented fields and passes the authored final filter."
+      ]
+    },
+    {
+      "id": "A_WORKFLOW_ORDER",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_MISSING_PRODUCERS"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the actual producer handoffs and preserve the supplied SAS construction order from raw CRSP/13F inputs through the filtered finaldataset.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CRSP",
+        "E_HOLDINGS",
+        "E_TURNOVER",
+        "E_FUND_TURNOVER_OUTPUT",
+        "E_CHARS",
+        "E_IDIORISK",
+        "E_BUSHEE",
+        "E_FUND_STIO",
+        "E_IBES",
+        "E_EARNVOL",
+        "E_HERDING",
+        "E_RDSALE",
+        "E_FINAL_FILTER"
+      ],
+      "edits": [],
+      "steps": [
+        "Load quarter-end monthly CRSP and Holdings.Holdings_type; derive quarter-end rdates, sort both inputs, and merge on permno/rqdate to create the matched holdings rows. Keep the code's existing share-code/return/price filters, qtrno2/value/pctshares calculations and native SAS KEEP/RENAME behavior.",
+        "From matched holdings, form fundqtr and test2 to fill observed two-quarter reporting gaps, append test and test2 into testchange, align lagged holding values on the next qtrno2, apply maxqtr, and produce testinst. Preserve that the source's lag and semiannual logic is part of the turnover input construction.",
+        "Re-read quarter-end CRSP prices and merge with testinst; compute num/den and sum by fundno/qtrno2/semiannual into fundturnover_inst, then create lagturn1-3, the four-quarter mean and turnrank. Merge fundturnover_inst with testinst2 to create fundturnshares and aggregate to stock_fundturnover/fundturnlen.",
+        "Before the final merge, resolve the absent producer for fundturnover_ltstio. The source comment links its stio_fundturn/ltio_fundturn measures to fundturnover_inst and testinst, but no supplied block creates that table; do not consume it until the producer/schema handoff is supplied.",
+        "Merge chars with the generated stock_fundturnover by qtrno2/permno to start finaldataset. Then, in the supplied order, merge idioriskff by qtrno2/permno; bushee_variables by qtrno2/permno; fundturnover_ltstio by qtrno2/permno; IBES recommendation summary by qtrno2/CUSIP after selecting the last statpers per quarter; jointmz.earnvol by fyear/CUSIP; herdingmeasures_final2 by qtrno2/permno; and rddata by CUSIP/fyear.",
+        "Apply the supplied SIC-code intangible assignments, then retain only observations with nonmissing fundturnlen, nonmissing meanrec, and prc >= 1; persist finaldataset to the chosen durable output library. Do not infer a regression or portfolio driver from the online appendix."
+      ],
+      "validation": [
+        "Before any separately authorized run, verify each producer's output dataset, keys and columns against its next consumer, including fyear versus qtrno2 and the char prc field used by the final filter.",
+        "After an authorized run, verify the documented order, the prepared-input merge keys and the persistent finaldataset output."
+      ]
+    },
+    {
+      "id": "A_CONFIG_AND_OUTPUT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "S_SAS",
+        "I_LIBREF_CONFIG",
+        "I_SAS_RUNTIME",
+        "I_FINAL_OUTPUT"
+      ],
+      "kind": "configuration",
+      "description": "Configure SAS library roots and a durable finaldataset output for a future batch run while preserving the program's original source directories and table names.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CRSP",
+        "E_HOLDINGS",
+        "E_EARNVOL",
+        "E_FINAL_FILTER",
+        "E_ENV"
+      ],
+      "edits": [],
+      "steps": [
+        "Use a SAS 9.4 batch runtime only after its TKELS initialization problem is resolved; the current frozen probe does not establish whether the installed runtime is usable.",
+        "Configure crsp, Holdings and jointmz librefs plus the library/current-directory containing the unqualified prepared tables. Use coherent relative or approved [redacted-path-1ea520892f47] paths in any host wrapper; validate path visibility and write access before the separately authorized execution.",
+        "Set an explicit durable output library and filename for finaldataset after the final filter, and document that output as the construction result. The supplied package includes no paper-wide regression or portfolio-analysis driver; that analysis workflow is outside this data-construction target.",
+        "Run the supplied source in its documented step order only after inputs, library paths and SAS runtime are ready; do not alter KEEP/RENAME, chained comparisons or other authored data semantics during configuration."
+      ],
+      "validation": [
+        "Verify the SAS runtime version and batch startup after environment resolution.",
+        "Verify every LIBNAME and prepared input resolves to the intended dataset and persist the final dataset at the selected output path."
+      ]
+    }
+  ],
+  "review_notes": [
+    "This static assessment targets only the supplied SAS final-dataset construction program. The package does not supply a paper-wide regression or portfolio-analysis driver.",
+    "The packaged CUSIP/year/qtr list is an identifier file, not a full analysis dataset. One-row catalog probes establish only sampled readability and column names; coverage, compatible history and prepared-input mappings remain unresolved.",
+    "Direct CRSP, 13F and Compustat candidates remain unverified for this author workflow; TFN.S34 timed out on a bounded read, and exact catalog searches found no MEANREC/NUMREC recommendation-summary candidate.",
+    "The required prepared-table producers, SAS library/workspace configuration and final-output handoff remain incomplete. SAS runtime availability remains unverified after the frozen TKELS startup failure.",
+    "No source edits, author-code execution, estimator execution, dataset downloads or package installations occurred. Authored SAS KEEP/RENAME, filter, comment and chained-comparison semantics are preserved without repair proposals."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "62dd5e50f332cdd478bd0b9c84d531e42f970beed8071e426d40ccb303c725a3",
+    "applied": false
+  }
+}

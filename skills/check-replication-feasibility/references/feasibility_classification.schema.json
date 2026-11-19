@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/accounting/feasibility-classification-1.0.schema.json",
+  "title": "Common feasibility classification",
+  "description": "A reporting projection of saved assessments. Original verdicts, assessment targets and verification profiles are preserved; this schema does not supply new evidence or certify execution.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["classification_version", "approach", "subject_id", "paper_id", "package_id", "doi", "model_id", "result_set_id", "scope", "eligibility", "data_status", "execution_readiness", "execution_verified", "independent_attempt_ready", "evidence_profile", "original", "source"],
+  "properties": {
+    "classification_version": {"const": "1.0"},
+    "approach": {"enum": ["independent_reconstruction", "author_package"]},
+    "subject_id": {"type": "string", "minLength": 1},
+    "paper_id": {"type": ["string", "null"]},
+    "package_id": {"type": ["string", "null"]},
+    "doi": {"type": ["string", "null"]},
+    "model_id": {"type": ["string", "null"]},
+    "result_set_id": {"type": ["string", "null"]},
+    "scope": {"enum": ["baseline_fit", "full_pipeline", "analysis_only", "paper_eligibility"]},
+    "eligibility": {"enum": ["in_scope", "no_baseline"]},
+    "data_status": {"anyOf": [{"$ref": "#/$defs/data_status"}, {"type": "null"}]},
+    "execution_readiness": {"$ref": "#/$defs/execution_readiness"},
+    "execution_verified": {"type": ["boolean", "null"]},
+    "independent_attempt_ready": {"type": ["boolean", "null"]},
+    "evidence_profile": {"enum": ["reconstruction_dimensions", "author_workflow_compatibility"]},
+    "original": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["data_status", "execution_readiness", "attempt_ready", "paper_outcome"],
+      "properties": {
+        "data_status": {"type": ["string", "null"]},
+        "execution_readiness": {"type": ["string", "null"]},
+        "attempt_ready": {"type": ["boolean", "null"]},
+        "paper_outcome": {"type": ["string", "null"]}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "line", "line_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "line": {"type": "integer", "minimum": 1},
+        "line_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "data_status": {
+      "enum": ["local_available", "public_acquisition_required", "access_blocked", "undetermined", "no_observed_data_required"],
+      "description": "Mandatory input availability for the stated target, according to its retained evidence profile. A required access barrier dominates uncertainty, which dominates public acquisition, otherwise inputs are local. No-observed-data is distinct from absence of a target baseline."
+    },
+    "execution_readiness": {
+      "enum": ["ready_to_attempt", "preparation_required", "blocked", "undetermined", "no_runnable_code", "not_assessed"],
+      "description": "Readiness of the supplied code/workflow. Use not_assessed for independent-reconstruction records that did not audit the supplied workflow; retain their independent_attempt_ready separately."
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"eligibility": {"const": "no_baseline"}}},
+      "then": {"properties": {
+        "approach": {"const": "independent_reconstruction"},
+        "scope": {"const": "paper_eligibility"},
+        "data_status": {"type": "null"},
+        "model_id": {"type": "null"},
+        "result_set_id": {"type": "null"},
+        "independent_attempt_ready": {"type": "null"}
+      }},
+      "else": {"properties": {"data_status": {"$ref": "#/$defs/data_status"}}}
+    },
+    {
+      "if": {"properties": {"approach": {"const": "independent_reconstruction"}}},
+      "then": {"properties": {
+        "paper_id": {"type": "string", "minLength": 1},
+        "package_id": {"type": "null"},
+        "scope": {"enum": ["baseline_fit", "paper_eligibility"]},
+        "execution_readiness": {"const": "not_assessed"},
+        "execution_verified": {"type": "null"},
+        "evidence_profile": {"const": "reconstruction_dimensions"}
+      }},
+      "else": {"properties": {
+        "paper_id": {"type": "null"},
+        "package_id": {"type": "string", "minLength": 1},
+        "scope": {"enum": ["full_pipeline", "analysis_only"]},
+        "eligibility": {"const": "in_scope"},
+        "model_id": {"type": "null"},
+        "result_set_id": {"type": "null"},
+        "independent_attempt_ready": {"type": "null"},
+        "execution_verified": {"type": "boolean"},
+        "execution_readiness": {"enum": ["ready_to_attempt", "preparation_required", "blocked", "undetermined", "no_runnable_code"]},
+        "evidence_profile": {"const": "author_workflow_compatibility"}
+      }}
+    },
+    {
+      "if": {"properties": {"scope": {"const": "paper_eligibility"}}},
+      "then": {"properties": {"eligibility": {"const": "no_baseline"}}}
+    },
+    {
+      "if": {"properties": {"scope": {"const": "baseline_fit"}}},
+      "then": {"properties": {
+        "eligibility": {"const": "in_scope"},
+        "model_id": {"type": "string", "minLength": 1},
+        "independent_attempt_ready": {"type": "boolean"}
+      }}
+    }
+  ],
+  "x_status_mappings": {
+    "independent_reconstruction": {
+      "local_ready": "local_available",
+      "public_acquisition_required": "public_acquisition_required",
+      "access_blocked": "access_blocked",
+      "undetermined": "undetermined",
+      "no_observed_data_required": "no_observed_data_required"
+    },
+    "author_package": {
+      "local_available": "local_available",
+      "public_acquisition_required": "public_acquisition_required",
+      "restricted_access_required": "access_blocked",
+      "undetermined": "undetermined",
+      "not_applicable": "no_observed_data_required"
+    }
+  },
+  "x_data_labels": {
+    "local_available": "Every listed mandatory input has a confirmed compatible local or packaged route under the recorded evidence profile.",
+    "public_acquisition_required": "All listed mandatory inputs have confirmed local/public routes and at least one requires public acquisition.",
+    "access_blocked": "A mandatory input has an evidenced access barrier without a confirmed usable alternative.",
+    "undetermined": "At least one necessary availability claim remains unresolved, or required inputs have not been fully identified.",
+    "no_observed_data_required": "The target requires no observed data; this does not describe whether a target baseline model exists."
+  },
+  "x_evidence_profiles": {
+    "reconstruction_dimensions": "Primary inputs are independently reconstructed. Native assessments separately verify access, fields, meaning, coverage and identifiers; local coverage requires a coordinator confirmation. Author-prepared analysis data remain alternatives. These original proof requirements are preserved.",
+    "author_workflow_compatibility": "Primary inputs may include author-prepared data. Native assessments verify readable resources/fields and source-supported compatibility of the supplied workflow. They do not use the reconstruction skill's mandatory five-dimension/coordinator-coverage-confirmation structure. These original proof requirements are preserved."
+  }
+}

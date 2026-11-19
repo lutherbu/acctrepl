@@ -1,0 +1,186 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "The persistence of earnings and cash flows and the role of special items: Implications for the accrual anomaly",
+  "doi": "10.1007/s11142-006-9004-1",
+  "route": "reconstruction",
+  "paper_id": "W3123423002",
+  "years": 5,
+  "sources_checked": [
+    "Local COMP.FUNDA at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat (catalog: PROC CONTENTS source catalog, COMP.FUNDA lines 27500–27523); snapshot modified 2026-07-22, 941,340 metadata rows. Confirmed GVKEY/DATADATE/FYEAR, INDFMT/CONSOL/POPSRC/DATAFMT/SCF and the accepted IBC/OANCF/IVNCF/FINCF/AT/CEQ/SPI/SICH/CURCD fields. After the accepted provider screen, current SCF=7 row counts in FY 2003–2007 are 9,096/9,724/9,587/9,362/9,039; no duplicate GVKEY×FY or GVKEY×DATADATE keys through FY 2008. FY 2008 has 10,687 lead-source rows, including 8,768 nonmissing IBC, 8,855 AT and 8,830 CEQ.",
+    "Local CRSP.CCMXPF_LNKHIST at ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_lnkhist.sas7bdat (catalog lines 81319–81559); snapshot modified 2026-08-14, 123,388 metadata rows. Accepted-filter link dates span LINKDT 1949–2025 and LINKENDDT 1958–2026, covering FY 2003–2007.",
+    "Local CRSP.STOCKNAMES at ${ACCTREPL_SAS_ROOT}/crsp/a_stock/stocknames.sas7bdat (catalog lines 81423–85903); snapshot modified 2025-12-06, 83,280 metadata rows. NAMEDT/NAMEENDDT/ST_DATE/END_DATE span 1925–2024; accepted effective-date conditions find intervals overlapping each added year 2003–2007.",
+    "Local CRSP.DSEDELIST at ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsedelist.sas7bdat (catalog lines 81323–81760); snapshot modified 2025-12-06, 38,872 metadata rows. DLSTDT spans 1926–2024 and has 544 dated events in FY/calendar 2008; the accepted delisting code/date rule is retained.",
+    "Fresh controller build output: work/runtime/20261118T091017445707Z/build.lst reports 95,463 handoff rows, 89,355 Table 2 rows, and zero handoff formula errors; work/data/accrual_persistence_main/reg.dta metadata retains fyear as int16. Native regression logs report 2003–2007 contributions and last_added=2007."
+  ],
+  "changes": [
+    "Kept the original fiscal-year start at 1988 and extended the observation end from 2002 to 2007. The existing adjacent-year construction retains FY 1987 for the lag and adds FY 2008 for the one-year earnings/equity lead.",
+    "Rebuilt one pooled historical-plus-added sample from current local COMP.FUNDA, CRSP.CCMXPF_LNKHIST, CRSP.STOCKNAMES and CRSP.DSEDELIST. Changed only the SAS source bound to FY 1987–2008 and the t-year pool bound to FY 1988–2007; retained source screens, transformations, pooled 1% trimming, annual rank procedure, event rules, and OLS terms.",
+    "Retained fyear through the SAS-to-Stata handoff and added fit-active Stata e(sample) counts by original/added period for both regression cells. The pooled trim produces 69,916 original-period observations in these fits versus 70,084 in the saved period-only predecessor run."
+  ],
+  "limitations": [
+    "The accepted Attempt 02 best-effort reconstruction estimated 70,084 Table 2 observations for 1988–2002, compared with 61,989 reported in the paper. The predecessor review says the difference remains unexplained by available paper detail and provider vintage. This extended replay retains that construction; pooled trimming yields 69,916 original-period observations plus 19,439 added-period observations.",
+    "The paper leaves average-assets dates, delisting book-equity and deflator dates, the delisting code set, no-lead event window, and trimming population/order partly unspecified. The accepted code uses average assets from adjacent annual observations, the documented event-date replacement rule and DLSTCD 500 or 520–584; these inherited best-effort choices remain.",
+    "The inherited review also identifies uncertainty about the full financial-variable trimming universe and tie handling for annual bottom-decile ranks. The accepted builder keeps its declared pooled P1/P99 cutoffs and PROC RANK TIES=MEAN convention.",
+    "The Stata template reports two-sided p-values and 10%, 5%, and 1% stars; the paper’s Table 2 legend specifies 5% and 1% only."
+  ],
+  "analyses": [
+    {
+      "scope_id": "earnings_persistence_opacc_m6 / opacc_column6",
+      "key": "s1",
+      "label": "Table 2, panel A, column 6: operating-accrual persistence decomposition",
+      "sample_ids": [
+        "accrual_persistence_main"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh pooled Table 2 equation (6) OLS using the accepted reconstruction and current local inputs. The actual e(sample) contains 89,355 firm-year observations: 69,916 in FY 1988–2002 and 19,439 in FY 2003–2007; the last contributing added fiscal year is 2007. Bounded source checks and the native build support the requested endpoint.",
+      "source_evidence": [
+        "output/samples/records/W3123423002.json: sample-period and Compustat/CRSP source evidence, physical PDF pp. 7–9.",
+        "output/models/records/W3123423002.json: earnings_persistence_opacc_m6, Table 2 panel A, column 6, equation (6), physical PDF pp. 19–20.",
+        "output/reproductions/packages/W3123423002/attempt_02/stata.ipynb#cell table2_panel_a: accepted original estimator and regressors; output/reproductions/packages/W3123423002/attempt_02/submission.json maps the cell to opacc_column6.",
+        "work/build.sas lines 15–24 and 191–203: pooled period bounds and adjacent fiscal-year lag/lead construction; work/stata.ipynb#cell table2_panel_a counts actual e(sample)."
+      ],
+      "original_begin": 1988,
+      "original_end": 2002,
+      "requested_end": 2007,
+      "supported_end": 2007,
+      "last_added": 2007,
+      "count_unit": "firm-year observations in the Stata OLS e(sample), split by fiscal-year variable fyear",
+      "original_n": 69916,
+      "added_n": 19439,
+      "artifacts": [
+        "results/tables/table2_panel_a.csv"
+      ],
+      "comparison": "OPACC_t ratio-on-ratio OLS slope: saved period-only Attempt 02 estimate 0.6938244 (repository output/reproductions/packages/W3123423002/attempt_02/tables/table2_panel_a.csv, native log output/reproductions/packages/W3123423002/attempt_02/runtime/20261103T054234305137Z/cell_table2_panel_a.log); pooled FY 1988–2007 estimate 0.6976008 (job work/tables/table2_panel_a.csv, native log work/runtime/20261118T091017445707Z/cell_table2_panel_a.log).",
+      "native_evidence": {
+        "path": "urn:sha256:3bc69f2d5f0495b547808e66d03e59ba06b36ce2a6cc2d63dab7d1bda00bbb13",
+        "sha256": "3bc69f2d5f0495b547808e66d03e59ba06b36ce2a6cc2d63dab7d1bda00bbb13",
+        "marker": "EXT_SAMPLE s1 69916 19439 2007"
+      }
+    },
+    {
+      "scope_id": "earnings_persistence_tacc_m6 / tacc_column6",
+      "key": "s2",
+      "label": "Table 2, panel B, column 6: total-accrual persistence decomposition",
+      "sample_ids": [
+        "accrual_persistence_main"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh pooled Table 2 equation (6) OLS using the accepted reconstruction and current local inputs. The actual e(sample) contains 89,355 firm-year observations: 69,916 in FY 1988–2002 and 19,439 in FY 2003–2007; the last contributing added fiscal year is 2007. Bounded source checks and the native build support the requested endpoint.",
+      "source_evidence": [
+        "output/samples/records/W3123423002.json: sample-period and Compustat/CRSP source evidence, physical PDF pp. 7–9.",
+        "output/models/records/W3123423002.json: earnings_persistence_tacc_m6, Table 2 panel B, column 6, equation (6), physical PDF pp. 19–20.",
+        "output/reproductions/packages/W3123423002/attempt_02/stata.ipynb#cell table2_panel_b: accepted original estimator and regressors; output/reproductions/packages/W3123423002/attempt_02/submission.json maps the cell to tacc_column6.",
+        "work/build.sas lines 15–24 and 191–203: pooled period bounds and adjacent fiscal-year lag/lead construction; work/stata.ipynb#cell table2_panel_b counts actual e(sample)."
+      ],
+      "original_begin": 1988,
+      "original_end": 2002,
+      "requested_end": 2007,
+      "supported_end": 2007,
+      "last_added": 2007,
+      "count_unit": "firm-year observations in the Stata OLS e(sample), split by fiscal-year variable fyear",
+      "original_n": 69916,
+      "added_n": 19439,
+      "artifacts": [
+        "results/tables/table2_panel_b.csv"
+      ],
+      "comparison": "TACC_t ratio-on-ratio OLS slope: saved period-only Attempt 02 estimate 0.7800925 (repository output/reproductions/packages/W3123423002/attempt_02/tables/table2_panel_b.csv, native log output/reproductions/packages/W3123423002/attempt_02/runtime/20261103T054234305137Z/cell_table2_panel_b.log); pooled FY 1988–2007 estimate 0.7972571 (job work/tables/table2_panel_b.csv, native log work/runtime/20261118T091017445707Z/cell_table2_panel_b.log).",
+      "native_evidence": {
+        "path": "urn:sha256:47418d53227069ff292e00bf606649d2eede6b2072527ad14c7e9af4026d7759",
+        "sha256": "47418d53227069ff292e00bf606649d2eede6b2072527ad14c7e9af4026d7759",
+        "marker": "EXT_SAMPLE s2 69916 19439 2007"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 2
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1edde-d93d-70a3-a32c-31aa27471070",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3123423002.json",
+    "models": "output/models/records/W3123423002.json",
+    "predecessor": "output/reproductions/packages/W3123423002/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3123423002.json"
+  },
+  "input_hashes": {
+    "sample": "60642bc319543deb2a17060304cba12336ad76259f65f0a472220a96dd70feab",
+    "models": "d19b52090cf827c202ffbabcacd6d224a0453d9ce2b5d86948be9448b8607ce9",
+    "predecessor": "1aa2d044473f2f4df7ffc5a1061a8c430acf3a2b762635a809d64aaac48a71f5",
+    "feasibility": "753cb88bc6ac697d4d3496e14ae1372c56903993c0030bcbaf63bd14a612087e"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:01bdf904a920ee943bdb61fcf94f17f1c88d38eb8c25ccf5385464039d8301e9",
+    "sha256": "01bdf904a920ee943bdb61fcf94f17f1c88d38eb8c25ccf5385464039d8301e9",
+    "ok": true,
+    "state_sha256": "4c75a83fc8061bb330f09c1acea32743684b324234ece5812a3b559be24d89cf",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LNKHIST",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_lnkhist.sas7bdat",
+        "bytes": 6094848,
+        "mtime_ns": 1786704782782829989
+      },
+      {
+        "dataset": "CRSP.STOCKNAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/stocknames.sas7bdat",
+        "bytes": 12845056,
+        "mtime_ns": 1764951373746064803
+      },
+      {
+        "dataset": "CRSP.DSEDELIST",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsedelist.sas7bdat",
+        "bytes": 6094848,
+        "mtime_ns": 1764950801576115988
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "b6ff90ad4499a8846af7ee2ab0934e9b34ed61f01c2032e13c8551555d47585d",
+      "work/stata.ipynb": "bd789eed141d33205912743c8047808265d0adbdd23efde117d10336f1a9a1d1",
+      "work/submission.json": "5d09391b24171a1aab7a8574d40ff041c9503e3da40ee3b0b1d595e58484594d"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "7ec18a61881208bb603c0f59bf64c3eea241bb993c7ee525f1149b56ad71341d",
+      "predecessor": "output/reproductions/packages/W3123423002/attempt_02/build.sas",
+      "predecessor_sha256": "3f1da65b85c75be35e2521646dfbf97a1b649b30d05e0b92b6a24409b9a2c1ff",
+      "executed_sha256": "b6ff90ad4499a8846af7ee2ab0934e9b34ed61f01c2032e13c8551555d47585d",
+      "historical_predecessor_sha256": "e1ae2a556f8caea6eaf80db45da3c67bcd9f5459d55904f7966150a62a94d961"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "bd789eed141d33205912743c8047808265d0adbdd23efde117d10336f1a9a1d1",
+      "predecessor": "output/reproductions/packages/W3123423002/attempt_02/stata.ipynb",
+      "predecessor_sha256": "32929d3a0d5c7d354c4410c14191ce1321329c1cfabe511420a505114433d5f6",
+      "historical_predecessor_sha256": "6451dd9464d4cc22c2c2c060d5f7ecf7c2400e660b7a1ab7c61137eb9f00f893"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "ef523f54f056854204760e453c82a6f9f6480db38026056f60838eb0efe5ff84",
+    "predecessor": "d1def00b3fbf89fc40211b9bdc26ff9d10648e8d48cb8371d212330395850907",
+    "feasibility": "3795df7db59501ccee75920175cd65ce586ef3f0f75d0838a6c1701024def114"
+  }
+}

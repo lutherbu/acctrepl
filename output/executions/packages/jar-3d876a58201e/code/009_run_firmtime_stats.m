@@ -1,0 +1,13 @@
+cd('@@ACCTREPL_WORK@@/Datasheet and ReplicationFiles');
+run('@@ACCTREPL_WORK@@/Datasheet and ReplicationFiles/FRQSim_FinalStatsTWFirmXYear.m');
+writematrix(SIZEFirmXYear, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_SIZEFirmXYear.csv');
+writematrix([cvfirmtime; cvSxTfirmtime; cvSIC1xTfirmtime; cvSIC2xTfirmtime], '@@ACCTREPL_WORK@@/outputs/FIRMTIME_CV95.csv');
+writematrix(kse, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_kse.csv');
+writematrix(pfirmtime, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_pfirmtime.csv');
+writematrix(pSxTfirmtime, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_pSxTfirmtime.csv');
+writematrix(pSIC1xTfirmtime, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_pSIC1xTfirmtime.csv');
+writematrix(pSIC2xTfirmtime, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_pSIC2xTfirmtime.csv');
+writematrix(sapfirmtime, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_sapfirmtime.csv');
+writematrix(sapSxTfirmtime, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_sapSxTfirmtime.csv');
+writematrix(sapSIC1xTfirmtime, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_sapSIC1xTfirmtime.csv');
+writematrix(sapSIC2xTfirmtime, '@@ACCTREPL_WORK@@/outputs/FIRMTIME_sapSIC2xTfirmtime.csv');

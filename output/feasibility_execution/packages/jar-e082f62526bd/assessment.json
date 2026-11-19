@@ -1,0 +1,911 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-e082f62526bd",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 58/Issue 1/12292 - Detecting-Accounting-Fraud-in-Publicly-Traded-U-S-Firms-Using-Machine-Learning-Approach/bklyz-datasheet-and-code.zip",
+        "sha256": "3987dc123dc53337176c804c77a0ca456b7f3506922dfd8ccf678ac519a9d887"
+      },
+      {
+        "path": "JAR-Volume 58/Issue 1/12292 - Detecting-Accounting-Fraud-in-Publicly-Traded-U-S-Firms-Using-Machine-Learning-Approach/bklyz-online-appendix.pdf",
+        "sha256": "fa0cf584a1171dd90f11cf6b2a22edb4613abbf030dca07fd0601559d6cb512b"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "878d7cf62aa015af19212f6bd10057e957c667164ea742bbb00bf968dabfe57a"
+  },
+  "title": "Detecting Accounting Fraud in Publicly Traded U.S. Firms Using Machine Learning Approach",
+  "doi": "10.1111/1475-679X.12292",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Complete supplied workflow: transcribe and configure the SAS preparation embedded in the PDF, then run the supplied MATLAB RUSBoost28 script and its reader/evaluation helpers after resolving the SAS-to-MATLAB input contract. Preserve pooled SAS construction and winsorization plus the 2003–2008 RUSBoost analysis.",
+      "entry_points": [
+        "20191108 SAS coding.pdf",
+        "20191108 run_RUSBoost28.m"
+      ],
+      "requirement_ids": [
+        "compustat_annual",
+        "aaer_firm_year"
+      ],
+      "software_ids": [
+        "sas_base",
+        "matlab",
+        "matlab_stats_ml"
+      ],
+      "issue_ids": [
+        "sas_setup",
+        "sas_runtime",
+        "sas_matlab_handoff",
+        "matlab_file_names",
+        "matlab_runtime",
+        "compustat_panel_producer"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "sas_source",
+        "sas_inputs",
+        "sas_population",
+        "sas_lags",
+        "sas_winsor",
+        "sas_winsor_call",
+        "sas_output",
+        "matlab_reader",
+        "matlab_runner",
+        "matlab_model",
+        "matlab_reader_function",
+        "matlab_eval_function",
+        "matlab_eval_call",
+        "datasheet_sources",
+        "datasheet_aaer",
+        "datasheet_contract",
+        "aaer_probe",
+        "aaer_stream",
+        "environment_probe",
+        "matlab_capability_probe",
+        "catalog_resource",
+        "catalog_lookup",
+        "repo_public",
+        "repo_readme",
+        "repo_filemeta",
+        "repo_reader",
+        "repo_runner",
+        "matlab_reader_csv",
+        "matlab_perfcurve",
+        "matlab_top1",
+        "matlab_ndcg",
+        "matlab_output",
+        "catalog_funda_fields",
+        "comp_funda_probe"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "compustat_annual",
+      "kind": "data",
+      "description": "WRDS/Compustat annual industrial firm-year source consumed as fraud.compustatindustrial7815. The actual SAS code requires source variables used in joins, filters, formulas and the 28 raw features. It filters fyear to 1978–2015 before lag construction, then winsorizes the full retained pooled population at the 1st/99th percentiles; the datasheet separately reports fiscal years 1991–2014 for the accounting data in the paper’s current version. Keep these as the supplied construction and later analysis windows, respectively.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "local_comp_funda_candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "Frozen catalog lists this local file as COMP.FUNDA, “Merged Fundamental Annual File,” with 949 variables and a snapshot count of 941,340 observations. A bounded row_limit=1 read confirms the file is readable and exposes all 34 source fields referenced by the supplied SAS code; the sampled row is fyear 1961 and the probe does not establish industrial filtering, the required 1978–2015 population/history, or equivalence to fraud.compustatindustrial7815.",
+          "evidence_ids": [
+            "catalog_resource",
+            "catalog_funda_fields",
+            "comp_funda_probe"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "cik",
+            "fyear",
+            "sich",
+            "at",
+            "txp",
+            "act",
+            "che",
+            "lct",
+            "dlc",
+            "ivao",
+            "lt",
+            "dltt",
+            "ivst",
+            "pstk",
+            "rect",
+            "invt",
+            "ppent",
+            "sale",
+            "cogs",
+            "ap",
+            "ni",
+            "ib",
+            "sstk",
+            "dltis",
+            "ceq",
+            "prcc_f",
+            "csho",
+            "dp",
+            "re",
+            "xint",
+            "txt",
+            "ppegt"
+          ],
+          "expected_period": "SAS code requires an industrial panel retaining fyear 1978–2015 before lags and pooled winsorization; the single sampled row at 1961 does not establish that range or the industrial population."
+        },
+        {
+          "id": "compustat_wrds_annual",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS Compustat North America Fundamentals Annual; author SAS table fraud.compustatindustrial7815",
+          "description": "Author identifies Compustat annual data and a source table named fraud.compustatindustrial7815; current entitlement, local compatible extract, product fields and actual 1978–2015 population coverage are unverified. The SAS code filter and pooled winsorization apply to the full 1978–2015 retained source population; the datasheet separately reports fiscal years 1991–2014 for the accounting data in the current paper version. These are distinct construction and analysis windows. Constructing changes for model training beginning in 1991 uses prior-year observations from the included panel (1990 onward); the code applies its 1978 filter before lags, so no earlier input is specified.",
+          "evidence_ids": [
+            "sas_source",
+            "sas_inputs",
+            "sas_population",
+            "sas_lags",
+            "sas_winsor_call",
+            "datasheet_sources",
+            "catalog_lookup"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "cik",
+            "fyear",
+            "sich",
+            "at",
+            "txp",
+            "act",
+            "che",
+            "lct",
+            "dlc",
+            "ivao",
+            "lt",
+            "dltt",
+            "ivst",
+            "pstk",
+            "rect",
+            "invt",
+            "ppent",
+            "sale",
+            "cogs",
+            "ap",
+            "ni",
+            "ib",
+            "sstk",
+            "dltis",
+            "ceq",
+            "prcc_f",
+            "csho",
+            "dp",
+            "re",
+            "xint",
+            "txt",
+            "ppegt"
+          ],
+          "expected_period": "SAS source/construction and pooled-winsorization window: fyear 1978–2015. Datasheet current-version accounting-data/model description: fiscal years 1991–2014. For the supplied RUSBoost run, training years are 1991 through each test year minus two, with test years 2003–2008. Keep these windows distinct; training feature changes use the preceding consecutive firm-year observations within the SAS retained panel."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "aaer_firm_year",
+      "kind": "data",
+      "description": "Fraud firm-year labels joined to Compustat by CIK and fyear; SAS uses p_aaer and understatement and derives misstate from the presence of yeara. The packaged author CSV is readable with the required label-table fields; full population coverage is based on the author documentation and is not independently swept.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "packaged_aaer_csv",
+          "type": "packaged",
+          "status": "verified",
+          "location": "20191108 AAER_firm_year.csv",
+          "description": "The packaged CSV is an author-provided fraud firm-year input. A bounded one-row probe confirms readability and columns P_AAER, CIK, YEARA, UNDERSTATEMENT, matching the SAS join/use fields. The datasheet says it combines the initial CFRM observations and additional hand-collected fraud years through 2018; the one-row probe and streaming metadata do not independently establish coverage.",
+          "evidence_ids": [
+            "aaer_probe",
+            "aaer_stream",
+            "datasheet_aaer",
+            "sas_inputs"
+          ],
+          "expected_fields": [
+            "P_AAER",
+            "CIK",
+            "YEARA",
+            "UNDERSTATEMENT"
+          ],
+          "expected_period": "Author datasheet describes AAER announcements through 2016-09-30 plus manually collected observations through 2018-12-31; the code joins by CIK and fiscal year."
+        }
+      ],
+      "outcome": "local_available"
+    }
+  ],
+  "software": [
+    {
+      "id": "sas_base",
+      "name": "SAS Base (PROC SQL, SORT, UNIVARIATE)",
+      "status": "unverified",
+      "description": "The embedded SAS workflow uses PROC SQL, PROC SORT, DATA steps, and an included winsor macro calling PROC UNIVARIATE. These procedures do not establish a SAS/STAT dependency. A bounded SAS 9.4 startup probe failed at TKELS initialization, so runnable Base SAS capability is unverified; this does not establish a license barrier.",
+      "evidence_ids": [
+        "sas_winsor",
+        "sas_winsor_call",
+        "environment_probe"
+      ]
+    },
+    {
+      "id": "matlab",
+      "name": "MATLAB",
+      "status": "unverified",
+      "description": "The supplied workflow is MATLAB; its release is unspecified in this package. The bounded command lookup did not find matlab on the inherited PATH, so actual installation, version and host availability remain unverified.",
+      "evidence_ids": [
+        "matlab_runner",
+        "matlab_capability_probe"
+      ]
+    },
+    {
+      "id": "matlab_stats_ml",
+      "name": "MATLAB Statistics and Machine Learning Toolbox",
+      "status": "unverified",
+      "description": "The supplied analysis invokes fitensemble with RUSBoost, templateTree, predict, and perfcurve. The availability of these exact MATLAB entry points and toolbox capability is unverified; Octave or another language is not treated as a substitute.",
+      "evidence_ids": [
+        "matlab_model",
+        "matlab_capability_probe"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "sas_setup",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "embedded_sas_and_missing_setup",
+      "description": "The substantive SAS preparation is embedded in a PDF and begins by reading fraud library tables. No standalone .sas driver, libname/import setup, input file paths, working directory, or output directory is supplied. This is a preparation/configuration gap; the supplied formulas and macro should be preserved in a working copy.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "sas_inputs",
+        "sas_output",
+        "datasheet_aaer"
+      ]
+    },
+    {
+      "id": "sas_runtime",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "sas_runtime_unverified",
+      "description": "The environment inventory records a SAS 9.4 startup failure during TKELS initialization. Runtime availability is unverified; this is not evidence of a missing license and no additional SAS startup attempt was made.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "environment_probe",
+        "sas_winsor"
+      ]
+    },
+    {
+      "id": "sas_matlab_handoff",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_cross_language_output_contract",
+      "description": "The SAS program ends by creating fraud.all after a selected KEEP and a raw Compustat join; no CSV export to the MATLAB input is present. The frozen MATLAB reader requires 37 positional columns: year, firm, sic, insbank, understatement, options, paaer, new_paaer, label, then 28 features. The SAS output code does not establish the options or new_p_aaer columns or a 37-column export order. The current author repository lists data_FraudDetection_JAR2020.csv, whose current reader contract has 32 positions (year, firm, p_aaer, label, 28 features) and whose current runner uses 300 trees and test years 2003–2014; it is not a demonstrated compatible replacement for this supplied RUSBoost28 branch (3,000 trees, 2003–2008, new_p_aaer). Request the exact matching prepared file/version or author field mapping; do not guess aliases or change the target analysis.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "sas_output",
+        "matlab_reader",
+        "matlab_runner",
+        "datasheet_contract",
+        "repo_public",
+        "repo_readme",
+        "repo_filemeta",
+        "repo_reader",
+        "repo_runner",
+        "matlab_reader_csv",
+        "matlab_output"
+      ]
+    },
+    {
+      "id": "matlab_file_names",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "helper_filename_resolution",
+      "description": "The supplied helper files are named 20191108 data_reader.m and 20191108 evaluate.m, but declare functions data_reader and evaluate, which the runner calls by those bare names. Resolve names in a working copy so MATLAB can find the functions; retain original bytes and do not change their contents. The runner itself is a script stored under a date-prefixed name with a space and can also be staged under a conventional working-copy name.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "matlab_reader_function",
+        "matlab_eval_function",
+        "matlab_eval_call"
+      ]
+    },
+    {
+      "id": "matlab_runtime",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "matlab_runtime_and_toolbox_unverified",
+      "description": "The MATLAB command was not found on the inherited PATH, and the exact MATLAB Statistics and Machine Learning Toolbox functions required by the supplied branch have not been checked in an available MATLAB session. Actual installation/version/toolbox entitlement remains unknown.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "matlab_capability_probe",
+        "matlab_model"
+      ]
+    },
+    {
+      "id": "compustat_panel_producer",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "industrial_panel_producer_unresolved",
+      "description": "The SAS program reads fraud.compustatindustrial7815 directly, but the supplied PDF does not show how that exact table is produced from the catalog-listed COMP.FUNDA file or how its industrial membership/population is formed. The local COMP.FUNDA candidate has the required variable names and is readable in a one-row probe, but its catalog label and sampled fyear=1961 row do not establish an industrial filter, the retained 1978–2015 panel, or the lag/history and pooled-winsorization population. Keep the local file as a candidate, not a verified substitute or proof of absent licensing.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "sas_source",
+        "sas_inputs",
+        "sas_population",
+        "sas_lags",
+        "sas_winsor_call",
+        "catalog_resource",
+        "catalog_funda_fields",
+        "comp_funda_probe"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "sas_source",
+      "kind": "source",
+      "description": "SAS PDF comments identify the author Compustat table and AAER inputs/provenance.",
+      "file": "20191108 SAS coding.pdf",
+      "line_begin": 4,
+      "line_end": 10,
+      "quote": "/*All the accounting raw data are downloaded from WRDS/COMPUSTAT/2017.4.3--\nfraud.compustatindustrial7815;*/\n/*AAER_firm_year dataset has two sources (see our shared dataset): in\naddition to AAER 20160930 database we purchased from the University of\nCalifornia-Berkeley’s Center for Financial Reporting and Management (CFRM),\nwe hand collect AAER frauds from SEC website in the period from 20160930 to\n20181231*/\n"
+    },
+    {
+      "id": "sas_inputs",
+      "kind": "source",
+      "description": "SAS joins Compustat industrial and fraud firm-year tables by CIK and fiscal year; selects yeara, p_aaer and understatement.",
+      "file": "20191108 SAS coding.pdf",
+      "line_begin": 14,
+      "line_end": 20,
+      "quote": "PROC SQL;\nCREATE TABLE temp1 AS SELECT\na.*, b.yeara, b.p_aaer,b.understatement\nFROM fraud.compustatindustrial7815 AS a LEFT JOIN fraud.aaer_firm_year AS b\nON a.cik=b.cik\nAND a.fyear=b.yeara;\nQUIT;\n"
+    },
+    {
+      "id": "sas_population",
+      "kind": "source",
+      "description": "SAS filters joined observations to fyear 1978–2015 before forming lags and calculated features.",
+      "file": "20191108 SAS coding.pdf",
+      "line_begin": 36,
+      "line_end": 38,
+      "quote": "data temp1; set temp1;\nif 1978<=fyear<=2015;\nrun;\n"
+    },
+    {
+      "id": "sas_lags",
+      "kind": "source",
+      "description": "SAS creates one-row lags for firm, fiscal year, CIK and assets, then validates consecutive firm-year matches in feature blocks.",
+      "file": "20191108 SAS coding.pdf",
+      "line_begin": 53,
+      "line_end": 59,
+      "quote": "/*calculate 14 financial ratios;*/\nDATA temp1; SET temp1;\nlag_gvkey=LAG(gvkey);\nlag_fyear=LAG(fyear);\nlag_cik=LAG(cik);\nlag_at=LAG(at);\nRUN;\n"
+    },
+    {
+      "id": "sas_winsor",
+      "kind": "source",
+      "description": "The included winsor macro obtains requested percentile cut points with PROC UNIVARIATE.",
+      "file": "20191108 SAS coding.pdf",
+      "line_begin": 265,
+      "line_end": 269,
+      "quote": "proc univariate data = xtemp noprint;\n    by &byvar;\n    var &vars;\n    output out = xtemp_pctl PCTLPTS = &pctl PCTLPRE = &vars PCTLNAME = L H;\n    run;\n"
+    },
+    {
+      "id": "sas_winsor_call",
+      "kind": "source",
+      "description": "The supplied macro is called with byvar=none, type=winsor and 1st/99th percentile cut points on the derived features.",
+      "file": "20191108 SAS coding.pdf",
+      "line_begin": 302,
+      "line_end": 305,
+      "quote": "%winsor(dsetin=temp1, dsetout=temp1, byvar=none, vars=dch_wc ch_rsst dch_rec\ndch_inv soft_assets ch_cs ch_cm ch_roa ch_ib\nbm dpi reoa ebit, type=winsor, pctl=1 99);\n RUN;\n"
+    },
+    {
+      "id": "sas_output",
+      "kind": "source",
+      "description": "SAS selects variables into temp, joins that table to the raw Compustat table for additional analysis, sorts, and creates fraud.all; no CSV export is present in the supplied code.",
+      "file": "20191108 SAS coding.pdf",
+      "line_begin": 311,
+      "line_end": 334,
+      "quote": "DATA temp;SET temp1;\nKEEP P_AAER gvkey cik sich insbnk fyear datadate understatement misstate\ndch_wc ch_rsst dch_rec dch_inv soft_assets\nch_cs ch_cm ch_roa ch_fcf issue bm dpi reoa ebit\nat ceq che cogs csho dlc dltt dp ib invt ivao ivst lct lt ni ppegt pstk re\nrect sale txp txt xint prcc_f act ap dltis sstk;\nRUN;\n\n*Including all accounting raw data as fraud prediction features for\nadditional analysis;\nPROC SQL;\nCREATE TABLE temp AS SELECT\na.*, b.*\nFROM temp AS a LEFT JOIN fraud.compustatindustrial7815 AS b\nON a.gvkey=b.gvkey\nAND a.fyear=b.fyear;\nQUIT;\nRUN;\n\nPROC SORT DATA=temp nodupkey;\nBY gvkey fyear; RUN;\n\nDATA fraud.all; SET temp;\nRUN;\n"
+    },
+    {
+      "id": "matlab_reader",
+      "kind": "source",
+      "description": "Local MATLAB reader consumes CSV after its header and maps the uscecchini28 format positionally to fields through column 37.",
+      "file": "20191108 data_reader.m",
+      "line_begin": 17,
+      "line_end": 30,
+      "quote": "    case 'uscecchini28' % read data with 28 uscecchini raw variables as features\n        data.years = temp(:, 1);\n        idx = data.years>=year_start & data.years<=year_end;\n        data.years = temp(idx, 1);\n        data.firms = temp(idx, 2);\n        data.sics = temp(idx, 3);\n        data.insbnks = temp(idx, 4);\n        data.understatements = temp(idx, 5);\n        data.options = temp(idx, 6);\n        data.paaers = temp(idx, 7);\n        data.newpaaers = temp(idx, 8);\n        data.labels = temp(idx, 9);\n        data.features = temp(idx,10:37);\n        data.num_obervations = size(data.features,1);\n"
+    },
+    {
+      "id": "matlab_runner",
+      "kind": "source",
+      "description": "Local runner fixes RNG seed, uses 3,000 RUSBoost iterations and a two-year gap, tests each year 2003–2008, and recodes overlapping serial fraud IDs in training labels.",
+      "file": "20191108 run_RUSBoost28.m",
+      "line_begin": 6,
+      "line_end": 26,
+      "quote": "iters = 3000; % the number of iterations/trees of RUSBoost model\ngap = 2; % the gap between training and testing periods, 2-year gap by default\n\n%% train and test models\nfor year_test = 2003:2008\n    rng(0,'twister'); % fix random seed for reproducing the results\n    % read training data\n    fprintf('Running RUSBoost (training period: 1991-%d, testing period: %d, with %d-year gap)...\\n',year_test-gap,year_test,gap);\n    data_train = data_reader('uscecchini28.csv','uscecchini28',1991,year_test-gap);\n    y_train = data_train.labels;\n    X_train = data_train.features;\n    newpaaer_train = data_train.newpaaers;\n    data_test = data_reader('uscecchini28.csv','uscecchini28',year_test,year_test);\n    y_test = data_test.labels;\n    X_test = data_test.features;\n    newpaaer_test = unique(data_test.newpaaers(data_test.labels~=0));\n    % handle serial frauds as described in our paper\n    num_frauds = sum(y_train==1);\n    y_train(ismember(newpaaer_train,newpaaer_test))=0;\n    num_frauds = num_frauds - sum(y_train==1);\n    fprintf('Recode %d overlapped frauds (i.e., change fraud label from 1 to 0).\\n',num_frauds);\n"
+    },
+    {
+      "id": "matlab_model",
+      "kind": "source",
+      "description": "Local code trains RUSBoost with a 5-observation leaf tree, learning rate .1, class ratio [1 1], predicts fraud probabilities, and evaluates at top one percent.",
+      "file": "20191108 run_RUSBoost28.m",
+      "line_begin": 28,
+      "line_end": 45,
+      "quote": "    % train model\n    t1 = tic;\n    t = templateTree('MinLeafSize',5); % base model\n    % fit RUSBoost model (default parameters: learning rate: 0.1, RatioToSmallest: [1 1])\n    rusboost = fitensemble(X_train,y_train,'RUSBoost',iters,t,'LearnRate',0.1,'RatioToSmallest',[1 1]);\n    t_train = toc(t1);\n    % turn on the following line of code if you want to get feature importance\n    % [imp,ma] = predictorImportance(rusboost);\n\n    % test model\n    t2 = tic;\n    [label_predict,dec_values] = predict(rusboost,X_test); % predict frauds in the testing year\n    dec_values = dec_values(:,2); % get fraud probability\n    t_test = toc(t2);\n\n    % print evaluation results\n    fprintf('Training time: %g seconds | Testing time %g seconds \\n', t_train, t_test);\n    metrics = evaluate(y_test,label_predict,dec_values,0.01); % topN=0.01\n"
+    },
+    {
+      "id": "matlab_reader_function",
+      "kind": "source",
+      "description": "The source file declares the MATLAB helper function as data_reader.",
+      "file": "20191108 data_reader.m",
+      "line_begin": 5,
+      "line_end": 5,
+      "quote": "function [data] = data_reader(data_path, data_type, year_start, year_end)\n"
+    },
+    {
+      "id": "matlab_eval_function",
+      "kind": "source",
+      "description": "The source file declares the MATLAB helper function as evaluate.",
+      "file": "20191108 evaluate.m",
+      "line_begin": 5,
+      "line_end": 5,
+      "quote": "function [results] = evaluate(label_true,label_predict,dec_values,topN)\n"
+    },
+    {
+      "id": "matlab_eval_call",
+      "kind": "source",
+      "description": "The runner calls data_reader and evaluate by their declared function names.",
+      "file": "20191108 run_RUSBoost28.m",
+      "line_begin": 14,
+      "line_end": 45,
+      "quote": "    data_train = data_reader('uscecchini28.csv','uscecchini28',1991,year_test-gap);\n    y_train = data_train.labels;\n    X_train = data_train.features;\n    newpaaer_train = data_train.newpaaers;\n    data_test = data_reader('uscecchini28.csv','uscecchini28',year_test,year_test);\n    y_test = data_test.labels;\n    X_test = data_test.features;\n    newpaaer_test = unique(data_test.newpaaers(data_test.labels~=0));\n    % handle serial frauds as described in our paper\n    num_frauds = sum(y_train==1);\n    y_train(ismember(newpaaer_train,newpaaer_test))=0;\n    num_frauds = num_frauds - sum(y_train==1);\n    fprintf('Recode %d overlapped frauds (i.e., change fraud label from 1 to 0).\\n',num_frauds);\n\n    % train model\n    t1 = tic;\n    t = templateTree('MinLeafSize',5); % base model\n    % fit RUSBoost model (default parameters: learning rate: 0.1, RatioToSmallest: [1 1])\n    rusboost = fitensemble(X_train,y_train,'RUSBoost',iters,t,'LearnRate',0.1,'RatioToSmallest',[1 1]);\n    t_train = toc(t1);\n    % turn on the following line of code if you want to get feature importance\n    % [imp,ma] = predictorImportance(rusboost);\n\n    % test model\n    t2 = tic;\n    [label_predict,dec_values] = predict(rusboost,X_test); % predict frauds in the testing year\n    dec_values = dec_values(:,2); % get fraud probability\n    t_test = toc(t2);\n\n    % print evaluation results\n    fprintf('Training time: %g seconds | Testing time %g seconds \\n', t_train, t_test);\n    metrics = evaluate(y_test,label_predict,dec_values,0.01); % topN=0.01\n"
+    },
+    {
+      "id": "datasheet_sources",
+      "kind": "source",
+      "description": "Datasheet says archival data came mainly from commercial sources, identifies the 1991–2014 Compustat period, and dates the extract to April 2017.",
+      "file": "BKLYZ Datasheet.pdf",
+      "line_begin": 14,
+      "line_end": 28,
+      "quote": "Archival data are used in this paper. The data are mainly obtained from commercially available sources.\nThe details are as follows.\n    1) AAER Data: our initial accounting fraud sample comes from the SEC’s Accounting and Auditing\n       Enforcement Releases (AAERs), as compiled by the University of California-Berkeley’s Center\n       for Financial Reporting and Management (CFRM).\n    2) The AAER database used in the current version of our paper includes all the AAERs announced\n       over the period between May 17th, 1982 and September 30th, 2016. Since the CFRM has not\n       updated the AAER database since 2017, we also hand collected additional fraud observations from\n       the SEC website: https://www.sec.gov/divisions/enforce/friactions/friactions2018.shtml that are\n       dated up to December 31, 2018 (AAER #4012). We make the fraud observations available (see\n       item 5)\n    3) Financial Accounting Data: The publicly traded U.S. firms’ accounting data are from\n       COMPUSTAT fundamental annual database fiscal year 1991 to 2014. The data from\n       COMPUSTATA used in the current version of the paper were downloaded in April 2017.\n\n"
+    },
+    {
+      "id": "datasheet_aaer",
+      "kind": "source",
+      "description": "Datasheet explicitly describes the packaged AAER_firm_year file, SAS preparation, and the label content of the CSV, so the historic CFRM purchase is not automatically a present-day data barrier.",
+      "file": "BKLYZ Datasheet.pdf",
+      "line_begin": 62,
+      "line_end": 68,
+      "quote": "The fraud firm years observations, SAS and Matlab programs used in this paper are publicly available on\nJAR online supplements and datasheet webpage (https://research.chicagobooth.edu/arc/journal-of-\naccounting-research/online-supplements).\nThe file “AAER_firm_year” contains both the initial fraud firm years from CFRM and additional fraud\nfirm years of AAERs announced after September 30, 2016 up to December 31, 2018 by hand-collection.\nThe file “SAS coding” shows the process of merging fraud firm years with COMPUSTATA database and\nprepare necessary accounting features for our prediction models.\n"
+    },
+    {
+      "id": "datasheet_contract",
+      "kind": "source",
+      "description": "Local datasheet names the earlier uscecchini28.csv prepared dataset, misstate label, 28 raw feature names, and new_p_aaer serial-fraud identifier.",
+      "file": "BKLYZ Datasheet.pdf",
+      "line_begin": 72,
+      "line_end": 80,
+      "quote": "We also made the final dataset                       publicly     available     in    our     Github     repository\n(https://github.com/JarFraud/FraudDetection).\nThe file “uscecchini28.csv” is our final dataset which contains the fraud labels and feature variables. The\nvariable name of our fraud label is “misstate” (1 denotes fraud, and 0 denotes non-fraud). The variable\nnames of the 28 raw financial data items are: act, ap, at, ceq, che, cogs, csho, dlc, dltis, dltt, dp, ib, invt,\nivao, ivst, lct, lt, ni, ppegt, pstk, re, rect, sale, sstk, txp, txt, xint, prcc_f. The variable name of 14 financial\nratios are: dch_wc, ch_rsst, dch_rec, dch_inv, soft_assets, ch_cs, ch_cm, ch_roa, issue, bm, dpi, reoa, EBIT,\nch_fcf. The variable new_p_aaer is used for identifying serial frauds as described in Section 3.3 (see the\ncode in “RUSBoost28.m” for more details).\n"
+    },
+    {
+      "id": "aaer_probe",
+      "kind": "probe",
+      "description": "Pre-existing bounded row_limit=1 readability probe for the packaged AAER CSV: readable, sampled columns P_AAER, CIK, YEARA, UNDERSTATEMENT, rows_read=1 and coverage_verified=false.",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "96a75082899ada98cbeb460b2199f36d2ad4b188610cb54ffb00bbb89987db2e"
+    },
+    {
+      "id": "aaer_stream",
+      "kind": "inspection",
+      "description": "Streaming SHA-256 and physical newline count for the packaged AAER CSV; physical line count is not claimed as a complete observation count or coverage proof.",
+      "artifact_path": "probes/aaer_stream_metadata.json",
+      "sha256": "c6823de3a6126ccdf255f6cef1f23043a90549615efd40c33271b0562f0714e0"
+    },
+    {
+      "id": "environment_probe",
+      "kind": "probe",
+      "description": "Pre-existing bounded environment inventory records Stata, R, Python and SAS probes; SAS failed at TKELS initialization and no MATLAB proof is included. No authors’ program/data were used.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "matlab_capability_probe",
+      "kind": "probe",
+      "description": "Self-written PATH-only MATLAB command check; executable was not found on inherited PATH, so no runtime or toolbox capability was tested. No author program/data were used.",
+      "artifact_path": "probes/matlab_capability_check.json",
+      "sha256": "f3f5ffb464d1a2ee372c559a36a22778268d7cf6fef810dd8034979ada266534"
+    },
+    {
+      "id": "catalog_resource",
+      "kind": "catalog",
+      "description": "The frozen catalog lists COMP.FUNDA at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat, labeled “Merged Fundamental Annual File,” with 949 variables and a snapshot count of 941,340 observations. Catalog metadata is a local discovery candidate, not proof of current population, industrial filtering, compatibility or vendor entitlement.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "catalog_lookup",
+      "kind": "inspection",
+      "description": "Initial phrase queries for Compustat annual industrial, fraud.compustatindustrial7815, and WRDS Compustat returned no catalog matches because the entry uses the abbreviated COMP.FUNDA ID. The separate exact candidate and one-row proof are the operative follow-up evidence; this older lookup is not interpreted as absence.",
+      "artifact_path": "probes/catalog_compustat_lookups.json",
+      "sha256": "052abf2b4577675e42e0b40c99e50a243ed0b97601abe4a9db182a118e98e7ff"
+    },
+    {
+      "id": "repo_public",
+      "kind": "public",
+      "description": "The author GitHub repository is publicly viewable and its current listing includes a prepared CSV and MATLAB source files.",
+      "url": "https://github.com/JarFraud/FraudDetection",
+      "checked_at": "2026-11-08",
+      "quote": "Public",
+      "authority": "repository"
+    },
+    {
+      "id": "repo_readme",
+      "kind": "public",
+      "description": "The current author README names data_FraudDetection_JAR2020.csv as its final dataset, documents misstate as the fraud label, lists 28 raw accounting variables, and mentions related fields such as fyear, gvkey and p_aaer. This is not the frozen uscecchini28.csv contract.",
+      "url": "https://github.com/JarFraud/FraudDetection/blob/master/README.md",
+      "checked_at": "2026-11-08",
+      "quote": "The file \"data_FraudDetection_JAR2020.csv\" is the final dataset which contains the fraud labels, feature variables, and related variables. The variable \"misstate\" is the fraud label.",
+      "authority": "author"
+    },
+    {
+      "id": "repo_filemeta",
+      "kind": "public",
+      "description": "The current repository file page lists data_FraudDetection_JAR2020.csv at 45.6 MB; GitHub did not render its contents at that size and no raw CSV was fetched.",
+      "url": "https://github.com/JarFraud/FraudDetection/blob/master/data_FraudDetection_JAR2020.csv",
+      "checked_at": "2026-11-08",
+      "quote": "45.6 MB",
+      "authority": "repository"
+    },
+    {
+      "id": "repo_reader",
+      "kind": "public",
+      "description": "The current author reader page documents a different 32-position data_default contract: year, firm, p_aaer, label, and 28 features in columns 5–32; it does not document the frozen runner’s additional new_p_aaer/metadata positions.",
+      "url": "https://github.com/JarFraud/FraudDetection/blob/master/data_reader.m",
+      "checked_at": "2026-11-08",
+      "quote": "case 'data_default' % read data with 28 raw accounting variables\ndata.paaers = temp(idx, 3);\ndata.labels = temp(idx, 4);\ndata.features = temp(idx,5:32);",
+      "authority": "author"
+    },
+    {
+      "id": "repo_runner",
+      "kind": "public",
+      "description": "The current author runner is a distinct variant: it calls the current dataset/reader, loops through 2003–2014, and fits 300 trees, rather than the frozen 3,000-tree 2003–2008 RUSBoost28 branch.",
+      "url": "https://github.com/JarFraud/FraudDetection/blob/master/run_RUSBoost.m",
+      "checked_at": "2026-11-08",
+      "quote": "for year_test = 2003:2014\nrusboost = fitensemble(X_train,y_train,'RUSBoost',300,t,'LearnRate',0.1,'RatioToSmallest',[1 1]);",
+      "authority": "author"
+    },
+    {
+      "id": "matlab_reader_csv",
+      "kind": "source",
+      "description": "The MATLAB reader skips the first CSV row, so its input must match the documented header-plus-numeric-matrix format.",
+      "file": "20191108 data_reader.m",
+      "line_begin": 5,
+      "line_end": 6,
+      "quote": "function [data] = data_reader(data_path, data_type, year_start, year_end)\ntemp = csvread(data_path, 1, 0); % read csv data starting from row 1 (second), column 0 (first).\n"
+    },
+    {
+      "id": "matlab_perfcurve",
+      "kind": "source",
+      "description": "The evaluation helper invokes perfcurve for fraud-class AUC and stores ROC outputs.",
+      "file": "20191108 evaluate.m",
+      "line_begin": 11,
+      "line_end": 16,
+      "quote": "% calculate metric: AUC\n[X,Y,T,AUC,OPTROCPT,SUBY,SUBYNAMES] = perfcurve(label_true,dec_values,pos_class,'negClass',neg_class);\nresults.auc = AUC;\nresults.auc_optimalPT = OPTROCPT;\nresults.roc_X = X;\nresults.roc_Y = Y;\n"
+    },
+    {
+      "id": "matlab_top1",
+      "kind": "source",
+      "description": "The evaluation helper ranks decision values, marks the top k firms, and computes sensitivity, specificity, balanced accuracy and precision for topN.",
+      "file": "20191108 evaluate.m",
+      "line_begin": 32,
+      "line_end": 47,
+      "quote": "% calculate metric: precision, sensitivity, specificity, and BAC (balanced accuracy) by using topN% cut-off thresh\nk = round(length(label_true)*topN);\n[~,idx] = sort(dec_values,'descend');\nlabel_predict_topk = ones(length(label_true),1)*neg_class;\nlabel_predict_topk(idx(1:k))=1;\ntp_topk=sum(label_true==pos_class & label_predict_topk==pos_class);\nfn_topk=sum(label_true==pos_class & label_predict_topk==neg_class);\ntn_topk=sum(label_true==neg_class & label_predict_topk==neg_class);\nfp_topk=sum(label_true==neg_class & label_predict_topk==pos_class);\nsensitivity_topk = tp_topk/(tp_topk+fn_topk);\nspecificity_topk = tn_topk/(tn_topk+fp_topk);\nresults.bac_topk = (sensitivity_topk+specificity_topk)/2;\nprecision_topk = tp_topk/(tp_topk+fp_topk);\nresults.sensitivity_topk=sensitivity_topk;\nresults.specificity_topk=specificity_topk;\nresults.precision_topk = precision_topk;\n"
+    },
+    {
+      "id": "matlab_ndcg",
+      "kind": "source",
+      "description": "The evaluation helper computes normalized discounted cumulative gain through k.",
+      "file": "20191108 evaluate.m",
+      "line_begin": 50,
+      "line_end": 70,
+      "quote": "% calculate metric: NDCG@k\nhits = sum(label_true==pos_class);\nkz=min(k,hits);\nz=0.0;\nfor i=1:kz\n    rel = 1;\n    z = z+ (2^rel-1)/log2(1+i);\nend\ndcg_at_k=0.0;\nfor i=1:k\n    if label_true(idx(i))==1\n        rel = 1;\n        dcg_at_k = dcg_at_k + (2^rel-1)/log2(1+i);\n    end\nend\nif z~=0\n    ndcg_at_k = dcg_at_k/z;\nelse\n    ndcg_at_k = 0;\nend\nresults.ndcg_at_k = ndcg_at_k;\n"
+    },
+    {
+      "id": "matlab_output",
+      "kind": "source",
+      "description": "The supplied runner writes annual prediction CSVs named prediction_rusboost28 followed by the test year.",
+      "file": "20191108 run_RUSBoost28.m",
+      "line_begin": 53,
+      "line_end": 55,
+      "quote": "    % turn on the following lines of code if your want to save prediction results in a file\n    output_filename = ['prediction_rusboost28',num2str(year_test),'.csv'];\n    dlmwrite(output_filename,[data_test.years, data_test.firms, data_test.newpaaers, y_test, label_predict, dec_values],'precision','%g');\n"
+    },
+    {
+      "id": "catalog_funda_fields",
+      "kind": "inspection",
+      "description": "A bounded comparison of the catalog-listed COMP.FUNDA metadata with the SAS source-variable contract found all 34 referenced names in the catalog, including their source types/labels. This is metadata only and does not establish row coverage or industrial filtering.",
+      "artifact_path": "probes/comp_funda_catalog_match.json",
+      "sha256": "ea7a2055c217a6f74a7f18323e54303c31d70a097d0c148cb88d9def90ff18d2"
+    },
+    {
+      "id": "comp_funda_probe",
+      "kind": "probe",
+      "description": "Frozen helper row_limit=1 probe read ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat as COMP.FUNDA and returned all 34 requested SAS fields. The sampled row has fyear=1961; coverage_verified=false. This proves bounded readability/column presence only, not the industrial panel or required 1978–2015 coverage.",
+      "artifact_path": "probes/comp_funda_row1.json",
+      "sha256": "fdd1e7dd6551e8e88cc55ca462b21d81fbda27991813e31b17ae143f45aad8ad"
+    }
+  ],
+  "dependency_review": [],
+  "actions": [
+    {
+      "id": "resolve_compustat_source",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "compustat_annual",
+        "compustat_panel_producer"
+      ],
+      "kind": "clarification",
+      "description": "Resolve whether the catalog-listed local annual-fundamentals candidate can supply the author’s industrial SAS input, and use a documented route if it cannot.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "sas_source",
+        "sas_inputs",
+        "sas_population",
+        "sas_lags",
+        "sas_winsor_call",
+        "datasheet_sources",
+        "catalog_resource",
+        "catalog_funda_fields",
+        "comp_funda_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "Treat ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat (COMP.FUNDA) as the first local candidate: the frozen catalog labels it “Merged Fundamental Annual File,” and a bounded one-row probe verifies readability and all 34 source field names used by the SAS code.",
+        "Confirm the exact author construction/filter that creates fraud.compustatindustrial7815 from its source, including industrial membership, retained fyear 1978–2015 population, and prior consecutive firm-year observations needed for lag features. The supplied PDF reads that table but does not produce it; do not infer compatibility from the matching fields or catalog count.",
+        "If the local candidate cannot be shown to satisfy the documented source contract, verify current institutional WRDS/Compustat access or request the exact source-table specification. Do not treat the earlier phrase-search miss or unknown entitlement as evidence of unavailable data or licensing."
+      ],
+      "validation": [
+        "Before a future SAS run, verify the actual source table’s product, field types, identifiers, industrial filter and full 1978–2015 retained population; the row_limit=1 probe and its 1961 sample do not establish coverage.",
+        "Confirm pooled 1st/99th percentile winsorization uses all rows retained by the author’s 1978–2015 filter, keeping the datasheet 1991–2014 paper/model window distinct."
+      ]
+    },
+    {
+      "id": "prepare_sas_working_copy",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sas_setup",
+        "sas_base",
+        "aaer_firm_year"
+      ],
+      "kind": "data_preparation",
+      "description": "Prepare the PDF-embedded SAS program and package inputs in a separate, batch-usable working tree without modifying the original package.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "sas_inputs",
+        "sas_winsor",
+        "sas_winsor_call",
+        "sas_output",
+        "datasheet_aaer",
+        "aaer_probe",
+        "aaer_stream"
+      ],
+      "edits": [],
+      "steps": [
+        "Transcribe the supplied SAS statements and included winsor macro into a working-copy .sas file in their authored order; retain the formulas, filters, lags and 1st/99th pooled winsorization.",
+        "Set up the fraud library and import the packaged CSV to fraud.aaer_firm_year using its documented columns P_AAER, CIK, YEARA and UNDERSTATEMENT. Assign fraud.compustatindustrial7815 only after the exact Compustat route, fields and period are confirmed.",
+        "Choose a coherent project working root under [redacted-path-cc809e05bbbb] or relative to the batch working directory; use only relative or [redacted-path-91234f6bc086] and preserve the originals. Confirm host visibility and writability before any separately authorized run."
+      ],
+      "validation": [
+        "Before an authorized SAS run, verify staged input table names/columns and paths and confirm the copied preparation statements match the supplied PDF.",
+        "In a future run, confirm fraud.all is produced with the author-selected variables and that the pooled 1st/99th percentile treatment is applied on the retained source population."
+      ]
+    },
+    {
+      "id": "verify_sas_runtime",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sas_runtime",
+        "sas_base"
+      ],
+      "kind": "software_setup",
+      "description": "Resolve the recorded SAS startup issue and verify the existing SAS Base runtime before any author-code run.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "environment_probe",
+        "sas_winsor"
+      ],
+      "edits": [],
+      "steps": [
+        "Have the managed host/runtime owner verify SAS 9.4 startup and Base procedure availability after the recorded TKELS initialization failure.",
+        "Do not infer missing entitlement from the startup failure and do not retry SAS as part of this assessment.",
+        "Use batch mode with a relative or [redacted-path-cc809e05bbbb] working root and the common SAS autoexec only after the environment is independently ready."
+      ],
+      "validation": [
+        "Confirm the intended SAS 9.4 runtime can invoke PROC SQL, PROC SORT and PROC UNIVARIATE in an empty-session check before the package is run."
+      ]
+    },
+    {
+      "id": "resolve_sas_matlab_handoff",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sas_matlab_handoff"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the exact, version-matched SAS-to-MATLAB input contract for the supplied RUSBoost28 branch.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "sas_output",
+        "matlab_reader",
+        "matlab_runner",
+        "datasheet_contract",
+        "repo_public",
+        "repo_readme",
+        "repo_filemeta",
+        "repo_reader",
+        "repo_runner"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask for the exact prepared uscecchini28.csv version or author crosswalk that feeds the supplied data_reader.m positions 1–37, including the producer and meaning of options and new_p_aaer.",
+        "Ask how the SAS output fraud.all is exported or mapped to that positional schema; do not assume the SAS KEEP list is the MATLAB file or guess aliases.",
+        "The current author repository’s data_FraudDetection_JAR2020.csv and data_default reader form a different 32-position, 300-tree, 2003–2014 variant. Do not substitute that workflow for the frozen 3,000-tree, 2003–2008 RUSBoost28 target.",
+        "If an exact compatible author-prepared input/mapping is supplied, assess it as a distinct analysis-only route in a subsequent scoped review; until then retain this missing handoff in the full pipeline."
+      ],
+      "validation": [
+        "Compare any supported CSV header/order to the frozen reader’s year, firm, sic, insbank, understatement, options, paaer, new_paaer, label and columns 10–37 feature contract before an authorized run.",
+        "Confirm any crosswalk preserves fraud labels, serial-fraud recoding, 28 raw features and the authored training/test years."
+      ]
+    },
+    {
+      "id": "stage_matlab_working_copies",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "matlab_file_names"
+      ],
+      "kind": "data_preparation",
+      "description": "Resolve MATLAB helper filenames in a working copy while preserving original source files and code contents.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "matlab_reader_function",
+        "matlab_eval_function",
+        "matlab_eval_call",
+        "matlab_reader_csv",
+        "matlab_output"
+      ],
+      "edits": [],
+      "steps": [
+        "Copy the supplied helper contents into working files named data_reader.m and evaluate.m so the MATLAB filenames match their declared functions and the runner’s calls.",
+        "Stage the script as run_RUSBoost28.m for a conventional invocation and place the resolved author CSV contract in the same analysis working directory, because the runner names uscecchini28.csv relatively.",
+        "Keep the source package’s dated filenames unchanged and do not alter formulas, samples, estimators, labels or output names."
+      ],
+      "validation": [
+        "From the MATLAB working directory, verify which data_reader and which evaluate resolve to the staged working copies before running the script.",
+        "Confirm the runner can resolve uscecchini28.csv from its current working directory and that its prediction_rusboost28YYYY.csv outputs go to the intended writable results directory."
+      ]
+    },
+    {
+      "id": "verify_matlab_runtime",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "matlab",
+        "matlab_stats_ml",
+        "matlab_runtime"
+      ],
+      "kind": "software_setup",
+      "description": "Verify an existing MATLAB runtime and the exact Statistics and Machine Learning Toolbox functions required by the supplied RUSBoost code.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "matlab_model",
+        "matlab_capability_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "Check whether MATLAB is installed/configured on the managed host and record its version; a PATH miss in the bounded check does not prove system-wide absence.",
+        "In MATLAB, verify the exact entry points fitensemble, templateTree, predict and perfcurve and the applicable Statistics and Machine Learning Toolbox capability/license.",
+        "If the runtime or capability is missing, request authorized MATLAB/toolbox access; do not install packages or replace the authored method with Octave, Python or R."
+      ],
+      "validation": [
+        "In the future MATLAB session, record version, which results for fitensemble/templateTree/predict/perfcurve, and applicable toolbox availability before a package run."
+      ]
+    },
+    {
+      "id": "run_full_pipeline_after_prerequisites",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "compustat_annual",
+        "aaer_firm_year",
+        "sas_base",
+        "matlab",
+        "matlab_stats_ml",
+        "sas_setup",
+        "sas_runtime",
+        "sas_matlab_handoff",
+        "matlab_file_names",
+        "matlab_runtime",
+        "compustat_panel_producer"
+      ],
+      "kind": "run_procedure",
+      "description": "Run the supplied SAS preparation and unchanged MATLAB RUSBoost28 branch only after source-table construction, handoff schema, host paths and runtimes are verified.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "sas_source",
+        "sas_inputs",
+        "sas_population",
+        "sas_lags",
+        "sas_winsor_call",
+        "sas_output",
+        "matlab_reader",
+        "matlab_runner",
+        "matlab_model",
+        "matlab_top1",
+        "matlab_ndcg",
+        "matlab_output",
+        "aaer_probe",
+        "catalog_resource",
+        "comp_funda_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "In a separate working copy with a host-visible/writable staged project root, use the staged root as the relative runtime working directory; keep executable paths relative or under [redacted-path-cc809e05bbbb], preserve the original dated files, import the packaged AAER CSV, and configure SAS library paths without absolute Dropbox paths.",
+        "After SAS Base is available and the exact industrial source producer/population is verified, run the transcribed PDF SAS program in batch mode. Preserve the 1978–2015 filter, firm-year lag checks, derived features and pooled 1st/99th winsorization; retain the produced fraud.all table.",
+        "Before MATLAB, resolve the exact 37-position uscecchini28.csv header/order and the producer/semantics of options and new_p_aaer; verify the export against the frozen reader. Do not run the model with the current repository’s different 32-position/300-tree/2003–2014 variant.",
+        "After MATLAB and Statistics and Machine Learning Toolbox capabilities are verified, run the staged run_RUSBoost28.m from the analysis working directory with data_reader.m, evaluate.m and the verified uscecchini28.csv alongside it. Preserve rng(0,'twister'), 3,000 RUSBoost iterations, gap=2, training years 1991 through testyear−2, test years 2003–2008, serial-fraud recoding and top-1% evaluation.",
+        "Capture SAS and MATLAB console output as run logs and retain the six prediction_rusboost28YYYY.csv files produced for 2003–2008."
+      ],
+      "validation": [
+        "Check SAS logs for successful creation of fraud.all and inspect its variables, identifiers and retained fyear population against the documented producer/source contract.",
+        "Verify the exported uscecchini28.csv has a header and the exact 37 positional fields expected by data_reader.m, with the required labels, serial-fraud IDs and 28 raw features.",
+        "Check the MATLAB log contains results for each 2003–2008 test year under the unchanged 3,000-tree settings; confirm six prediction CSVs and their six-column positional order (the supplied dlmwrite call does not write a header): year, firm, new_p_aaer, true label, predicted label, fraud score. Do not execute these future checks during this assessment."
+      ]
+    }
+  ],
+  "review_notes": [
+    "The static audit reports no supported code because its parser excludes MATLAB; direct source review confirms three MATLAB files and substantive SAS preparation code embedded in the 335-line PDF. The dependency list in the frozen work item is empty, so the complete source graph was reviewed manually.",
+    "The current author repository is public and lists a 45.6 MB final CSV, but its current reader uses a different 32-column positional contract and its current RUSBoost runner uses 300 trees and tests 2003–2014. This does not establish a compatible analysis-only bypass for the supplied 2019 37-column, 3,000-tree, 2003–2008 branch. No public dataset was downloaded and no raw CSV was fetched.",
+    "The packaged AAER CSV has 1,747 physical newline characters and a streamed SHA-256; this is not claimed as an observation count or proof of full coverage. The existing one-row probe confirms the four expected label-table columns.",
+    "The author appendix contains result summaries for other model families, but the assigned package does not provide their code branches. They remain contextual; target the supplied SAS preparation and RUSBoost28 branch only.",
+    "The initial full-phrase catalog searches missed the abbreviated COMP.FUNDA entry. Follow-up catalog metadata and a bounded one-row probe identify ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat and all 34 SAS source fields; the probe samples fyear=1961 and does not verify industrial filtering, the required 1978–2015 population, or compatibility with fraud.compustatindustrial7815. This is not evidence of absent access or licensing.",
+    "The SAS Base and MATLAB/toolbox checks remain unverified. SAS startup failure at TKELS and a MATLAB PATH miss are not treated as evidence of missing licenses.",
+    "The SAS construction and pooled-winsorization population is 1978–2015; the datasheet reports fiscal years 1991–2014 for the paper data/model period. Treat these as distinct authored windows, not a defect or additional author-intent gate."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "a2dddec1b491f7ede8ace7dd6c498089f86fbff16d959380af88934e1b1322db",
+    "applied": false
+  }
+}

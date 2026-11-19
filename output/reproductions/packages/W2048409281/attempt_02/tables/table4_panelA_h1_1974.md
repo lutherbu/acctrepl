@@ -1,0 +1,24 @@
+
+|                      |          (1)    |
+|                      |    1974-1983    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| Current adjusted earnings / lagged assets |        0.829*** |
+|                      |      (0.000)    |
+| Regular dividend indicator=0 |        0.000    |
+|                      |          (.)    |
+| Regular dividend indicator=1 |        0.011*   |
+|                      |      (0.091)    |
+| Regular dividend indicator=0 # Current adjusted earnings / lagged assets |        0.000    |
+|                      |          (.)    |
+| Regular dividend indicator=1 # Current adjusted earnings / lagged assets |        0.077    |
+|                      |      (0.154)    |
+| Constant             |        0.005    |
+|                      |      (0.544)    |
+| Observations         |        16378    |
+| *R*<sup>2</sup>      |        0.516    |
+| Adjusted *R*<sup>2</sup> |        0.516    |
+
+Two-way cluster-robust SE by firm and fiscal year; no fixed effects.<br>
+Template parentheses report p-values; source parentheses are standard errors.
+

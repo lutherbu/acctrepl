@@ -1,0 +1,1203 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-4c6f6d091116",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 60/Issue 5/12433 - Audit-Implications-of-Non-GAAP-Reporting/hst-datasheet-code-and-identifiers.zip",
+        "sha256": "b9b7285200e8ea16ec6de3197ca855dfd8a6ec5e3e55d80ac0ed2770fbc2e725"
+      },
+      {
+        "path": "JAR-Volume 60/Issue 5/12433 - Audit-Implications-of-Non-GAAP-Reporting/hst-online-appendix.pdf",
+        "sha256": "2952068edca993ffb011942cf441189c45c73531da3ea70a7bf020ff27ae900c"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "b27a13e5107ad64aa7d573bd0d83eddda9fef42731cdc1c8d8677c1738fa296f",
+    "work_item_sha256": "05899c03b9f0b00eb5d057e7f6c7e0f12ad003a3ba012a2f065a0e7ca7297f16"
+  },
+  "title": "Audit Implications of Non-GAAP Reporting",
+  "doi": "10.1111/1475-679X.12433",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "The supplied Code.do data-preparation workflow through DATA/PROC DATA/FINAL.dta. It prepares a firm crosswalk, currency rates and vendor panels; merges those with the hand-collected workbook; constructs variables and applies final sample filters. No separate estimation/table-producing program is supplied, so this target does not claim to reproduce paper-wide results.",
+      "entry_points": [
+        "Code.do"
+      ],
+      "requirement_ids": [
+        "R_HAND",
+        "R_CURRENCY",
+        "R_COMPUSTAT",
+        "R_FAME",
+        "R_IBES",
+        "R_AA"
+      ],
+      "software_ids": [
+        "S_STATA",
+        "S_GZUSE",
+        "S_DROPMISS",
+        "S_NEARMRG",
+        "S_WINSOR2"
+      ],
+      "issue_ids": [
+        "I_CLOSURE",
+        "I_ROOT",
+        "I_APPENDIX",
+        "I_FX_CONVENTION",
+        "I_GBP_MACRO"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_ROOT",
+        "E_HAND",
+        "E_FX",
+        "E_FX_FILL",
+        "E_COMPUSTAT",
+        "E_COMPUSTAT_OUTPUT",
+        "E_FAME",
+        "E_IBES",
+        "E_AA",
+        "E_MERGE",
+        "E_VARIABLES",
+        "E_VARIABLES_OUTPUT",
+        "E_FINAL",
+        "E_DATA_TITLE",
+        "E_DATA_SOURCES",
+        "E_DATA_PACKAGE",
+        "E_APPENDIX_TITLE",
+        "E_PACKAGED_IDS",
+        "E_ENVIRONMENT",
+        "E_CATALOG",
+        "E_CATALOG_SEARCH",
+        "E_COMP_G_FUNDA",
+        "E_IBES_STATSUM_EPSINT",
+        "E_AA_FEED71",
+        "E_AA_FEED70",
+        "E_FX_COMMENT",
+        "E_IMF_DAILY",
+        "E_SW_GZUSE",
+        "E_SW_DROPMISS",
+        "E_SW_NEARMRG",
+        "E_SW_WINSOR2",
+        "E_SW_CONFIGURED",
+        "E_GBP_MACRO",
+        "E_STATA_MACRO_QUOTING",
+        "E_WORKFLOW_TRACE"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_HAND",
+      "kind": "data",
+      "description": "Author-prepared hand-collected workbook used both to create the firm crosswalk and as the base table for the four-source merge. The workbook's full schema and the origin of its non-vendor analysis fields are not supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_hand",
+          "type": "local",
+          "status": "unverified",
+          "location": "DATA/RAW DATA/HAND_COLLECTED_DATA.xlsx",
+          "description": "Exact workbook named by Code.do; absent from the package inventory. The code directly selects gvkey, isin, regno and sedol2 to build FIRM_ID.dta and later imports the workbook as the merge base; required downstream workbook fields and coverage remain unverified.",
+          "evidence_ids": [
+            "E_HAND",
+            "E_MERGE",
+            "E_DATA_SOURCES"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "isin",
+            "regno",
+            "sedol2"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CURRENCY",
+      "kind": "data",
+      "description": "Daily currency-rate input required by Compustat, FAME and I/B/E/S preparation stages; all three merge rates by a date within a 30-day limit.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_currency",
+          "type": "local",
+          "status": "unverified",
+          "location": "DATA/RAW DATA/currency_exchange_rates_1-1-1995_-_11-4-2018 2.csv",
+          "description": "Exact CSV named by Code.do; absent from the package inventory. The code expects date and six named currency columns, then filters dates before 2012, fills daily gaps, and manually adds GEL values. Coverage of the dates used by all consumers is unverified. The frozen catalog has no exact filename or IMF-labeled record.",
+          "evidence_ids": [
+            "E_FX",
+            "E_FX_FILL",
+            "E_COMPUSTAT_OUTPUT",
+            "E_FAME",
+            "E_IBES"
+          ],
+          "expected_fields": [
+            "date",
+            "euro",
+            "ukpoundsterling",
+            "australiandollar",
+            "russianruble",
+            "indianrupee",
+            "malaysianringgit"
+          ],
+          "expected_period": "The code drops dates before 2012 and matches source event dates within 30 days; consumer-required coverage remains to be checked."
+        },
+        {
+          "id": "route_currency_imf_archive",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://www.imf.org/external/np/fin/data/param_rms_mth.aspx/rms_rep.aspx",
+          "description": "Official IMF monthly archive/query interface is consistent with the author comment about daily central-bank representative rates and supports a public acquisition candidate. Its exact currency selection, daily historical coverage, output-column mapping, quote direction and compatibility with Code.do's multiplication are unverified; GEL values are separately hard-coded in the author script.",
+          "evidence_ids": [
+            "E_IMF_DAILY",
+            "E_FX_COMMENT",
+            "E_FX",
+            "E_FX_FILL"
+          ],
+          "expected_period": "Author comment says the source covered 1995–2018; Code.do drops dates before 2012 and each near-date merge has limit(30). Exact required coverage remains unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_COMPUSTAT",
+      "kind": "data",
+      "description": "Compustat Global fundamentals file used to construct the gvkey/fyear accounting panel and up to four fiscal-year leads and lags.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_compustat",
+          "type": "local",
+          "status": "unverified",
+          "location": "DATA/RAW DATA/g_funda_20210607.dta.gz",
+          "description": "Exact gzipped file named by Code.do; absent from the package inventory. The code filters datadate year > 2007, retains named accounting, identifier, date, currency and audit fields, merges gvkey to FIRM_ID, and creates four fiscal-year leads/lags. Product/table and coverage compatibility remain unverified.",
+          "evidence_ids": [
+            "E_COMPUSTAT",
+            "E_COMPUSTAT_OUTPUT",
+            "E_DATA_SOURCES"
+          ],
+          "expected_fields": [
+            "pi",
+            "oancf",
+            "am",
+            "at",
+            "lt",
+            "nicon",
+            "revt",
+            "spi",
+            "ibc",
+            "ppent",
+            "sppch",
+            "sppiv",
+            "dispoch",
+            "epsincon",
+            "teq",
+            "aqc",
+            "do",
+            "sstk",
+            "act",
+            "lct",
+            "re",
+            "ceq",
+            "oiadp",
+            "rect",
+            "ap",
+            "cogs",
+            "ppegt",
+            "sich",
+            "gvkey",
+            "sedol",
+            "datadate",
+            "curcd",
+            "cshpria",
+            "fyear",
+            "au",
+            "cshoi",
+            "auop",
+            "conm",
+            "compst"
+          ],
+          "expected_period": "datadate year > 2007 in code; four fiscal-year leads/lags are generated, while sample boundaries are not specified in this file."
+        },
+        {
+          "id": "route_comp_global_catalog",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.G_FUNDA",
+          "description": "Native Global annual fundamentals candidate at ${ACCTREPL_SAS_ROOT}/comp/d_global/g_funda.sas7bdat; a bounded one-row read is successful and the required columns are present. The candidate is not the exact 2021 author gzip export; its observation period, row population, transformations and four-year lead/lag coverage are unknown. The probed source column is SEDOL in uppercase while Code.do keeps sedol in lowercase; Stata variable names are case-sensitive, so a converter/rename mapping must be explicit before this source can satisfy the authored call.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_CATALOG_SEARCH",
+            "E_COMP_G_FUNDA"
+          ],
+          "expected_fields": [
+            "pi",
+            "oancf",
+            "am",
+            "at",
+            "lt",
+            "nicon",
+            "revt",
+            "spi",
+            "ibc",
+            "ppent",
+            "sppch",
+            "sppiv",
+            "dispoch",
+            "epsincon",
+            "teq",
+            "aqc",
+            "do",
+            "sstk",
+            "act",
+            "lct",
+            "re",
+            "ceq",
+            "oiadp",
+            "rect",
+            "ap",
+            "cogs",
+            "ppegt",
+            "sich",
+            "gvkey",
+            "SEDOL",
+            "datadate",
+            "curcd",
+            "cshpria",
+            "fyear",
+            "au",
+            "cshoi",
+            "auop",
+            "conm",
+            "compst"
+          ],
+          "expected_period": "Code.do retains datadate year > 2007 and creates four fiscal-year leads/lags; full compatible coverage is not established by the one-row probe."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_FAME",
+      "kind": "data",
+      "description": "FAME firm audit-fee and auditor-tenure file used in the 1.2.F preparation stage and later merged by regno/fyear.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_fame",
+          "type": "local",
+          "status": "unverified",
+          "location": "DATA/RAW DATA/lst2_fornick.dta",
+          "description": "Exact Stata file named by Code.do; absent from the package inventory. The code requires registered_number, firmtenure, non_audit_fee, audit_fee, accounts_date and ticker_symbol, plus a regno crosswalk; schema, observation coverage and transformation compatibility are unverified. Frozen catalog searches for FAME and the exact filename returned no matching dataset; this does not establish that the data or a license are unavailable.",
+          "evidence_ids": [
+            "E_FAME",
+            "E_DATA_SOURCES"
+          ],
+          "expected_fields": [
+            "registered_number",
+            "firmtenure",
+            "non_audit_fee",
+            "audit_fee",
+            "accounts_date",
+            "ticker_symbol"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IBES",
+      "kind": "data",
+      "description": "International I/B/E/S EPS summary input used to construct the annual firm-year analyst measures merged into the analysis table.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_ibes",
+          "type": "local",
+          "status": "unverified",
+          "location": "DATA/RAW DATA/statsum_epsint_20170930",
+          "description": "Exact file named by Code.do; absent from the package inventory. The code selects current annual EPS observations, derives sedol2 and fyear, prioritizes estimates by date/currency, and uses a firm crosswalk and currency rates. Product/table, actual field schema and needed history remain unverified.",
+          "evidence_ids": [
+            "E_IBES",
+            "E_DATA_SOURCES"
+          ],
+          "expected_fields": [
+            "actual",
+            "fiscalp",
+            "fpedats",
+            "cname",
+            "fpi",
+            "measure",
+            "cusip",
+            "curr_act",
+            "statpers",
+            "curcode",
+            "numest",
+            "meanest",
+            "stdev",
+            "medest",
+            "highest",
+            "lowest"
+          ],
+          "expected_period": "fyear 2013-2016 after the code's fyear filter; underlying estimate-date coverage and exact table compatibility remain unverified."
+        },
+        {
+          "id": "route_ibes_epsint_catalog",
+          "type": "local",
+          "status": "unverified",
+          "location": "IBES.STATSUM_EPSINT",
+          "description": "Native IBES.STATSUM_EPSINT at ${ACCTREPL_SAS_ROOT}/ibes/statsum_epsint.sas7bdat is a directly named I/B/E/S EPS International summary table. A bounded one-row read is successful and the code-required raw columns are present; Code.do lowercases imported names. The local file's 2013–2016 firm/fiscal-period population and full-history compatibility are not established by catalog metadata or a one-row read.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_CATALOG_SEARCH",
+            "E_IBES_STATSUM_EPSINT"
+          ],
+          "expected_fields": [
+            "ACTUAL",
+            "FISCALP",
+            "FPEDATS",
+            "CNAME",
+            "FPI",
+            "MEASURE",
+            "CUSIP",
+            "CURR_ACT",
+            "STATPERS",
+            "CURCODE",
+            "NUMEST",
+            "MEANEST",
+            "STDEV",
+            "MEDEST",
+            "HIGHEST",
+            "LOWEST"
+          ],
+          "expected_period": "Code.do keeps derived fyear 2013–2016; full local file coverage and the fiscal-period mapping are unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_AA",
+      "kind": "data",
+      "description": "Audit Analytics Europe audit-fees CSV used to build the 1.2.T firm-year/auditor fee panel merged into the hand-collected base.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_aa",
+          "type": "local",
+          "status": "unverified",
+          "location": "DATA/RAW DATA/europe-audit-fees-1572455007.csv",
+          "description": "Exact CSV named by Code.do; absent from the package inventory. The code requires the listed date, ISIN, fee and auditor-name columns, derives fyear, normalizes amounts and joins through the firm crosswalk. Product, data-field and coverage compatibility remain unverified. Frozen catalog searches found no exact author CSV. A native Europe Audit Fee table is readable locally, but it has different field names and lacks ISIN; its compatible use requires the companion company map and an unverified ENTITY_MAP_FKEY-to-ISIN join.",
+          "evidence_ids": [
+            "E_AA",
+            "E_DATA_SOURCES"
+          ],
+          "expected_fields": [
+            "auditfeefiscalyearend",
+            "isin",
+            "auditfeesusd",
+            "totalnonauditfeesusd",
+            "auditorname"
+          ],
+          "expected_period": "fyear 2012-2016 after the code's filter; broader input coverage is not specified."
+        },
+        {
+          "id": "route_aa_europe_catalog_candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "AUDIT.FEED71_EUROPE_AUDIT_FEE",
+          "description": "Catalog-listed Audit Analytics Europe fee table at ${ACCTREPL_SAS_ROOT}/audit/europe/feed71_europe_audit_fee.sas7bdat, paired conditionally with AUDIT.FEED70_EUROPE_COMPANY_BLOCK to map the shared ENTITY_MAP_FKEY to ISIN. FEED71 supplies the fee date, auditor name and USD fee fields, but its source names differ from the author's CSV and it has no ISIN column; FEED70 has ISIN. Any join/rename/export conversion, firm-level mapping, 2012–2016 coverage and population compatibility remain unverified. This is a candidate replacement route for the author's one fee CSV, not an additional mandatory paper input.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_CATALOG_SEARCH",
+            "E_AA_FEED71",
+            "E_AA_FEED70"
+          ],
+          "expected_fields": [
+            "ENTITY_MAP_FKEY",
+            "AUDIT_FEE_FISCAL_YEAR_END",
+            "AUDITOR_NAME",
+            "AUDIT_FEES_USD",
+            "TOTAL_NON_AUDIT_FEES_USD"
+          ],
+          "expected_period": "Code.do keeps fyear 2012–2016; coverage of that interval in the candidate tables is unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "S_STATA",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 is available and the saved software metadata checks used only version/which commands; Code.do was not executed.",
+      "evidence_ids": [
+        "E_ENVIRONMENT"
+      ]
+    },
+    {
+      "id": "S_GZUSE",
+      "name": "gzuse",
+      "status": "preparation_required",
+      "description": "The actual command used to read the Compustat Global and I/B/E/S files was not found by which in Stata 18's default or checked shared ado path. Its required release/source and compatible inputs remain to be configured.",
+      "evidence_ids": [
+        "E_SW_GZUSE",
+        "E_SW_CONFIGURED"
+      ]
+    },
+    {
+      "id": "S_DROPMISS",
+      "name": "dropmiss",
+      "status": "preparation_required",
+      "description": "The actual command used for missing-observation drops was not found by which in Stata 18's default or checked shared ado path. Its required release/source remains to be configured.",
+      "evidence_ids": [
+        "E_SW_DROPMISS",
+        "E_SW_CONFIGURED"
+      ]
+    },
+    {
+      "id": "S_NEARMRG",
+      "name": "nearmrg",
+      "status": "preparation_required",
+      "description": "The actual command used for currency-date matching was not found by which in Stata 18's default or checked shared ado path. Its required release/source and limit(30) call compatibility remain to be configured.",
+      "evidence_ids": [
+        "E_SW_NEARMRG",
+        "E_SW_CONFIGURED"
+      ]
+    },
+    {
+      "id": "S_WINSOR2",
+      "name": "winsor2",
+      "status": "preparation_required",
+      "description": "The actual command used for final 1st/99th percentile replacement was not found by which in Stata 18's default or checked shared ado path. Its required release/source remains to be configured.",
+      "evidence_ids": [
+        "E_SW_WINSOR2",
+        "E_SW_CONFIGURED"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "I_CLOSURE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_input_and_schema_closure",
+      "description": "Code.do reads six named raw files that are absent from the package: the hand-collected workbook, currency CSV, Compustat Global gzip file, FAME DTA, I/B/E/S EPS International file, and Audit Analytics Europe fee CSV. The package's only data file is a registration-number list and Code.do does not read it. The assigned frozen catalog has native global Compustat and I/B/E/S candidates with successful one-row reads, and an Audit Analytics Europe fee/company candidate pair; those are not yet verified for period, population, transformations or every handoff. No FAME or exact raw-file catalog entry was found. Hand-workbook field ownership, currency quote/history, vendor-source mappings and required observation coverage remain unresolved before the 2.1.dta -> 2.2.a.dta -> FINAL.dta chain is closed.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_HAND",
+        "E_FX",
+        "E_COMPUSTAT",
+        "E_FAME",
+        "E_IBES",
+        "E_AA",
+        "E_MERGE",
+        "E_VARIABLES",
+        "E_FINAL",
+        "E_DATA_PACKAGE",
+        "E_PACKAGED_IDS",
+        "E_CATALOG",
+        "E_CATALOG_SEARCH",
+        "E_COMP_G_FUNDA",
+        "E_IBES_STATSUM_EPSINT",
+        "E_AA_FEED71",
+        "E_AA_FEED70"
+      ]
+    },
+    {
+      "id": "I_ROOT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "working_directory_configuration",
+      "description": "The entry script changes to an absolute Mac user directory that is not part of this release. The DATA-relative paths can be preserved by staging the expected DATA tree under a dedicated writable run root, setting home_directory to '.', and launching Code.do in batch mode from that root.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_ROOT",
+        "E_HAND",
+        "E_COMPUSTAT",
+        "E_MERGE"
+      ]
+    },
+    {
+      "id": "I_APPENDIX",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "package_attribution_conflict",
+      "description": "The frozen header and datasheet identify Audit Implications of Non-GAAP Reporting, while the included online appendix identifies itself as U.S. Auditor Materiality Decisions and describes a U.S. audit-partner survey. Retain the registered title/DOI and the Code.do workflow as imported; ask the depositor to confirm whether this appendix belongs in this package before attributing its contents to the registered paper. The appendix is not used as an input or analysis entry point for the supplied Code.do target.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_DATA_TITLE",
+        "E_APPENDIX_TITLE"
+      ]
+    },
+    {
+      "id": "I_FX_CONVENTION",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "currency_quote_history_contract",
+      "description": "The supplied currency CSV is absent. Code.do says the source rates were daily representative rates reported to the IMF, filters the source to dates from 2012, and multiplies accounting/fee/forecast fields by names ending in _USD_Convert. The official IMF archive describes representative rates as currency units per U.S. dollar. The exact author CSV quote convention, inverse conversion, six-currency coverage, required event dates within the 30-day merge limit, and treatment of any pre-2012 Compustat rows used in the four-year lags are unresolved; do not change conversion direction or extend coverage without supported evidence.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_FX_COMMENT",
+        "E_FX",
+        "E_FX_FILL",
+        "E_COMPUSTAT",
+        "E_COMPUSTAT_OUTPUT",
+        "E_IMF_DAILY"
+      ]
+    },
+    {
+      "id": "I_GBP_MACRO",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "Stata_macro_string_comparison",
+      "description": "The two I/B/E/S division-by-100 conditions compare the expanded loop macro to bare GBP tokens. Stata 18 documents that an unquoted macro value is treated as a variable; the adjacent currency-selection conditions already quote the macro. Quote the expanded macro in both comparisons in a working copy, preserving the GBP-only scaling, source variables and subsequent currency multipliers. This is a supported same-operation preparation correction, not a result of executing Code.do.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_GBP_MACRO",
+        "E_STATA_MACRO_QUOTING",
+        "E_WORKFLOW_TRACE"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_ROOT",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 3,
+      "line_end": 5,
+      "quote": "* The two lines of code below set the directory so that all future file references are relative *\nglobal home_directory \"[redacted-path-1204eec0c014]\"\ncd \"$home_directory\"",
+      "description": "The supplied driver hard-codes the author's Mac project root and changes to it before relative DATA paths are used."
+    },
+    {
+      "id": "E_HAND",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 26,
+      "line_end": 32,
+      "quote": "import excel \"DATA/RAW DATA/HAND_COLLECTED_DATA.xlsx\", first clear\n\nkeep gvkey isin regno sedol2\nsort gvkey\nby gvkey: keep if _n == 1 \n\nsave \"DATA/PROC DATA/FIRM_ID.dta\", replace",
+      "description": "The driver imports the hand-collected workbook, creates a gvkey-deduplicated crosswalk, and writes FIRM_ID.dta."
+    },
+    {
+      "id": "E_FX",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 47,
+      "line_end": 63,
+      "quote": "import delim \"DATA/RAW DATA/currency_exchange_rates_1-1-1995_-_11-4-2018 2.csv\", varnames(1)\n\n\nkeep euro ukpoundsterling australiandollar russianruble indianrupee malaysianringgit date\n\nrename euro EUR_USD_Convert\nrename ukpoundsterling GBP_USD_Convert\nrename australiandollar AUD_USD_Convert\nrename russianruble RUB_USD_Convert\nrename indianrupee INR_USD_Convert\nrename malaysianringgit MYR_USD_Convert\n\ngen Date = date(date, \"YMD\")\nformat Date %td\ndrop if year(Date) < 2012\n\ntset Date",
+      "description": "The currency-rate stage imports the specified daily CSV, keeps six currencies and dates, converts dates, and limits the retained series to 2012 onward."
+    },
+    {
+      "id": "E_FX_FILL",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 66,
+      "line_end": 80,
+      "quote": "/* Fill in missing days with adjsent day's conversion rate */\nforeach i in EUR_USD_Convert GBP_USD_Convert AUD_USD_Convert RUB_USD_Convert INR_USD_Convert MYR_USD_Convert {\n\treplace `i' = l1.`i' if `i' == .\n}\n\nkeep Date EUR_USD_Convert GBP_USD_Convert AUD_USD_Convert RUB_USD_Convert INR_USD_Convert MYR_USD_Convert\n\n/* Manually add coversion rates for GEL missing from file */\ngen GEL_USD_Convert = .\nreplace GEL_USD_Convert = 1/1.7348 if Date == date(\"12/31/2013\", \"MDY\")\nreplace GEL_USD_Convert = 1/1.8828 if Date == date(\"12/31/2014\", \"MDY\")\n\nrename Date curr_date\n\nsave \"DATA/PROC DATA/1.2.K.dta\", replace",
+      "description": "The currency stage fills missing days from the prior day, adds two GEL values, renames the date key, and writes 1.2.K.dta."
+    },
+    {
+      "id": "E_COMPUSTAT",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 91,
+      "line_end": 111,
+      "quote": "{\nclear\ngzuse if year(datadate) > 2007 using \"DATA/RAW DATA/g_funda_20210607.dta.gz\"\n\n/* Keep only needed variables */\nkeep /* currency based */ pi oancf am at lt nicon revt spi ibc ppent sppch sppiv dispoch epsincon teq aqc do sstk act lct re ceq oiadp rect ap cogs ppegt/* non-currency based */ sich gvkey sedol datadate curcd cshpria fyear au cshoi auop conm compst\n\n/* Destring variables */\ndestring gvkey au, replace\n\n/* Keep needed firm's */\nmerge m:1 gvkey using \"DATA/PROC DATA/FIRM_ID.dta\"\ndrop if _merge != 3\ndrop _merge\n\n/* Drop non-comparable fiscal year-end changes */\nsort gvkey fyear\nby gvkey fyear: drop if _N > 1 & compst == \"DB\"\n\n/* Set as panel */\nxtset gvkey fyear",
+      "description": "The Compustat Global stage reads the named gzipped DTA, retains the listed fields, merges the firm crosswalk, and sets a gvkey/fyear panel."
+    },
+    {
+      "id": "E_COMPUSTAT_OUTPUT",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 113,
+      "line_end": 143,
+      "quote": "/* Covert to base currency units instead of millions (all currency based excpet for per-share varaibles) plus shares outstanding (cshpria) */\nforeach i in pi oancf am at lt nicon revt spi ibc ppent sppch sppiv dispoch teq aqc do sstk act lct re ceq oiadp rect ap cogs ppegt cshpria {\n\treplace `i' = `i' * 1000000\n}\n\n/* Merge in Exchange Rates and Convert to Dollars */\ngen curr_date = datadate\n\nnearmrg using \"DATA/PROC DATA/1.2.K.dta\", nearvar(curr_date) genmatch(exchange_rate_date) limit(30)\ndrop _merge\n\nforeach var in pi oancf am at lt nicon revt spi ibc ppent sppch sppiv dispoch epsincon teq aqc do sstk act lct re ceq oiadp rect ap cogs ppegt {\n\tforeach cur in AUD EUR INR MYR RUB GBP GEL {\n\t\treplace `var' = `var' * `cur'_USD_Convert if curcd == \"`cur'\"\n\t}\n}\n\ndrop *_Convert curr_date\n\n/* Create leads/lags */\nsort gvkey fyear\nforeach var in at revt oancf pi nicon spi ibc ppent sppiv teq epsincon rect ap am au {\n\tforval i = 1/4 {\n\t\tgen `var'_lag`i' = l`i'.`var'\n\t\tgen `var'_lead`i' = f`i'.`var'\n\t}\n\t\n}\n\n/* Save */\nsave \"DATA/PROC DATA/1.2.A.dta\", replace",
+      "description": "The Compustat stage scales monetary fields, merges currency rates within 30 days, creates four fiscal-year leads and lags, and writes 1.2.A.dta."
+    },
+    {
+      "id": "E_FAME",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 154,
+      "line_end": 200,
+      "quote": "clear\nuse \"DATA/RAW DATA/lst2_fornick.dta\"\n\n/* Rename varaibles */\nrename registered_number regno\nrename firmtenure aud_firm_tenure\nrename non_audit_fee nas_fee\n\n/* Keep needed firm's */\nmerge m:1 regno using \"DATA/PROC DATA/FIRM_ID.dta\"\ndrop if _merge != 3\ndrop _merge\n\n/* Create fyear */\ngen fyear = .\nreplace fyear = year(date(accounts_date,\"DMY\")) if month(date(accounts_date,\"DMY\")) >=6 & date(accounts_date,\"DMY\") != .\nreplace fyear = year(date(accounts_date,\"DMY\"))-1 if month(date(accounts_date,\"DMY\")) < 6 & date(accounts_date,\"DMY\") != .\n\n/* Unscale variables expressed in 1000's */\nforeach var in nas_fee audit_fee {\n\treplace `var' = `var' * 1000\t\n}\n\n/* Drop observations missing identifer or fiscal year info */\ndropmiss regno fyear, any obs force\n\n/* Set as panel and keep lead/lags */\negen group = group(regno)\nxtset group fyear\nsort group fyear\n\n/* Merge in Exchange Rates and Convert to Dollars */\ngen Currency = \"GBP\"\ngen curr_date = date(accounts_date,\"DMY\")\n\nnearmrg using \"DATA/PROC DATA/1.2.K.dta\", nearvar(curr_date) genmatch(exchange_rate_date) limit(30)\ndrop _merge\n\nforeach var in audit_fee nas_fee {\n\tforeach cur in AUD EUR INR MYR RUB GBP GEL {\n\t\treplace `var' = `var' * `cur'_USD_Convert if Currency == \"`cur'\"\n\t}\n}\n\nkeep regno fyear aud_firm_tenure audit_fee nas_fee ticker_symbol\n\nsave \"DATA/PROC DATA/1.2.F.dta\", replace",
+      "description": "The FAME stage reads lst2_fornick.dta, renames fields, merges the crosswalk, constructs fyear, converts fees, merges currency rates, and writes 1.2.F.dta."
+    },
+    {
+      "id": "E_IBES",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 214,
+      "line_end": 276,
+      "quote": "gzuse \"DATA/RAW DATA/statsum_epsint_20170930\"\n\n/* Rename variables */\nrename *, lower\nrename actual value\nrename fiscalp pdicity\nrename fpedats pends\nrename cname ibes_co_name\n\n/* Keep only current year EPS forecasts */\nkeep if fpi == \"1\"\ndrop if pdicity != \"ANN\"\ndrop if measure != \"EPS\"\n\n/* Drop observations with missing values of required variables */\ndrop if value == .\ndrop if cusip == \"\"\n\n/* Create sedol variable for merging */\ngen sedol2 = substr(cusip,3,8)\n\n/* Keep needed firm's */\nmerge m:1 sedol2 using \"DATA/PROC DATA/FIRM_ID.dta\"\ndrop if _merge != 3\ndrop _merge\n\n/* Create fyear */\ngen fyear = .\nreplace fyear = year(pends) if month(pends) >=6 & pends != .\nreplace fyear = year(pends)-1 if month(pends) < 6 & pends != .\nkeep if fyear > 2012 & fyear < 2017\n\n/* Drop older estimate dates for each firm-year, prioritizing those denominated in dollars */\ngen curr_priority = (curr_act == \"USD\")\ngsort cusip fyear statpers curr_priority\nby cusip fyear: keep if _n == _N\n\n/* Merge in Exchange Rates and Convert to Dollars */\ngen curr_date = pends\n\nreplace curcode = \"GBP\" if curcode == \"BPN\"\nreplace curr_act = \"GBP\" if curr_act == \"BPN\"\n\nnearmrg using \"DATA/PROC DATA/1.2.K.dta\", nearvar(curr_date) genmatch(exchange_rate_date) limit(30)\ndrop _merge\n\nforeach var in medest meanest highest lowest {\n\tforeach cur in AUD EUR INR MYR RUB GBP GEL {\n\t\treplace `var' = `var'/100 if `cur' == GBP & curcode == \"GBP\"\n\t\treplace `var' = `var' * `cur'_USD_Convert if curcode == \"`cur'\"\n\t\t\n\t}\n}\n\nforeach cur in AUD EUR INR MYR RUB GBP GEL {\n\treplace value = value/100 if `cur' == GBP & curr_act == \"GBP\"\n\treplace value = value * `cur'_USD_Convert if curr_act == \"`cur'\"\n}\n\n/* Keep only needed varaibles */\nkeep cusip value pends numest meanest stdev medest ibes_co_name fyear sedol2\n\nsave \"DATA/PROC DATA/1.2.J.dta\", replace",
+      "description": "The I/B/E/S stage reads the international EPS summary file, filters annual EPS observations, merges the crosswalk, converts currencies, and writes 1.2.J.dta."
+    },
+    {
+      "id": "E_AA",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 287,
+      "line_end": 338,
+      "quote": "import delimited using \"DATA/RAW DATA/europe-audit-fees-1572455007.csv\", bindquote(strict) clear\n\n/* Create fyear */\ngen fyear = .\nreplace fyear = year(date(auditfeefiscalyearend,\"YMD\")) if month(date(auditfeefiscalyearend,\"YMD\")) >=6 & date(auditfeefiscalyearend,\"YMD\") != .\nreplace fyear = year(date(auditfeefiscalyearend,\"YMD\"))-1 if month(date(auditfeefiscalyearend,\"YMD\")) < 6 & date(auditfeefiscalyearend,\"YMD\") != .\n\n/* Keep only needed firms */\nmerge m:1 isin using \"DATA/PROC DATA/FIRM_ID.dta\"\ndrop if _merge != 3\ndrop _merge\n\n/* Format fee variables */\nreplace auditfeesusd = subinstr(auditfeesusd, \",\", \"\",.)\nreplace totalnonauditfeesusd = subinstr(totalnonauditfeesusd, \",\", \"\",.)\ndestring auditfeesusd totalnonauditfeesusd, replace\n\n/* Rename varaibles */\nrename auditfeesusd audit_fee\nrename totalnonauditfeesusd nas_fee\n\n/* Replace missing values of NAS with 0 (the zero values were coded as missing) */\nreplace nas_fee = 0 if nas_fee == .\n\n/* Standardize audit firm names */\ngen audit_firm_aa = \"\"\nreplace audit_firm_aa = \"DT\" if (strpos(lower(auditorname),\"deloitte\") != 0)\nreplace audit_firm_aa = \"PWC\" if (strpos(lower(auditorname),\"waterhouse\") != 0)\nreplace audit_firm_aa = \"EY\" if  (strpos(lower(auditorname),\"ernst\") != 0)\nreplace audit_firm_aa = \"KPMG\" if (strpos(lower(auditorname),\"kpmg\") != 0)\nreplace audit_firm_aa = \"BDO\" if (strpos(lower(auditorname),\"bdo\") != 0)\nreplace audit_firm_aa = \"GT\" if  (strpos(lower(auditorname),\"thornton\") != 0)\nreplace audit_firm_aa = \"Other\" if audit_firm_aa == \"\"\n\n/* Drop observations missing required data */\ndropmiss isin fyear audit_fee, any obs force\n\n/* Drop years outside relevant range */\nkeep if fyear > 2011 & fyear < 2017\n\n/* Create audit_firm variable for merging */\ngen audit_firm_hand = audit_firm_aa\ncompress audit_firm_hand\n\n/* Limit to one obserbation per firm-year, prioritizing higher paid auditors when two are paid by same client */\nsort isin fyear audit_firm_hand audit_fee, stable\nby isin fyear audit_firm_hand: keep if _n == _N\n\n/* Keep only needed variables */\nkeep isin fyear auditorname audit_fee nas_fee audit_firm_aa audit_firm_hand\n\nsave \"DATA/PROC DATA/1.2.T.dta\", replace",
+      "description": "The Audit Analytics stage reads the named Europe fees CSV, constructs fiscal year and fee fields, standardizes audit firm names, and writes 1.2.T.dta."
+    },
+    {
+      "id": "E_MERGE",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 349,
+      "line_end": 372,
+      "quote": "/* Start with hand collected data */\nimport excel \"DATA/RAW DATA/HAND_COLLECTED_DATA.xlsx\", first clear\n\n/* Merge in Compustat */\nmerge 1:1 gvkey fyear using \"DATA/PROC DATA/1.2.A.dta\"\ndrop if _merge == 2\ndrop _merge\n\n/* Merge in Audit Analytics data */\nmerge 1:1 isin fyear audit_firm_hand using \"DATA/PROC DATA/1.2.T.dta\"\ndrop if _merge == 2\ndrop _merge\n\n/* Merge in FAME data */\nmerge 1:1 regno fyear using \"DATA/PROC DATA/1.2.F.dta\", update \ndrop if _merge == 2\ndrop _merge\n\n/* Merge in IBES data */\nmerge 1:1 sedol2 fyear using \"DATA/PROC DATA/1.2.J.dta\" \ndrop if _merge == 2\ndrop _merge\n\nsave \"DATA/PROC DATA/2.1.dta\", replace",
+      "description": "The 2.1 stage starts from the hand-collected workbook, merges Compustat, Audit Analytics, FAME and I/B/E/S in sequence, then writes 2.1.dta."
+    },
+    {
+      "id": "E_VARIABLES",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 379,
+      "line_end": 395,
+      "quote": "clear\nuse \"DATA/PROC DATA/2.1.dta\"\t\n\n/* Set data as panel */\nxtset gvkey fyear\n\n/* Expand audit firm tenure to second year (only have from FAME for first year) */\nreplace aud_firm_tenure = l1.aud_firm_tenure + 1 if audit_firm_id == l1.audit_firm_id & year == 2\nreplace aud_firm_tenure = 1 if audit_firm_id != l1.audit_firm_id & audit_firm_id != . & l1.audit_firm_id != . & year == 2\ngen ln_aud_firm_tenure = ln(aud_firm_tenure)\n\n/* Create simple variables */ \ngen ln_at = log(at)\ngen ln_pi = log(abs(pi))\ngen loss = (pi<0)\ngen ln_aud_rmms = log(aud_rmms)\ngen roa = pi/at_lag1",
+      "description": "The 2.2.a stage consumes 2.1.dta, declares the gvkey/fyear panel, and starts constructing analysis variables from merged fields and lags."
+    },
+    {
+      "id": "E_VARIABLES_OUTPUT",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 416,
+      "line_end": 475,
+      "quote": "/* Create materiality varaibles */\ngen mgmt_adj_amt_s_pi = mgmt_adj_amt/abs(pi)\ngen aud_adj_amt_s_pi = aud_adj_amt/abs(pi)\ngen perc_calculated = materiality_amt/(abs(pi))\ngen mgmt_adj_pi = pi + mgmt_adj_amt\ngen aud_adj_pi = pi + aud_adj_amt\ngen disagreement = mgmt_adj_amt_s_pi - aud_adj_amt_s_pi\ngen revt_mat_perc = materiality_amt/revt\ngen revt_mat_perc_no_adj = (abs(pi)*perc)/revt\n\n/* Create volatility measures */\negen earnings_vol = rowsd(pi pi_lag1 pi_lag2 pi_lag3)\nreplace earnings_vol = ln(earnings_vol)\n\negen cash_vol = rowsd(oancf oancf_lag1 oancf_lag2 oancf_lag3)\nreplace cash_vol = ln(cash_vol)\n\n/* Create contextual factor score variable */\ngen large_earnings_decrease = (pi < .25 * ((pi_lag1 + pi_lag2 + pi_lag3)/3) & pi != . & pi_lag1 != . & pi_lag2 != . & pi_lag3 != .) \ngen near_change_eps = (abs(epsincon-epsincon_lag1) <= .02 & epsincon != . & epsincon_lag1 != .)\ngen small_profit = (roa > 0 & roa < .01 & roa != .)\ngen small_loss = (roa < 0 & roa > -.01 & roa != .)\ngen small_pos_streak = (  (pi - pi_lag1)/pi_lag1 > 0 & (pi - pi_lag1)/pi_lag1 < .03     &    (pi_lag1 - pi_lag2)/pi_lag2 > 0 & (pi_lag1 - pi_lag2)/pi_lag2 < .03     &    (pi_lag2 - pi_lag3)/pi_lag3 > 0 & (pi_lag2 - pi_lag3)/pi_lag3 < .03 ) \ngen capital_raising = (sstk > (.2*at_lag1) & sstk != . & at_lag1 != . )\ngen contextual_factor_score = large_earnings_decrease + near_change_eps + small_profit + small_loss + small_pos_streak + capital_raising\n\t\n/* Create analyst variables */\nreplace numest = 0 if numest == . \nreplace stdev = 0 if numest == 1 \ngen forecast_error = (value - meanest)\ngen meet_or_beat_1cent = (forecast_error <= .01 & forecast_error >= 0)\n\ngen analyst_adj_amt = ((value * cshpria) - nicon) - (pi - nicon)\ngen analyst_adj_amt_s_pi = analyst_adj_amt/abs(pi)\n\ngen aud_excess_adj = aud_adj_amt - analyst_adj_amt \ngen aud_excess_adj_s_pi = aud_excess_adj/abs(pi)\n\ngen mgmt_excess_adj = mgmt_adj_amt - analyst_adj_amt\ngen mgmt_excess_adj_s_pi = mgmt_excess_adj/abs(pi)\n\n/* Create asset-scaled variables for persistence tests */\ngen mgmt_exclude_s_at = mgmt_adj_amt/at_lag1\ngen aud_exclude_s_at = aud_adj_amt/at_lag1\ngen pi_lead1_s_at = pi_lead1/at\ngen mgmt_adj_pi_s_at = mgmt_adj_pi/at_lag1\ngen aud_adj_pi_s_at = aud_adj_pi/at_lag1\n\n/* Create benchmark category variable for mlogit test */\ngen benchmark_cat = 1 if pbt_benchmark == 1 & aud_adj_dummy == 0\nreplace benchmark_cat = 2 if pbt_benchmark == 1 & aud_adj_dummy == 1\nreplace benchmark_cat = 3 if pbt_benchmark == 0\n\n/* Create variables for market return test */\ngen aud_adj_pi_ps = aud_adj_pi/cshpria\ngen mgmt_adj_pi_ps = mgmt_adj_pi/cshpria\ngen aud_excess_adj_dummy = (aud_excess_adj > 0)\n\n/* Save file */\nsave \"DATA/PROC DATA/2.2.a.dta\", replace",
+      "description": "The variable-construction stage defines materiality, volatility, contextual, analyst, persistence and benchmark variables, then writes 2.2.a.dta."
+    },
+    {
+      "id": "E_FINAL",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 481,
+      "line_end": 514,
+      "quote": "clear\nuse \"DATA/PROC DATA/2.2.a.dta\" \n\n/* Keep needed variables */\nkeep mgmt_adj_amt_s_pi aud_adj_amt_s_pi mgmt_adj_dummy aud_adj_dummy aud_amort_adj mgmt_amort_adj earnings_vol ln_at ///\nln_pi loss crosslisted ln_aud_rmms aud_ng_rmm am_s_pi big4 ln_aud_firm_tenure revenue_growth ///\ncontextual_factor_score aud_excess_adj_s_pi mgmt_excess_adj_s_pi analyst_adj_amt_s_pi numest pi_lead1_s_at ///\nmgmt_adj_pi_s_at mgmt_exclude_s_at aud_adj_pi_s_at aud_exclude_s_at disagreement aud_partner_change aud_firm_change leverage ///\nroa roa_lag1 cashflow_s_at cash_vol restructure aquisition ppe_s_at rec_turn pay_turn opinmod breakeven /// \nln_sharesout stdev perc_calculated am_s_pi_lag1 revt pi SensCount Largest* WouldaMade abs_ta_s_at fee_ratio ///\naud_adj_pi_ps mgmt_adj_pi_ps epsincon close bv_ps value next_year_mkt_return btm ///\n/*  Variables that don't need winsorizing */ sich1 benchmark_cat pbt_benchmark regno fyear perc audit_firm_id revt_mat_perc ///\nrevt_mat_perc_no_adj revenue_benchmark year materiality_amt at outobs aud_excess_adj_dummy aud_rmms meet_or_beat_1cent value meanest\n\n/* Winsor at 1 and 99 */\nwinsor2 mgmt_adj_amt_s_pi aud_adj_amt_s_pi mgmt_adj_dummy aud_adj_dummy aud_amort_adj mgmt_amort_adj earnings_vol ln_at ///\nln_pi loss crosslisted ln_aud_rmms aud_ng_rmm am_s_pi big4 ln_aud_firm_tenure revenue_growth ///\ncontextual_factor_score aud_excess_adj_s_pi mgmt_excess_adj_s_pi analyst_adj_amt_s_pi numest pi_lead1_s_at ///\nmgmt_adj_pi_s_at mgmt_exclude_s_at aud_adj_pi_s_at aud_exclude_s_at disagreement aud_partner_change aud_firm_change leverage ///\nroa roa_lag1 cashflow_s_at cash_vol restructure aquisition ppe_s_at rec_turn pay_turn opinmod breakeven /// \nln_sharesout stdev perc_calculated am_s_pi_lag1 pi Largest* abs_ta_s_at fee_ratio aud_adj_pi_ps mgmt_adj_pi_ps ///\nepsincon close bv_ps value next_year_mkt_return btm, replace\n\n/* Drop observations missing key variables from Compustat */\ndropmiss ln_at ln_pi earnings_vol big4 contextual_factor_score sich1 pi_lead1_s_at, any obs force\n\n/* Drop observations missing rmm/auditor data */\ndropmiss ln_aud_rmms aud_ng_rmm ln_aud_firm_tenure, any obs force\n\n/* Drop observations missing materiality data */\ndropmiss benchmark_cat mgmt_adj_dummy, any obs force\ndropmiss mgmt_adj_amt aud_adj_amt mgmt_adj_dummy aud_adj_dummy perc_calculated if pbt_benchmark == 1, any obs force\n\nsave \"DATA/PROC DATA/FINAL.dta\", replace",
+      "description": "The final stage consumes 2.2.a.dta, retains specified variables, calls winsor2 at 1/99, drops incomplete observations, and writes FINAL.dta."
+    },
+    {
+      "id": "E_DATA_TITLE",
+      "kind": "source",
+      "file": "HST datasheet.pdf",
+      "line_begin": 1,
+      "line_end": 4,
+      "quote": "                               Audit Implications of Non-GAAP Reporting\n\n                           Nicholas Hallman, Jaime Schmidt, Anne Thompson\n",
+      "description": "The datasheet identifies the paper title and authors."
+    },
+    {
+      "id": "E_DATA_SOURCES",
+      "kind": "source",
+      "file": "HST datasheet.pdf",
+      "line_begin": 16,
+      "line_end": 31,
+      "quote": "The raw data were collected from annual reports downloaded directly from Companies House and from\ncompanies’ corporate investor relations websites. Originally, we downloaded the first year of data from\nCompanies House (the U.K. equivalent of the SEC’s EDGAR) between July 2014 and April 2015. Because\ncompanies in Jersey, Guernsey, Ireland, and the Isle of Man are not required to file with Companies\nHouse, we obtained annual reports from these companies’ investor relations websites. Between August\n2016 and July 2017, we downloaded text-searchable pdfs for the first year of data from companies’\ninvestor relations websites to facilitate data collection. We downloaded the second year of data from\ncompanies’ investor relations websites and Companies House between June 2017 and February 2018.\nWe do not expect that the exact date of download impacts the reliability of the data because the source\nof the data is the annual report and restatements in the U.K. are very rare. The authors and 18 research\nassistants at the University of Illinois and University of Texas at Austin collected the data necessary for\nthis study. Other data was downloaded from Compustat Global on 6/7/2021, from I/B/E/S on\n9/30/2017, from FAME in August of 2016, and from Audit Analytics on 10/30/2019. Daily stock market\ndata was downloaded by RAs from Yahoo Finance and Investing.com. At the Editor’s request, we hand\ncollected data that was missing from the archival databases to increase the sample size to the extent\npossible.",
+      "description": "The datasheet describes annual-report hand collection and names Compustat Global, I/B/E/S, FAME, Audit Analytics and daily market data origins."
+    },
+    {
+      "id": "E_DATA_PACKAGE",
+      "kind": "source",
+      "file": "HST datasheet.pdf",
+      "line_begin": 73,
+      "line_end": 75,
+      "quote": "We are submitting two documents with this file. The first file is the list of registration numbers for the\nfirms in our sample (“Firm IDs.txt”). The second file is the Stata code used to prepare our data for\nanalysis (“Code.do”).",
+      "description": "The datasheet says the release includes a registration-number list and the Stata data-preparation program."
+    },
+    {
+      "id": "E_APPENDIX_TITLE",
+      "kind": "source",
+      "file": "_audit_supplements/hst-online-appendix.pdf",
+      "line_begin": 1,
+      "line_end": 5,
+      "quote": "         ONLINE APPENDIX\n\n   U.S. Auditor Materiality Decisions\n\nQualitative Survey of U.S. Audit Partners",
+      "description": "The supplied appendix identifies itself as U.S. Auditor Materiality Decisions and begins a qualitative survey of U.S. audit partners."
+    },
+    {
+      "id": "E_PACKAGED_IDS",
+      "kind": "probe",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "903d1fdd424b55bea0f4f136c321bf89ad4df37b00dde34798f231124558d06d",
+      "description": "Existing bounded package probe: FIRM_IDS.csv is readable and exposes regno; one sampled row does not establish a full analysis panel or history."
+    },
+    {
+      "id": "E_ENVIRONMENT",
+      "kind": "probe",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00",
+      "description": "Existing environment evidence records Stata 18 availability and checked Stata command locations; it is not a compatibility run of Code.do."
+    },
+    {
+      "id": "E_CATALOG",
+      "kind": "catalog",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "description": "Assigned frozen resource catalog (959 listed SAS datasets). Direct search identified the native Compustat Global annual file COMP.G_FUNDA, I/B/E/S international EPS summary file IBES.STATSUM_EPSINT, and the Audit Analytics Europe fee/company tables AUDIT.FEED71_EUROPE_AUDIT_FEE and AUDIT.FEED70_EUROPE_COMPANY_BLOCK. The search found no FAME or author-named raw-file entry; these misses do not establish unavailable data or licensing."
+    },
+    {
+      "id": "E_CATALOG_SEARCH",
+      "kind": "inspection",
+      "artifact_path": "probes/assigned_catalog_direct_search.json",
+      "sha256": "91945929a3e247beddee678d56ecc47ecf2d3106446f878eb9ba4edd240b7c83",
+      "description": "Saved read-only searches of the exact assigned catalog for each author-named product and filename, after the snapshot CLI import failure. Results include candidate IDs, labels, paths and catalog fields."
+    },
+    {
+      "id": "E_CATALOG_CLI_FAILURE",
+      "kind": "inspection",
+      "artifact_path": "probes/catalog_lookup_checks.json",
+      "sha256": "e52113a5b1ae71f7541eefdc4728429ae1f222dc427791f90f55d19b63b1432a",
+      "description": "Process-history artifact retaining all 12 failed frozen-CLI lookup commands, stdout/stderr and return codes; the failure was a missing generation-local sibling resources.py, not a data/license finding."
+    },
+    {
+      "id": "E_COMP_G_FUNDA",
+      "kind": "probe",
+      "artifact_path": "probes/comp_g_funda_probe.json",
+      "sha256": "3f22734e2054034861deec18aa4a35b3e7c18a3d611cec2d3ee51ddb57f04008",
+      "description": "Successful frozen Python metadata probe of the exact catalog-listed global annual fundamentals file; one row read, columns recorded, whole-file history/count unknown."
+    },
+    {
+      "id": "E_IBES_STATSUM_EPSINT",
+      "kind": "probe",
+      "artifact_path": "probes/ibes_statsum_epsint_probe.json",
+      "sha256": "92b92a3c525a58982936c01ad0e077581fdac2f382fdf68d0dc0f8bd29a3bd53",
+      "description": "Successful frozen Python metadata probe of the exact catalog-listed I/B/E/S international EPS summary file; one row read, columns recorded, whole-file history/count unknown."
+    },
+    {
+      "id": "E_AA_FEED71",
+      "kind": "probe",
+      "artifact_path": "probes/audit_feed71_europe_audit_fee_probe.json",
+      "sha256": "45337cbba72aaad7194913c1536e6d45e4bf2040e864b7eb2a91b43a3615e5dd",
+      "description": "Successful frozen Python metadata probe of the exact catalog-listed Audit Analytics Europe fee table; one row read, columns recorded, whole-file history/count unknown."
+    },
+    {
+      "id": "E_AA_FEED70",
+      "kind": "probe",
+      "artifact_path": "probes/audit_feed70_europe_company_block_probe.json",
+      "sha256": "7a842b4909d40e2bf820f18829e747fb73adcf85bc4f3d19b98cb83d586ca3a3",
+      "description": "Successful frozen Python metadata probe of the exact catalog-listed Audit Analytics Europe company table; one row read, columns recorded, whole-file history/count unknown."
+    },
+    {
+      "id": "E_FX_COMMENT",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 37,
+      "line_end": 44,
+      "quote": "* This dataset contains the daily currency\t* \n* exchange rates as reported to the \t\t*\n* International Monetary Fund by the \t\t*\n* issuing central bank. Included are 51 \t*\n* currencies over the period from \t\t\t*\n* 01-01-1995 to 11-04-2018. Downloaded in\t*\n* March if 2020. \t\t\t\t\t\t\t*\n*-------------------------------------------*",
+      "description": "The author comment identifies the exchange-rate file as daily rates reported to the IMF by issuing central banks and states its date range."
+    },
+    {
+      "id": "E_IMF_DAILY",
+      "kind": "public",
+      "url": "https://www.imf.org/external/np/fin/data/param_rms_mth.aspx/rms_rep.aspx",
+      "checked_at": "2026-11-10T16:49:10Z",
+      "authority": "official",
+      "quote": "These rates, normally quoted as currency units per U.S. dollar, are reported daily to the Fund by the issuing central bank.",
+      "description": "The official IMF monthly archive/query page describes daily representative rates and offers a query/save interface. This static page supports a public route candidate; it does not verify availability of all six code currencies or the exact 2012–2018 daily rows, CSV column names, quote transformations, GEL values, or early Compustat match dates. No data payload or API was requested."
+    },
+    {
+      "id": "E_SW_GZUSE",
+      "kind": "probe",
+      "artifact_path": "probes/software_gzuse.json",
+      "sha256": "e4478eedf3b3cc0e93b73f27368c7fefb7d588a356076fba01725dae4261d534",
+      "description": "The frozen Stata version/which helper reports gzuse not found in the default ado path."
+    },
+    {
+      "id": "E_SW_DROPMISS",
+      "kind": "probe",
+      "artifact_path": "probes/software_dropmiss.json",
+      "sha256": "863181788e1538fe5cd09ca0b8771b087dbc84f222ab207d29248bc1412a9389",
+      "description": "The frozen Stata version/which helper reports dropmiss not found in the default ado path."
+    },
+    {
+      "id": "E_SW_NEARMRG",
+      "kind": "probe",
+      "artifact_path": "probes/software_nearmrg.json",
+      "sha256": "3a2351940d3267f26f86119b2e2a38b28888e95c566ce616210f5c88395c9eaf",
+      "description": "The frozen Stata version/which helper reports nearmrg not found in the default ado path."
+    },
+    {
+      "id": "E_SW_WINSOR2",
+      "kind": "probe",
+      "artifact_path": "probes/software_winsor2.json",
+      "sha256": "e5c1a03c83ddefc0f3ad4af4759ef67ab88a72839b2cfa8b2f5ca966cc69ddb4",
+      "description": "The frozen Stata version/which helper reports winsor2 not found in the default ado path."
+    },
+    {
+      "id": "E_SW_CONFIGURED",
+      "kind": "probe",
+      "artifact_path": "probes/stata_configured_software.json",
+      "sha256": "f44e3203bd4a9962aa99435763f690328a5ad610299fb545e5d2cc2720457872",
+      "description": "Self-written Stata 18 version/which metadata check after the shared adopath recorded in existing environment evidence; none of the four invoked add-ons was found there. No author code/data or installer was used."
+    },
+    {
+      "id": "E_GBP_MACRO",
+      "kind": "source",
+      "file": "Code.do",
+      "line_begin": 260,
+      "line_end": 270,
+      "quote": "foreach var in medest meanest highest lowest {\n\tforeach cur in AUD EUR INR MYR RUB GBP GEL {\n\t\treplace `var' = `var'/100 if `cur' == GBP & curcode == \"GBP\"\n\t\treplace `var' = `var' * `cur'_USD_Convert if curcode == \"`cur'\"\n\t\t\n\t}\n}\n\nforeach cur in AUD EUR INR MYR RUB GBP GEL {\n\treplace value = value/100 if `cur' == GBP & curr_act == \"GBP\"\n\treplace value = value * `cur'_USD_Convert if curr_act == \"`cur'\"",
+      "description": "In the I/B/E/S currency-conversion loops, both division-by-100 conditions compare the expanded currency macro to an unquoted GBP token; the following currency-selection lines quote the macro value."
+    },
+    {
+      "id": "E_STATA_MACRO_QUOTING",
+      "kind": "public",
+      "url": "https://www.stata.com/manuals18/u.pdf",
+      "checked_at": "2026-11-10T17:09:25Z",
+      "authority": "official",
+      "quote": "no would not be a string but would be interpreted as a variable in the data.",
+      "description": "Stata 18 User's Guide section 18.3.5 demonstrates quoting local macro values in string comparisons and explains that the unquoted expanded token is interpreted as a variable. This supports quoting the loop macro in the two GBP conditions; no author code was run."
+    },
+    {
+      "id": "E_WORKFLOW_TRACE",
+      "kind": "inspection",
+      "artifact_path": "probes/workflow_trace.json",
+      "sha256": "29a07d51512d9d5fbabbbb44ef0cbe4dfd417d3b95202e8b19c480ee7197cad7",
+      "description": "Updated static ordered workflow trace records all Code.do preparation branches and the specific GBP macro comparison repair; it preserves the original trace as a separate file and records that no author code or data were run/read."
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_FAME"
+      ],
+      "evidence_ids": [
+        "E_FAME",
+        "E_CATALOG_SEARCH",
+        "E_WORKFLOW_TRACE"
+      ],
+      "description": "The supplied FAME stage reads the named raw file; it is an unresolved mandatory input because no exact package file or verified catalog route is available."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_MERGE",
+        "E_WORKFLOW_TRACE"
+      ],
+      "description": "2.1.dta is generated by the preceding hand-workbook and four-panel merge stage, then consumed by variable construction; it is not a separate external input."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_VARIABLES",
+        "E_VARIABLES_OUTPUT",
+        "E_FINAL",
+        "E_WORKFLOW_TRACE"
+      ],
+      "description": "2.2.a.dta is generated from 2.1.dta by the supplied variable-construction stage and consumed by the final filter/winsor stage; it is not a separate external input."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_HAND"
+      ],
+      "evidence_ids": [
+        "E_HAND",
+        "E_MERGE",
+        "E_WORKFLOW_TRACE"
+      ],
+      "description": "The hand-collected workbook is both the FIRM_ID.dta crosswalk source and the base of the 2.1 merge, so it is a mandatory external input."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_AA"
+      ],
+      "evidence_ids": [
+        "E_AA",
+        "E_MERGE",
+        "E_WORKFLOW_TRACE"
+      ],
+      "description": "The Audit Analytics Europe source is transformed into 1.2.T.dta and merged into the base; it is a mandatory input or compatible route within R_AA."
+    }
+  ],
+  "actions": [
+    {
+      "id": "A_INPUTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_HAND",
+        "R_CURRENCY",
+        "R_COMPUSTAT",
+        "R_FAME",
+        "R_IBES",
+        "R_AA",
+        "I_CLOSURE",
+        "I_FX_CONVENTION"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the missing author inputs or establish compatible same-product source mappings, then verify the actual fields, identifiers, units, periods and producer handoffs before a separately authorized run.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_HAND",
+        "E_FX",
+        "E_FX_FILL",
+        "E_FX_COMMENT",
+        "E_IMF_DAILY",
+        "E_COMPUSTAT",
+        "E_COMPUSTAT_OUTPUT",
+        "E_FAME",
+        "E_IBES",
+        "E_AA",
+        "E_MERGE",
+        "E_VARIABLES",
+        "E_VARIABLES_OUTPUT",
+        "E_FINAL",
+        "E_DATA_PACKAGE",
+        "E_PACKAGED_IDS",
+        "E_CATALOG",
+        "E_CATALOG_SEARCH",
+        "E_COMP_G_FUNDA",
+        "E_IBES_STATSUM_EPSINT",
+        "E_AA_FEED71",
+        "E_AA_FEED70",
+        "E_WORKFLOW_TRACE"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the named hand-collected workbook and its used sheets/headers; identify which workbook columns supply the non-vendor variables read by the downstream 2.2.a and FINAL stages. The packaged FIRM_IDS.csv probe shows only regno and Code.do does not read that list.",
+        "For currency conversion, obtain the exact author CSV or verify a compatible IMF-derived series for date and the six required currency columns; document quote direction because Code.do multiplies values ending in _USD_Convert. Verify coverage within each 30-day near-date match, the 2012 cutoff, the manually supplied GEL dates, and any pre-2012 Compustat observations used for four-year leads/lags. The official IMF archive is a public candidate, not a verified six-currency compatible route.",
+        "For Compustat Global, obtain the named gzip export or verify the local COMP.G_FUNDA candidate's full period, population and transformation compatibility. The bounded probe found the required columns, but its SEDOL column is uppercase while the supplied keep statement names lowercase sedol; specify a supported mapping before using this candidate. Preserve the datadate-year filter and four fiscal-year lead/lag construction.",
+        "For FAME, obtain the named lst2_fornick.dta input or identify an actually compatible FAME product/export with registered_number, firmtenure, non_audit_fee, audit_fee, accounts_date and ticker_symbol. The assigned catalog search found no FAME entry; this does not establish that the source or a license is unavailable.",
+        "For I/B/E/S, obtain the named EPS International summary file or verify the local IBES.STATSUM_EPSINT candidate's required period, full firm/fiscal-period population and 2013-2016 mapping. The bounded probe found the needed raw columns, and Code.do lowercases imported names, but the sample does not establish historical coverage.",
+        "For Audit Analytics, obtain the named Europe fee CSV or verify the FEED71 Europe fee table plus FEED70 company-map candidate as one route. Resolve ENTITY_MAP_FKEY-to-ISIN mapping, source-column renames, 2012-2016 coverage, population and the author's merge contract; do not treat either local table as a verified substitute on its own.",
+        "Stage compatible inputs under the exact DATA/RAW DATA names and verify bounded source headers plus the ordered generated-field/key contracts in probes/workflow_trace.json before any separately authorized execution."
+      ],
+      "validation": [
+        "Compare each acquired or mapped source's actual imported fields, record unit, identifiers, fiscal-period mapping, date coverage and units with the cited Code.do reads and joins; confirm every trace handoff from FIRM_ID.dta and 1.2.K.dta through 1.2.A.dta, 1.2.F.dta, 1.2.J.dta, 1.2.T.dta, 2.1.dta, 2.2.a.dta and FINAL.dta without executing author code during this assessment."
+      ]
+    },
+    {
+      "id": "A_ROOT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_ROOT"
+      ],
+      "kind": "source_edit",
+      "description": "Replace the author's machine-specific root with a relative root and execute from the prepared project directory that contains the DATA subdirectories.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_ROOT",
+        "E_HAND",
+        "E_MERGE"
+      ],
+      "edits": [
+        {
+          "file": "Code.do",
+          "sha256": "6a4d015cd4bb68553681d595d690a42f03820de7c6199b2d984c5d696bc3436c",
+          "line_begin": 4,
+          "line_end": 4,
+          "before": "global home_directory \"[redacted-path-1204eec0c014]\"",
+          "after": "global home_directory \".\"",
+          "reason": "The host wrapper can choose the working directory; keeping the supplied DATA-relative paths intact avoids the hard-coded author workstation path."
+        }
+      ],
+      "steps": [
+        "In a working copy, make the line 4 replacement and keep the subsequent cd and all DATA-relative paths unchanged.",
+        "On the eventual execution host, place Code.do and the staged DATA tree in a dedicated writable run root; invoke Stata batch mode with that root as the current working directory. Use a relative path or [redacted-path-e8ccba0b8ba7] path in the host wrapper, not a Dropbox workspace path."
+      ],
+      "validation": [
+        "Before an authorized run, confirm that all DATA/RAW DATA and DATA/PROC DATA locations resolve under the chosen root and that the host can read inputs and write generated intermediates there."
+      ]
+    },
+    {
+      "id": "A_APPENDIX",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_APPENDIX"
+      ],
+      "kind": "clarification",
+      "description": "Resolve whether the included U.S. Auditor Materiality Decisions appendix is intended to accompany this registered Non-GAAP paper.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DATA_TITLE",
+        "E_APPENDIX_TITLE"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the depositor to identify the appendix's intended paper/package and provide the matching appendix only if this file was included in error."
+      ],
+      "validation": [
+        "Check the confirmed appendix title/DOI against the registered header before using its material as evidence about this paper."
+      ]
+    },
+    {
+      "id": "A_GBP_MACRO",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_GBP_MACRO"
+      ],
+      "kind": "source_edit",
+      "description": "In a working copy, quote the expanded currency-loop macro in the two GBP division-by-100 conditions while preserving the original division, currency tests and multipliers.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_GBP_MACRO",
+        "E_STATA_MACRO_QUOTING",
+        "E_WORKFLOW_TRACE"
+      ],
+      "edits": [
+        {
+          "file": "Code.do",
+          "sha256": "6a4d015cd4bb68553681d595d690a42f03820de7c6199b2d984c5d696bc3436c",
+          "line_begin": 262,
+          "line_end": 262,
+          "before": "\t\treplace `var' = `var'/100 if `cur' == GBP & curcode == \"GBP\"",
+          "after": "\t\treplace `var' = `var'/100 if \"`cur'\" == \"GBP\" & curcode == \"GBP\"",
+          "reason": "The loop value is a string label; quoting its expansion makes the comparison test that label against GBP while preserving the existing GBP-only forecast scaling and all following currency-conversion logic."
+        },
+        {
+          "file": "Code.do",
+          "sha256": "6a4d015cd4bb68553681d595d690a42f03820de7c6199b2d984c5d696bc3436c",
+          "line_begin": 269,
+          "line_end": 269,
+          "before": "\treplace value = value/100 if `cur' == GBP & curr_act == \"GBP\"",
+          "after": "\treplace value = value/100 if \"`cur'\" == \"GBP\" & curr_act == \"GBP\"",
+          "reason": "The loop value is a string label; quoting its expansion preserves the existing GBP-only actual-value scaling and subsequent currency conversion."
+        }
+      ],
+      "steps": [
+        "Apply the two exact after snippets to Code.do in a working copy, preserving tabs, surrounding loop structure, the divide-by-100 operations, and the following USD-conversion lines."
+      ],
+      "validation": [
+        "Statically compare both edited conditions with the adjacent quoted currency comparisons; after any separately authorized run, verify the affected I/B/E/S GBP values retain the author's documented input units before USD conversion."
+      ]
+    },
+    {
+      "id": "A_SOFTWARE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "S_GZUSE",
+        "S_DROPMISS",
+        "S_NEARMRG",
+        "S_WINSOR2"
+      ],
+      "kind": "software_setup",
+      "description": "Configure compatible Stata 18 ado support for all four commands invoked by Code.do; Stata itself is available, but the commands were not found in either checked ado path.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_SW_GZUSE",
+        "E_SW_DROPMISS",
+        "E_SW_NEARMRG",
+        "E_SW_WINSOR2",
+        "E_SW_CONFIGURED",
+        "E_ENVIRONMENT"
+      ],
+      "edits": [],
+      "steps": [
+        "Before a separately authorized run, identify and configure the compatible source/release and ado path for gzuse, dropmiss, nearmrg and winsor2. Preserve the Code.do calls, including nearmrg's nearvar(), genmatch() and limit(30) options, rather than substituting commands or changing the analysis.",
+        "Record the command versions and any required dependencies in the run environment; do not install or download packages as part of this assessment."
+      ],
+      "validation": [
+        "On the eventual Stata 18 execution host, use read-only which/help checks for each exact invoked command and confirm the documented call options before any separately authorized full workflow run."
+      ]
+    },
+    {
+      "id": "A_ORDER",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_CLOSURE"
+      ],
+      "kind": "run_procedure",
+      "description": "Follow the supplied Code.do order and named producer-consumer chain through FINAL.dta after the raw-input, software and working-root preparation is complete.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_WORKFLOW_TRACE",
+        "E_ROOT",
+        "E_HAND",
+        "E_FX",
+        "E_COMPUSTAT",
+        "E_FAME",
+        "E_IBES",
+        "E_AA",
+        "E_MERGE",
+        "E_VARIABLES",
+        "E_VARIABLES_OUTPUT",
+        "E_FINAL"
+      ],
+      "edits": [],
+      "steps": [
+        "Use a dedicated writable working root containing Code.do and DATA/RAW DATA plus DATA/PROC DATA; create those directories during setup because the supplied script does not create them. Set home_directory to '.' in the working copy and start batch Stata from that root.",
+        "Import HAND_COLLECTED_DATA.xlsx and create DATA/PROC DATA/FIRM_ID.dta; import the currency CSV and create 1.2.K.dta. The currency panel feeds the subsequent Compustat, FAME and I/B/E/S stages.",
+        "Run the supplied Compustat Global stage with FIRM_ID.dta and 1.2.K.dta to produce 1.2.A.dta; then the FAME stage with FIRM_ID.dta and 1.2.K.dta to produce 1.2.F.dta; the I/B/E/S stage with FIRM_ID.dta and 1.2.K.dta to produce 1.2.J.dta; and the Audit Analytics stage with FIRM_ID.dta to produce 1.2.T.dta.",
+        "Import the hand-collected workbook as the 2.1 base. Merge 1.2.A.dta by gvkey/fyear, 1.2.T.dta by isin/fyear/audit_firm_hand, 1.2.F.dta by regno/fyear with update, then 1.2.J.dta by sedol2/fyear; save 2.1.dta.",
+        "Consume 2.1.dta in the variable-construction stage, including its gvkey/fyear panel, and save 2.2.a.dta. Consume 2.2.a.dta in the final stage, apply the supplied winsor2 and dropmiss calls, and save FINAL.dta.",
+        "Keep all named inputs and branches in this order. The trace records these intermediate files as generated dependencies, not as separate external-data requirements; their schemas and upstream compatibility are still subject to the unresolved input checks."
+      ],
+      "validation": [
+        "Before a separately authorized execution, verify each staged directory is visible and writable and each preceding output has the expected name, key fields and source-to-consumer mappings in probes/workflow_trace.json; no stage was executed in this assessment."
+      ]
+    }
+  ],
+  "review_notes": [
+    "This target covers the supplied Code.do data-preparation stages through FINAL.dta. No separate estimation or table-producing program is supplied; this is not a claim of paper-wide result reproduction.",
+    "The packaged FIRM_IDS.csv is an identifier list with a bounded one-row probe exposing regno only, and Code.do does not read it; it is not a compatible analysis panel.",
+    "The supplied online appendix identifies itself as U.S. Auditor Materiality Decisions while the frozen title/datasheet identify Audit Implications of Non-GAAP Reporting. The attribution issue is retained; frozen metadata and the as-downloaded Code.do workflow remain unchanged, and the appendix is not treated as a workflow input.",
+    "Assessment was static. No author code, estimator, SAS startup, data payload, or synthetic/descriptive trial was run. E_CATALOG_CLI_FAILURE is retained only as process history and is intentionally absent from every evidence_ids list; its missing snapshot sibling resources.py is not a data or access finding.",
+    "Local Compustat Global, I/B/E/S and paired Audit Analytics Europe records and the official IMF archive are candidates with specific unresolved source-field, period, population, construction or coverage contracts. The FAME catalog miss and bounded one-row probes do not establish availability or completeness."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "1d34054a1768fb61dc0413833425d5a439aea9aa16921ca875e1dbde5fe89950",
+    "applied": false
+  }
+}

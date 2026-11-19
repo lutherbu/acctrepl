@@ -1,0 +1,350 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Discretionary-accruals models and audit qualifications",
+  "doi": "10.1016/s0165-4101(01)00015-5",
+  "route": "reconstruction",
+  "paper_id": "W3121620818",
+  "years": 5,
+  "sources_checked": [
+    "Resolved assigned catalog record: output/feasibility_reproduction/resources/catalog.json (work_item.catalog_path after project relocation), generated 2026-10-27; checked dataset paths, row counts, field names, types, and source metadata for all six declared inputs.",
+    "COMP.FUNDA — ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; 941,340 rows, file metadata last modified 2026-07-22; checked GVKEY, DATADATE, FYEAR and INDL/STD/C/D filters. Filtered rows include FY1998 12,554; FY1999 12,531; FY2000 12,093; FY2001 11,584; FY2002 11,253. FY2002 DATADATE spans 2002-06-30 to 2003-05-31. No added-window GVKEY-FYEAR duplicates.",
+    "COMP.SEC_MTH — ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mth.sas7bdat; 8,453,514 rows, file metadata last modified 2026-08-14; checked GVKEY/IID/DATADATE/PRIMISS; available dates span 1998-01-31 to 2003-12-31 and added-window GVKEY-IID-DATADATE keys are unique.",
+    "COMP.SEC_MTHPRC — ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat; 8,285,814 rows, file metadata last modified 2026-08-14; checked GVKEY/IID/DATADATE/CURCDM/PRCCM; available dates span 1998-01-31 to 2003-12-31 and added-window GVKEY-IID-DATADATE keys are unique.",
+    "COMP.G_EXRT_DLY — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat; 2,221,564 rows, file metadata last modified 2026-08-14; checked FROMCURD/TOCURD/DATADATE/EXRATD. The bounded GBP bridge scan found 369,497 positive daily quote rows across 1998-2003 and no duplicate DATADATE-TOCURD keys.",
+    "CRSP.CCMXPF_LINKTABLE — ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat; 92,711 rows, file metadata last modified 2026-08-14; checked LINKPRIM/LINKTYPE/LPERMNO/LINKDT/LINKENDDT. The source has 11,922 eligible P/C, LC/LU/LS, positive-PERMNO links overlapping 1998-2002.",
+    "CRSP.DSENAMES — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat; 117,859 rows, file metadata last modified 2025-12-06; checked PERMNO/NAMEDT/NAMEENDT/SICCD. 24,242 dated rows overlap the 1998-2002 event window under the expanded 2003-05-31 input bound; 24,227 have a valid SICCD."
+  ],
+  "changes": [
+    "Extended the event-year fiscal label from 1980-1997 through 1980-2002 and the event population, first-qualified case selection, and cross-sectional Jones support through FY2002. Retained the 1971 start of historical accrual support and all original matching, common-sample, winsorization, and logit rules.",
+    "Widened the SEC_MTH, SEC_MTHPRC, GBP daily FX, and DSENAMES date filters through 2003-05-31, the maximum DATADATE observed among filtered FY2002 Compustat rows. This accommodates fiscal-label/reporting-date differences; the fit clock remains FYEAR and no event year after 2002 enters the sample.",
+    "Added active-fit Stata e(sample) counts for FY1980-1997 and FY1998-2002, computed the last added fiscal year during each fit, and saved one fresh aggregate esttab CSV per Table 7 model under work/artifacts/. The estimator and model terms were unchanged.",
+    "The pooled handoff contains 481 matched pairs (962 firm-event observations): 475 pairs/950 observations from FY1980-1997 plus 6 pairs/12 observations from FY1998-2002. The added pairs occur in FY1998, FY2000, FY2001, and FY2002; the last contributing year is FY2002."
+  ],
+  "limitations": [
+    "Exact source match ordering, control replacement/ties, and historical Big Six crosswalk are not fully specified; the accepted construction uses disclosed deterministic rules.",
+    "Published Table 1 Big Six counts conflict (151/22 in the table versus 152/21 in the surrounding text); the construction does not force either split.",
+    "Table 3 cites income item 18 but labels it “income from operations,” while Table 7 says “income from continuing operations”; IB is used from the provider item-18 crosswalk.",
+    "Local Compustat and matched event-year currency conversion may differ from the authors’ vintage and sample; unavailable issue/date prices or FX rates remain missing.",
+    "CRSP SIC fallback is best-effort and is used only when FUNDA.SICH is missing; source overlaps contain both agreement and disagreement, so Compustat SICH is retained wherever available.",
+    "Price quote currency is directly observed only when the exact dated HIID issue price agrees with annual PRCC_F; FUNDA.CURCD is an explicitly inferred proxy for remaining price rows.",
+    "The source gives one Table 7 count (173 qualified and 173 unqualified) but not the exact joint missing-data or control-eligibility algorithm. The predecessor A2 common pre-match complete-data screen produced 475 pairs (475 per side; 950 rows), versus the published 173 per side. This replay yields 481 pairs; the source-vintage and sample-selection gap remains unexplained.",
+    "The five-year extension adds only 6 matched pairs (12 firm-event observations), in FY1998 and FY2000-2002; no added matched pair contributes in FY1999. The small added sample limits the weight of later years in the pooled fits.",
+    "SAS emitted narrow-variable-range and potentially inaccurate R-square warnings in some supporting PROC REG fits. The accepted full-rank and eight-prior-year screens remained in force; the final four logits completed, but the supporting-regression numerical warnings were not resolved.",
+    "The Stata template reports two-sided coefficient p-values, while Table 7 describes one-tailed slope probabilities; displayed p-values and stars therefore retain the predecessor’s convention difference."
+  ],
+  "analyses": [
+    {
+      "scope_id": "t7_ts_jones / t7_ts_jones_table7",
+      "key": "s1",
+      "label": "Table 7 Time-Series Jones Model",
+      "sample_ids": [
+        "qualified_audit173"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh native Table 7 logit verified on the pooled FY1980-FY2002 matched event-year sample. The active Stata estimation sample includes 950 observations in FY1980-FY1997 and 12 observations in FY1998-FY2002; its last added period is FY2002. The 962 observations form 481 matched pairs.",
+      "source_evidence": [
+        "work/work_item.json: model t7_ts_jones, result set t7_ts_jones_table7, sample qualified_audit173; Table 7 physical p. 21 (continued on p. 22), event years 1980-1997; the paper reports 173 qualified and 173 clean controls but no combined fit N.",
+        "work/design.md: cited article physical pp. 6-8 (Jones/Modified Jones equations and eight prior years), pp. 11-12 (first qualified opinions and matching), and pp. 20-22 (Table 7 logit and winsorization).",
+        "work/build.sas: lines 22-23 (Compustat support window), 73 (dated names bound), 198-202 and 229 (dated security rows and event-year join), 277 (FX bound), 373-380 (first qualified event selection), 389-430 (eight-year TS and year/SIC2 CS estimates), 816 and 869-870 (FYEAR retained through SAS handoff).",
+        "work/stata.ipynb cell table7_ts_jones: accepted unweighted logit and e(sample)-based counts; work/runtime/20261118T081944086007Z/cell_table7_ts_jones.log contains the native standalone marker EXT_SAMPLE s1 950 12 2002.",
+        "Original saved A2 result: output/reproductions/packages/W3121620818/attempt_02/table7_ts_jones.csv; current aggregate result: work/artifacts/s1.csv."
+      ],
+      "original_begin": "1980",
+      "original_end": "1997",
+      "requested_end": "2002",
+      "supported_end": "2002",
+      "last_added": "2002",
+      "count_unit": "Matched event-year firm observations: one qualified case or one matched clean control per row; firms may recur in different event years.",
+      "original_n": 950,
+      "added_n": 12,
+      "artifacts": [
+        "results/artifacts/s1.csv"
+      ],
+      "comparison": {
+        "measure": "Unstandardized log-odds coefficient on the model-specific absolute discretionary-accrual measure abs(DA), per one-unit increase; p-values follow the two-sided Stata table template.",
+        "original": {
+          "coefficient": 0.912,
+          "p_display": "0.200",
+          "odds_ratio": 2.489,
+          "observations": 950,
+          "location": "output/reproductions/packages/W3121620818/attempt_02/tables/table7_ts_jones.csv"
+        },
+        "extended": {
+          "coefficient": 1.09,
+          "p_display": "0.124",
+          "odds_ratio": 2.975,
+          "observations": 962,
+          "location": "work/artifacts/s1.csv"
+        },
+        "precision": "Coefficients and p-values shown at the original table export precision (three decimals); odds ratios are from the saved aggregate table.",
+        "coefficient_difference_extended_minus_original": 0.178
+      },
+      "native_evidence": {
+        "path": "urn:sha256:8464dd80432c454b6ad162eb7b0f4c776f42654afaed7efce673ccfaff78641b",
+        "sha256": "8464dd80432c454b6ad162eb7b0f4c776f42654afaed7efce673ccfaff78641b",
+        "marker": "EXT_SAMPLE s1 950 12 2002"
+      }
+    },
+    {
+      "scope_id": "t7_ts_modified_jones / t7_ts_modified_jones_table7",
+      "key": "s2",
+      "label": "Table 7 Time-Series Modified Jones Model",
+      "sample_ids": [
+        "qualified_audit173"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh native Table 7 logit verified on the pooled FY1980-FY2002 matched event-year sample. The active Stata estimation sample includes 950 observations in FY1980-FY1997 and 12 observations in FY1998-FY2002; its last added period is FY2002. The 962 observations form 481 matched pairs.",
+      "source_evidence": [
+        "work/work_item.json: model t7_ts_modified_jones, result set t7_ts_modified_jones_table7, sample qualified_audit173; Table 7 physical p. 21 (continued on p. 22), event years 1980-1997; the paper reports 173 qualified and 173 clean controls but no combined fit N.",
+        "work/design.md: cited article physical pp. 6-8 (Jones/Modified Jones equations and eight prior years), pp. 11-12 (first qualified opinions and matching), and pp. 20-22 (Table 7 logit and winsorization).",
+        "work/build.sas: lines 22-23 (Compustat support window), 73 (dated names bound), 198-202 and 229 (dated security rows and event-year join), 277 (FX bound), 373-380 (first qualified event selection), 389-430 (eight-year TS and year/SIC2 CS estimates), 816 and 869-870 (FYEAR retained through SAS handoff).",
+        "work/stata.ipynb cell table7_ts_modified_jones: accepted unweighted logit and e(sample)-based counts; work/runtime/20261118T081944086007Z/cell_table7_ts_modified_jones.log contains the native standalone marker EXT_SAMPLE s2 950 12 2002.",
+        "Original saved A2 result: output/reproductions/packages/W3121620818/attempt_02/table7_ts_modified_jones.csv; current aggregate result: work/artifacts/s2.csv."
+      ],
+      "original_begin": "1980",
+      "original_end": "1997",
+      "requested_end": "2002",
+      "supported_end": "2002",
+      "last_added": "2002",
+      "count_unit": "Matched event-year firm observations: one qualified case or one matched clean control per row; firms may recur in different event years.",
+      "original_n": 950,
+      "added_n": 12,
+      "artifacts": [
+        "results/artifacts/s2.csv"
+      ],
+      "comparison": {
+        "measure": "Unstandardized log-odds coefficient on the model-specific absolute discretionary-accrual measure abs(DA), per one-unit increase; p-values follow the two-sided Stata table template.",
+        "original": {
+          "coefficient": 1.051,
+          "p_display": "0.128",
+          "odds_ratio": 2.859,
+          "observations": 950,
+          "location": "output/reproductions/packages/W3121620818/attempt_02/tables/table7_ts_modified_jones.csv"
+        },
+        "extended": {
+          "coefficient": 1.194,
+          "p_display": "0.083",
+          "odds_ratio": 3.299,
+          "observations": 962,
+          "location": "work/artifacts/s2.csv"
+        },
+        "precision": "Coefficients and p-values shown at the original table export precision (three decimals); odds ratios are from the saved aggregate table.",
+        "coefficient_difference_extended_minus_original": 0.143
+      },
+      "native_evidence": {
+        "path": "urn:sha256:cd74ce1d0d89b541f5a76f3cafcc467b8117283573aa94913d04ccbb89cef9e3",
+        "sha256": "cd74ce1d0d89b541f5a76f3cafcc467b8117283573aa94913d04ccbb89cef9e3",
+        "marker": "EXT_SAMPLE s2 950 12 2002"
+      }
+    },
+    {
+      "scope_id": "t7_cs_jones / t7_cs_jones_table7",
+      "key": "s3",
+      "label": "Table 7 Cross-Sectional Jones Model",
+      "sample_ids": [
+        "qualified_audit173"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh native Table 7 logit verified on the pooled FY1980-FY2002 matched event-year sample. The active Stata estimation sample includes 950 observations in FY1980-FY1997 and 12 observations in FY1998-FY2002; its last added period is FY2002. The 962 observations form 481 matched pairs.",
+      "source_evidence": [
+        "work/work_item.json: model t7_cs_jones, result set t7_cs_jones_table7, sample qualified_audit173; Table 7 physical p. 21 (continued on p. 22), event years 1980-1997; the paper reports 173 qualified and 173 clean controls but no combined fit N.",
+        "work/design.md: cited article physical pp. 6-8 (Jones/Modified Jones equations and eight prior years), pp. 11-12 (first qualified opinions and matching), and pp. 20-22 (Table 7 logit and winsorization).",
+        "work/build.sas: lines 22-23 (Compustat support window), 73 (dated names bound), 198-202 and 229 (dated security rows and event-year join), 277 (FX bound), 373-380 (first qualified event selection), 389-430 (eight-year TS and year/SIC2 CS estimates), 816 and 869-870 (FYEAR retained through SAS handoff).",
+        "work/stata.ipynb cell table7_cs_jones: accepted unweighted logit and e(sample)-based counts; work/runtime/20261118T081944086007Z/cell_table7_cs_jones.log contains the native standalone marker EXT_SAMPLE s3 950 12 2002.",
+        "Original saved A2 result: output/reproductions/packages/W3121620818/attempt_02/table7_cs_jones.csv; current aggregate result: work/artifacts/s3.csv."
+      ],
+      "original_begin": "1980",
+      "original_end": "1997",
+      "requested_end": "2002",
+      "supported_end": "2002",
+      "last_added": "2002",
+      "count_unit": "Matched event-year firm observations: one qualified case or one matched clean control per row; firms may recur in different event years.",
+      "original_n": 950,
+      "added_n": 12,
+      "artifacts": [
+        "results/artifacts/s3.csv"
+      ],
+      "comparison": {
+        "measure": "Unstandardized log-odds coefficient on the model-specific absolute discretionary-accrual measure abs(DA), per one-unit increase; p-values follow the two-sided Stata table template.",
+        "original": {
+          "coefficient": 3.705,
+          "p_display": "0.001",
+          "odds_ratio": 40.64,
+          "observations": 950,
+          "location": "output/reproductions/packages/W3121620818/attempt_02/tables/table7_cs_jones.csv"
+        },
+        "extended": {
+          "coefficient": 3.207,
+          "p_display": "0.001",
+          "odds_ratio": 24.71,
+          "observations": 962,
+          "location": "work/artifacts/s3.csv"
+        },
+        "precision": "Coefficients and p-values shown at the original table export precision (three decimals); odds ratios are from the saved aggregate table.",
+        "coefficient_difference_extended_minus_original": -0.498
+      },
+      "native_evidence": {
+        "path": "urn:sha256:57e5e4ecf9901a86130491cb7656e2f3f1e192afd1a272a635d23af2772c617e",
+        "sha256": "57e5e4ecf9901a86130491cb7656e2f3f1e192afd1a272a635d23af2772c617e",
+        "marker": "EXT_SAMPLE s3 950 12 2002"
+      }
+    },
+    {
+      "scope_id": "t7_cs_modified_jones / t7_cs_modified_jones_table7",
+      "key": "s4",
+      "label": "Table 7 Cross-Sectional Modified Jones Model",
+      "sample_ids": [
+        "qualified_audit173"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh native Table 7 logit verified on the pooled FY1980-FY2002 matched event-year sample. The active Stata estimation sample includes 950 observations in FY1980-FY1997 and 12 observations in FY1998-FY2002; its last added period is FY2002. The 962 observations form 481 matched pairs.",
+      "source_evidence": [
+        "work/work_item.json: model t7_cs_modified_jones, result set t7_cs_modified_jones_table7, sample qualified_audit173; Table 7 physical p. 21 (continued on p. 22), event years 1980-1997; the paper reports 173 qualified and 173 clean controls but no combined fit N.",
+        "work/design.md: cited article physical pp. 6-8 (Jones/Modified Jones equations and eight prior years), pp. 11-12 (first qualified opinions and matching), and pp. 20-22 (Table 7 logit and winsorization).",
+        "work/build.sas: lines 22-23 (Compustat support window), 73 (dated names bound), 198-202 and 229 (dated security rows and event-year join), 277 (FX bound), 373-380 (first qualified event selection), 389-430 (eight-year TS and year/SIC2 CS estimates), 816 and 869-870 (FYEAR retained through SAS handoff).",
+        "work/stata.ipynb cell table7_cs_modified_jones: accepted unweighted logit and e(sample)-based counts; work/runtime/20261118T081944086007Z/cell_table7_cs_modified_jones.log contains the native standalone marker EXT_SAMPLE s4 950 12 2002.",
+        "Original saved A2 result: output/reproductions/packages/W3121620818/attempt_02/table7_cs_modified_jones.csv; current aggregate result: work/artifacts/s4.csv."
+      ],
+      "original_begin": "1980",
+      "original_end": "1997",
+      "requested_end": "2002",
+      "supported_end": "2002",
+      "last_added": "2002",
+      "count_unit": "Matched event-year firm observations: one qualified case or one matched clean control per row; firms may recur in different event years.",
+      "original_n": 950,
+      "added_n": 12,
+      "artifacts": [
+        "results/artifacts/s4.csv"
+      ],
+      "comparison": {
+        "measure": "Unstandardized log-odds coefficient on the model-specific absolute discretionary-accrual measure abs(DA), per one-unit increase; p-values follow the two-sided Stata table template.",
+        "original": {
+          "coefficient": 3.718,
+          "p_display": "0.000",
+          "odds_ratio": 41.2,
+          "observations": 950,
+          "location": "output/reproductions/packages/W3121620818/attempt_02/tables/table7_cs_modified_jones.csv"
+        },
+        "extended": {
+          "coefficient": 3.25,
+          "p_display": "0.001",
+          "odds_ratio": 25.8,
+          "observations": 962,
+          "location": "work/artifacts/s4.csv"
+        },
+        "precision": "Coefficients and p-values shown at the original table export precision (three decimals); odds ratios are from the saved aggregate table.",
+        "coefficient_difference_extended_minus_original": -0.468
+      },
+      "native_evidence": {
+        "path": "urn:sha256:0b204cc692256449f74dd38378a56e9fdcfdc2f0428a2e671f07105b47cc11f3",
+        "sha256": "0b204cc692256449f74dd38378a56e9fdcfdc2f0428a2e671f07105b47cc11f3",
+        "marker": "EXT_SAMPLE s4 950 12 2002"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 4
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1edb1-1784-7e50-aa28-6b91398ebcac",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3121620818.json",
+    "models": "output/models/records/W3121620818.json",
+    "predecessor": "output/reproductions/packages/W3121620818/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3121620818.json"
+  },
+  "input_hashes": {
+    "sample": "b807018418061e9e4a929f3b0fbc5de8437a65158385fdb9004d677fedb11c07",
+    "models": "8703c7a6a8fbf54082cb79af5530891ad8575a8f5f1e2faf5301e52c167c5fc8",
+    "predecessor": "e49328d82dc272b0a642d56b5ba89909d7d4cfb9baa51b9a7efdd30a58f94d72",
+    "feasibility": "202fc4d4f19da3e628b4896185a5a23af06f1cbf6eed93ff121d3dd5d4370fe9"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:567e8b5c556a290b1d41467fb2bb4f2aaa7148e95b3a2ea063d9e81c84c506c9",
+    "sha256": "567e8b5c556a290b1d41467fb2bb4f2aaa7148e95b3a2ea063d9e81c84c506c9",
+    "ok": true,
+    "state_sha256": "d625cc50a0c479a07828aa7587af5c591073c6823b688d994320a66818483a9a",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.SEC_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mth.sas7bdat",
+        "bytes": 678297600,
+        "mtime_ns": 1786704748974369987
+      },
+      {
+        "dataset": "COMP.SEC_MTHPRC",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat",
+        "bytes": 598212608,
+        "mtime_ns": 1786704756970478757
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.DSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764950802100128761
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "95e70dd36a1d6d2e602c391288d8299cd154d2519c8c3b9a8d9acff1c02537d8",
+      "work/stata.ipynb": "7f0f7e42337f674cbb757256497d43e46af51c5c6593d64d1c4d102d04385f7c",
+      "work/submission.json": "594829795a63130b7896b7ba39979bce97475bf0916e37eab94d4e0e2b797ff3"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "8b355dc0a728486fa720f8e0b7e569619cb9075fdd093efa3b14d44a76404dd7",
+      "predecessor": "output/reproductions/packages/W3121620818/attempt_02/build.sas",
+      "predecessor_sha256": "fbc72d1888aba8356428e5f4661208d19650b14517fb0d6e67da0a6acca0f401",
+      "executed_sha256": "95e70dd36a1d6d2e602c391288d8299cd154d2519c8c3b9a8d9acff1c02537d8",
+      "historical_predecessor_sha256": "4844749ae1f5c1e2692c81c76beaf4edda8b46bbb91296300392c85d8c0da007"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "c2c77444934c041dfad9b0749a85ac5c127b26c22bfa632fa58830b7e2912c1a",
+      "predecessor": "output/reproductions/packages/W3121620818/attempt_02/stata.ipynb",
+      "predecessor_sha256": "59cead037a32df4f02b79e77a1ce389d7241c60b91a25f9ad3130fcc51a91535",
+      "executed_sha256": "7f0f7e42337f674cbb757256497d43e46af51c5c6593d64d1c4d102d04385f7c",
+      "historical_predecessor_sha256": "48df52f9caf54d261523a835e92f4bc5e111ecfa9773976d7337fa4c4e19dc02"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "83bec599db34a426ecfcd1e276bf1ec2bcac87ff5292ad1cd5b6a87421652b27",
+    "predecessor": "6f4824421e8ee281102b1d33505a2bef65729a2a241df5a3a5d720cf7183f0f7",
+    "feasibility": "45188d6d7363e64d9d28c94f2e85730f4ec1ca6fcb79508c3ba7af33836a58f9"
+  }
+}

@@ -1,0 +1,546 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Earnings Management: New Evidence Based on Deferred Tax Expense",
+  "doi": "10.2308/accr.2003.78.2.491",
+  "route": "reconstruction",
+  "paper_id": "W3124907716",
+  "years": 5,
+  "sources_checked": [
+    "COMP.FUNDA — ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; local mtime 2026-07-22 UTC; pyreadstat header 941,340 rows × 949 columns. A selected-column scan under the accepted USA/INDL/C/D/STD/SICH screens found 104,770 rows across FY1992–2006, including 5,804 in FY2005 and 5,537 in FY2006, with zero duplicate GVKEY–fyear keys. The native SAS listing independently reports each screened fiscal year and datadate ranges through 31 May 2007.",
+    "IBES.STATSUM_EPSUS — ${ACCTREPL_SAS_ROOT}/ibes/statsum_epsus.sas7bdat; local mtime 2026-07-25 UTC; 15,029,492 rows × 26 columns. A selected-column scan using the accepted annual EPS, USD, primary-estimate, and pre-announcement screen found eligible rows in every FPEDATS year 1992–2006 (50,193 in FY2005; 51,741 in FY2006); the native linked forecast table has 3,059 unique Compustat matches in FY2005 and 2,706 in FY2006.",
+    "WRDSAPPS.IBCRSPHIST — ${ACCTREPL_SAS_ROOT}/wrdsapps/linking/iclink/ibcrsphist.sas7bdat; local mtime 2026-08-15 UTC; 37,662 rows × 6 columns. A selected-field date-overlap check found 13,539 link rows overlapping 2001–2005; the accepted construction applies ticker and effective-date matching.",
+    "CRSP.CCMXPF_LINKTABLE — ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat; local mtime 2026-08-14 UTC; 92,711 rows × 9 columns. A selected-field check found 9,764 LC/LU, P/C link rows with effective dates overlapping 2001–2005; the native construction applies the accepted FPEDATS-date join.",
+    "COMP.G_EXRT_DLY — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat; local mtime 2026-08-14 UTC; 2,221,564 rows × 5 columns. Selected-field coverage has daily records and positive GBP-origin quotes through 31 Dec 2006, beyond the last required source date.",
+    "COMP.G_EXRT_MTH — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat; local mtime 2026-08-14 UTC; 75,838 rows × 22 columns. Selected-field coverage has positive GBP-origin quotes for all 12 months of each calendar year 1992–2006, beyond the last required source date.",
+    "COMP.SEC_MTH — ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mth.sas7bdat; local mtime 2026-08-14 UTC; 8,453,514 rows × 10 columns. Selected-field data run from 31 Jan 1992 through 31 Dec 2006; 194,625 dated P markers occur in calendar 2005.",
+    "COMP.SEC_MTHPRC — ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat; local mtime 2026-08-14 UTC; 8,285,814 rows × 10 columns. Selected-field data run from 31 Jan 1992 through 31 Dec 2006; calendar 2005 has 204,173 rows with nonmissing PRCCM and CURCDM.",
+    "COMP.SEC_DPRC — ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_dprc.sas7bdat; local mtime 2026-08-14 UTC; readable metadata reports 160,330,937 rows × 17 columns. I did not scan this 20.6 GB file globally. The sole native build used the accepted GVKEY-indexed fallback for unresolved HIID price keys with dates bounded through 31 Dec 2005 and reported route counts by fiscal year; FY2004 had 5,391 verified monthly routes, zero accepted daily routes, and 622 unresolved keys. No broader coverage claim is made.",
+    "CRSP.DSI — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat; local mtime 2025-12-05 UTC; 26,051 rows × 11 columns. Selected date coverage is 2 Jan 1992–29 Dec 2006, including 252 exchange-session dates in 2005."
+  ],
+  "changes": [
+    "Pooled Tables 2 and 3 over FY1994–2005 (original FY1994–2000 plus FY2001–2005). Pooled Table 4 over FY1994–2004 (original FY1994–1999 plus FY2000–2004), retaining the accepted one-year future-sales lead. The paper's general sample description is 1994–2000; the accepted Table 4 code's narrower fit window controls those rows.",
+    "Extended the accepted source bounds to match the pooled windows: Compustat FY1992–2006; historical price keys FY1993–2004 and monthly/daily price dates through 31 Dec 2005; exchange rates and IBES fiscal-period years through 2006. The accepted GVKEY/fiscal-year uniqueness assertion passed on the extended Compustat screen.",
+    "Kept the source construction and estimators, including currency handling, lag/lead rules, target screens, calibration fits, and probit terms. Added aggregate coverage summaries and active e(sample) counts on the retained numeric fyear field. A final added esttab artifact export was placed after est clear; this caused each selected Stata cell to end with r(111), despite its probit, counts, and four standard aggregate exports having completed."
+  ],
+  "limitations": [
+    "The one controller launch produced a successful SAS build and handoff, but all eight eligible Stata cells are marked unsuccessful: each printed its EXT_SAMPLE counts and wrote the standard result files, then the added artifact export after est clear failed with r(111), ‘estimation result m1 not found.’ The receipt has no successful-cell proofs. In keeping with the single-launch instruction, no retry was made; none of these scopes receives extension credit or a report artifact. Counts and coefficients in each row's reason/comparison are diagnostic-only outputs from the failed cell.",
+    "Table 2 target 2 remains prior_unexecuted because the assigned predecessor has no valid estimate: its corrected handoff ran (3,144 rows; 3,128 after perfect-prediction deletions), but Stata failed to converge after 300 iterations (r(430)); SIC2 14/45/75 lost 1/11/4 rows, and Stata reported 48 failures and 41 successes completely determined. No valid exports were retained and the task assigns no eligible cell for replay.",
+    "Table 4's paper-wide sample description says 1994–2000, but the accepted FL construction and handoff end at FY1999 because the model uses next-year sales. The replay preserves the accepted Table 4 endpoint and adds FY2000–2004; this differs from the requested 2005 endpoint for Tables 2 and 3 by design.",
+    "Current local data files are later vintages than the study's 1990s source data. The provider guide supports the legacy Compustat item crosswalk, but current-vintage equivalence to the paper's vendor snapshot, IBES historical links, and exact forecast-period conventions is not established. No unavailable component was imputed.",
+    "The paper's IBES stock-split adjustment-factor-above-3 screen is unavailable in the selected summary/detail files and was not substituted from another field. Ticker/PERMNO/GVKEY matching, unique-link exclusions, and the 62-day IBES-to-Compustat date tolerance remain documented best-effort construction choices.",
+    "The accepted construction follows the explicit p.504 DTE percentile narrative and leaves unresolved the Table 1 p.511 note that also describes percentile trimming on accrual measures; the target-specific DTE percentile population is also not specified by the paper. It follows the primary-table t−1 market-equity note for EM1 despite Table 1's t−2 definition.",
+    "The paper does not specify a probit covariance estimator; Stata's model-based covariance remains in use. The paper's narrative calls p-values one-tailed while Table 2 labels them ‘Prob > chi-square’; the accepted two-sided export convention is retained.",
+    "The source/sample-size records and predecessor exports are not fully aligned: the assigned sample record reports 4,139 for the Table 2 main sample while the predecessor Table2_T1 export reports 4,995 observations; the accepted design also records a Table 4 analyst-sample count discrepancy. No screens were changed to force agreement. In FY2004 price-key support, 622 historical price currencies remained unresolved after accepted verification rules and therefore stay missing."
+  ],
+  "analyses": [
+    {
+      "scope_id": "tacc_t1 / table_2_t1",
+      "key": "s1",
+      "label": "tacc_t1 / table_2_t1",
+      "sample_ids": [
+        "earnings_decline_probit"
+      ],
+      "status": "failed",
+      "reason": "The probit completed on firm-year e(sample) over pooled FY1994–2000 plus FY2001–2005; the private native log records EXT_SAMPLE s1 4993 2192 2005. The four standard aggregate table exports were written to work/tables/table2_t1.csv (and the other template formats). The added artifact esttab call then ran after est clear and failed r(111), ‘estimation result m1 not found’; the controller records table2_t1 as ok=false and supplied no successful-cell proof. Disposition is failed, with no extension credit or report artifact. The counts and coefficient comparison are diagnostic-only outputs; no second native launch was made.",
+      "source_evidence": [
+        "Paper sample/table evidence: printed pp.504, 513–515; output/samples/records/W3124907716.json#samples[earnings_decline_probit] (p.14 period 1994–2000).",
+        "Accepted/extended model mapping: work/build.sas:764,830,955; work/stata.ipynb#table2_t1; target window and model are shown in the named notebook cell. For Table 4, the accepted predecessor build lines 837, 868, 925 set FY1994–1999; the extended code keeps the lead and adds FY2000–2004.",
+        "work/runtime/20261118T101532274233Z/cell_table2_t1.log: line with EXT_SAMPLE s1 4993 2192 2005; lines after the standard exports report ‘estimation result m1 not found’ and r(111). Fresh aggregate table: work/tables/table2_t1.csv; work/runtime/latest.json#cells.table2_t1 has ok=false; receipt.json has proofs=[]."
+      ],
+      "original_begin": "1994",
+      "original_end": "2000",
+      "requested_end": "2005",
+      "supported_end": "2005",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Focal DTE probit coefficient (unstandardized beta per 1.0 increase in DTE=TXDI/AT_(t-1)): predecessor 3.718** in output/reproductions/packages/W3124907716/attempt_05/tables/table2_t1.csv; pooled diagnostic output 4.726*** in work/tables/table2_t1.csv. The pooled coefficient is visible in a fresh aggregate table, but the Stata cell ended r(111) after est clear, so this is not a verified extension result."
+    },
+    {
+      "scope_id": "tacc_t2 / table_2_t2",
+      "key": "s2",
+      "label": "tacc_t2 / table_2_t2",
+      "sample_ids": [
+        "earnings_decline_probit"
+      ],
+      "status": "prior_unexecuted",
+      "reason": "The predecessor ran the corrected Table 2 target-2 handoff (3,144 SAS rows; 3,128 after perfect-prediction deletions), but Stata failed to converge after 300 iterations (r(430)). SIC2 14 removed 1 row, SIC2 45 removed 11, and SIC2 75 removed 4; Stata reported 48 failures and 41 successes completely determined. No valid estimate or exports were retained. This assigned scope has cell=null and worked=false, so no extended fit was launched.",
+      "source_evidence": [
+        "task.json#scopes[tacc_t2 / table_2_t2]: cell=null, worked=false, with the assigned predecessor failure note.",
+        "output/reproductions/packages/W3124907716/attempt_05/outcome.json#fits[tacc_t2]: execution_status=blocked, r(430) after 300 iterations, no valid estimate or export.",
+        "output/reproductions/packages/W3124907716/attempt_05/build.sas:728,794,919: original Table 2 target sample/candidate filters FY1994–2000; output/reproductions/packages/W3124907716/attempt_05/stata.ipynb#table2_t2: intended probit em dte tacc cfo i.sic2.",
+        "Paper sample statement: printed p.504 (1994–2000); output/samples/records/W3124907716.json#samples[earnings_decline_probit]."
+      ],
+      "original_begin": "1994",
+      "original_end": "2000",
+      "requested_end": "2005",
+      "supported_end": "2005",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Unavailable: no valid predecessor Table2_T2 estimate was retained after r(430), and the assigned scope was not eligible for a native extension replay."
+    },
+    {
+      "scope_id": "tacc_t3 / table_2_t3",
+      "key": "s3",
+      "label": "tacc_t3 / table_2_t3",
+      "sample_ids": [
+        "earnings_decline_probit"
+      ],
+      "status": "failed",
+      "reason": "The probit completed on firm-year e(sample) over pooled FY1994–2000 plus FY2001–2005; the private native log records EXT_SAMPLE s3 4083 2417 2005. The four standard aggregate table exports were written to work/tables/table2_t3.csv (and the other template formats). The added artifact esttab call then ran after est clear and failed r(111), ‘estimation result m1 not found’; the controller records table2_t3 as ok=false and supplied no successful-cell proof. Disposition is failed, with no extension credit or report artifact. The counts and coefficient comparison are diagnostic-only outputs; no second native launch was made.",
+      "source_evidence": [
+        "Paper sample/table evidence: printed pp.504, 513–515; output/samples/records/W3124907716.json#samples[earnings_decline_probit] (p.14 period 1994–2000).",
+        "Accepted/extended model mapping: work/build.sas:764,830,955; work/stata.ipynb#table2_t3; target window and model are shown in the named notebook cell. For Table 4, the accepted predecessor build lines 837, 868, 925 set FY1994–1999; the extended code keeps the lead and adds FY2000–2004.",
+        "work/runtime/20261118T101532274233Z/cell_table2_t3.log: line with EXT_SAMPLE s3 4083 2417 2005; lines after the standard exports report ‘estimation result m1 not found’ and r(111). Fresh aggregate table: work/tables/table2_t3.csv; work/runtime/latest.json#cells.table2_t3 has ok=false; receipt.json has proofs=[]."
+      ],
+      "original_begin": "1994",
+      "original_end": "2000",
+      "requested_end": "2005",
+      "supported_end": "2005",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Focal DTE probit coefficient (unstandardized beta per 1.0 increase in DTE=TXDI/AT_(t-1)): predecessor 0.986 in output/reproductions/packages/W3124907716/attempt_05/tables/table2_t3.csv; pooled diagnostic output 1.692 in work/tables/table2_t3.csv. The pooled coefficient is visible in a fresh aggregate table, but the Stata cell ended r(111) after est clear, so this is not a verified extension result."
+    },
+    {
+      "scope_id": "abaccmj_t1 / table_3_t1",
+      "key": "s4",
+      "label": "abaccmj_t1 / table_3_t1",
+      "sample_ids": [
+        "earnings_decline_probit"
+      ],
+      "status": "failed",
+      "reason": "The probit completed on firm-year e(sample) over pooled FY1994–2000 plus FY2001–2005; the private native log records EXT_SAMPLE s4 4993 2192 2005. The four standard aggregate table exports were written to work/tables/table3_t1.csv (and the other template formats). The added artifact esttab call then ran after est clear and failed r(111), ‘estimation result m1 not found’; the controller records table3_t1 as ok=false and supplied no successful-cell proof. Disposition is failed, with no extension credit or report artifact. The counts and coefficient comparison are diagnostic-only outputs; no second native launch was made.",
+      "source_evidence": [
+        "Paper sample/table evidence: printed pp.504, 513–515; output/samples/records/W3124907716.json#samples[earnings_decline_probit] (p.14 period 1994–2000).",
+        "Accepted/extended model mapping: work/build.sas:764,830,955; work/stata.ipynb#table3_t1; target window and model are shown in the named notebook cell. For Table 4, the accepted predecessor build lines 837, 868, 925 set FY1994–1999; the extended code keeps the lead and adds FY2000–2004.",
+        "work/runtime/20261118T101532274233Z/cell_table3_t1.log: line with EXT_SAMPLE s4 4993 2192 2005; lines after the standard exports report ‘estimation result m1 not found’ and r(111). Fresh aggregate table: work/tables/table3_t1.csv; work/runtime/latest.json#cells.table3_t1 has ok=false; receipt.json has proofs=[]."
+      ],
+      "original_begin": "1994",
+      "original_end": "2000",
+      "requested_end": "2005",
+      "supported_end": "2005",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Focal DTE probit coefficient (unstandardized beta per 1.0 increase in DTE=TXDI/AT_(t-1)): predecessor 3.632** in output/reproductions/packages/W3124907716/attempt_05/tables/table3_t1.csv; pooled diagnostic output 4.458*** in work/tables/table3_t1.csv. The pooled coefficient is visible in a fresh aggregate table, but the Stata cell ended r(111) after est clear, so this is not a verified extension result."
+    },
+    {
+      "scope_id": "abaccmj_t2 / table_3_t2",
+      "key": "s5",
+      "label": "abaccmj_t2 / table_3_t2",
+      "sample_ids": [
+        "earnings_decline_probit"
+      ],
+      "status": "failed",
+      "reason": "The probit completed on firm-year e(sample) over pooled FY1994–2000 plus FY2001–2005; the private native log records EXT_SAMPLE s5 3128 1463 2005. The four standard aggregate table exports were written to work/tables/table3_t2.csv (and the other template formats). The added artifact esttab call then ran after est clear and failed r(111), ‘estimation result m1 not found’; the controller records table3_t2 as ok=false and supplied no successful-cell proof. Disposition is failed, with no extension credit or report artifact. The counts and coefficient comparison are diagnostic-only outputs; no second native launch was made.",
+      "source_evidence": [
+        "Paper sample/table evidence: printed pp.504, 513–515; output/samples/records/W3124907716.json#samples[earnings_decline_probit] (p.14 period 1994–2000).",
+        "Accepted/extended model mapping: work/build.sas:764,830,955; work/stata.ipynb#table3_t2; target window and model are shown in the named notebook cell. For Table 4, the accepted predecessor build lines 837, 868, 925 set FY1994–1999; the extended code keeps the lead and adds FY2000–2004.",
+        "work/runtime/20261118T101532274233Z/cell_table3_t2.log: line with EXT_SAMPLE s5 3128 1463 2005; lines after the standard exports report ‘estimation result m1 not found’ and r(111). Fresh aggregate table: work/tables/table3_t2.csv; work/runtime/latest.json#cells.table3_t2 has ok=false; receipt.json has proofs=[]."
+      ],
+      "original_begin": "1994",
+      "original_end": "2000",
+      "requested_end": "2005",
+      "supported_end": "2005",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Focal DTE probit coefficient (unstandardized beta per 1.0 increase in DTE=TXDI/AT_(t-1)): predecessor 9.549*** in output/reproductions/packages/W3124907716/attempt_05/tables/table3_t2.csv; pooled diagnostic output 11.469*** in work/tables/table3_t2.csv. The pooled coefficient is visible in a fresh aggregate table, but the Stata cell ended r(111) after est clear, so this is not a verified extension result."
+    },
+    {
+      "scope_id": "abaccmj_t3 / table_3_t3",
+      "key": "s6",
+      "label": "abaccmj_t3 / table_3_t3",
+      "sample_ids": [
+        "earnings_decline_probit"
+      ],
+      "status": "failed",
+      "reason": "The probit completed on firm-year e(sample) over pooled FY1994–2000 plus FY2001–2005; the private native log records EXT_SAMPLE s6 4083 2417 2005. The four standard aggregate table exports were written to work/tables/table3_t3.csv (and the other template formats). The added artifact esttab call then ran after est clear and failed r(111), ‘estimation result m1 not found’; the controller records table3_t3 as ok=false and supplied no successful-cell proof. Disposition is failed, with no extension credit or report artifact. The counts and coefficient comparison are diagnostic-only outputs; no second native launch was made.",
+      "source_evidence": [
+        "Paper sample/table evidence: printed pp.504, 513–515; output/samples/records/W3124907716.json#samples[earnings_decline_probit] (p.14 period 1994–2000).",
+        "Accepted/extended model mapping: work/build.sas:764,830,955; work/stata.ipynb#table3_t3; target window and model are shown in the named notebook cell. For Table 4, the accepted predecessor build lines 837, 868, 925 set FY1994–1999; the extended code keeps the lead and adds FY2000–2004.",
+        "work/runtime/20261118T101532274233Z/cell_table3_t3.log: line with EXT_SAMPLE s6 4083 2417 2005; lines after the standard exports report ‘estimation result m1 not found’ and r(111). Fresh aggregate table: work/tables/table3_t3.csv; work/runtime/latest.json#cells.table3_t3 has ok=false; receipt.json has proofs=[]."
+      ],
+      "original_begin": "1994",
+      "original_end": "2000",
+      "requested_end": "2005",
+      "supported_end": "2005",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Focal DTE probit coefficient (unstandardized beta per 1.0 increase in DTE=TXDI/AT_(t-1)): predecessor 0.913 in output/reproductions/packages/W3124907716/attempt_05/tables/table3_t3.csv; pooled diagnostic output 1.719 in work/tables/table3_t3.csv. The pooled coefficient is visible in a fresh aggregate table, but the Stata cell ended r(111) after est clear, so this is not a verified extension result."
+    },
+    {
+      "scope_id": "abaccfl_t1 / table_4_t1",
+      "key": "s7",
+      "label": "abaccfl_t1 / table_4_t1",
+      "sample_ids": [
+        "earnings_decline_probit"
+      ],
+      "status": "failed",
+      "reason": "The probit completed on firm-year e(sample) over pooled FY1994–1999 plus FY2000–2004; the private native log records EXT_SAMPLE s7 4112 2600 2004. The four standard aggregate table exports were written to work/tables/table4_t1.csv (and the other template formats). The added artifact esttab call then ran after est clear and failed r(111), ‘estimation result m1 not found’; the controller records table4_t1 as ok=false and supplied no successful-cell proof. Disposition is failed, with no extension credit or report artifact. The counts and coefficient comparison are diagnostic-only outputs; no second native launch was made.",
+      "source_evidence": [
+        "Paper sample/table evidence: printed pp.504, 513–515; output/samples/records/W3124907716.json#samples[earnings_decline_probit] (p.14 period 1994–2000).",
+        "Accepted/extended model mapping: output/reproductions/packages/W3124907716/attempt_05/build.sas:837,868,925; work/build.sas:873,904,961; work/stata.ipynb#table4_t1; target window and model are shown in the named notebook cell. For Table 4, the accepted predecessor build lines 837, 868, 925 set FY1994–1999; the extended code keeps the lead and adds FY2000–2004.",
+        "work/runtime/20261118T101532274233Z/cell_table4_t1.log: line with EXT_SAMPLE s7 4112 2600 2004; lines after the standard exports report ‘estimation result m1 not found’ and r(111). Fresh aggregate table: work/tables/table4_t1.csv; work/runtime/latest.json#cells.table4_t1 has ok=false; receipt.json has proofs=[]."
+      ],
+      "original_begin": "1994",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Focal DTE probit coefficient (unstandardized beta per 1.0 increase in DTE=TXDI/AT_(t-1)): predecessor 4.167** in output/reproductions/packages/W3124907716/attempt_05/tables/table4_t1.csv; pooled diagnostic output 4.325*** in work/tables/table4_t1.csv. The pooled coefficient is visible in a fresh aggregate table, but the Stata cell ended r(111) after est clear, so this is not a verified extension result."
+    },
+    {
+      "scope_id": "abaccfl_t2 / table_4_t2",
+      "key": "s8",
+      "label": "abaccfl_t2 / table_4_t2",
+      "sample_ids": [
+        "earnings_decline_probit"
+      ],
+      "status": "failed",
+      "reason": "The probit completed on firm-year e(sample) over pooled FY1994–1999 plus FY2000–2004; the private native log records EXT_SAMPLE s8 2556 1869 2004. The four standard aggregate table exports were written to work/tables/table4_t2.csv (and the other template formats). The added artifact esttab call then ran after est clear and failed r(111), ‘estimation result m1 not found’; the controller records table4_t2 as ok=false and supplied no successful-cell proof. Disposition is failed, with no extension credit or report artifact. The counts and coefficient comparison are diagnostic-only outputs; no second native launch was made.",
+      "source_evidence": [
+        "Paper sample/table evidence: printed pp.504, 513–515; output/samples/records/W3124907716.json#samples[earnings_decline_probit] (p.14 period 1994–2000).",
+        "Accepted/extended model mapping: output/reproductions/packages/W3124907716/attempt_05/build.sas:837,868,925; work/build.sas:873,904,961; work/stata.ipynb#table4_t2; target window and model are shown in the named notebook cell. For Table 4, the accepted predecessor build lines 837, 868, 925 set FY1994–1999; the extended code keeps the lead and adds FY2000–2004.",
+        "work/runtime/20261118T101532274233Z/cell_table4_t2.log: line with EXT_SAMPLE s8 2556 1869 2004; lines after the standard exports report ‘estimation result m1 not found’ and r(111). Fresh aggregate table: work/tables/table4_t2.csv; work/runtime/latest.json#cells.table4_t2 has ok=false; receipt.json has proofs=[]."
+      ],
+      "original_begin": "1994",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Focal DTE probit coefficient (unstandardized beta per 1.0 increase in DTE=TXDI/AT_(t-1)): predecessor 11.446*** in output/reproductions/packages/W3124907716/attempt_05/tables/table4_t2.csv; pooled diagnostic output 11.816*** in work/tables/table4_t2.csv. The pooled coefficient is visible in a fresh aggregate table, but the Stata cell ended r(111) after est clear, so this is not a verified extension result."
+    },
+    {
+      "scope_id": "abaccfl_t3 / table_4_t3",
+      "key": "s9",
+      "label": "abaccfl_t3 / table_4_t3",
+      "sample_ids": [
+        "earnings_decline_probit"
+      ],
+      "status": "failed",
+      "reason": "The probit completed on firm-year e(sample) over pooled FY1994–1999 plus FY2000–2004; the private native log records EXT_SAMPLE s9 3230 2339 2004. The four standard aggregate table exports were written to work/tables/table4_t3.csv (and the other template formats). The added artifact esttab call then ran after est clear and failed r(111), ‘estimation result m1 not found’; the controller records table4_t3 as ok=false and supplied no successful-cell proof. Disposition is failed, with no extension credit or report artifact. The counts and coefficient comparison are diagnostic-only outputs; no second native launch was made.",
+      "source_evidence": [
+        "Paper sample/table evidence: printed pp.504, 513–515; output/samples/records/W3124907716.json#samples[earnings_decline_probit] (p.14 period 1994–2000).",
+        "Accepted/extended model mapping: output/reproductions/packages/W3124907716/attempt_05/build.sas:837,868,925; work/build.sas:873,904,961; work/stata.ipynb#table4_t3; target window and model are shown in the named notebook cell. For Table 4, the accepted predecessor build lines 837, 868, 925 set FY1994–1999; the extended code keeps the lead and adds FY2000–2004.",
+        "work/runtime/20261118T101532274233Z/cell_table4_t3.log: line with EXT_SAMPLE s9 3230 2339 2004; lines after the standard exports report ‘estimation result m1 not found’ and r(111). Fresh aggregate table: work/tables/table4_t3.csv; work/runtime/latest.json#cells.table4_t3 has ok=false; receipt.json has proofs=[]."
+      ],
+      "original_begin": "1994",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": null,
+      "count_unit": null,
+      "original_n": null,
+      "added_n": null,
+      "native_log": null,
+      "artifacts": [],
+      "comparison": "Focal DTE probit coefficient (unstandardized beta per 1.0 increase in DTE=TXDI/AT_(t-1)): predecessor 1.100 in output/reproductions/packages/W3124907716/attempt_05/tables/table4_t3.csv; pooled diagnostic output 2.390* in work/tables/table4_t3.csv. The pooled coefficient is visible in a fresh aggregate table, but the Stata cell ended r(111) after est clear, so this is not a verified extension result."
+    }
+  ],
+  "outcome": "failed",
+  "counts": {
+    "failed": 8,
+    "prior_unexecuted": 1
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ee16-ad28-77b1-9501-913f330de31c",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3124907716.json",
+    "models": "output/models/records/W3124907716.json",
+    "predecessor": "output/reproductions/packages/W3124907716/attempt_05/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3124907716.json"
+  },
+  "input_hashes": {
+    "sample": "78a94044101d39d2a183f8a0473eeab9c16afb84b6dc339a48e5987877cd8610",
+    "models": "428bab105ac18442e82a19c81c4fd08f35a32eb2024f4c14dc07021a706a1cfb",
+    "predecessor": "31e37aaf0f2b1dace164cb286b2ee1fded15f2ca34bfdba433aa11780899a4dd",
+    "feasibility": "1679fdc1941f5512832f2b12630e3685e3c85de5e133d34519ba41f000f060ad"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:e45f9cf3497caa0ffb39e937e89c04cd01c067f39ce228d09e4bacfe4263ff7a",
+    "sha256": "e45f9cf3497caa0ffb39e937e89c04cd01c067f39ce228d09e4bacfe4263ff7a",
+    "ok": false,
+    "state_sha256": "09994e2a14bbeb71c0d5b4d2c84149db5c73a4cbdf7814464b6a16cb25e2b7c6",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "IBES.STATSUM_EPSUS",
+        "path": "${ACCTREPL_SAS_ROOT}/ibes/statsum_epsus.sas7bdat",
+        "bytes": 2774728704,
+        "mtime_ns": 1784976218535591980
+      },
+      {
+        "dataset": "WRDSAPPS.IBCRSPHIST",
+        "path": "${ACCTREPL_SAS_ROOT}/wrdsapps/linking/iclink/ibcrsphist.sas7bdat",
+        "bytes": 1966080,
+        "mtime_ns": 1786794228524345880
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      },
+      {
+        "dataset": "COMP.SEC_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mth.sas7bdat",
+        "bytes": 678297600,
+        "mtime_ns": 1786704748974369987
+      },
+      {
+        "dataset": "COMP.SEC_MTHPRC",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat",
+        "bytes": 598212608,
+        "mtime_ns": 1786704756970478757
+      },
+      {
+        "dataset": "COMP.SEC_DPRC",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_dprc.sas7bdat",
+        "bytes": 20562706432,
+        "mtime_ns": 1786704729902110610
+      },
+      {
+        "dataset": "CRSP.DSI",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat",
+        "bytes": 2490368,
+        "mtime_ns": 1764951110019635009
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "83f3c7ab110bb8eb189a8fe37002d3ad9618395d920168b64282af2bc201ad24",
+      "work/stata.ipynb": "a53280c4a55f5cfeb9a14ee7fdad5b9a67965be7e9367602422c5de301021276",
+      "work/submission.json": "d63b9238075107c0d36eeae73da157d2099d66fc6cd82e6ac43d20be4126852c"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "8f92de93d9ed29162fda7a131b787e8523a4a30346675228c6914c199d4de0c8",
+      "predecessor": "output/reproductions/packages/W3124907716/attempt_05/build.sas",
+      "predecessor_sha256": "a48fbf076495130b391bee24f2b657e7bebabf13d41cbc736ae6f2a3102c2d66",
+      "executed_sha256": "83f3c7ab110bb8eb189a8fe37002d3ad9618395d920168b64282af2bc201ad24",
+      "historical_predecessor_sha256": "b4b4eb13ddf60dfd04119b3f94fd0f83175a9b3fd2916085bcfd8fa1d21b126e"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "a53280c4a55f5cfeb9a14ee7fdad5b9a67965be7e9367602422c5de301021276",
+      "predecessor": "output/reproductions/packages/W3124907716/attempt_05/stata.ipynb",
+      "predecessor_sha256": "f8f313cfb5a48b54991f1bec4d56d4dfd8202e22853cfdc10aa57f5220e203a1",
+      "historical_predecessor_sha256": "f57151dc226ddb4231f0501a7d44beaf88be85e32aafd9b9e23fa12cd99f6b0c"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "d63b9238075107c0d36eeae73da157d2099d66fc6cd82e6ac43d20be4126852c",
+      "predecessor": "output/reproductions/packages/W3124907716/attempt_05/submission.json",
+      "predecessor_sha256": "61ae47bd1d53aae245105b9f63c4154f803c37b9c1fc297d1e230280ed570b2a"
+    }
+  ],
+  "completed_tables_before_export_failure": [
+    {
+      "paper_id": "W3124907716",
+      "scope_id": "tacc_t1 / table_2_t1",
+      "cell": "table2_t1",
+      "worker_status": "failed",
+      "original_n": 4993,
+      "added_n": 2192,
+      "last_added": 2005,
+      "native_fit_n": 7185,
+      "working_table": "work/tables/table2_t1.md",
+      "table_sha256": "79dce0f099b6a3d5868de6b779dbe871e342dca6a832f7623345468768183c8b",
+      "native_log": "urn:sha256:ee8fb3251684b5bfbb95d349d8a0aea449428099562ec14bf6e28cbb2ecc5a50",
+      "log_sha256": "ee8fb3251684b5bfbb95d349d8a0aea449428099562ec14bf6e28cbb2ecc5a50",
+      "state_sha256": "09994e2a14bbeb71c0d5b4d2c84149db5c73a4cbdf7814464b6a16cb25e2b7c6",
+      "trailing_error": "Stata r(111) on artifacts/s1.csv",
+      "table_path": "output/replications/packages/W3124907716/diagnostic_results/table2_t1.md"
+    },
+    {
+      "paper_id": "W3124907716",
+      "scope_id": "tacc_t3 / table_2_t3",
+      "cell": "table2_t3",
+      "worker_status": "failed",
+      "original_n": 4083,
+      "added_n": 2417,
+      "last_added": 2005,
+      "native_fit_n": 6500,
+      "working_table": "work/tables/table2_t3.md",
+      "table_sha256": "023902b4d099377e235970d7950e2937eef563fd7b6fc2b98d489eff5d5d0b82",
+      "native_log": "urn:sha256:57b553e937649a20200827f42c3541570a7755a617b8207ad9d16e8744b7a0f6",
+      "log_sha256": "57b553e937649a20200827f42c3541570a7755a617b8207ad9d16e8744b7a0f6",
+      "state_sha256": "09994e2a14bbeb71c0d5b4d2c84149db5c73a4cbdf7814464b6a16cb25e2b7c6",
+      "trailing_error": "Stata r(111) on artifacts/s3.csv",
+      "table_path": "output/replications/packages/W3124907716/diagnostic_results/table2_t3.md"
+    },
+    {
+      "paper_id": "W3124907716",
+      "scope_id": "abaccmj_t1 / table_3_t1",
+      "cell": "table3_t1",
+      "worker_status": "failed",
+      "original_n": 4993,
+      "added_n": 2192,
+      "last_added": 2005,
+      "native_fit_n": 7185,
+      "working_table": "work/tables/table3_t1.md",
+      "table_sha256": "eb9115c796a3def81506b8e77880fe7394c473f5ac871463ce8b09cb5f05dc7e",
+      "native_log": "urn:sha256:21b143bcbbb1c4ca344a8c248cdbe083144d934fdbf031df260ce3ed0aafb999",
+      "log_sha256": "21b143bcbbb1c4ca344a8c248cdbe083144d934fdbf031df260ce3ed0aafb999",
+      "state_sha256": "09994e2a14bbeb71c0d5b4d2c84149db5c73a4cbdf7814464b6a16cb25e2b7c6",
+      "trailing_error": "Stata r(111) on artifacts/s4.csv",
+      "table_path": "output/replications/packages/W3124907716/diagnostic_results/table3_t1.md"
+    },
+    {
+      "paper_id": "W3124907716",
+      "scope_id": "abaccmj_t2 / table_3_t2",
+      "cell": "table3_t2",
+      "worker_status": "failed",
+      "original_n": 3128,
+      "added_n": 1463,
+      "last_added": 2005,
+      "native_fit_n": 4591,
+      "working_table": "work/tables/table3_t2.md",
+      "table_sha256": "1c1c41af59a58b591f7ba053b0f39c521af8d76d9b880b89aa8458f4ae844d97",
+      "native_log": "urn:sha256:8567997de5a848eb7e8acba58f18d3f6e4bde6109da373585355613804662211",
+      "log_sha256": "8567997de5a848eb7e8acba58f18d3f6e4bde6109da373585355613804662211",
+      "state_sha256": "09994e2a14bbeb71c0d5b4d2c84149db5c73a4cbdf7814464b6a16cb25e2b7c6",
+      "trailing_error": "Stata r(111) on artifacts/s5.csv",
+      "table_path": "output/replications/packages/W3124907716/diagnostic_results/table3_t2.md"
+    },
+    {
+      "paper_id": "W3124907716",
+      "scope_id": "abaccmj_t3 / table_3_t3",
+      "cell": "table3_t3",
+      "worker_status": "failed",
+      "original_n": 4083,
+      "added_n": 2417,
+      "last_added": 2005,
+      "native_fit_n": 6500,
+      "working_table": "work/tables/table3_t3.md",
+      "table_sha256": "3b0b00ce35bb77c04205ae40938f8615d705ebf055891e55f7b705c64b093d19",
+      "native_log": "urn:sha256:fb10d9d0e459f9830430a4c27213d727c81c5e1e824ee8c9dbf9f1b18a3ec92a",
+      "log_sha256": "fb10d9d0e459f9830430a4c27213d727c81c5e1e824ee8c9dbf9f1b18a3ec92a",
+      "state_sha256": "09994e2a14bbeb71c0d5b4d2c84149db5c73a4cbdf7814464b6a16cb25e2b7c6",
+      "trailing_error": "Stata r(111) on artifacts/s6.csv",
+      "table_path": "output/replications/packages/W3124907716/diagnostic_results/table3_t3.md"
+    },
+    {
+      "paper_id": "W3124907716",
+      "scope_id": "abaccfl_t1 / table_4_t1",
+      "cell": "table4_t1",
+      "worker_status": "failed",
+      "original_n": 4112,
+      "added_n": 2600,
+      "last_added": 2004,
+      "native_fit_n": 6712,
+      "working_table": "work/tables/table4_t1.md",
+      "table_sha256": "b25562ad343dbdbcc107aea44a3fceb052f700ace5f7f52c592b3750bb6478f9",
+      "native_log": "urn:sha256:d9577bcce1d27cfc01f6a1180b597ba48220137654fd15953b58318eff8d8392",
+      "log_sha256": "d9577bcce1d27cfc01f6a1180b597ba48220137654fd15953b58318eff8d8392",
+      "state_sha256": "09994e2a14bbeb71c0d5b4d2c84149db5c73a4cbdf7814464b6a16cb25e2b7c6",
+      "trailing_error": "Stata r(111) on artifacts/s7.csv",
+      "table_path": "output/replications/packages/W3124907716/diagnostic_results/table4_t1.md"
+    },
+    {
+      "paper_id": "W3124907716",
+      "scope_id": "abaccfl_t2 / table_4_t2",
+      "cell": "table4_t2",
+      "worker_status": "failed",
+      "original_n": 2556,
+      "added_n": 1869,
+      "last_added": 2004,
+      "native_fit_n": 4425,
+      "working_table": "work/tables/table4_t2.md",
+      "table_sha256": "4f4da6e332be1fa1582be69b310848236e2b0cbfc8a9ed4a07417e168fffeab8",
+      "native_log": "urn:sha256:6fc9f07ca16522f4a646ab900fba78f033e10fb7af263da7ef9c4b1bdc63d04d",
+      "log_sha256": "6fc9f07ca16522f4a646ab900fba78f033e10fb7af263da7ef9c4b1bdc63d04d",
+      "state_sha256": "09994e2a14bbeb71c0d5b4d2c84149db5c73a4cbdf7814464b6a16cb25e2b7c6",
+      "trailing_error": "Stata r(111) on artifacts/s8.csv",
+      "table_path": "output/replications/packages/W3124907716/diagnostic_results/table4_t2.md"
+    },
+    {
+      "paper_id": "W3124907716",
+      "scope_id": "abaccfl_t3 / table_4_t3",
+      "cell": "table4_t3",
+      "worker_status": "failed",
+      "original_n": 3230,
+      "added_n": 2339,
+      "last_added": 2004,
+      "native_fit_n": 5569,
+      "working_table": "work/tables/table4_t3.md",
+      "table_sha256": "a4e564a3819cbc04409d09ee4e623ebdde073f933d02c06321c931581434a317",
+      "native_log": "urn:sha256:edb2d745a3dca60906526b8ede416ce082dfa2caa3cf2f4478fc2839aa57403f",
+      "log_sha256": "edb2d745a3dca60906526b8ede416ce082dfa2caa3cf2f4478fc2839aa57403f",
+      "state_sha256": "09994e2a14bbeb71c0d5b4d2c84149db5c73a4cbdf7814464b6a16cb25e2b7c6",
+      "trailing_error": "Stata r(111) on artifacts/s9.csv",
+      "table_path": "output/replications/packages/W3124907716/diagnostic_results/table4_t3.md"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "a1003f2eadd7d424c7194f737d00d25766a17deffbf5ddaa2bbfb9fa6663fdd1",
+    "predecessor": "870f7f0cf5970e3e0f8b5153dbaa469f09d2e2dccf7a93bc6387c7e27bd9988e",
+    "feasibility": "a3dce6af52331949b542663e721a4e7d1210f57138c3636a883f7ddb06e96cb9"
+  }
+}

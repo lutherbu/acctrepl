@@ -1,0 +1,17 @@
+
+|                      |          (1)    |
+|                      | Adjusted change in ROA in year 1    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| RM\_2                 |       -0.029    |
+|                      |      (0.240)    |
+| Discretionary accruals |       -0.065    |
+|                      |      (0.270)    |
+| Sales growth         |       -0.005    |
+|                      |      (0.815)    |
+| Capex growth         |       -0.004    |
+|                      |      (0.553)    |
+| Observations         |         2030    |
+| R-squared            |        0.214    |
+| Mean annual adjusted R-squared (%) |       15.677    |
+

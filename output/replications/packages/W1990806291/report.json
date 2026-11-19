@@ -1,0 +1,229 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "The Mispricing of Abnormal Accruals",
+  "doi": "10.2308/accr.2001.76.3.357",
+  "route": "reconstruction",
+  "paper_id": "W1990806291",
+  "years": 5,
+  "sources_checked": [
+    "Original sample record and paper source evidence: 1971–1992, 56,692 firm-years, 1995 Compustat Annual and 1995 CRSP monthly vintage (output/samples/records/W1990806291.json, PDF p. 4).",
+    "Current local COMP.FUNDA selected rows: FY1970–1998 and DATADATE 30JUN1970–31MAY1999 (245936 rows); local catalog last modified 2026-07-22. This covers FY1997 observations and FY1998 lead earnings.",
+    "Current local COMP.G_EXRT_MTH: 31JAN1982–31JUL2026 (75838 GBP-sourced quote rows), duplicate date/currency keys 0; catalog last modified 2026-08-14.",
+    "Current local COMP.G_EXRT_DLY: 01FEB1982–19JUL2026 (2221564 GBP-sourced quote rows), duplicate date/currency keys 0; catalog last modified 2026-08-14.",
+    "Current local CRSP.CCMXPF_LINKTABLE and CRSP.DSENAMES: valid-dated joined accounting rows FY1971–1998, DATADATE 30JUN1971–31MAY1999 (139965); zero ambiguous links and zero ambiguous name rows. CCM catalog last modified 2026-08-14; DSENAMES 2025-12-06.",
+    "Current local CRSP.MSF linked monthly inputs: 31JAN1970–31DEC2001 (2019553 rows); CRSP.MSEDELIST: 16JAN1970–31DEC2001 (15932 events), zero duplicate PERMNO-month groups. Both catalog last modified 2025-12-06.",
+    "Current local CRSP.MSF December capitalization ranks span startyear 1970–2000 (167047 rows); CRSP.MSIX joins cover return-window months 31OCT1970–31AUG1999 (1679580 window-months), with zero missing market-index months. CRSP.MSIX catalog last modified 2025-01-24.",
+    "The accepted construction was rebuilt from the named current local inputs in the single controller run; no predecessor generated data/table was reused as an estimation input. The table2 fiscal-year counts for 1993–1997 are in work/artifacts/extended_source_coverage.csv."
+  ],
+  "changes": [
+    "Observation clock remains Compustat fiscal year fyear. The original window is 1971–1992; the assigned five-year extension requests 1993–1997. The accepted construction uses next-fiscal-year earnings and size-adjusted return outcomes, so FY1998 accounting and return inputs are retained for FY1997 observations.",
+    "Widened only the job-local accepted source/construction bounds needed for pooling: accounting, dated links/names, and Jones support through FY1998; linked CRSP monthly and delisting inputs through 2001; and December capitalization ranks through 1999. These are supporting-input bounds, not the estimation window. All original screens, lag/lead rules, return window, and accepted estimator/model terms remain unchanged.",
+    "Retained fyear and datadate through the last SAS KEEP and Stata import; metadata-only inspection of the fresh reg.dta confirms lowercase numeric fyear and numeric datadate. The cell counts original/added observations from the active joint-system e(sample), reports FY1997 as the last included period, and prints one EXT_SAMPLE line per assigned scope.",
+    "The paper’s sample-selection discussion ties its 1992 endpoint to post-sample stock-return availability (PDF p. 4); the assigned Table 2 fit and accepted code operationalize each observation as fiscal year t with t+1 outcomes and 12-month return windows ending three months after fiscal year-end (PDF p. 5; Table 2 equations on p. 7). The run keeps t through FY1997 and records the actually matched return-window end in the source-coverage artifact."
+  ],
+  "limitations": [
+    "The assigned predecessor reported that local historical coverage/population was unverified. This pooled run now verifies the inputs needed through FY1997 (FY1998 lead records; matched return windows through 31AUG1999), but the paper’s 1995 data vintage remains unavailable. The rebuilt FY1971–1992 sample has 59,585 firm-years and 55,064 complete system observations versus the paper’s 56,692 and 51,579; the pooled FY1971–1997 panel has 83,089 rows and 76,471 complete system observations. The population difference has no single demonstrated cause and should not be attributed to vintage alone.",
+    "The exact historical CRSP size-breakpoint series and paper’s 1995 CRSP vintage are unavailable; the accepted construction uses local December market-cap ranks. Their 1970–2000 constructed support is sufficient for the requested return windows but remains an approximation.",
+    "The paper specifies a minimum of six observations at SIC-year level and exchange-split Jones fits, leaving the intended exchange-cell minimum ambiguous. The accepted code uses the literal SIC-year screen without adding an exchange minimum and excludes Jones groups with deficient rank or missing model degrees of freedom; the extended run found 46 not-full-rank groups (94 rows), 45 groups with missing model df, and one rank-deficient group (4 rows).",
+    "The exact order and reference population of the three-standard-deviation screen are not reported; the accepted construction applies it within exchange-specific Jones cells before the combined SIC-year minimum-six screen.",
+    "The source describes iterative generalized nonlinear least squares, but the accepted direct Stata mlexp system uses conditional Gaussian likelihood with independent homoskedastic equation disturbances and separate variances. This is the disclosed best-effort identification assumption, not a recovery of the paper’s unspecified GLS covariance/weights. Intermediate “not concave” notices appeared in iterations; all SAS, handoff, and Stata stages completed with return code 0 and the native cell produced its tables.",
+    "The paper reports 2N ln(SSRc/SSRu) but does not specify the system SSR weighting/normalization. The accepted output reports conditional Gaussian likelihood-ratio tests instead, a defensible joint-system best effort rather than an exact reproduction of the printed statistic.",
+    "Stata table coefficient p-values are two-sided tests against zero; the paper’s rational-pricing tests compare starred and unstarred parameters using equality-restriction likelihood ratios. The five source restrictions retain 1, 1, 1, 2, and 3 degrees of freedom; do not interpret the table’s coefficient p-values as those tests.",
+    "The predecessor flagged unavailable non-USD conversions. In this run the final panel has 18 CAD rows (11 in the common system sample), and all current, prior, and lead flow/stock FX availability flags are valid; no Table 2 row is missing its current, prior, or lead currency code. One current/prior currency-code mismatch remains and is handled by the accepted exact-date row-level conversion. The original 1995 source-vintage difference remains unresolved.",
+    "Two duplicate COMP.FUNDA GVKEY/FYEAR groups (two extra rows) occurred among the selected FY1970–1998 source rows. The accepted construction sorts by DATADATE and PDATE and retains the latest fiscal-year record; the final firm-year panel has zero duplicate keys. This follows the existing tie policy and was not tuned to the estimates."
+  ],
+  "analyses": [
+    {
+      "scope_id": "mishkin_forecast / table2_panel_a_forecasting",
+      "key": "s1",
+      "label": "Table 2 Panel A forecasting equation (2)",
+      "sample_ids": [
+        "mispricing_panel"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh controller-owned pooled current-vintage replay of the Table 2 Panel A forecasting equation (2) completed within the joint system. The common Table 2 e(sample) covers FY1971–1997, with 55,064 original-period firm-years, 21,407 added firm-years, and FY1997 as the last contributing period; all five requested added years have positive estimation counts.",
+      "source_evidence": [
+        "output/samples/records/W1990806291.json: mispricing_panel period/source-vintage evidence, PDF p. 4.",
+        "output/models/records/W1990806291.json: Table 2 Panel A equation (2), mishkin_forecast / table2_panel_a_forecasting, PDF p. 7.",
+        "Assigned original reading: return construction and 12-month window ending three months after fiscal-year end, PDF p. 5; equations (2) and (3) are jointly estimated, PDF pp. 7–8.",
+        "output/reproductions/packages/W1990806291/attempt_04/build.sas and stata.ipynb cell mishkin-system: assigned predecessor construction and executed joint fit; output/reproductions/packages/W1990806291/attempt_04/outcome.json records both predecessor scopes as executed.",
+        "Fresh native proof: work/runtime/20261118T054149585993Z/build.lst, build.log, handoff.log and cell_mishkin-system.log; current aggregate table in work/tables/table2_mishkin.csv."
+      ],
+      "original_begin": "1971",
+      "original_end": "1992",
+      "requested_end": "1997",
+      "supported_end": "1997",
+      "last_added": "1997",
+      "count_unit": "Firm-year observations in the common Table 2 joint-system Stata e(sample), classified by Compustat fyear.",
+      "original_n": 55064,
+      "added_n": 21407,
+      "artifacts": [
+        "results/tables/table2_mishkin.csv"
+      ],
+      "comparison": "Focal ABNAC forecasting slope γ3, ratio on ratio (dimensionless): fresh extended estimate 0.665; saved assigned predecessor attempt_04 estimate 0.679 (output/reproductions/packages/W1990806291/attempt_04/tables/table2_mishkin.csv); published Table 2 estimate 0.57 (SE 0.005, output/models/records/W1990806291.json, PDF p. 7). Fresh aggregate table: work/tables/table2_mishkin.csv.",
+      "native_evidence": {
+        "path": "urn:sha256:8515e1e16faa62fda7ed9cc048c43d3d5ea3beae66fa3f376dc7cb98fa691cb6",
+        "sha256": "8515e1e16faa62fda7ed9cc048c43d3d5ea3beae66fa3f376dc7cb98fa691cb6",
+        "marker": "EXT_SAMPLE s1 55064 21407 1997"
+      }
+    },
+    {
+      "scope_id": "mishkin_valuation / table2_panel_a_valuation",
+      "key": "s2",
+      "label": "Table 2 Panel A valuation equation (3)",
+      "sample_ids": [
+        "mispricing_panel"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh controller-owned pooled current-vintage replay of the Table 2 Panel A valuation equation (3) completed within the joint system. The common Table 2 e(sample) covers FY1971–1997, with 55,064 original-period firm-years, 21,407 added firm-years, and FY1997 as the last contributing period; all five requested added years have positive estimation counts.",
+      "source_evidence": [
+        "output/samples/records/W1990806291.json: mispricing_panel period/source-vintage evidence, PDF p. 4.",
+        "output/models/records/W1990806291.json: Table 2 Panel A equation (3), mishkin_valuation / table2_panel_a_valuation, PDF p. 7.",
+        "Assigned original reading: return construction and 12-month window ending three months after fiscal-year end, PDF p. 5; equations (2) and (3) are jointly estimated, PDF pp. 7–8.",
+        "output/reproductions/packages/W1990806291/attempt_04/build.sas and stata.ipynb cell mishkin-system: assigned predecessor construction and executed joint fit; output/reproductions/packages/W1990806291/attempt_04/outcome.json records both predecessor scopes as executed.",
+        "Fresh native proof: work/runtime/20261118T054149585993Z/build.lst, build.log, handoff.log and cell_mishkin-system.log; current aggregate table in work/tables/table2_mishkin.csv."
+      ],
+      "original_begin": "1971",
+      "original_end": "1992",
+      "requested_end": "1997",
+      "supported_end": "1997",
+      "last_added": "1997",
+      "count_unit": "Firm-year observations in the common Table 2 joint-system Stata e(sample), classified by Compustat fyear.",
+      "original_n": 55064,
+      "added_n": 21407,
+      "artifacts": [
+        "results/tables/table2_mishkin.csv"
+      ],
+      "comparison": "Focal ABNAC valuation slope γ*3, ratio on ratio (dimensionless): fresh extended estimate 4.839; saved assigned predecessor attempt_04 estimate 1.153 (output/reproductions/packages/W1990806291/attempt_04/tables/table2_mishkin.csv); published Table 2 estimate 0.69 (SE 0.018, output/models/records/W1990806291.json, PDF p. 7). Fresh aggregate table: work/tables/table2_mishkin.csv.",
+      "native_evidence": {
+        "path": "urn:sha256:8515e1e16faa62fda7ed9cc048c43d3d5ea3beae66fa3f376dc7cb98fa691cb6",
+        "sha256": "8515e1e16faa62fda7ed9cc048c43d3d5ea3beae66fa3f376dc7cb98fa691cb6",
+        "marker": "EXT_SAMPLE s2 55064 21407 1997"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 2
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed22-d2de-7901-a73d-3a0332ee28f1",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W1990806291.json",
+    "models": "output/models/records/W1990806291.json",
+    "predecessor": "output/reproductions/packages/W1990806291/attempt_04/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W1990806291.json"
+  },
+  "input_hashes": {
+    "sample": "1180fc00e2ce078c769bdbe390ed67f7a141e9069614385db3ec6a671c8339a1",
+    "models": "8f3fbb55705effa8208f8dba3e6c56aadb975e9a2c1a5f14916c8159c5737eca",
+    "predecessor": "ad91faa9f6b75230f5a788996bd109698be440bc4a6f95e3960afcf63ecd5890",
+    "feasibility": "6714d53a88dfe7b60222e48b29c1f0ff8e846f513ed7196c27a8cd9f7f157818"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:edcb0bf0ad64a57f4f07072c51c66f7b0977fd46bd02bcb1ebdad0f843d34e51",
+    "sha256": "edcb0bf0ad64a57f4f07072c51c66f7b0977fd46bd02bcb1ebdad0f843d34e51",
+    "ok": true,
+    "state_sha256": "98c93918c0240183e36fd1550073fcb58f9eb9ac563bfbffd4cee5fafb334212",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.DSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764950802100128761
+      },
+      {
+        "dataset": "CRSP.MSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+        "bytes": 868417536,
+        "mtime_ns": 1764951132644186578
+      },
+      {
+        "dataset": "CRSP.MSEDELIST",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msedelist.sas7bdat",
+        "bytes": 6094848,
+        "mtime_ns": 1764951124659991929
+      },
+      {
+        "dataset": "CRSP.MSIX",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_indexes/msix.sas7bdat",
+        "bytes": 524288,
+        "mtime_ns": 1738978046470322077
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "8a3590b25d4f41766f887f149773b4a0447239dd834b5858a225a04498b7a028",
+      "work/stata.ipynb": "ca8d047f569834aebd8195f65fbce9b07f883db194c7a6c807445f2f57dff5b4",
+      "work/submission.json": "cb4a9847b7ad10b182d158f90136204e666d54562ef58684199073f71e061bd2"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "0c1b18b876c270e03eeac4f74b2331ee8c69eac284e1903a5c07d1f53baa73b6",
+      "predecessor": "output/reproductions/packages/W1990806291/attempt_04/build.sas",
+      "predecessor_sha256": "57eaae2b9c2c23fae3bf1fb7bcb4d3b5f791a38bb2baa6d0e2ced7eaa2375404",
+      "executed_sha256": "8a3590b25d4f41766f887f149773b4a0447239dd834b5858a225a04498b7a028",
+      "historical_predecessor_sha256": "a9a9e3da18bee855b0c3ce4b3e30a12db2d3a1ce1a1b0792e7d2bdcff5a79ff6"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "6ac21f2e868f23bacadc885ebee4364249802e662cffcd8efb28961056cf1910",
+      "predecessor": "output/reproductions/packages/W1990806291/attempt_04/stata.ipynb",
+      "predecessor_sha256": "5b9a71a15463f9b81d083e18a3119d87f99453d8e431f401bcf0c36973f4664a",
+      "executed_sha256": "ca8d047f569834aebd8195f65fbce9b07f883db194c7a6c807445f2f57dff5b4",
+      "historical_predecessor_sha256": "50038bc7c289055775bd3c740ac03f36fe9271b1c7e74cbc8ed258240aed0c41"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "cb4a9847b7ad10b182d158f90136204e666d54562ef58684199073f71e061bd2",
+      "predecessor": "output/reproductions/packages/W1990806291/attempt_04/submission.json",
+      "predecessor_sha256": "1559a4b74facc55edd5dbc354016e1c1984e659dbdda38fbeae55249adbf69bf"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "6e5d7ba1e1dcef79c8019e422a73305b85916422667a0eaf19704e54e68cd900",
+    "predecessor": "924bbbe8a51ea3d7c8788f11e595cd7435c98cfc75c615b279a167a97fece189",
+    "feasibility": "9485803b50fd2a882ecf4a77e8443817b9a5fcd94ff9777307a66ddf6242308e"
+  }
+}

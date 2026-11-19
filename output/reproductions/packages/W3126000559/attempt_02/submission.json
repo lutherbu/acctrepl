@@ -1,0 +1,132 @@
+{
+  "paper_id": "W3126000559",
+  "attempt": 2,
+  "required_commands": [
+    "esttab",
+    "estpost",
+    "estadd"
+  ],
+  "samples": [
+    {
+      "sample_id": "icw_loan_facilities",
+      "sas_file": "data/icw_loan_facilities.sas7bdat",
+      "dta_file": "data/icw_loan_facilities/reg.dta",
+      "key": [
+        "facilityid"
+      ],
+      "description": "Complete-case on shared loan and firm controls, 1999-09-01 through 2008-12-31 syndicated facilities linked to SOX 302 material-weakness firms; facilities in the three-year prior, explicit uncorrected, or three-year post-clean-report periods; firms have at least one prior and at least one uncorrected or corrected facility. General Covenants remains missing where source components are incomplete and its regression uses observed outcomes."
+    },
+    {
+      "sample_id": "icw_pp_ratio_eligible",
+      "sas_file": "data/icw_pp_ratio_eligible.sas7bdat",
+      "dta_file": "data/icw_pp_ratio_eligible/reg.dta",
+      "key": [
+        "facilityid"
+      ],
+      "description": "Restricted facility sample of PP contracts with classified accounting-ratio or credit-rating grids and observed S&P, Moody's, Fitch, or DPR senior-debt ratings; borrowers have rated PP facilities both before and after the first ICW report."
+    }
+  ],
+  "fits": [
+    {
+      "model_id": "icw_financial_covenants",
+      "result_set_id": "icw_financial_covenants_primary_col_1",
+      "cell_id": "w312_t3",
+      "table_basename": "tables/table3_financial_covenants",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "OLS is the best-effort interpretation of the paper's unnamed linear regression.",
+        "Audit Analytics COMPANY_FKEY is matched directly to Compustat CIK within accounting-coverage years. A dated CRSP/CCM facility route requires exact borrower-name agreement with historical CRSP issuer names; the independent LEI route requires unique direct-company, name, and CIK confirmation. Conflicts are unmatched. The paper's four-agency senior-debt fallback is reconstructed from Compustat S&P and date-valid FISD issue history; ambiguous issue grades remain unavailable. Its exact 1\u201327 crosswalk is not published, so the explicit raw-grade notch conversion is best-effort."
+      ],
+      "blocked_reason": null
+    },
+    {
+      "model_id": "icw_interest_rate",
+      "result_set_id": "icw_interest_rate_primary_col_1",
+      "cell_id": "w312_t4",
+      "table_basename": "tables/table4_interest_rate",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "OLS is the best-effort interpretation of the paper's unnamed linear regression.",
+        "All-in-Drawn spread uses LIBOR or LIBOR-equivalent pricing rows. Loan size uses the exact LoanConnector tranche bridge to converted USD amount; historical revisions and facility borrower mapping remain best-effort."
+      ],
+      "blocked_reason": null
+    },
+    {
+      "model_id": "icw_secured",
+      "result_set_id": "icw_secured_primary_col_1",
+      "cell_id": "w312_t5",
+      "table_basename": "tables/table5_loan_mechanisms",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "Probit follows Table 5. Collateral values are mapped from explicit local yes/no codes; historical DealScan borrower links use dated name-confirmed CRSP/CCM or exact-tranche LEI routes with direct-company and CIK corroboration."
+      ],
+      "blocked_reason": null
+    },
+    {
+      "model_id": "icw_general_covenants",
+      "result_set_id": "icw_general_covenants_primary_col_2",
+      "cell_id": "w312_t5",
+      "table_basename": "tables/table5_loan_mechanisms",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "OLS is the best-effort interpretation of the paper's unnamed linear regression.",
+        "General covenants sum the five Appendix A provisions. A positive numeric sweep field or explicit Yes is treated as provision present; an explicit zero or No is treated as absent. The assigned catalog and provider pointers do not define blank semantics, so blanks and unknown codes remain missing; duplicate cardinality is checked and the model uses the observed-outcome subsample."
+      ],
+      "blocked_reason": null
+    },
+    {
+      "model_id": "icw_maturity",
+      "result_set_id": "icw_maturity_primary_col_3",
+      "cell_id": "w312_t5",
+      "table_basename": "tables/table5_loan_mechanisms",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "OLS is the best-effort interpretation of the paper's unnamed linear regression.",
+        "DealScan maturity in months is used and logged as the dependent variable. Credit rating squared is included as the paper specifies."
+      ],
+      "blocked_reason": null
+    },
+    {
+      "model_id": "icw_pp_ratio",
+      "result_set_id": "icw_pp_ratio_primary_col_1",
+      "cell_id": "w312_t6",
+      "table_basename": "tables/table6_pp_ratio",
+      "fidelity": "best_effort",
+      "assumptions": [
+        "Probit follows Table 6. The restricted sample requires an observed S&P, Moody's, Fitch, or DPR senior-debt rating and rated PP facilities before and after the first report; this before/after screen is applied within the shared complete-case sample before retaining classified PP Ratio outcomes. Only explicit accounting-ratio and credit-rating pricing types are classified.",
+        "FISD provides issue-level ratings, so only mapped active SEN/SS issues with one common current grade per agency contribute. Conflicting grades or unavailable date-valid issue links remain missing and do not become score 28. The exact paper cross-agency 1\u201327 conversion is not printed; the raw-grade notch mapping is best-effort."
+      ],
+      "blocked_reason": null
+    }
+  ],
+  "limitations": [
+    "The frozen feasibility route names SOX 404, but the original paper requires SOX 302; construction uses the catalog-listed SOX 302 disclosure-controls table and verifies local numeric flag frequencies.",
+    "Facility borrower coverage is conservative: the dated CRSP/CCM route requires exact contemporaneous name agreement, and the independent LEI route requires direct-company name and CIK confirmation. Conflicting unique routes are left unmatched.",
+    "The current local data vintage and DealScan historical revisions are not certified as the authors' vintage; only unique tranche amount and borrower matches are retained.",
+    "The Bond-CRSP link file starts in July 2002. Earlier FISD issue ratings cannot be verified through the date-valid bond-to-equity bridge; missing rating history or conflicts remain unavailable instead of receiving score 28.",
+    "The appendix does not publish the exact cross-agency rating-score conversion, and local sources provide agency grade strings rather than the paper's converted 1\u201327 scores. The explicit ordinal notch conversion is best-effort; unrecognized grades remain unavailable.",
+    "Local coverage is much narrower than the paper: 11,356 of 133,309 dated DealScan facilities passed the conservative borrower routes. Of 1,645 facilities in linked-report event windows, 738 have an observed rating score and 907 have no score, including unavailable mapping/history and conflict states rather than only confirmed unrated firms; 414 pass the shared complete-case screen. The prior/post requirement retains 223 facilities across 45 borrowers. No sample was relaxed to approach the paper's N=2,828.",
+    "After applying rated-PP pre/post eligibility within the common complete-case sample, the PP Ratio file has 89 classifiable facilities across 27 firms; the probit estimates on 88 after one perfect-prediction exclusion. Attempt_02 reports PP Ratio descriptives on the 89-row pre-estimation restricted file, consistent with the paper's Table 2/Table 6 population. The paper's exact order of its borrower-level PP restriction relative to complete-case screening is not stated.",
+    "Annual firm controls use the latest eligible DATADATE in the preceding calendar year. Appendix A does not resolve calendar year versus latest fiscal report; selected source ages are 6\u2013697 days (median 213). This timing interpretation is best effort, not a demonstrated exact authors' convention."
+  ],
+  "source_datasets": [
+    "AUDIT.FEED10_SOX_302_DISCLOSURE_CONTRO",
+    "DEALSCAN.FACILITY",
+    "DEALSCAN.PACKAGE",
+    "DEALSCAN.CURRFACPRICING",
+    "DEALSCAN.FINANCIALCOVENANT",
+    "DEALSCAN.PERFORMANCEPRICING",
+    "DEALSCAN.LENDERSHARES",
+    "DEALSCAN.WRDS_LOANCONNECTOR_IDS",
+    "DEALSCAN.DEALSCAN",
+    "CRSPA.STOCKNAMES_V2",
+    "CRSPA.CCMXPF_LINKTABLE",
+    "COMP.FUNDA",
+    "COMP.NAMES",
+    "COMP.ADSPRATE",
+    "REVELIO.COMPANY_MAPPING",
+    "FISD.FISD_RATINGS",
+    "FISD.FISD_MERGEDISSUE",
+    "WRDSAPPS.BONDCRSP_LINK"
+  ]
+}

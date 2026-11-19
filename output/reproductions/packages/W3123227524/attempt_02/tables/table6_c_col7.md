@@ -1,0 +1,17 @@
+
+|                      |          (1)    |
+|                      | Adjusted change in ROA in year 1    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| Abnormal production costs |        0.023    |
+|                      |      (0.532)    |
+| Discretionary accruals |       -0.075    |
+|                      |      (0.252)    |
+| Sales growth         |        0.001    |
+|                      |      (0.958)    |
+| Capex growth         |       -0.002    |
+|                      |      (0.680)    |
+| Observations         |         2030    |
+| R-squared            |        0.199    |
+| Mean annual adjusted R-squared (%) |       14.205    |
+

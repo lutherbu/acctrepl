@@ -1,0 +1,36 @@
+
+|                      |          (1)    |
+|                      |                 |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| g1                   |                 |
+| Forecast CFO         |        0.811*** |
+|                      |      (0.000)    |
+| g2                   |                 |
+| Forecast NAC         |        0.783*** |
+|                      |      (0.000)    |
+| g3                   |                 |
+| Forecast ABNAC       |        0.679*** |
+|                      |      (0.000)    |
+| gs1                  |                 |
+| Valuation CFO        |        0.607*** |
+|                      |      (0.000)    |
+| gs2                  |                 |
+| Valuation NAC        |        0.870*** |
+|                      |      (0.000)    |
+| gs3                  |                 |
+| Valuation ABNAC      |        1.153*** |
+|                      |      (0.000)    |
+| N                    |        55064    |
+| Unrestricted log likelihood |   -32117.005    |
+| LR: CFO, chi2(1)     |        34.23    |
+| p-value              |       0.0000    |
+| LR: NAC, chi2(1)     |         1.95    |
+| p-value              |       0.1624    |
+| LR: ABNAC, chi2(1)   |        69.41    |
+| p-value              |       0.0000    |
+| LR: NAC and ABNAC, chi2(2) |        92.76    |
+| p-value              |       0.0000    |
+| LR: all components, chi2(3) |       186.11    |
+| p-value              |       0.0000    |
+

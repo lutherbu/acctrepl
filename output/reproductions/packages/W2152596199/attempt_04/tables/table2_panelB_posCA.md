@@ -1,0 +1,27 @@
+
+|                      |          (1)    |
+|                      | Positive Current Accruals    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| eq1                  |                 |
+| Auditor tenure in consecutive years |       -0.020*** |
+|                      |      (0.000)    |
+| Years with total assets reported since 1980 |       -0.022*** |
+|                      |      (0.000)    |
+| Log total assets     |       -0.236*** |
+|                      |      (0.000)    |
+| Industry sales ratio |        0.000    |
+|                      |      (0.463)    |
+| Cash flow from operations / average assets |       -0.694*** |
+|                      |      (0.000)    |
+| Big N auditor indicator |       -0.139*** |
+|                      |      (0.005)    |
+| Constant             |       -1.002    |
+|                      |      (0.120)    |
+| /                    |                 |
+| sigma                |        0.330*** |
+|                      |      (0.000)    |
+| Observations         |        14442    |
+| *R*<sup>2</sup>      |                 |
+| Adjusted *R*<sup>2</sup> |                 |
+

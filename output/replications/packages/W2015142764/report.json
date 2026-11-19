@@ -1,0 +1,432 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Financial reporting quality and idiosyncratic return volatility",
+  "doi": "10.1016/j.jacceco.2010.06.001",
+  "route": "reconstruction",
+  "paper_id": "W2015142764",
+  "years": 5,
+  "sources_checked": [
+    "Local resource catalog: output/feasibility_reproduction/resources/catalog.json; generated 2026-10-27; catalog SHA-256 45894893e45d56cb56150252c2ce4e85dfa88f5d891f3e547d3e9ea8003993fb.",
+    "Full date-column-only scans of the exact catalog paths are summarized in work/artifacts/source_date_coverage.csv; file modification times identify the current local snapshots; raw date-year counts are source coverage aggregates, not sample or estimation counts.",
+    "COMP.FUNDA: current local SAS file mtime 2026-07-22 UTC; observed FYEAR 1950–2026; FYEAR 2007 DATADATE through 2008-05-31; see work/artifacts/source_date_coverage.csv.",
+    "COMP.G_EXRT_DLY: current local SAS file mtime 2026-08-14 UTC; observed DATADATE 1982-02-01–2026-07-19; see work/artifacts/source_date_coverage.csv.",
+    "COMP.G_EXRT_MTH: current local SAS file mtime 2026-08-14 UTC; observed DATADATE 1982-01-31–2026-07-31; see work/artifacts/source_date_coverage.csv.",
+    "WRDSAPPS.FIRM_RATIO: current local SAS file mtime 2026-08-15 UTC; observed ADATE 1968-12-31–2025-10-31; see work/artifacts/source_date_coverage.csv.",
+    "CRSP.CCMXPF_LINKTABLE: current local SAS file mtime 2026-08-14 UTC; observed LINKDT through 2025-12-31; LINKENDDT through 2026-01-30; see work/artifacts/source_date_coverage.csv.",
+    "CRSP.DSENAMES: current local SAS file mtime 2025-12-05 UTC; observed NAMEENDT through 2024-12-31; see work/artifacts/source_date_coverage.csv.",
+    "CRSP.DSF: current local SAS file mtime 2025-12-05 UTC; observed DATE 1925-12-31–2024-12-31; added-year raw date rows present 2002–2006; see work/artifacts/source_date_coverage.csv.",
+    "CRSP.MSF: current local SAS file mtime 2025-12-05 UTC; observed DATE 1925-12-31–2024-12-31; added-year raw date rows present 2002–2006; see work/artifacts/source_date_coverage.csv.",
+    "FF.FACTORS_DAILY: current local SAS file mtime 2026-09-27 UTC; observed DATE 1926-07-01–2026-05-29; see work/artifacts/source_date_coverage.csv.",
+    "IBES.STATSUM_EPSUS: current local SAS file mtime 2026-07-25 UTC; observed STATPERS 1976-01-15–2026-05-14; FPEDATS through 2031-03-31; see work/artifacts/source_date_coverage.csv.",
+    "WRDSAPPS.IBCRSPHIST: current local SAS file mtime 2026-08-15 UTC; observed EDATE through 2026-01-31; see work/artifacts/source_date_coverage.csv.",
+    "TFN.S34: current local SAS file mtime 2026-08-15 UTC; observed RDATE 1978-12-31–2025-12-31; FDATE 1980-03-31–2025-12-31; raw RDATE rows present each 2002–2006; see work/artifacts/source_date_coverage.csv."
+  ],
+  "changes": [
+    "Rebuilt the original 1962–2001 period together with fiscal years 2002–2006 from the same named, read-only local sources. Compustat input extends through FYEAR 2007 for CFO at t+1 in baseline FYEAR 2006; the same FX inputs extend through 2008-12-31 to cover those reporting dates. CRSP/FF daily inputs extend through 2008-12-31; FFI49/support fits and S34 RDATE inputs extend through 2006. The original lags, leads, five-year windows, currency rules, screens, transformations, and Eq. (7) estimator are retained.",
+    "Kept FYEAR through each SAS handoff and added Stata e(sample) counts split at the original 2001 endpoint, plus a computed last added FYEAR, in each assigned baseline cell.",
+    "Checked the current local source dates and physical file modification times using the exact catalog-listed files; no alternate or acquired data were used. The fresh SAS and Stata outputs are job-local."
+  ],
+  "limitations": [
+    "The source leaves the instrument set, GMM weighting details, and panel covariance ordering unspecified. The fitted regressors are used as instruments; in this exactly identified linear equation the OLS coefficient solution with panel HAC is equivalent to those moments.",
+    "Local eligible samples differ from the published counts and complete-case regression samples are smaller because source analyst and institutional ownership observations are missing. The exact source of the published-count discrepancy is unresolved; no source-vintage attribution is asserted.",
+    "Data mappings, annual volatility coverage, currency translation, company-level market equity, and historical links are best effort from local Compustat, CRSP, IBES, holdings, and Fama–French sources; see design.md and review.md.",
+    "Non-USD accounting amounts require positive unique same-date Xpressfeed GBP-to-source and GBP-to-USD legs. Unavailable or ambiguous FX legs remain missing; no historical rates are imputed.",
+    "Company market equity sums all common issues only when the effective CCM/CRSP PERMCO mapping is unique and all active issues have valid quotes on one date within 30 days of the three-month target. Ambiguous mappings and incomplete quote sets leave MVE unavailable.",
+    "FREV2A subtracts MEDEST only for identical nonmissing IBES CURCODE values; the source paper does not state currency treatment, and 37 cross-currency pairs were identified in the bounded matched-pair diagnostic.",
+    "S34 retains the earliest FDATE at MGRNO/RDATE grain and all holdings from that vintage. SHARES is converted from FDATE to the CRSP RDATE-month share basis with CFACSHR(FDATE)/CFACSHR(RDATE month); this is a documented best-effort vintage choice because the paper does not specify the vendor or filing vintage.",
+    "Although raw source dates extend beyond 2006, complete-case Eq. (7) estimation observations stop at FYEAR 2003 under the accepted construction: in every eligible DD and ABACC² firm-year for 2004–2006, lagged FREV2A and NANAL and their time interactions are missing. The source-date audit finds IBES rows in those years, but the existing IBES matching path produces no usable values for these baseline controls; no alternative link or imputation was introduced. See work/artifacts/period_complete_case_audit.csv.",
+    "The SAS log contains a nonfatal warning that missing arguments to INTNX returned missing values during fiscal-month assembly. The controller completed both sample handoffs and both Stata fits; the warning and its native log are retained.",
+    "The two Stata cells computed the required counts and years, but the display format omitted a separator between added_n and last_added. The native lines read `EXT_SAMPLE s1 27363 17802003` and `EXT_SAMPLE s2 30594 19392003`; separate count output and year tabs show 1,780/1,939 added observations through 2003. Because the controller requires an exact parseable marker and a second scientific launch is prohibited, both rows are reported as unverified and their structured count fields/artifacts remain empty.",
+    "The original-versus-extended t_eq comparisons retain the same model term and estimator, but the extension also uses current local source vintages and recomputes pooled winsorization/support fits across the enlarged period; the difference is not a vintage-controlled horizon effect."
+  ],
+  "analyses": [
+    {
+      "scope_id": "baseline_dd / table3_col_1",
+      "key": "s1",
+      "label": "baseline_dd / table3_col_1",
+      "sample_ids": [
+        "dd_firm_years"
+      ],
+      "status": "unverified",
+      "reason": "The controller-owned SAS build and Stata cell succeeded (29,143 total e(sample) observations). The native log separately records 27,363 original-period and 1,780 added-period firm-years, with FYEAR 2002=1,612 and 2003=168; no complete-case observations occur in 2004–2006. However, the required computed marker was emitted as `EXT_SAMPLE s1 27363 17802003`, without a separator between added_n and last_added, so the controller cannot validate the marker. With the one scientific launch completed and no retry allowed, the disposition is unverified. The complete-case cutoff is caused by missing FREV2A/NANAL controls under the accepted IBES matching path.",
+      "source_evidence": [
+        "output/models/records/W2015142764.json: baseline_dd, Table 3 column (1), Eq. (7), pages 10–11.",
+        "output/samples/records/W2015142764.json: dd_firm_years, 1962–2001 firm-year sample and source description, page 6.",
+        "output/reproductions/packages/W2015142764/attempt_03/stata.ipynb: accepted cell baseline-dd, original Eq. (7) fit and saved output (Number of obs 27,363; t_eq 0.0058138).",
+        "work/build.sas: lines 22, 47, 68, 198, 300, 397, 521, 806, 915, and 999–1008; expanded source bounds, FYEAR filter and handoff retaining fyear.",
+        "work/runtime/20261118T062209607866Z/cell_baseline-dd.log: lines 83, 95, 123, 128, 138, 208–209; fresh total N, t_eq result, separate counts, malformed marker and estimation-year tabulation.",
+        "work/artifacts/period_complete_case_audit.csv: rows 2–6; prepared DD sample has 2,540/2,661/2,554 eligible firm-years in 2004–2006 but zero complete RHS rows, with FREV2A/NANAL fields missing throughout.",
+        "work/artifacts/source_date_coverage.csv: rows 2–13; exact local source paths, file mtimes and date coverage."
+      ],
+      "original_begin": "1962",
+      "original_end": "2001",
+      "requested_end": "2006",
+      "supported_end": "2003",
+      "last_added": "2003",
+      "count_unit": "firm-year observations in Stata e(sample)",
+      "original_n": null,
+      "added_n": null,
+      "native_log": "work/runtime/20261118T062209607866Z/cell_baseline-dd.log",
+      "artifacts": [],
+      "comparison": {
+        "focal_term": "t_eq = TIME × lagged DD",
+        "units": "Coefficient in the VAR_FFadj equation per one-unit increase in fiscal-year index × lagged DD.",
+        "original": {
+          "estimate": 0.0058138,
+          "std_error": 0.0021848,
+          "p_value": 0.008,
+          "location": "output/reproductions/packages/W2015142764/attempt_03/stata.ipynb, cell baseline-dd, saved Table 3 column (1) output."
+        },
+        "extended": {
+          "estimate": 0.0041746,
+          "std_error": 0.001838,
+          "p_value": 0.023,
+          "location": "work/runtime/20261118T062209607866Z/cell_baseline-dd.log:95; work/tables/table3_dd.md."
+        },
+        "note": "Same focal term and HAC estimator. The extended fit has 29,143 total observations and a visible 1,780-observation addition through 2003, but the mandatory marker formatting makes formal extension verification unavailable."
+      }
+    },
+    {
+      "scope_id": "baseline_abacc2 / table3_col_2",
+      "key": "s2",
+      "label": "baseline_abacc2 / table3_col_2",
+      "sample_ids": [],
+      "status": "unverified",
+      "reason": "The controller-owned SAS build and Stata cell succeeded (32,533 total e(sample) observations). The native log separately records 30,594 original-period and 1,939 added-period firm-years, with FYEAR 2002=1,759 and 2003=180; no complete-case observations occur in 2004–2006. The required marker was emitted as `EXT_SAMPLE s2 30594 19392003`, without a separator between added_n and last_added, so the controller cannot validate it. With the one scientific launch completed and no retry allowed, the disposition is unverified. In the eligible 2004–2006 ABACC² rows, FREV2A/NANAL controls are missing under the accepted IBES matching path. The assigned model record supplies no ABACC² sample_id; the accepted submission identifies its separate local handoff as abacc_firm_years.",
+      "source_evidence": [
+        "output/models/records/W2015142764.json: baseline_abacc2, Table 3 column (2), Eq. (7), pages 10–11; sample_id is null and source sample size is 99,643.",
+        "output/samples/records/W2015142764.json: page 6 documents the common 1962–2001 period and the distinct ABACC² construction sample (99,643 firm-years).",
+        "output/reproductions/packages/W2015142764/attempt_03/submission.json: accepted sample entry abacc_firm_years and fit baseline_abacc2 / table3_col_2.",
+        "output/reproductions/packages/W2015142764/attempt_03/stata.ipynb: accepted cell baseline-abacc2, original Eq. (7) fit and saved output (Number of obs 30,594; t_eq 0.0095975).",
+        "work/build.sas: lines 22, 47, 68, 198, 300, 397, 521, 806, 915, and 1010–1019; expanded source bounds and separate ABACC² handoff retaining fyear.",
+        "work/runtime/20261118T062209607866Z/cell_baseline-abacc2.log: lines 85, 97, 125, 130, 140, 210–211; fresh total N, t_eq result, separate counts, malformed marker and estimation-year tabulation.",
+        "work/artifacts/period_complete_case_audit.csv: rows 7–11; prepared ABACC² sample has 3,231/3,192/3,136 eligible firm-years in 2004–2006 but zero complete RHS rows, with FREV2A/NANAL fields missing throughout.",
+        "work/artifacts/source_date_coverage.csv: rows 2–13; exact local source paths, file mtimes and date coverage."
+      ],
+      "original_begin": "1962",
+      "original_end": "2001",
+      "requested_end": "2006",
+      "supported_end": "2003",
+      "last_added": "2003",
+      "count_unit": "firm-year observations in Stata e(sample)",
+      "original_n": null,
+      "added_n": null,
+      "native_log": "work/runtime/20261118T062209607866Z/cell_baseline-abacc2.log",
+      "artifacts": [],
+      "comparison": {
+        "focal_term": "t_eq = TIME × lagged ABACC²",
+        "units": "Coefficient in the VAR_FFadj equation per one-unit increase in fiscal-year index × lagged ABACC².",
+        "original": {
+          "estimate": 0.0095975,
+          "std_error": 0.003608,
+          "p_value": 0.008,
+          "location": "output/reproductions/packages/W2015142764/attempt_03/stata.ipynb, cell baseline-abacc2, saved Table 3 column (2) output."
+        },
+        "extended": {
+          "estimate": 0.0112798,
+          "std_error": 0.0033663,
+          "p_value": 0.001,
+          "location": "work/runtime/20261118T062209607866Z/cell_baseline-abacc2.log:97; work/tables/table3_abacc2.md."
+        },
+        "note": "Same focal term and HAC estimator. The extended fit has 32,533 total observations and a visible 1,939-observation addition through 2003, but the mandatory marker formatting makes formal extension verification unavailable."
+      }
+    }
+  ],
+  "outcome": "unverified",
+  "counts": {
+    "unverified": 2
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed31-e103-7ec0-b5b2-a6fcfe38ba0d",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W2015142764.json",
+    "models": "output/models/records/W2015142764.json",
+    "predecessor": "output/reproductions/packages/W2015142764/attempt_03/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W2015142764.json"
+  },
+  "input_hashes": {
+    "sample": "7415ff7d06752bd38f70d11b1fc0ce664644e6e516018f6b8d982599407bc1f4",
+    "models": "10ec9092be81732d7db582d622d1082b98a53df0d540b594bc5a4261a57a809b",
+    "predecessor": "71b9f863ef1c7470f28f07dcfb8a248b94c993ecf32c0701004c9dad45e9fe2b",
+    "feasibility": "70572e25ff96fc578fd7bf586c0beeb17472caef93a0eef49fcca5a0cd78ed11"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:f74de317ed0a3762d995238f61c22e1d841cdc39722871e6a6f9cd6c208f43a9",
+    "sha256": "f74de317ed0a3762d995238f61c22e1d841cdc39722871e6a6f9cd6c208f43a9",
+    "ok": true,
+    "state_sha256": "9eea62b517f656bf53f74b00e6870934dc8b913e08719ea6b027232a19b554e1",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      },
+      {
+        "dataset": "WRDSAPPS.FIRM_RATIO",
+        "path": "${ACCTREPL_SAS_ROOT}/wrdsapps/finratio/fr/firm_ratio.sas7bdat",
+        "bytes": 2484412416,
+        "mtime_ns": 1786794221460246067
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.DSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764950802100128761
+      },
+      {
+        "dataset": "CRSP.DSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat",
+        "bytes": 17251565568,
+        "mtime_ns": 1764950931963294339
+      },
+      {
+        "dataset": "CRSP.MSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+        "bytes": 868417536,
+        "mtime_ns": 1764951132644186578
+      },
+      {
+        "dataset": "FF.FACTORS_DAILY",
+        "path": "${ACCTREPL_SAS_ROOT}/ff/factors_daily.sas7bdat",
+        "bytes": 1441792,
+        "mtime_ns": 1790529369023711302
+      },
+      {
+        "dataset": "IBES.STATSUM_EPSUS",
+        "path": "${ACCTREPL_SAS_ROOT}/ibes/statsum_epsus.sas7bdat",
+        "bytes": 2774728704,
+        "mtime_ns": 1784976218535591980
+      },
+      {
+        "dataset": "WRDSAPPS.IBCRSPHIST",
+        "path": "${ACCTREPL_SAS_ROOT}/wrdsapps/linking/iclink/ibcrsphist.sas7bdat",
+        "bytes": 1966080,
+        "mtime_ns": 1786794228524345880
+      },
+      {
+        "dataset": "TFN.S34",
+        "path": "${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat",
+        "bytes": 21583233024,
+        "mtime_ns": 1786793343423906928
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "4b7b930b54df1b67e4dace6f575985aff23e9c07f194df601a76fba3e4b4172c",
+      "work/stata.ipynb": "7c227a0914a2e0797e2f159833549957aa36bd0980a8ff4214f3c19aa17c3e90",
+      "work/submission.json": "92e44c72e1782756b3af0796022154444cf4ee575dd06d9fdbd91c692a3d044f"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "512c7299f1ec38b39adee14ebc8ca513268f201ff2c3834968180c0148c8440d",
+      "predecessor": "output/reproductions/packages/W2015142764/attempt_03/build.sas",
+      "predecessor_sha256": "1dcd26a6917232fb64473b410b2de579dfdbcd80c13bd073886fb921fe6166e6",
+      "executed_sha256": "4b7b930b54df1b67e4dace6f575985aff23e9c07f194df601a76fba3e4b4172c",
+      "historical_predecessor_sha256": "456d04c9bb2d25e2df3dee893dc1db5e3bd7295d9d544bcc8681c6d4845488e8"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "7c227a0914a2e0797e2f159833549957aa36bd0980a8ff4214f3c19aa17c3e90",
+      "predecessor": "output/reproductions/packages/W2015142764/attempt_03/stata.ipynb",
+      "predecessor_sha256": "e7089034728bae1dfc9f3df37642ec047892cab68f1b3acfb68c34a2c27a80f4",
+      "historical_predecessor_sha256": "c663b7ac2e93f9579cd1f533fe8bee4ea556372bc2c27fe13368dd2e2635aa18"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "92e44c72e1782756b3af0796022154444cf4ee575dd06d9fdbd91c692a3d044f",
+      "predecessor": "output/reproductions/packages/W2015142764/attempt_03/submission.json",
+      "predecessor_sha256": "858b2267e9669d3dc276a48527a16a05146ab2565f392725002b3ad71d952d9b"
+    }
+  ],
+  "independent_evidence_review": {
+    "outcome": "extended_partial",
+    "counts": {
+      "extended_partial": 2
+    },
+    "fits": [
+      {
+        "paper_id": "W2015142764",
+        "scope_id": "baseline_dd / table3_col_1",
+        "cell": "baseline-dd",
+        "label": "baseline_dd / table3_col_1",
+        "extracted_sample_ids": [
+          "dd_firm_years"
+        ],
+        "accepted_sample_id": "dd_firm_years",
+        "sample_reference": "output/reproductions/packages/W2015142764/attempt_03/submission.json",
+        "count_unit": "firm-year observations in Stata e(sample)",
+        "worker_status": "unverified",
+        "reviewed_status": "extended_partial",
+        "original_end": 2001,
+        "requested_end": 2006,
+        "supported_end": 2003,
+        "time_variable": "fyear",
+        "original_n": 27363,
+        "added_n": 1780,
+        "last_added": 2003,
+        "year_counts": {
+          "1979": 42,
+          "1980": 595,
+          "1981": 1004,
+          "1982": 1045,
+          "1983": 1043,
+          "1984": 1087,
+          "1985": 1082,
+          "1986": 1088,
+          "1987": 1069,
+          "1988": 1012,
+          "1989": 1087,
+          "1990": 1170,
+          "1991": 1208,
+          "1992": 1353,
+          "1993": 1434,
+          "1994": 1436,
+          "1995": 1458,
+          "1996": 1479,
+          "1997": 1544,
+          "1998": 1557,
+          "1999": 1530,
+          "2000": 1530,
+          "2001": 1510,
+          "2002": 1612,
+          "2003": 168
+        },
+        "native_fit_n": 29143,
+        "printed_marker": "EXT_SAMPLE s1 27363 17802003",
+        "native_log": "urn:sha256:5f3d6d7068af87c9ae538bd3ce2e2fcac3c5d9aef4a67b6615e723d39aa8b132",
+        "log_sha256": "5f3d6d7068af87c9ae538bd3ce2e2fcac3c5d9aef4a67b6615e723d39aa8b132",
+        "comparison": {
+          "focal_term": "t_eq = TIME × lagged DD",
+          "units": "Coefficient in the VAR_FFadj equation per one-unit increase in fiscal-year index × lagged DD.",
+          "original": {
+            "estimate": 0.0058138,
+            "std_error": 0.0021848,
+            "p_value": 0.008,
+            "location": "output/reproductions/packages/W2015142764/attempt_03/stata.ipynb, cell baseline-dd, saved Table 3 column (1) output."
+          },
+          "extended": {
+            "estimate": 0.0041746,
+            "std_error": 0.001838,
+            "p_value": 0.023,
+            "location": "work/runtime/20261118T062209607866Z/cell_baseline-dd.log:95; work/tables/table3_dd.md."
+          },
+          "note": "Same focal term and HAC estimator. The extended fit has 29,143 total observations and a visible 1,780-observation addition through 2003, but the mandatory marker formatting makes formal extension verification unavailable."
+        },
+        "working_table": "work/tables/table3_dd.md",
+        "table_sha256": "940043b8b1c0e71bf7a65dfd5285129ac4bd0858fcb69e0e7d805ddd1b4baa2a",
+        "table_path": "output/replications/packages/W2015142764/reviewed_results/table3_dd.md"
+      },
+      {
+        "paper_id": "W2015142764",
+        "scope_id": "baseline_abacc2 / table3_col_2",
+        "cell": "baseline-abacc2",
+        "label": "baseline_abacc2 / table3_col_2",
+        "extracted_sample_ids": [],
+        "accepted_sample_id": "abacc_firm_years",
+        "sample_reference": "output/reproductions/packages/W2015142764/attempt_03/submission.json",
+        "count_unit": "firm-year observations in Stata e(sample)",
+        "worker_status": "unverified",
+        "reviewed_status": "extended_partial",
+        "original_end": 2001,
+        "requested_end": 2006,
+        "supported_end": 2003,
+        "time_variable": "fyear",
+        "original_n": 30594,
+        "added_n": 1939,
+        "last_added": 2003,
+        "year_counts": {
+          "1979": 44,
+          "1980": 634,
+          "1981": 1070,
+          "1982": 1114,
+          "1983": 1123,
+          "1984": 1176,
+          "1985": 1190,
+          "1986": 1205,
+          "1987": 1170,
+          "1988": 1164,
+          "1989": 1230,
+          "1990": 1311,
+          "1991": 1415,
+          "1992": 1515,
+          "1993": 1538,
+          "1994": 1548,
+          "1995": 1608,
+          "1996": 1663,
+          "1997": 1769,
+          "1998": 1822,
+          "1999": 1723,
+          "2000": 1720,
+          "2001": 1842,
+          "2002": 1759,
+          "2003": 180
+        },
+        "native_fit_n": 32533,
+        "printed_marker": "EXT_SAMPLE s2 30594 19392003",
+        "native_log": "urn:sha256:a4c0e31b16e53531673a9a0d1704aa60f08f3691afcd9ff2a53610dad8249407",
+        "log_sha256": "a4c0e31b16e53531673a9a0d1704aa60f08f3691afcd9ff2a53610dad8249407",
+        "comparison": {
+          "focal_term": "t_eq = TIME × lagged ABACC²",
+          "units": "Coefficient in the VAR_FFadj equation per one-unit increase in fiscal-year index × lagged ABACC².",
+          "original": {
+            "estimate": 0.0095975,
+            "std_error": 0.003608,
+            "p_value": 0.008,
+            "location": "output/reproductions/packages/W2015142764/attempt_03/stata.ipynb, cell baseline-abacc2, saved Table 3 column (2) output."
+          },
+          "extended": {
+            "estimate": 0.0112798,
+            "std_error": 0.0033663,
+            "p_value": 0.001,
+            "location": "work/runtime/20261118T062209607866Z/cell_baseline-abacc2.log:97; work/tables/table3_abacc2.md."
+          },
+          "note": "Same focal term and HAC estimator. The extended fit has 32,533 total observations and a visible 1,939-observation addition through 2003, but the mandatory marker formatting makes formal extension verification unavailable."
+        },
+        "working_table": "work/tables/table3_abacc2.md",
+        "table_sha256": "be60c9ea1d84cf27961807f9f7148e01dfa44ba908aafee9ef6724c6ce7308ce",
+        "table_path": "output/replications/packages/W2015142764/reviewed_results/table3_abacc2.md"
+      }
+    ]
+  },
+  "historical_input_hashes": {
+    "models": "7f780da30226a33d22a3bb1222ec390f720fb9d86b3071058523e002a192f1ed",
+    "predecessor": "7ac142cb8f5049c3295dddb57ca91a55c8f288f920a8a2da55c64319ecc5fec5",
+    "feasibility": "3a0f1f3f258d5efcd52544970ecd96d2116b185cc96b7a7ce7b71f3c965988c0"
+  }
+}

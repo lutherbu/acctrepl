@@ -1,0 +1,2548 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-4ada532ef946",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 56/Issue 4/12216 - Non-GAAP-Earnings-Disclosure-in-Loss-Firms/lv2018-datasheet-and-code.zip",
+        "sha256": "93d7739e052232fcd6794437db9a2f7b3f9ad0cff8bdd76420a116029bd140c5"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "dbbfecedae746b39024c500809444c34628eb698a4cf1892264903be4f665dbf"
+  },
+  "title": "Non-GAAP Earnings Disclosure in Loss Firms",
+  "doi": "10.1111/1475-679X.12216",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Complete supplied Stata data construction and analysis workflow, retaining both packaged Perl text-search result branches, the two hand-collection rounds, the profitable-firm comparison, BCGW Table 6 Panel B, and all reported analysis sections. The packaged text-search CSVs are direct primary inputs; regenerating the revised output with the supplied Perl program is a separate conditional route because the numbered HTML working set is not supplied.",
+      "entry_points": [
+        "lv_jar_stata_code.do"
+      ],
+      "requirement_ids": [
+        "R_ITEMS8K",
+        "R_IBES_ACTU",
+        "R_IBES_ACTU_GAAP",
+        "R_IBES_STATSUMU",
+        "R_IBES_STATSUMU_EPS",
+        "R_IBES_STATSUMU_GPS",
+        "R_FUNDQ",
+        "R_CRSP_MONTHLY",
+        "R_CRSP_VWRETD",
+        "R_EXTRA_2016",
+        "R_EXTRA_2017",
+        "R_ERDPORT1",
+        "R_COMPAGE",
+        "R_XTRAVAR",
+        "R_FF_MONTHLY",
+        "R_BCGW",
+        "R_HAND_LOSS1",
+        "R_HAND_LOSS2",
+        "R_HAND_PROFIT",
+        "R_TEXTSEARCH_BASIC",
+        "R_TEXTSEARCH_REVISED"
+      ],
+      "software_ids": [
+        "SW_STATA",
+        "SW_STATA_ADOS",
+        "SW_RBOUNDS"
+      ],
+      "issue_ids": [
+        "I_DATA_CONTRACTS",
+        "I_FUNDQ_LINK",
+        "I_ERDPORT1",
+        "I_BCGW_ACCESS",
+        "I_PATHS"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_DOC_ORIGINS",
+        "E_DOC_POPULATION",
+        "E_DOC_WRDS_ITEMS",
+        "E_DOC_CRSP",
+        "E_DOC_EXTRA",
+        "E_DOC_IBES_ACTU",
+        "E_DOC_IBES_STATS",
+        "E_DOC_COMP_AGE_XTRA",
+        "E_DOC_XTRAVAR",
+        "E_DOC_BCGW",
+        "E_DOC_SHARE",
+        "E_MAIN_PATH",
+        "E_MAIN_ITEMS",
+        "E_MAIN_FUNDQ",
+        "E_MAIN_FUNDQ_WINDOW",
+        "E_TEXT_HANDOFF",
+        "E_HAND_FIELDS",
+        "E_PROFIT_HAND",
+        "E_BCGW_BRANCH",
+        "E_RBOUNDS_CALLS",
+        "E_CRSP_UPDATE",
+        "E_FF_CALLS",
+        "E_FINAL_OUTPUT",
+        "E_STATA_ENV",
+        "E_STATA_COMMANDS",
+        "E_PERL_STATIC",
+        "E_PERL_SOFTWARE",
+        "E_DOC_IBES_GAAP",
+        "E_DOC_IBES_GPS",
+        "E_CAT_IBES_XEPS"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_ITEMS8K",
+      "kind": "data",
+      "description": "Author’s items8k input used to identify earnings-release 8-Ks: CIK, filing date, nitem (filter 2.02), and fname for the later URL/downloadlist mapping. The code sample is 2006–2014. The local SEC catalog candidate has these columns, but local row sampling does not prove period/filter/URL compatibility.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_ITEMS8K_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/sec/items8k.sas7bdat",
+          "description": "Bounded local candidate WRDSSEC.ITEMS8K; confirm 2006–2014 coverage, Item 2.02 values, filename semantics and Stata conversion.",
+          "evidence_ids": [
+            "E_CAT_SEC",
+            "E_PROBE_SEC"
+          ],
+          "expected_fields": [
+            "fdate",
+            "cik",
+            "fname",
+            "nitem"
+          ],
+          "expected_period": "All sampled 8-K index rows needed for the 2006–2014 firm-quarter sample."
+        },
+        {
+          "id": "RT_ITEMS8K_SEC",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data",
+          "description": "SEC publicly provides indexes and filing text, but its listed index fields do not provide the author’s nitem field. An exact compliant Item 2.02 index/parser and mapping to the author’s filename IDs remain unspecified.",
+          "evidence_ids": [
+            "E_SEC_PUBLIC",
+            "E_MAIN_ITEMS"
+          ],
+          "expected_fields": [
+            "CIK",
+            "form type",
+            "date filed",
+            "file name"
+          ],
+          "expected_period": "2006–2014 filings plus the corresponding complete filing text."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IBES_ACTU",
+      "kind": "data",
+      "description": "Unadjusted actual quarterly EPS input, with CUSIP, period end, value, announcement date and ticker; code drops blank/zero CUSIP and missing values/dates and joins by CUSIP/date.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_IBES_ACTU_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/ibes/actu_epsus.sas7bdat",
+          "description": "Local unadjusted EPS US candidate has matching input columns; verify measure EPS, quarterly periodicity, author-compatible dates/period and required 2006–2014 coverage.",
+          "evidence_ids": [
+            "E_CAT_IBES",
+            "E_PROBE_IBES_ACTU"
+          ],
+          "expected_fields": [
+            "CUSIP",
+            "PENDS",
+            "VALUE",
+            "ANNDATS",
+            "TICKER",
+            "MEASURE",
+            "PDICITY"
+          ],
+          "expected_period": "Quarterly actuals covering the 2006–2014 estimation sample and lag-date joins."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IBES_ACTU_GAAP",
+      "kind": "data",
+      "description": "Separate unadjusted GAAP EPS actuals input (IBES measure GPS), keyed by CUSIP and period end with actual value; used for agreement checks, ERC surprises and forecast/actual comparisons.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_IBES_GAAP_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/ibes/actu_xepsus.sas7bdat",
+          "description": "Catalog-only ACTU_XEPSUS non-EPS US-region candidate has the expected actuals fields, but no bounded probe was run and the presence/coverage of MEASURE=GPS quarterly records remains unverified.",
+          "evidence_ids": [
+            "E_CAT_IBES_XEPS",
+            "E_DOC_IBES_GAAP",
+            "E_MAIN_IBES_GAAP"
+          ],
+          "expected_fields": [
+            "TICKER",
+            "CUSIP",
+            "PENDS",
+            "VALUE",
+            "ANNDATS",
+            "MEASURE",
+            "PDICITY"
+          ],
+          "expected_period": "Quarterly GPS actuals covering sample and ERC joins; exact required extent unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IBES_STATSUMU",
+      "kind": "data",
+      "description": "Unadjusted analyst coverage summary statistics for EPS/FPI 6; Stata uses NUMEST after requiring same calendar month of STATPERS and FPEDATS and joins on CUSIP/date.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_IBES_STATS_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/ibes/statsumu_epsus.sas7bdat",
+          "description": "Local unadjusted EPS US summary candidate has required columns; verify measure/FPI filters, month match and 2006–2014 coverage.",
+          "evidence_ids": [
+            "E_CAT_IBES",
+            "E_PROBE_IBES_STATS"
+          ],
+          "expected_fields": [
+            "CUSIP",
+            "STATPERS",
+            "FPEDATS",
+            "MEASURE",
+            "FPI",
+            "NUMEST"
+          ],
+          "expected_period": "Coverage observations aligned to 2006–2014 fiscal quarter ends."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IBES_STATSUMU_EPS",
+      "kind": "data",
+      "description": "Unadjusted EPS consensus forecasts for ERC tests: ticker, STATPERS, FPEDATS and MEDEST; code joins at ticker and quarter-end.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_IBES_EPS_FORECAST_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/ibes/statsumu_epsus.sas7bdat",
+          "description": "Local candidate has required fields; verify EPS/FPI 6, monthly period match, coverage and date vintage.",
+          "evidence_ids": [
+            "E_CAT_IBES",
+            "E_PROBE_IBES_STATS"
+          ],
+          "expected_fields": [
+            "TICKER",
+            "STATPERS",
+            "FPEDATS",
+            "MEDEST",
+            "MEASURE",
+            "FPI"
+          ],
+          "expected_period": "Forecasts matching the required sample quarter ends."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IBES_STATSUMU_GPS",
+      "kind": "data",
+      "description": "Separate unadjusted GAAP EPS consensus (GPS/FPI 6) for ERC tests; code needs median estimates matched by ticker and fiscal period end.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_IBES_GPS_FORECAST_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/ibes/statsumu_xepsus.sas7bdat",
+          "description": "Catalog-only STATSUMU_XEPSUS non-EPS US-region candidate has the summary-statistics fields, but no bounded probe was run and the GPS/FPI 6 observations and period coverage remain unverified.",
+          "evidence_ids": [
+            "E_CAT_IBES_XEPS",
+            "E_DOC_IBES_GPS",
+            "E_MAIN_IBES_GPS"
+          ],
+          "expected_fields": [
+            "TICKER",
+            "STATPERS",
+            "FPEDATS",
+            "MEDEST",
+            "MEASURE",
+            "FPI"
+          ],
+          "expected_period": "GPS forecasts matching ERC sample quarter ends."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_FUNDQ",
+      "kind": "data",
+      "description": "The author’s CRSP/Compustat merged quarterly input. Main construction uses GVKEY/date/fiscal-quarter keys, CIK, SIC, lpermno, U.S. flag, Compustat statement/earnings/price fields and lags. Sample bounds are 2006–2014; pre-sample quarterly history is consumed for lags and prior announcement checks.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_FUNDQ_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+          "description": "Local COMP.FUNDQ candidate has many quarterly accounting fields but the bounded probe shows no lpermno, required by the source. The CCM link table is only a candidate; the package does not supply a producer/join specification that would establish the author’s merged input.",
+          "evidence_ids": [
+            "E_CAT_FUNDQ",
+            "E_PROBE_COMP_FUNDQ"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyearq",
+            "fqtr",
+            "lpermno",
+            "fic",
+            "cik",
+            "sic",
+            "atq",
+            "niq",
+            "ibq",
+            "rdq",
+            "epsfxq",
+            "prccq",
+            "cshoq",
+            "cshfdq"
+          ],
+          "expected_period": "2006–2014 estimation period plus quarterly history used for lags; exact coverage boundaries and merge vintage remain unresolved."
+        },
+        {
+          "id": "RT_FUNDQ_WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS CRSP/Compustat Merged → Fundamentals Quarterly",
+          "description": "The datasheet names this exact product family. Confirm entitlement, author-compatible merged fields including lpermno and source period, then export the named fundq.dta input.",
+          "evidence_ids": [
+            "E_DOC_EXTRA",
+            "E_MAIN_FUNDQ"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyearq",
+            "fqtr",
+            "lpermno",
+            "fic",
+            "cik",
+            "sic",
+            "atq",
+            "niq",
+            "ibq",
+            "rdq",
+            "epsfxq"
+          ],
+          "expected_period": "2006–2014 estimation period with needed pre-sample quarter lags; actual source bounds unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CRSP_MONTHLY",
+      "kind": "data",
+      "description": "Monthly CRSP stock returns and prices. Step 1 uses prc/ret keyed by permno/date to calculate buy-and-hold checks; the Table 9 portfolio branch separately appends crspm_2015_2017.dta before monthly portfolio returns.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CRSP_MONTHLY_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock_v2/msf_v2.sas7bdat",
+          "description": "Local MSF_V2 candidate has PERMNO, MthCalDt, MthPrc and MthRet, which can map to author permno/date/prc/ret. Verify date coverage including required lags and 2015–2017 portfolio extension, and author-compatible return definition.",
+          "evidence_ids": [
+            "E_CAT_CRSP",
+            "E_PROBE_CRSP_MSF"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "MthCalDt",
+            "MthPrc",
+            "MthRet"
+          ],
+          "expected_period": "Monthly sample and return history for 2006–2014 plus months needed by the portfolio branch; code also names a 2015–2017 extension."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CRSP_VWRETD",
+      "kind": "data",
+      "description": "Monthly value-weighted return including distributions, author input crspm_vwretd.dta; code joins by date to construct 3- and 12-month market returns.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CRSP_VWRETD_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_indexes/msix.sas7bdat",
+          "description": "Local CRSP.MSIX candidate has caldt and vwretd; date mapping and 2006–2014 month coverage/vintage remain unverified.",
+          "evidence_ids": [
+            "E_CAT_CRSP",
+            "E_PROBE_CRSP_MSIX"
+          ],
+          "expected_fields": [
+            "caldt",
+            "vwretd"
+          ],
+          "expected_period": "Monthly observations spanning the monthly CRSP sample and preceding 12-month return windows."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_EXTRA_2016",
+      "kind": "data",
+      "description": "Author’s additional quarterly data file used to attach one-to-twelve-quarter future operating, cash-flow, EPS and share-count outcomes; code drops records before fiscal year/date 2002.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_EXTRA2016_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+          "description": "Local quarterly Compustat candidate includes named accounting fields, but its exact author extract, date coverage and post-sample lead availability are not verified.",
+          "evidence_ids": [
+            "E_CAT_FUNDQ",
+            "E_PROBE_COMP_FUNDQ"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyearq",
+            "fqtr",
+            "atq",
+            "ibq",
+            "oancfy",
+            "ivncfy",
+            "rdq",
+            "revt",
+            "cogsq",
+            "xsgaq",
+            "xrdq",
+            "epsfxq",
+            "cshfdq"
+          ],
+          "expected_period": "At least 2002 onward, with up to 12 future quarters for 2006–2014 sample outcomes; exact endpoint unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_EXTRA_2017",
+      "kind": "data",
+      "description": "Author’s later quarterly merged input, used specifically to calculate up-to-12-quarter future operating cash flow for additional tests; code drops pre-2002 observations.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_EXTRA2017_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+          "description": "Local quarterly candidate includes the principal accounting fields but exact CRSP/Compustat merged construction and 12-quarter future coverage are not established.",
+          "evidence_ids": [
+            "E_CAT_FUNDQ",
+            "E_PROBE_COMP_FUNDQ"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyearq",
+            "fqtr",
+            "atq",
+            "oancfy"
+          ],
+          "expected_period": "At least 2002 history and 12-quarter future cash-flow coverage for the sample; exact endpoint unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_ERDPORT1",
+      "kind": "data",
+      "description": "Author’s daily size-adjusted event-return file. Code expects permno, date, raw ret and benchmark return decret, and creates one-, 60-, 120- and 240-trading-observation forward abnormal returns plus lags.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_ERDPORT1_WRDS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS CRSP SAS/SSH index data with NYSE/AMEX/NASDAQ breakpoints (author file erdport1.dta)",
+          "description": "Datasheet names a daily size-adjusted return series obtained through SAS/SSH; no exact compatible prepared product or author transformation is supplied. Local DSF_V2 is raw daily returns and does not establish decret or author breakpoints.",
+          "evidence_ids": [
+            "E_DOC_CRSP",
+            "E_DAILY_ADJUSTED",
+            "E_CAT_CRSP",
+            "E_PROBE_CRSP_DSF"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "DlyCalDt",
+            "DlyRet"
+          ],
+          "expected_period": "Event windows around 2006–2014 announcements with up to 241 future and 61 lagged trading observations; exact date endpoints depend on event coverage."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_COMPAGE",
+      "kind": "data",
+      "description": "Annual Compustat input used to derive firstyear by GVKEY and firm age; requires annual history through the analysis sample.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_COMPAGE_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "Local COMP.FUNDA candidate contains GVKEY, FYEAR and AT, but full history and period coverage are unverified.",
+          "evidence_ids": [
+            "E_CAT_COMP_FF",
+            "E_PROBE_COMP_FUNDA"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "at"
+          ],
+          "expected_period": "Annual firm history sufficient to calculate first available year for the 2006–2014 sample; exact lower bound unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_XTRAVAR",
+      "kind": "data",
+      "description": "Quarterly Compustat history used for earnings volatility over prior 2–8 quarters and sales growth; source code retains U.S. firms and drops fiscal/data years before 2002.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_XTRAVAR_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+          "description": "Local quarterly Compustat candidate includes required accounting fields; verify exact CIK/SIC/U.S. firm fields, 2002–2014 coverage and history for four-quarter growth lags.",
+          "evidence_ids": [
+            "E_CAT_FUNDQ",
+            "E_PROBE_COMP_FUNDQ"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyearq",
+            "fqtr",
+            "fic",
+            "cik",
+            "sic",
+            "atq",
+            "ibq",
+            "saleq"
+          ],
+          "expected_period": "Quarterly history from 2002 through the 2006–2014 estimation sample; exact endpoints and population coverage unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_FF_MONTHLY",
+      "kind": "data",
+      "description": "Four monthly factors used in Table 9 regressions: mktrf, smb, hml and umd, joined by year/month to the portfolio return series.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_FF_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/ff/factors_monthly.sas7bdat",
+          "description": "Local FF.FACTORS_MONTHLY candidate has date and all four factor columns, but period and historical definition/vintage are not verified.",
+          "evidence_ids": [
+            "E_CAT_COMP_FF",
+            "E_PROBE_FF",
+            "E_FF_PUBLIC"
+          ],
+          "expected_fields": [
+            "date",
+            "mktrf",
+            "smb",
+            "hml",
+            "umd"
+          ],
+          "expected_period": "Monthly factors across the code-generated 12-year portfolio window; exact start/end and requested historical vintage need validation."
+        },
+        {
+          "id": "RT_FF_PUBLIC",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html",
+          "description": "Official current library lists downloadable Fama/French 3 factors and a separate Momentum factor; check matching periods, units, alignment and historical FIZ/CIZ definition before using as a compatible route.",
+          "evidence_ids": [
+            "E_FF_PUBLIC",
+            "E_FF_CALLS"
+          ],
+          "expected_fields": [
+            "date",
+            "mktrf",
+            "smb",
+            "hml",
+            "umd"
+          ],
+          "expected_period": "At least the monthly span used by the Table 9 regressions; exact endpoints unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_BCGW",
+      "kind": "data",
+      "description": "Separate BCGW comparison dataset for Table 6 Panel B, keyed by GVKEY/datadate and used with MGR_NG_EPS and mgr_exclude. Expected author range is 2003–2016.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_BCGW_AUTHOR",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://sites.google.com/view/kurthgee/data",
+          "description": "The author page lists the named Manager Non-GAAP EPS dataset and links to a request form; exact delivered columns, coverage, access and Stata-ready file remain unverified.",
+          "evidence_ids": [
+            "E_DOC_BCGW",
+            "E_BCGW_PUBLIC",
+            "E_BCGW_BRANCH"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "MGR_NG_EPS",
+            "mgr_exclude",
+            "url"
+          ],
+          "expected_period": "2003–2016."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_HAND_LOSS1",
+      "kind": "data",
+      "description": "Author-prepared first-round loss-firm hand-coded file, joined by CIK/fdate with non-GAAP earnings and exclusion indicators.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_R_HAND_LOSS1_PACKAGED",
+          "type": "packaged",
+          "status": "verified",
+          "location": "EDGAR/data_clean.dta",
+          "description": "Supplied author-prepared Stata file is readable and the bounded metadata probe matches the required keys and variables; count notes come from file metadata or author code, not a row sample.",
+          "evidence_ids": [
+            "E_PROBE_HAND1"
+          ],
+          "expected_fields": [
+            "cik",
+            "fdate",
+            "eps_dil_ng",
+            "ni_ng",
+            "ng",
+            "dummy_comp",
+            "dummy_amort"
+          ],
+          "expected_period": "3,629 first-round observations as identified by the source; sample period is the author’s 2006–2014 firm-quarter design."
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_HAND_LOSS2",
+      "kind": "data",
+      "description": "Author-prepared second-round loss-firm hand-coded file, retained as the separate collection round.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_R_HAND_LOSS2_PACKAGED",
+          "type": "packaged",
+          "status": "verified",
+          "location": "EDGAR/data_clean2.dta",
+          "description": "Supplied author-prepared Stata file is readable and the bounded metadata probe matches the required keys and variables; count notes come from file metadata or author code, not a row sample.",
+          "evidence_ids": [
+            "E_PROBE_HAND2"
+          ],
+          "expected_fields": [
+            "cik",
+            "fdate",
+            "eps_dil_ng",
+            "ni_ng",
+            "ng",
+            "dummy_comp",
+            "dummy_amort"
+          ],
+          "expected_period": "2,779 second-round observations as identified by the source."
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_HAND_PROFIT",
+      "kind": "data",
+      "description": "Author-prepared 4,000-row profit-firm hand-coded sample with CIK/fdate, non-GAAP EPS/earnings, disclosure indicator and exclusion fields.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_R_HAND_PROFIT_PACKAGED",
+          "type": "packaged",
+          "status": "verified",
+          "location": "EDGAR/data_profit_clean.dta",
+          "description": "Supplied author-prepared Stata file is readable and the bounded metadata probe matches the required keys and variables; count notes come from file metadata or author code, not a row sample.",
+          "evidence_ids": [
+            "E_PROBE_HANDPROFIT"
+          ],
+          "expected_fields": [
+            "cik",
+            "fdate",
+            "eps_dil_ng_p",
+            "ni_ng_p",
+            "comp_excl_p",
+            "depram_excl_p",
+            "ng_p"
+          ],
+          "expected_period": "4,000 observations as identified by the source."
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_TEXTSEARCH_BASIC",
+      "kind": "data",
+      "description": "Packaged first-stage Perl text-search result used directly by the Stata pipeline; keyed by File_Number/downloadId and word indicator columns.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_TEXT_BASIC_PACKAGED",
+          "type": "packaged",
+          "status": "verified",
+          "location": "EDGAR/output.csv",
+          "description": "Supplied CSV is readable with File_Number and the word columns imported by Stata.",
+          "evidence_ids": [
+            "E_PROBE_TEXT1",
+            "E_TEXT_HANDOFF"
+          ],
+          "expected_fields": [
+            "File_Number",
+            "word1",
+            "word2",
+            "word3",
+            "word4",
+            "word5",
+            "word6",
+            "word7",
+            "word8",
+            "word9",
+            "word10",
+            "word11",
+            "word12",
+            "word13",
+            "word14",
+            "word15"
+          ],
+          "expected_period": "Rows keyed to the download IDs generated by the supplied Stata branch."
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_TEXTSEARCH_REVISED",
+      "kind": "data",
+      "description": "Packaged revised second-stage Perl text-search result used directly by the Stata pipeline and final shared sample; keyed by File_Number/downloadId and word indicators.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_TEXT_REVISED_PACKAGED",
+          "type": "packaged",
+          "status": "verified",
+          "location": "EDGAR/output_new.csv",
+          "description": "Supplied CSV is readable with File_Number and revised word indicators; it can be consumed without regenerating the source HTML search.",
+          "evidence_ids": [
+            "E_PROBE_TEXT2",
+            "E_TEXT_HANDOFF",
+            "E_VARIABLE_LIST"
+          ],
+          "expected_fields": [
+            "File_Number",
+            "word1",
+            "word2",
+            "word3",
+            "word4",
+            "word5",
+            "word6",
+            "word7",
+            "word8",
+            "word9",
+            "word10",
+            "word11",
+            "word12",
+            "word13",
+            "word14",
+            "word15"
+          ],
+          "expected_period": "Rows keyed to the download IDs generated by the supplied Stata branch."
+        }
+      ],
+      "outcome": "local_available"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW_STATA",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 is installed. The author’s exact Stata release is unspecified; the package ADO path must be prepended in the configured execution copy before invocation.",
+      "evidence_ids": [
+        "E_STATA_ENV",
+        "E_STATA_COMMANDS",
+        "E_MAIN_PATH"
+      ]
+    },
+    {
+      "id": "SW_STATA_ADOS",
+      "name": "Bundled Stata ADOs and invoked helper commands",
+      "status": "available",
+      "description": "The four supplied ADO command entries resolve when the package ado directory is prepended. konfound’s invoked indeplist, moss and matsort commands also resolve locally.",
+      "evidence_ids": [
+        "E_STATA_COMMANDS",
+        "E_SOFT_INDEPLIST",
+        "E_SOFT_MOSS",
+        "E_SOFT_MATSORT",
+        "E_KONFOUND_HELPERS",
+        "E_STATA_ADO_SOFTWARE"
+      ]
+    },
+    {
+      "id": "SW_RBOUNDS",
+      "name": "Stata rbounds command",
+      "status": "preparation_required",
+      "description": "The supplied Table 8 sensitivity branches invoke rbounds. The Stata 18 command lookup did not find it; add a compatible Stata ado package and verify the entry before running those branches.",
+      "evidence_ids": [
+        "E_RBOUNDS_CALLS",
+        "E_SOFT_RBOUNDS",
+        "E_STATA_COMMANDS"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "I_DATA_CONTRACTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "data_compatibility",
+      "description": "Named WRDS products and local SAS catalog candidates remain unverified for exact measures, source period, coverage and identifier mappings. The public SEC index does not itself establish the authors’ nitem==2.02 index. EPS actual/summary candidates have bounded column probes; the catalog also lists non-EPS XEPSUS actual/summary candidates for the GPS inputs, but no probes or GPS/FPI/date-coverage checks confirm them. Monthly return/factor vintages and all lead/lag history need validation.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_DOC_WRDS_ITEMS",
+        "E_DOC_IBES_ACTU",
+        "E_DOC_IBES_STATS",
+        "E_MAIN_ITEMS",
+        "E_MAIN_IBES_ACTU",
+        "E_MAIN_IBES_GAAP",
+        "E_MAIN_IBES_STATS",
+        "E_MAIN_CRSP",
+        "E_MAIN_FUNDQ_WINDOW",
+        "E_LEADS_2016",
+        "E_LEADS_2017",
+        "E_CRSP_UPDATE",
+        "E_FF_CALLS",
+        "E_PROBE_SEC",
+        "E_PROBE_IBES_ACTU",
+        "E_PROBE_IBES_STATS",
+        "E_PROBE_CRSP_MSF",
+        "E_PROBE_CRSP_MSIX",
+        "E_PROBE_FF",
+        "E_SEC_PUBLIC",
+        "E_FF_PUBLIC",
+        "E_DOC_IBES_GAAP",
+        "E_DOC_IBES_GPS",
+        "E_CAT_IBES_XEPS"
+      ]
+    },
+    {
+      "id": "I_FUNDQ_LINK",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_producer",
+      "description": "The quarterly main source requires lpermno, but local COMP.FUNDQ has no lpermno in the bounded field probe. A CRSP/Compustat link-table candidate exists, yet the package does not document the author’s link filters/producer or resulting fundq.dta contract.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_MAIN_FUNDQ",
+        "E_PROBE_COMP_FUNDQ",
+        "E_CAT_FUNDQ"
+      ]
+    },
+    {
+      "id": "I_ERDPORT1",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_transformation",
+      "description": "The supplied Stata driver consumes precomputed daily size-adjusted returns with ret and decret and creates forward windows through 240 trading observations. Local raw CRSP daily returns do not establish the author’s NYSE/AMEX/NASDAQ breakpoint-adjustment product or its exact producer.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_DOC_CRSP",
+        "E_DAILY_ADJUSTED",
+        "E_PROBE_CRSP_DSF",
+        "E_CAT_CRSP"
+      ]
+    },
+    {
+      "id": "I_BCGW_ACCESS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "data_access_and_schema",
+      "description": "The author’s dataset page identifies the BCGW Manager Non-GAAP EPS dataset and links to a form, but the delivered file, fields, period coverage and access conditions have not been verified.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_DOC_BCGW",
+        "E_BCGW_PUBLIC",
+        "E_BCGW_BRANCH"
+      ]
+    },
+    {
+      "id": "I_PATHS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "path_configuration",
+      "description": "The do-file hard-codes [redacted-path-beeb72543b10], uses Windows backslash separators and alternates InFiles/Infiles and OutFiles/Outfiles. The Stata path probe showed forward slashes work and backslashes fail in this environment; configure a relative execution root and consistent path casing on a separate copy.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_MAIN_PATH",
+        "E_STATA_COMMANDS"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_DOC_ORIGINS",
+      "kind": "source",
+      "description": "The datasheet identifies the primary data families and hand collection.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 11,
+      "line_end": 14,
+      "quote": "The data used in this study were either hand-collected from 8-K filings or retrieved from WRDS\n(Compustat, CRSP, I/B/E/S)."
+    },
+    {
+      "id": "E_DOC_POPULATION",
+      "kind": "source",
+      "description": "The study defines an 8-K Item 2.02 sample from 2006 through 2014 and says filings came from EDGAR.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 30,
+      "line_end": 35,
+      "quote": "period 2006-2014. Our sample selection procedures are described in Table 1 of the paper. We obtained all 8-K earnings releases for this\nsample from SEC EDGAR"
+    },
+    {
+      "id": "E_DOC_WRDS_ITEMS",
+      "kind": "source",
+      "description": "The 8-K input is a WRDS SEC Filings Index product used to identify Item 2.02.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 155,
+      "line_end": 159,
+      "quote": "items8k.dta                  List of all 8-K filings          WRDS → SEC Analytics Suite →   8/6/2015\n                              between 2006 and 2014,           SEC Filings Index"
+    },
+    {
+      "id": "E_DOC_CRSP",
+      "kind": "source",
+      "description": "The datasheet identifies erdport1.dta as daily size-adjusted returns obtained through WRDS SAS/SSH.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 101,
+      "line_end": 104,
+      "quote": "erdport1.dta                Daily size-adjusted returns"
+    },
+    {
+      "id": "E_DOC_EXTRA",
+      "kind": "source",
+      "description": "The datasheet identifies an additional quarterly Compustat extension used to ensure future-performance-test data availability.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 106,
+      "line_end": 111,
+      "quote": "extra_data_2016.dta         Additional quarterly"
+    },
+    {
+      "id": "E_DOC_IBES_ACTU",
+      "kind": "source",
+      "description": "The datasheet specifies the unadjusted EPS actuals product.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 130,
+      "line_end": 137,
+      "quote": "ibes_actu.dta                File containing actual value     WRDS → I/B/E/S → Unadjusted"
+    },
+    {
+      "id": "E_DOC_IBES_STATS",
+      "kind": "source",
+      "description": "The datasheet specifies unadjusted summary statistic EPS/GPS products and FPI 6.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 138,
+      "line_end": 153,
+      "quote": "ibes_statsumu_eps.dta        File containing number of        WRDS → I/B/E/S → Unadjusted"
+    },
+    {
+      "id": "E_DOC_COMP_AGE_XTRA",
+      "kind": "source",
+      "description": "The datasheet specifies annual Compustat inputs for firm age.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 87,
+      "line_end": 90,
+      "quote": "compustat_age_data.dta      Financial statement data       WRDS → Compustat-Capital IQ"
+    },
+    {
+      "id": "E_DOC_XTRAVAR",
+      "kind": "source",
+      "description": "The datasheet specifies quarterly Compustat data for historical earnings volatility and sales growth.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 161,
+      "line_end": 166,
+      "quote": "xtravar.dta                  Additional quarterly             WRDS → Compustat-Capital IQ"
+    },
+    {
+      "id": "E_DOC_BCGW",
+      "kind": "source",
+      "description": "The datasheet identifies the BCGW comparison data and author URL.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 15,
+      "line_end": 20,
+      "quote": "we obtained their non-GAAP data in February\n2018 from: https://sites.google.com/view/kurthgee/data."
+    },
+    {
+      "id": "E_DOC_SHARE",
+      "kind": "source",
+      "description": "The shared final dataset excludes purchased Compustat and I/B/E/S variables.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 185,
+      "line_end": 190,
+      "quote": "We share the final sample of 59821 firm-quarters (see Table 1) with\nthe hand-collected non-GAAP variables attached: “lv_jar_dataset.dta”. We cannot share variables\nin the final dataset that are based on data purchased from data providers such as Compustat or\nI/B/E/S."
+    },
+    {
+      "id": "E_MAIN_PATH",
+      "kind": "source",
+      "description": "The Stata source hard-codes a Windows root path.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 1,
+      "line_end": 1,
+      "quote": "global path \"[redacted-path-71fddbc7dac9]\""
+    },
+    {
+      "id": "E_MAIN_ITEMS",
+      "kind": "source",
+      "description": "The driver filters the SEC index to 8-K Item 2.02 and saves a CIK/date key.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 19,
+      "line_end": 25,
+      "quote": "use \"$path\\InFiles\\items8k.dta\", clear\n\tkeep if nitem==\"2.02\""
+    },
+    {
+      "id": "E_MAIN_IBES_ACTU",
+      "kind": "source",
+      "description": "The driver reads EPS actuals and prepares CUSIP/period/announcement-date fields.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 28,
+      "line_end": 37,
+      "quote": "use \"$path\\InFiles\\ibes_actu.dta\", clear\n\tdrop if cusip==\"\""
+    },
+    {
+      "id": "E_MAIN_IBES_GAAP",
+      "kind": "source",
+      "description": "The driver reads GAAP actuals as a separate source file.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 40,
+      "line_end": 50,
+      "quote": "use \"$path\\InFiles\\ibes_actu_gaap.dta\", clear"
+    },
+    {
+      "id": "E_MAIN_IBES_STATS",
+      "kind": "source",
+      "description": "The driver reads summary statistics for analyst coverage.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 53,
+      "line_end": 60,
+      "quote": "use \"$path\\InFiles\\ibes_statsumu.dta\", clear"
+    },
+    {
+      "id": "E_MAIN_IBES_EPS",
+      "kind": "source",
+      "description": "The driver reads the Street EPS consensus file used for ERC tests.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 63,
+      "line_end": 69,
+      "quote": "use \"$path\\InFiles\\ibes_statsumu_eps.dta\", clear"
+    },
+    {
+      "id": "E_MAIN_IBES_GPS",
+      "kind": "source",
+      "description": "The driver reads the separate GAAP EPS consensus file used for ERC tests.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 72,
+      "line_end": 78,
+      "quote": "use \"$path\\InFiles\\ibes_statsumu_gps.dta\", clear"
+    },
+    {
+      "id": "E_MAIN_CRSP",
+      "kind": "source",
+      "description": "The monthly CRSP stage joins value-weighted returns and constructs 3- and 12-month returns.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 80,
+      "line_end": 99,
+      "quote": "use \"$path\\InFiles\\crspm.dta\", clear\n\tsum date\n\tjoinby date using \"$path\\InFiles\\crspm_vwretd.dta\", unmatched(master)"
+    },
+    {
+      "id": "E_MAIN_FUNDQ",
+      "kind": "source",
+      "description": "The quarterly construction requires merged Compustat/CRSP identifiers and quarter keys.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 101,
+      "line_end": 123,
+      "quote": "use \"$path\\InFiles\\fundq.dta\", clear\n\tkeep if fic==\"USA\""
+    },
+    {
+      "id": "E_MAIN_FUNDQ_WINDOW",
+      "kind": "source",
+      "description": "The estimation sample filters to fiscal/data years 2006–2014 after quarterly construction.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 157,
+      "line_end": 176,
+      "quote": "replace sample=0 if year(datadate)<2006\n\treplace sample=0 if year(datadate)>2014"
+    },
+    {
+      "id": "E_SAMPLE_PRODUCERS",
+      "kind": "source",
+      "description": "The driver creates its sample and date-key intermediates before the EDGAR list stage.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 320,
+      "line_end": 344,
+      "quote": "save \"$path\\OutFiles\\fundq_sample.dta\", replace"
+    },
+    {
+      "id": "E_TEXT_HANDOFF",
+      "kind": "source",
+      "description": "Stata writes downloadlist.txt and then directly imports both packaged text-search CSV outputs.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 346,
+      "line_end": 370,
+      "quote": "outsheet using \"$path\\EDGAR\\downloadlist.txt\", comma noquote replace\n\n\t* Results of basic Perl text-search:"
+    },
+    {
+      "id": "E_HAND_FIELDS",
+      "kind": "source",
+      "description": "The driver defines the keys and variables in the two loss-sample hand-collection files.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 1309,
+      "line_end": 1320,
+      "quote": "In stage 1 we hand-collected data for 3629 firm-quarters, in stage 2 another 2779 firm-quarters."
+    },
+    {
+      "id": "E_HAND_READS",
+      "kind": "source",
+      "description": "Both hand-collection rounds are read and the first is merged to the prepared sample.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 1323,
+      "line_end": 1345,
+      "quote": "use \"$path\\EDGAR\\data_clean.dta\", clear"
+    },
+    {
+      "id": "E_PROFIT_HAND",
+      "kind": "source",
+      "description": "The Table 6 profit-firm branch reads a separate 4,000-observation hand-coded sample and joins by CIK/date.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 2323,
+      "line_end": 2358,
+      "quote": "\"data_profit_clean\" is a sample of 4000 profit-firm-quarters randomly selected"
+    },
+    {
+      "id": "E_NONGAAP_PRODUCERS",
+      "kind": "source",
+      "description": "The hand-collection merge and subsequent cleaning create the analysis datasets used by later tables.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 1378,
+      "line_end": 1446,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap3.dta\", replace"
+    },
+    {
+      "id": "E_LEADS_2016",
+      "kind": "source",
+      "description": "The 2016 quarterly extension creates 12-quarter forward outcomes and saves the derived intermediate.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 475,
+      "line_end": 542,
+      "quote": "forvalues i=1(1)12{"
+    },
+    {
+      "id": "E_LEADS_2017",
+      "kind": "source",
+      "description": "The 2017 extension creates 12-quarter forward cash-flow variables.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 544,
+      "line_end": 571,
+      "quote": "forvalues i=1(1)12{"
+    },
+    {
+      "id": "E_DAILY_ADJUSTED",
+      "kind": "source",
+      "description": "The daily returns input must already contain both firm return and benchmark decile return; code creates forward/lagged returns.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 573,
+      "line_end": 620,
+      "quote": "use \"$path\\Infiles\\erdport1.dta\", clear"
+    },
+    {
+      "id": "E_AGE_XTRAVAR",
+      "kind": "source",
+      "description": "Annual Compustat history is used for age; quarterly history back to 2002 is used for volatility and sales-growth inputs.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 630,
+      "line_end": 669,
+      "quote": "use \"$path\\Infiles\\compustat_age_data.dta\", clear"
+    },
+    {
+      "id": "E_XTRAVAR_CHUNKS",
+      "kind": "source",
+      "description": "The script creates sdroa_1 and other numbered chunks in a loop, then appends those chunks.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 674,
+      "line_end": 700,
+      "quote": "qui save"
+    },
+    {
+      "id": "E_GEN_SDROA_OUTPUT",
+      "kind": "source",
+      "description": "The code creates numbered volatility files and combines them into stdroa.dta.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 691,
+      "line_end": 716,
+      "quote": "save \"$path\\OutFiles\\stdroa.dta\", replace"
+    },
+    {
+      "id": "E_BCGW_BRANCH",
+      "kind": "source",
+      "description": "Table 6 Panel B retains the BCGW comparison branch and merges by GVKEY/date.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 2898,
+      "line_end": 2935,
+      "quote": "use \"$path\\Infiles\\bcgw_2018_ng_data_2003to2016.dta\", clear"
+    },
+    {
+      "id": "E_RBOUNDS_CALLS",
+      "kind": "source",
+      "description": "The Stata analysis invokes rbounds in multiple matching branches.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 3492,
+      "line_end": 3517,
+      "quote": "rbounds delta, gamma(1.3 (.05) 2.0)"
+    },
+    {
+      "id": "E_CRSP_UPDATE",
+      "kind": "source",
+      "description": "The portfolio section appends the separately named 2015–2017 CRSP monthly file.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 3573,
+      "line_end": 3580,
+      "quote": "append using \"$path\\Infiles\\crspm_2015_2017.dta\""
+    },
+    {
+      "id": "E_FF_CALLS",
+      "kind": "source",
+      "description": "The asset-pricing branch merges the four factors and estimates monthly Newey–West regressions.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 3611,
+      "line_end": 3618,
+      "quote": "joinby year month using \"$path\\InFiles\\ff_factors_4.dta\", unmatched(master)"
+    },
+    {
+      "id": "E_TABLE9_GENERATED",
+      "kind": "source",
+      "description": "The Table 9 asset-pricing cohort file is saved by this source.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 3568,
+      "line_end": 3571,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap4_assetpricing0.dta\", replace"
+    },
+    {
+      "id": "E_MISPRICING_GENERATED",
+      "kind": "source",
+      "description": "The final surprise/mispricing file is created and consumed by the portfolio regressions.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 3661,
+      "line_end": 3663,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap4_surprise_4mispricing.dta\", replace"
+    },
+    {
+      "id": "E_FINAL_OUTPUT",
+      "kind": "source",
+      "description": "The final shared dataset is created at the end of the script, not used as a separate analysis entry.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 3717,
+      "line_end": 3734,
+      "quote": "save \"$path\\lv_jar_dataset.dta\", replace"
+    },
+    {
+      "id": "E_VARIABLE_LIST",
+      "kind": "source",
+      "description": "The companion variable list shows that the shared dataset contains identifiers, text-search and hand-coded non-GAAP fields.",
+      "file": "lv_jar_dataset_variables.txt",
+      "line_begin": 1,
+      "line_end": 20,
+      "quote": "textsearch_stage2 = indicator variable set equal to 1 if second-stage Perl text-search identifies non-GAAP keywords/phrases, 0 otherwise"
+    },
+    {
+      "id": "E_ADO_MATA",
+      "kind": "source",
+      "description": "The dependency scanner’s .do hit is the Mata sorting construct do {, not a Stata include.",
+      "file": "ado/psmatch2.ado",
+      "line_begin": 733,
+      "line_end": 740,
+      "quote": "do {"
+    },
+    {
+      "id": "E_KONFOUND_HELPERS",
+      "kind": "source",
+      "description": "The supplied konfound ADO calls indeplist and moss.",
+      "file": "ado/konfound.ado",
+      "line_begin": 177,
+      "line_end": 181,
+      "quote": "quietly indeplist"
+    },
+    {
+      "id": "E_BASE_SAMPLE_SAVE",
+      "kind": "source",
+      "description": "The main sample, alternate sub-samples and combined sample files have in-script producers.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 322,
+      "line_end": 344,
+      "quote": "save \"$path\\OutFiles\\fundq_sample2.dta\", replace"
+    },
+    {
+      "id": "E_STEP1A_SAVE",
+      "kind": "source",
+      "description": "The first non-GAAP sample is saved in the driver.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 465,
+      "line_end": 465,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap.dta\", replace"
+    },
+    {
+      "id": "E_STEP1B_SAVE",
+      "kind": "source",
+      "description": "The 2016 extension output is saved in the driver.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 542,
+      "line_end": 542,
+      "quote": "save \"$path\\Outfiles\\extra_data_2016.dta\", replace"
+    },
+    {
+      "id": "E_STEP2_SAVES",
+      "kind": "source",
+      "description": "The age, volatility and sales-growth intermediates are produced in the supplied code.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 639,
+      "line_end": 726,
+      "quote": "save \"$path\\Outfiles\\age.dta\", replace"
+    },
+    {
+      "id": "E_STEP3_SAVE",
+      "kind": "source",
+      "description": "The second constructed non-GAAP file is saved before later analysis uses.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 1180,
+      "line_end": 1181,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap2.dta\", replace"
+    },
+    {
+      "id": "E_HAND_MERGE_SAVE",
+      "kind": "source",
+      "description": "The hand-collection integration creates fundq_sample_nongaap3.dta.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 1375,
+      "line_end": 1378,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap3.dta\", replace"
+    },
+    {
+      "id": "E_STEP4_SAVE",
+      "kind": "source",
+      "description": "The complete cleaned dataset for core analyses is produced.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 1443,
+      "line_end": 1446,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap4.dta\", replace"
+    },
+    {
+      "id": "E_PROFIT_SAMPLE_SAVE",
+      "kind": "source",
+      "description": "The profit comparison branch creates fundq_sample_nongaap6.dta.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 2377,
+      "line_end": 2380,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap6.dta\", replace"
+    },
+    {
+      "id": "E_LOSS_VARIANTS",
+      "kind": "source",
+      "description": "The Table 6 Panel A branches produce separate CFO, operating-income, earnings and free-cash-flow variants.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 2439,
+      "line_end": 2854,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap6_sample1.dta\", replace"
+    },
+    {
+      "id": "E_BCGW_VARIANTS",
+      "kind": "source",
+      "description": "The BCGW Panel B branches create separate analysis and operating-income variants.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 2965,
+      "line_end": 3183,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap6B.dta\", replace"
+    },
+    {
+      "id": "E_SURPRISE_SAVE",
+      "kind": "source",
+      "description": "The ERC section creates fundq_sample_nongaap4_surprise.dta before regressions.",
+      "file": "lv_jar_stata_code.do",
+      "line_begin": 3260,
+      "line_end": 3263,
+      "quote": "save \"$path\\OutFiles\\fundq_sample_nongaap4_surprise.dta\", replace"
+    },
+    {
+      "id": "E_PROBE_HAND1",
+      "kind": "probe",
+      "description": "Readable exact author hand-coded loss-round input; file metadata reports 3,629 observations.",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "4e64d15c10bc81d9ea0143b909d9cfaca51110882c8ace2a772e3d921df57da6"
+    },
+    {
+      "id": "E_PROBE_HAND2",
+      "kind": "probe",
+      "description": "Readable exact author hand-coded loss-round input; file metadata reports 2,779 observations.",
+      "artifact_path": "probes/packaged_2.json",
+      "sha256": "606b3f34685710164ee755916d5465b5d5c29dbe07843615966d17957ae47f80"
+    },
+    {
+      "id": "E_PROBE_HANDPROFIT",
+      "kind": "probe",
+      "description": "Readable exact author hand-coded profit-sample input; file metadata reports 4,000 observations.",
+      "artifact_path": "probes/packaged_3.json",
+      "sha256": "286c0ae77b0fe71463e409a34ed13e71ccb9999a25b050306b080cb8f187398b"
+    },
+    {
+      "id": "E_PROBE_TEXT1",
+      "kind": "probe",
+      "description": "Readable packaged output.csv with File_Number and word indicators.",
+      "artifact_path": "probes/packaged_4.json",
+      "sha256": "d29fe46b9e4a76d1d941d68681a48f76cff98c125f6bbaa1ec3173e388f01030"
+    },
+    {
+      "id": "E_PROBE_TEXT2",
+      "kind": "probe",
+      "description": "Readable packaged output_new.csv with File_Number and word indicators.",
+      "artifact_path": "probes/packaged_5.json",
+      "sha256": "b34d2c09bdecff4a31da7be29bfac77033931f5f8321a9633007846339270ea2"
+    },
+    {
+      "id": "E_PROBE_SHARE",
+      "kind": "probe",
+      "description": "Readable final shared file; metadata shows 59,821 observations but it lacks the provider variables used to build the analyses.",
+      "artifact_path": "probes/packaged_6.json",
+      "sha256": "46e682bd06c3f4a74d36b1d48c38c9401f66d926029f410e9b07ef0fd1fda43a"
+    },
+    {
+      "id": "E_PROBE_SEC",
+      "kind": "probe",
+      "description": "Bounded one-row probe of the local WRDS SEC 8-K item product candidate.",
+      "artifact_path": "probes/sas_one_row_wrdssec_items8k.json",
+      "sha256": "deddacc43191af26d280cf7fb90d8a70a4e5c8057c625105f6dadadbabd17915"
+    },
+    {
+      "id": "E_PROBE_COMP_FUNDQ",
+      "kind": "probe",
+      "description": "Bounded one-row probe of local quarterly Compustat candidate; the probe does not contain lpermno.",
+      "artifact_path": "probes/sas_one_row_comp_fundq.json",
+      "sha256": "5377139f114ffcf220c3073558caae3a052d5ecb6dd8dd42908dc18e856168ba"
+    },
+    {
+      "id": "E_PROBE_COMP_FUNDA",
+      "kind": "probe",
+      "description": "Bounded one-row probe of local annual Compustat candidate.",
+      "artifact_path": "probes/sas_one_row_comp_funda.json",
+      "sha256": "a36b5ab33ae1d2ff9f5a23be2833100e075769196260c80fc5ada7bb00ed5e9d"
+    },
+    {
+      "id": "E_PROBE_IBES_ACTU",
+      "kind": "probe",
+      "description": "Bounded one-row probe of local unadjusted actuals EPS US candidate.",
+      "artifact_path": "probes/sas_one_row_ibes_actu_epsus.json",
+      "sha256": "e2c2c20fce565c9ece5f71ca9a044c24fe9193afb4624da612f01d1229d68bee"
+    },
+    {
+      "id": "E_PROBE_IBES_STATS",
+      "kind": "probe",
+      "description": "Bounded one-row probe of local unadjusted summary statistics EPS US candidate.",
+      "artifact_path": "probes/sas_one_row_ibes_statsumu_epsus.json",
+      "sha256": "668a6788326009ceca0e3d9ed2a5604ea1e3f4f64549f0d840fb866bb9ea6f72"
+    },
+    {
+      "id": "E_PROBE_CRSP_MSF",
+      "kind": "probe",
+      "description": "Bounded one-row probe of local monthly CRSP candidate.",
+      "artifact_path": "probes/sas_one_row_crsp_msf_v2.json",
+      "sha256": "ef05924d8c76b76a1ebc563572c101862ea28322b31d7e115ab5c7cb6e50e6d7"
+    },
+    {
+      "id": "E_PROBE_CRSP_DSF",
+      "kind": "probe",
+      "description": "Bounded one-row probe of local daily CRSP candidate; it is raw daily return data, not author’s precomputed size-adjusted series.",
+      "artifact_path": "probes/sas_one_row_crsp_dsf_v2.json",
+      "sha256": "59f63ea1ee218957acade3c9da851e7720bd597158dee07b216820fdf306eac5"
+    },
+    {
+      "id": "E_PROBE_CRSP_MSIX",
+      "kind": "probe",
+      "description": "Bounded one-row probe of local CRSP monthly index candidate with vwretd.",
+      "artifact_path": "probes/sas_one_row_crsp_msix.json",
+      "sha256": "5e57330ecce8856015ae73122b53a2df3d54f9fb90fa0fe50c2005772f141181"
+    },
+    {
+      "id": "E_PROBE_FF",
+      "kind": "probe",
+      "description": "Bounded one-row probe of local monthly factors with mktrf, smb, hml and umd.",
+      "artifact_path": "probes/sas_one_row_ff_factors_monthly.json",
+      "sha256": "5c67cef7c835e8850bd084b3378129c17cb17ac529560a54368bdec6d9185598"
+    },
+    {
+      "id": "E_STATA_ENV",
+      "kind": "probe",
+      "description": "Environment helper reports Stata 18 installed.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "E_STATA_COMMANDS",
+      "kind": "inspection",
+      "description": "Hashed static Stata command/path probe: packaged ADOs resolve when prepended, helper entries resolve, rbounds does not.",
+      "artifact_path": "probes/stata_environment_path_inspection.json",
+      "sha256": "f42364b87669402919f93661ee609efb9309c422e200e386addecdffa0ac9b40"
+    },
+    {
+      "id": "E_SOFT_INDEPLIST",
+      "kind": "probe",
+      "description": "Stata which probe confirms indeplist.",
+      "artifact_path": "probes/software_indeplist.json",
+      "sha256": "416062daea1f33bb7e69bd16b073d3bee08968a950c9235f9ffb28ac466ea330"
+    },
+    {
+      "id": "E_SOFT_MOSS",
+      "kind": "probe",
+      "description": "Stata which probe confirms moss.",
+      "artifact_path": "probes/software_moss.json",
+      "sha256": "8c8043bdf26d66dfb37270b460abf584196d381cd909f3dfaf08841f8314bb6f"
+    },
+    {
+      "id": "E_SOFT_MATSORT",
+      "kind": "probe",
+      "description": "Stata which probe confirms matsort.",
+      "artifact_path": "probes/software_matsort.json",
+      "sha256": "891c7fc805f12a428bc8ae0a9b553fa7b994d2ec105e232a881a67f1805eb1e6"
+    },
+    {
+      "id": "E_SOFT_RBOUNDS",
+      "kind": "probe",
+      "description": "Stata which probe does not find rbounds.",
+      "artifact_path": "probes/software_rbounds.json",
+      "sha256": "3983468c8303a59a164485e18d109eea6a159a54c9dd1a909089c638b2a3078e"
+    },
+    {
+      "id": "E_PERL_STATIC",
+      "kind": "inspection",
+      "description": "Bounded static read of the supplied Perl source: reads numbered local HTML with File::Slurp and writes output_new.csv; does not fetch EDGAR.",
+      "artifact_path": "probes/perl_inspection.json",
+      "sha256": "4ea4e39d6e8cdb2fd23723899aa987deafdf4992bf8738398e71e895e7f67193"
+    },
+    {
+      "id": "E_PERL_SOFTWARE",
+      "kind": "probe",
+      "description": "Perl is installed; File::Slurp is not available in the current Perl environment.",
+      "artifact_path": "probes/perl_software.json",
+      "sha256": "76cae398cad8931f4789ed1910da61eac54f477da52bf78df660df3fc012f116"
+    },
+    {
+      "id": "E_CAT_SEC",
+      "kind": "catalog",
+      "description": "Frozen resource catalog discovery: WRDSSEC.ITEMS8K at ${ACCTREPL_SAS_ROOT}/sec/items8k.sas7bdat (4,438,126 catalog observations, 14 variables). Catalog metadata only; access/coverage not inferred."
+    },
+    {
+      "id": "E_CAT_FUNDQ",
+      "kind": "catalog",
+      "description": "Frozen resource catalog discovery: COMP.FUNDQ at ${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat (2,130,133 catalog observations, 648 variables); it does not list lpermno. CCMXPF_LINKTABLE is separately present as a link-table candidate but does not establish the author’s producer/join contract."
+    },
+    {
+      "id": "E_CAT_IBES",
+      "kind": "catalog",
+      "description": "Frozen resource catalog discovery: IBES.ACTU_EPSUS and IBES.STATSUMU_EPSUS are EPS-specific unadjusted US-region candidates. Catalog metadata does not verify measure filters or date coverage."
+    },
+    {
+      "id": "E_CAT_CRSP",
+      "kind": "catalog",
+      "description": "Frozen resource catalog discovery: CRSP.MSF_V2, CRSP.DSF_V2 and CRSP.MSIX candidates are present. They do not by themselves establish the separate author-built CRSP files or erdport1 adjusted-return transformation."
+    },
+    {
+      "id": "E_CAT_COMP_FF",
+      "kind": "catalog",
+      "description": "Frozen resource catalog discovery: COMP.FUNDA and FF.FACTORS_MONTHLY candidates are present. Catalog names/counts are not an access/coverage verification."
+    },
+    {
+      "id": "E_SEC_PUBLIC",
+      "kind": "public",
+      "description": "SEC official page establishes a public index and filing-text route; it does not provide the author’s SEC Analytics item field or confirm the Item 2.02 transformation.",
+      "url": "https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "quote": "Indexes to all public filings are available from 1994Q3 through the present.",
+      "access_barrier": false
+    },
+    {
+      "id": "E_BCGW_PUBLIC",
+      "kind": "public",
+      "description": "Author data page lists the BCGW Manager Non-GAAP EPS dataset and links to a request form; page does not confirm delivered file fields or coverage.",
+      "url": "https://sites.google.com/view/kurthgee/data",
+      "checked_at": "2026-11-08",
+      "authority": "author",
+      "quote": "Manager Non-GAAP EPS Dataset\nFrom Bentley, Christensen, Gee, and Whipple (Journal of Accounting Research, 2018)",
+      "access_barrier": false
+    },
+    {
+      "id": "E_FF_PUBLIC",
+      "kind": "public",
+      "description": "Official French data library lists CSV links for Fama/French 3 factors and a separate momentum factor; current page notes a CRSP format change effective January 2025, so compatibility with the author’s 2017 file remains to be checked.",
+      "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "quote": "Fama/French 3 Factors  CSV\nMomentum Factor (Mom)  CSV\nBeginning with the January 2025 data release, we use the new Stock and Indexes Flat File Format 2.0 (CIZ) files",
+      "access_barrier": false
+    },
+    {
+      "id": "E_DOC_MONTHLY_CRSP",
+      "kind": "source",
+      "description": "The datasheet identifies the separate CRSP monthly value-weighted return input.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 97,
+      "line_end": 99,
+      "quote": "crspm_vwretd.dta            File containing the value-"
+    },
+    {
+      "id": "E_STATA_ADO_SOFTWARE",
+      "kind": "probe",
+      "description": "Successful bounded Stata which probe confirms the packaged command entries and locally available helper commands.",
+      "artifact_path": "probes/stata_ado_software_probe.json",
+      "sha256": "4d43a7997967f1a19878a8eb549a82d89d04497a6e07ab9d4699c433a220f82f"
+    },
+    {
+      "id": "E_DOC_IBES_GAAP",
+      "kind": "source",
+      "description": "The datasheet specifies quarterly GAAP EPS actuals as the unadjusted Actual product with MEASURE=GPS and quarterly periodicity.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 134,
+      "line_end": 136,
+      "quote": " ibes_actu_gaap.dta           File containing actual value     WRDS → I/B/E/S → Unadjusted    8/6/2015\n                              of quarterly GAAP EPS            Actual (measure=“GPS”,\n                              from I/B/E/S                     pdicity=“QTR”)"
+    },
+    {
+      "id": "E_DOC_IBES_GPS",
+      "kind": "source",
+      "description": "The datasheet specifies quarterly unadjusted GAAP EPS summary forecasts as MEASURE=GPS and FPI=6 for ERC tests.",
+      "file": "LV Datasheet.pdf",
+      "line_begin": 149,
+      "line_end": 153,
+      "quote": " ibes_statsumu_gps.dta        File containing number of        WRDS → I/B/E/S → Unadjusted    4/11/2016\n                              estimates, median and mean       Summary Statistics\n                              forecast value of GAAP           (measure=“GPS”, FPI=“6”)\n                              EPS from I/B/E/S, used for\n                              the ERC tests"
+    },
+    {
+      "id": "E_CAT_IBES_XEPS",
+      "kind": "catalog",
+      "description": "Frozen catalog-only candidates: IBES.ACTU_XEPSUS at ${ACCTREPL_SAS_ROOT}/ibes/actu_xepsus.sas7bdat (4,875,994 catalog observations, 14 variables), labeled “I/B/E/S Detail History - Actuals Unadjusted File (Non-EPS for US Region),” catalog lines 104947–105030; fields include TICKER, CUSIP, PENDS, MEASURE, PDICITY, ANNDATS and VALUE. IBES.STATSUMU_XEPSUS at ${ACCTREPL_SAS_ROOT}/ibes/statsumu_xepsus.sas7bdat (22,216,688 catalog observations, 20 variables), labeled “I/B/E/S Summary History - Unadjusted Summary Statistics,” catalog lines 107968–108065; fields include TICKER, CUSIP, STATPERS, MEASURE, FISCALP, FPI, NUMEST, MEDEST and FPEDATS. These are discovery metadata only; no bounded row probes were run for these XEPSUS candidates, and GPS filters/history are unverified."
+    }
+  ],
+  "dependency_review": [
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_ADO_MATA"
+      ],
+      "description": "False positive include scan: psmatch2.ado uses Mata do { ... } syntax in its sorting function, with no external .do file include.",
+      "dependency_id": "D0001"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_ITEMS8K"
+      ],
+      "evidence_ids": [
+        "E_MAIN_ITEMS",
+        "E_DOC_WRDS_ITEMS",
+        "E_PROBE_SEC"
+      ],
+      "description": "External items8k.dta is required for the 2.02 filter and filename mapping.",
+      "dependency_id": "D0002"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_IBES_ACTU"
+      ],
+      "evidence_ids": [
+        "E_MAIN_IBES_ACTU",
+        "E_DOC_IBES_ACTU"
+      ],
+      "description": "Separate unadjusted EPS actuals input.",
+      "dependency_id": "D0003"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_IBES_ACTU_GAAP"
+      ],
+      "evidence_ids": [
+        "E_MAIN_IBES_GAAP",
+        "E_DOC_IBES_ACTU",
+        "E_DOC_IBES_GAAP",
+        "E_CAT_IBES_XEPS"
+      ],
+      "description": "Separate GAAP/GPS actuals input.",
+      "dependency_id": "D0004"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_IBES_STATSUMU"
+      ],
+      "evidence_ids": [
+        "E_MAIN_IBES_STATS",
+        "E_DOC_IBES_STATS"
+      ],
+      "description": "Summary statistics input for NUMEST analyst coverage.",
+      "dependency_id": "D0005"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_IBES_STATSUMU_EPS"
+      ],
+      "evidence_ids": [
+        "E_MAIN_IBES_EPS",
+        "E_DOC_IBES_STATS"
+      ],
+      "description": "Consensus EPS summary input used by ERC branch.",
+      "dependency_id": "D0006"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_IBES_STATSUMU_GPS"
+      ],
+      "evidence_ids": [
+        "E_MAIN_IBES_GPS",
+        "E_DOC_IBES_STATS",
+        "E_DOC_IBES_GPS",
+        "E_CAT_IBES_XEPS"
+      ],
+      "description": "Consensus GPS summary input used by ERC branch.",
+      "dependency_id": "D0007"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_CRSP_MONTHLY"
+      ],
+      "evidence_ids": [
+        "E_MAIN_CRSP",
+        "E_CRSP_UPDATE"
+      ],
+      "description": "The same author monthly CRSP input is read in initial checks and again in the later portfolio branch; the latter appends a 2015–2017 extension.",
+      "dependency_ids": [
+        "D0008",
+        "D0036"
+      ]
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_FUNDQ"
+      ],
+      "evidence_ids": [
+        "E_MAIN_FUNDQ",
+        "E_MAIN_FUNDQ_WINDOW"
+      ],
+      "description": "External merged quarterly firm data are the main sample construction input.",
+      "dependency_id": "D0009"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_SAMPLE_PRODUCERS",
+        "E_BASE_SAMPLE_SAVE"
+      ],
+      "description": "fundq_sample and fundq_sample2 are saved by the supplied Stata stages before downstream reads.",
+      "dependency_ids": [
+        "D0010",
+        "D0011"
+      ]
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_EXTRA_2016"
+      ],
+      "evidence_ids": [
+        "E_LEADS_2016",
+        "E_DOC_EXTRA"
+      ],
+      "description": "External 2016 quarterly extension used for forward outcomes.",
+      "dependency_id": "D0012"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_EXTRA_2017"
+      ],
+      "evidence_ids": [
+        "E_LEADS_2017",
+        "E_DOC_EXTRA"
+      ],
+      "description": "External 2017 quarterly extension used for 12-quarter forward cash flow.",
+      "dependency_id": "D0013"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_ERDPORT1"
+      ],
+      "evidence_ids": [
+        "E_DAILY_ADJUSTED",
+        "E_DOC_CRSP"
+      ],
+      "description": "Precomputed daily size-adjusted return input; code consumes ret and decret and constructs return windows.",
+      "dependency_id": "D0014"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMPAGE"
+      ],
+      "evidence_ids": [
+        "E_AGE_XTRAVAR",
+        "E_DOC_COMP_AGE_XTRA"
+      ],
+      "description": "Annual Compustat history is consumed to calculate firstyear/age.",
+      "dependency_id": "D0015"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_XTRAVAR"
+      ],
+      "evidence_ids": [
+        "E_AGE_XTRAVAR",
+        "E_DOC_XTRAVAR"
+      ],
+      "description": "Quarterly Compustat history feeds volatility and sales-growth construction.",
+      "dependency_id": "D0016"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_AGE_XTRAVAR"
+      ],
+      "description": "xtravar1.dta is saved from xtravar.dta at the end of the first volatility preparation stage.",
+      "dependency_id": "D0017"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_XTRAVAR_CHUNKS",
+        "E_GEN_SDROA_OUTPUT"
+      ],
+      "description": "The script writes sdroa_1 and additional numbered chunk files in a loop, then appends them before saving stdroa.dta.",
+      "dependency_id": "D0018"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_STEP1A_SAVE"
+      ],
+      "description": "fundq_sample_nongaap.dta is saved from the already constructed base sample.",
+      "dependency_id": "D0019"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_STEP3_SAVE"
+      ],
+      "description": "fundq_sample_nongaap2.dta is created by the supplied analysis-preparation stage.",
+      "dependency_id": "D0020"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_HAND_LOSS1"
+      ],
+      "evidence_ids": [
+        "E_HAND_READS",
+        "E_PROBE_HAND1"
+      ],
+      "description": "Supplied author-prepared round-one hand-coded input.",
+      "dependency_id": "D0021"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_HAND_LOSS2"
+      ],
+      "evidence_ids": [
+        "E_HAND_READS",
+        "E_PROBE_HAND2"
+      ],
+      "description": "Supplied author-prepared round-two hand-coded input.",
+      "dependency_id": "D0022"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_NONGAAP_PRODUCERS",
+        "E_STEP4_SAVE"
+      ],
+      "description": "The supplied hand-collection and cleaning stages save fundq_sample_nongaap3 and fundq_sample_nongaap4.",
+      "dependency_ids": [
+        "D0023",
+        "D0024"
+      ]
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_HAND_PROFIT"
+      ],
+      "evidence_ids": [
+        "E_PROFIT_HAND",
+        "E_PROBE_HANDPROFIT"
+      ],
+      "description": "Supplied author-prepared profit-firm hand-coded input retained by Table 6.",
+      "dependency_id": "D0025"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_PROFIT_SAMPLE_SAVE"
+      ],
+      "description": "fundq_sample_nongaap6.dta is saved by the Table 6 profit comparison preparation stage.",
+      "dependency_id": "D0026"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_LOSS_VARIANTS"
+      ],
+      "description": "Table 6 Panel A produces separate sample1 CFO, opincp1, earnp1 and fcfp1 analysis variants.",
+      "dependency_ids": [
+        "D0027",
+        "D0028",
+        "D0029",
+        "D0030"
+      ]
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_BCGW"
+      ],
+      "evidence_ids": [
+        "E_DOC_BCGW",
+        "E_BCGW_BRANCH",
+        "E_BCGW_PUBLIC"
+      ],
+      "description": "External author dataset used in the separate Table 6 Panel B BCGW branch.",
+      "dependency_id": "D0031"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_BCGW_BRANCH",
+        "E_BCGW_VARIANTS"
+      ],
+      "description": "The BCGW branch creates its cleaned main sample and later sample1/opincp1 analysis variants.",
+      "dependency_ids": [
+        "D0032",
+        "D0033",
+        "D0034"
+      ]
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_SURPRISE_SAVE"
+      ],
+      "description": "The ERC preparation branch saves fundq_sample_nongaap4_surprise.dta before its regressions.",
+      "dependency_id": "D0035"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_TABLE9_GENERATED"
+      ],
+      "description": "The Table 9 asset-pricing cohort data are constructed and saved in the same do-file.",
+      "dependency_id": "D0037"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_MISPRICING_GENERATED"
+      ],
+      "description": "The Table 9 surprise/mispricing dataset is produced before the portfolio regressions.",
+      "dependency_id": "D0038"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_TEXTSEARCH_BASIC"
+      ],
+      "evidence_ids": [
+        "E_TEXT_HANDOFF",
+        "E_PROBE_TEXT1"
+      ],
+      "description": "Packaged output.csv is consumed directly by Stata.",
+      "dependency_id": "D0039"
+    },
+    {
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_TEXTSEARCH_REVISED"
+      ],
+      "evidence_ids": [
+        "E_TEXT_HANDOFF",
+        "E_PROBE_TEXT2",
+        "E_PERL_STATIC"
+      ],
+      "description": "Packaged output_new.csv is consumed directly by Stata; supplied Perl program is the separate regeneration source.",
+      "dependency_id": "D0040"
+    }
+  ],
+  "actions": [
+    {
+      "id": "A_ITEMS8K",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_ITEMS8K",
+        "I_DATA_CONTRACTS"
+      ],
+      "kind": "clarification",
+      "description": "Confirm the exact SEC 8-K item-index route and the author filename-to-downloadId mapping before staging items8k.dta.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_WRDS_ITEMS",
+        "E_MAIN_ITEMS",
+        "E_PROBE_SEC",
+        "E_SEC_PUBLIC"
+      ],
+      "edits": [],
+      "steps": [
+        "Check entitlement and usable coverage of the local WRDSSEC.ITEMS8K candidate for 2006–2014.",
+        "Confirm that nitem==\"2.02\", cik, fdate and fname follow the author’s expected definitions and that fname maps to the filing-text URL consumed by the separate Perl route.",
+        "If using a public SEC index instead, identify a documented permitted method to obtain the 2.02 item classification and reproduce the filename/downloadId join; the SEC index field list alone does not provide nitem.",
+        "Convert the confirmed rows to items8k.dta under the configured relative InFiles directory."
+      ],
+      "validation": [
+        "Verify the exported columns, types, 2006–2014 period, CIK/date key uniqueness after the code filter, and expected filename-to-downloadId match before Stata execution."
+      ]
+    },
+    {
+      "id": "A_IBES_PRODUCTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_IBES_ACTU",
+        "R_IBES_ACTU_GAAP",
+        "R_IBES_STATSUMU",
+        "R_IBES_STATSUMU_EPS",
+        "R_IBES_STATSUMU_GPS",
+        "I_DATA_CONTRACTS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Stage the separate unadjusted IBES actuals and summary files used by the main sample and ERC branches, checking measure-specific fields and period matches.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_IBES_ACTU",
+        "E_DOC_IBES_STATS",
+        "E_MAIN_IBES_ACTU",
+        "E_MAIN_IBES_GAAP",
+        "E_MAIN_IBES_STATS",
+        "E_MAIN_IBES_EPS",
+        "E_MAIN_IBES_GPS",
+        "E_PROBE_IBES_ACTU",
+        "E_PROBE_IBES_STATS",
+        "E_DOC_IBES_GAAP",
+        "E_DOC_IBES_GPS",
+        "E_CAT_IBES_XEPS"
+      ],
+      "edits": [],
+      "steps": [
+        "For EPS actuals and EPS summary files, the existing bounded probes support the column shapes of the ACTU_EPSUS and STATSUMU_EPSUS candidates; verify the required EPS/FPI and date coverage filters before staging those files.",
+        "For GAAP/GPS inputs, use the catalog-only ACTU_XEPSUS and STATSUMU_XEPSUS candidates as product leads. No row probes were run for them; do not transfer the EPSUS probe proof to these XEPSUS files.",
+        "Confirm that ACTU_XEPSUS provides quarterly MEASURE=GPS actuals and that STATSUMU_XEPSUS provides MEASURE=GPS/FPI=6 forecasts, including the author-required CUSIP or ticker and date fields, before preparing separate Stata files.",
+        "Apply the source filters on measure, periodicity and fiscal period only after confirming candidate values; retain announcement dates for actuals and the same-month STATPERS/FPEDATS filter for summaries.",
+        "Do not infer coverage from a single row or require original 2015/2016 byte snapshots solely from the datasheet retrieval dates."
+      ],
+      "validation": [
+        "For each prepared file, inspect its own product fields, types, measure/FPI/periodicity values and date coverage; verify sample and lagged-CUSIP/date or ticker/date joins before running author code."
+      ]
+    },
+    {
+      "id": "A_CRSP_MONTHLY",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_CRSP_MONTHLY",
+        "R_CRSP_VWRETD",
+        "I_DATA_CONTRACTS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Stage both monthly stock returns/prices and the separate monthly value-weighted index return used in the full sample and Table 9 portfolio branch.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_CRSP",
+        "E_MAIN_CRSP",
+        "E_CRSP_UPDATE",
+        "E_PROBE_CRSP_MSF",
+        "E_PROBE_CRSP_MSIX"
+      ],
+      "edits": [],
+      "steps": [
+        "Check the local CRSP MSF_V2 candidate for the required monthly history and map PERMNO/MthCalDt/MthPrc/MthRet to permno/date/prc/ret in a separate preparation copy.",
+        "Retain enough prior monthly observations for the three- and twelve-month return calculations and verify the 2015–2017 period used by the later portfolio extension; the exact needed extent depends on the sample dates and constructed group index.",
+        "For crspm_vwretd.dta, confirm that the local MSIX caldt and vwretd series matches the author definition, map caldt to date, and verify monthly coverage.",
+        "Do not treat the author’s historical retrieval dates as a requirement for byte-identical files when a compatible product and history are confirmed."
+      ],
+      "validation": [
+        "Check PERMNO/date keys, duplicate policy, monthly bounds and nonmissing prc/ret/vwretd in the prepared files before the Stata joins."
+      ]
+    },
+    {
+      "id": "A_QUARTERLY_AUX",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_EXTRA_2016",
+        "R_EXTRA_2017",
+        "R_COMPAGE",
+        "R_XTRAVAR",
+        "I_DATA_CONTRACTS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Stage quarterly extensions and annual/quarterly Compustat histories used to construct future outcomes, firm age, volatility and sales growth.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_EXTRA",
+        "E_DOC_COMP_AGE_XTRA",
+        "E_DOC_XTRAVAR",
+        "E_LEADS_2016",
+        "E_LEADS_2017",
+        "E_AGE_XTRAVAR",
+        "E_PROBE_COMP_FUNDA",
+        "E_PROBE_COMP_FUNDQ"
+      ],
+      "edits": [],
+      "steps": [
+        "Use local COMP.FUNDA/COMP.FUNDQ candidates only after confirming the applicable data-product route and exact date coverage.",
+        "Build separate inputs for the 2016 future-outcome extract, the 2017 12-quarter CFO extension, annual age history, and quarterly xtravar history. Retain the keys/fields consumed by the code.",
+        "For xtravar, verify coverage from 2002 through the estimation sample and the prior four-quarter values used for growth; for extra_data files, verify up to 12 future quarter leads after the 2006–2014 sample.",
+        "Do not infer minimum endpoints solely from retrieval dates; validate the code’s explicit 2002 lower filter and future-offset requirements."
+      ],
+      "validation": [
+        "Check required GVKEY/fiscal-year-quarter keys, U.S. firm/CIK/SIC fields and each source’s needed date window, then validate produced intermediate keys before merge."
+      ]
+    },
+    {
+      "id": "A_FUNDQ_LINK",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_FUNDQ",
+        "I_FUNDQ_LINK"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the author’s merged quarterly input contract before constructing fundq.dta; the local COMP.FUNDQ candidate lacks lpermno.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_MAIN_FUNDQ",
+        "E_PROBE_COMP_FUNDQ",
+        "E_CAT_FUNDQ",
+        "E_DOC_EXTRA"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm whether the author-exported WRDS CRSP/Compustat Merged Fundamentals Quarterly input contains lpermno and the other columns used by the do-file, or obtain the exact documented author-prepared fundq.dta.",
+        "If a separate link-table export is proposed, obtain its documented date-effective link filters and output contract; do not infer a CCM merge recipe from the catalog link table alone.",
+        "Stage the compatible file as fundq.dta only after its identifiers, fiscal-quarter keys and required pre-sample lag history are established."
+      ],
+      "validation": [
+        "Verify lpermno, gvkey, datadate, fyearq, fqtr, CIK/SIC and all code-consumed accounting fields, plus the pre-2006 quarter history used by lags."
+      ]
+    },
+    {
+      "id": "A_ERDPORT1_CONTRACT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_ERDPORT1",
+        "I_ERDPORT1"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the prepared daily size-adjusted return file and its construction inputs for the event-return analysis.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_CRSP",
+        "E_DAILY_ADJUSTED",
+        "E_CAT_CRSP",
+        "E_PROBE_CRSP_DSF"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm a compatible author-prepared erdport1.dta or the exact authorized WRDS SAS/SSH query and transformation that produces permno, date, ret and benchmark decret from the documented daily returns and NYSE/AMEX/NASDAQ breakpoints.",
+        "Confirm sample dates and required 61 lag / 241 future trading-observation coverage.",
+        "Do not use raw DlyRet or a monthly index as a substitute for the precomputed benchmark-adjusted return series without that source contract."
+      ],
+      "validation": [
+        "Check fields, PERMNO/date uniqueness, return definitions and event-window endpoints in the prepared file before running Step 1b."
+      ]
+    },
+    {
+      "id": "A_FF_FACTORS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_FF_MONTHLY",
+        "I_DATA_CONTRACTS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Confirm a monthly four-factor source compatible with the author’s Table 9 joins and prepare it under ff_factors_4.dta.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_EXTRA",
+        "E_FF_CALLS",
+        "E_PROBE_FF",
+        "E_FF_PUBLIC"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm local FF.FACTORS_MONTHLY or the official Fama/French 3-factor and Momentum files cover the portfolio regression months with compatible units and month keys.",
+        "Check the historical definition expected by the 2017 author file; the official library documents a FIZ-to-CIZ source-format change beginning January 2025 and offers historical files.",
+        "Map the required date and mktrf, smb, hml, umd fields to the author’s Stata input without changing the regressors."
+      ],
+      "validation": [
+        "Verify all four factor fields, units, monthly key alignment and complete span of the joined portfolio regressions."
+      ]
+    },
+    {
+      "id": "A_BCGW_ACCESS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_BCGW",
+        "I_BCGW_ACCESS"
+      ],
+      "kind": "access_request",
+      "description": "Obtain and verify the BCGW comparison file used by the supplied Table 6 Panel B branch.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_BCGW",
+        "E_BCGW_PUBLIC",
+        "E_BCGW_BRANCH"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the author’s Manager Non-GAAP EPS Dataset page and its linked access form to determine delivery and access conditions.",
+        "Verify the delivered dataset corresponds to Bentley, Christensen, Gee and Whipple (JAR 2018), covers 2003–2016, and includes gvkey, datadate, MGR_NG_EPS and mgr_exclude (plus url as dropped by the source).",
+        "Convert to the Stata input bcgw_2018_ng_data_2003to2016.dta after confirming its period and keys."
+      ],
+      "validation": [
+        "Check fields, coverage, GVKEY/date keys and the resulting join cardinality before the BCGW branch runs."
+      ]
+    },
+    {
+      "id": "A_RBOUNDS_SETUP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW_RBOUNDS"
+      ],
+      "kind": "software_setup",
+      "description": "Add a compatible rbounds Stata command for the supplied sensitivity-analysis branches.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_RBOUNDS_CALLS",
+        "E_SOFT_RBOUNDS",
+        "E_STATA_COMMANDS"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain and install the rbounds Stata ado package through an authorized Stata package source.",
+        "Make the command discoverable on the Stata adopath used by the execution copy."
+      ],
+      "validation": [
+        "Run which rbounds in Stata 18 and confirm that it resolves to the intended command before running Table 8."
+      ]
+    },
+    {
+      "id": "A_PATHS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_PATHS",
+        "SW_STATA_ADOS"
+      ],
+      "kind": "configuration",
+      "description": "Create a configured execution copy with relative paths and the package helper directory first on the Stata adopath.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_MAIN_PATH",
+        "E_STATA_COMMANDS",
+        "E_SAMPLE_PRODUCERS"
+      ],
+      "edits": [],
+      "steps": [
+        "Copy the supplied package to a separate execution directory with coherent InFiles, OutFiles and EDGAR directories.",
+        "In the copy only, set the root global to a relative root such as \".\"; convert all path separators to forward slashes and normalize Infiles/Outfiles spellings to InFiles/OutFiles consistently across producers and consumers.",
+        "Prepend the bundled helper directory with adopath ++ \"ado\" so the supplied cluster2, logit2, psmatch2 and konfound files are found ahead of other versions.",
+        "Keep executable configuration paths relative or under [redacted-path-1843e3452e62]; do not set the root to the Dropbox workspace path."
+      ],
+      "validation": [
+        "From the configured execution directory, run harmless Stata file-open checks using a relative forward-slash path, then use which to verify the four packaged ADO paths and the three invoked helpers.",
+        "After all inputs and software are ready, launch the complete driver in Stata batch mode from the configured copy; retain all analysis branches and inspect generated output/logs for missing inputs."
+      ]
+    },
+    {
+      "id": "A_RUN_PROCEDURE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_PATHS"
+      ],
+      "kind": "run_procedure",
+      "description": "Use the complete supplied Stata driver after the input and software actions close their current gaps.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_MAIN_PATH",
+        "E_MAIN_FUNDQ",
+        "E_TEXT_HANDOFF",
+        "E_BCGW_BRANCH",
+        "E_RBOUNDS_CALLS",
+        "E_CRSP_UPDATE",
+        "E_FF_CALLS",
+        "E_FINAL_OUTPUT"
+      ],
+      "edits": [],
+      "steps": [
+        "Complete the relative-path configuration and stage the inputs under the named directories.",
+        "Ensure Stata resolves the package ADOs and rbounds before execution; if regenerating text-search output, also stage the numbered HTML files and File::Slurp.",
+        "Run lv_jar_stata_code.do in Stata 18 batch mode from the configured copy so Steps 1–12, both hand-collected rounds, profit comparison, BCGW Panel B, ERC, sensitivity and portfolio branches run in source order."
+      ],
+      "validation": [
+        "Confirm that every expected producer output exists before its next consumer, both search CSV joins use the generated downloadId mapping, all analysis branches complete, and lv_jar_dataset.dta is produced with the documented share fields."
+      ]
+    }
+  ],
+  "review_notes": [
+    "The EDGAR/downloadlist.txt file was treated as data. Only the frozen inventory size/hash were used; no line contents were read as narrative.",
+    "The supplied Perl source was statically inspected from the actual package file even though the frozen source reader did not cache it. A hashed JSON records its local HTML input/output interface. The HTML presentation copy is not treated as a second program.",
+    "The hand-collected DTA files and both text-search CSV outputs are accepted as author-prepared primary inputs. This avoids making the historical collection/download path a mandatory dependency where the Stata driver consumes supplied outputs.",
+    "The final lv_jar_dataset.dta is a sharing/output dataset with identifiers, text-search and hand-coded variables; its probe and variable list do not support a separate analysis-only scope that reproduces the paper analyses.",
+    "Source and software checks were static or bounded metadata probes only. No author code, model regressions, dataset imports into author software, installation or downloads were performed. execution_verified remains false.",
+    "Optional, unselected Perl regeneration lead: static inspection shows the supplied program reads numbered local HTML via File::Slurp and writes output_new.csv; the Perl runtime is present and File::Slurp is absent. The primary Stata workflow directly consumes the two verified packaged text-search CSVs, so the Perl module and HTML handoff are not mandatory for this target. If the regeneration route is selected later, stage the numbered HTML files in its working directory, prepare File::Slurp, and verify the output_new.csv File_Number/word schema against the Stata download IDs."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "44d7cfe6b64ffffb1a744165cace9d1bd87f77837c184b06a3824e2a43a65c36",
+    "applied": false
+  }
+}

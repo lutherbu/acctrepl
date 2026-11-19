@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/accounting/author-analysis-attempt-1.0.schema.json",
+  "title": "Author analysis-only execution attempt",
+  "description": "Actual runtime evidence for one fresh-agent attempt. Scope completion and agreement with a reference are separate. Identity, stage coverage, hashes and outcomes also require controller checks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "attempt_id", "package_id", "scope_id", "provenance", "outcome", "execution_verified", "method_fidelity", "plan", "run_receipt", "inputs", "patches", "stage_results", "artifacts", "comparison", "gaps", "review_notes"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "attempt_id": {"$ref": "#/$defs/id"},
+    "package_id": {"$ref": "#/$defs/id"},
+    "scope_id": {"const": "analysis_only"},
+    "title": {"type": "string"},
+    "doi": {"type": ["string", "null"]},
+    "phase": {"enum": ["pilot", "full"]},
+    "case": {"type": "integer", "minimum": 1, "maximum": 6},
+    "attempt_number": {"type": "integer", "minimum": 1},
+    "provenance": {"type": "object", "minProperties": 1, "additionalProperties": {"type": ["string", "null"]}},
+    "outcome": {"enum": ["completed", "partial", "failed", "blocked", "not_run"]},
+    "execution_verified": {"type": "boolean", "description": "True only for verified completion of the whole selected scope; successful stages of a partial attempt are recorded separately."},
+    "method_fidelity": {"enum": ["author_native", "source_supported_setup", "corrected_author_code", "requires_review"]},
+    "plan": {"anyOf": [{"$ref": "#/$defs/file_ref"}, {"type": "null"}]},
+    "run_receipt": {"anyOf": [{"$ref": "#/$defs/file_ref"}, {"type": "null"}]},
+    "inputs": {"type": "array", "items": {"$ref": "#/$defs/input"}},
+    "patches": {"type": "array", "items": {"$ref": "#/$defs/patch"}},
+    "stage_results": {"type": "array", "items": {"$ref": "#/$defs/stage"}},
+    "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
+    "comparison": {"$ref": "#/$defs/comparison"},
+    "gaps": {"type": "array", "items": {"$ref": "#/$defs/gap"}},
+    "review_notes": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"outcome": {"const": "completed"}}},
+      "then": {
+        "properties": {
+          "execution_verified": {"const": true},
+          "method_fidelity": {"enum": ["author_native", "source_supported_setup", "corrected_author_code"]},
+          "plan": {"$ref": "#/$defs/file_ref"},
+          "run_receipt": {"$ref": "#/$defs/file_ref"},
+          "stage_results": {
+            "minItems": 1,
+            "contains": {"properties": {"required": {"const": true}}, "required": ["required"]},
+            "items": {
+              "allOf": [
+                {"$ref": "#/$defs/stage"},
+                {
+                  "if": {"properties": {"required": {"const": true}}},
+                  "then": {"properties": {"status": {"const": "succeeded"}, "log_check": {"const": "passed"}, "returncode": {"const": 0}, "receipt": {"$ref": "#/$defs/file_ref"}}}
+                }
+              ]
+            }
+          },
+          "artifacts": {
+            "minItems": 1,
+            "contains": {"properties": {"freshness": {"enum": ["new", "changed"]}, "kind": {"enum": ["result_table", "figure", "model_result", "native_result_log"]}}, "required": ["freshness", "kind"]}
+          }
+        }
+      },
+      "else": {"properties": {"execution_verified": {"const": false}}}
+    },
+    {
+      "if": {"properties": {"outcome": {"enum": ["blocked", "not_run"]}}},
+      "then": {"properties": {"gaps": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"outcome": {"const": "partial"}}},
+      "then": {
+        "properties": {
+          "run_receipt": {"$ref": "#/$defs/file_ref"},
+          "stage_results": {"contains": {"properties": {"required": {"const": true}, "status": {"const": "succeeded"}, "log_check": {"const": "passed"}}, "required": ["required", "status", "log_check"]}},
+          "gaps": {"minItems": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"outcome": {"const": "failed"}}},
+      "then": {"properties": {
+        "plan": {"$ref": "#/$defs/file_ref"},
+        "run_receipt": {"$ref": "#/$defs/file_ref"},
+        "stage_results": {"contains": {"properties": {"status": {"const": "failed"}}, "required": ["status"]}}
+      }}
+    },
+    {
+      "if": {"properties": {"method_fidelity": {"const": "corrected_author_code"}}},
+      "then": {"properties": {"patches": {"contains": {"properties": {"kind": {"const": "source_supported_repair"}}, "required": ["kind"]}}}}
+    }
+  ],
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 180, "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "file_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "role", "original", "staged"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "role": {"enum": ["data", "code", "reference", "dependency"]},
+        "original": {"$ref": "#/$defs/file_ref"},
+        "staged": {"anyOf": [{"$ref": "#/$defs/file_ref"}, {"type": "null"}]}
+      }
+    },
+    "patch": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "original_path", "working_path", "before_sha256", "after_sha256", "kind", "reason", "source_locations", "approval"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "original_path": {"type": ["string", "null"]},
+        "working_path": {"type": "string", "minLength": 1},
+        "before_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "after_sha256": {"$ref": "#/$defs/sha256"},
+        "kind": {"enum": ["path", "filename_case", "format_staging", "document_reflow", "syntax_setup", "dependency_setup", "source_supported_repair"]},
+        "reason": {"type": "string", "minLength": 1},
+        "source_locations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "approval": {"anyOf": [{"$ref": "#/$defs/file_ref"}, {"type": "null"}]}
+      },
+      "allOf": [{"if": {"properties": {"kind": {"const": "source_supported_repair"}}}, "then": {"properties": {"approval": {"$ref": "#/$defs/file_ref"}}}}]
+    },
+    "stage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stage_id", "source_entry_points", "required", "status", "returncode", "receipt", "log_check", "output_ids", "note"],
+      "properties": {
+        "stage_id": {"$ref": "#/$defs/id"},
+        "source_entry_points": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "required": {"type": "boolean"},
+        "status": {"enum": ["succeeded", "failed", "blocked", "skipped"]},
+        "returncode": {"type": ["integer", "null"]},
+        "receipt": {"anyOf": [{"$ref": "#/$defs/file_ref"}, {"type": "null"}]},
+        "log_check": {"enum": ["passed", "failed", "not_assessed"]},
+        "output_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "note": {"type": "string"}
+      },
+      "allOf": [
+        {"if": {"properties": {"status": {"const": "succeeded"}}}, "then": {"properties": {"returncode": {"const": 0}, "receipt": {"$ref": "#/$defs/file_ref"}, "log_check": {"const": "passed"}}}},
+        {"if": {"properties": {"status": {"const": "failed"}}}, "then": {"properties": {"receipt": {"$ref": "#/$defs/file_ref"}}}}
+      ]
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "path", "sha256", "kind", "freshness", "stage_id"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "kind": {"enum": ["result_table", "figure", "model_result", "native_result_log", "other"]},
+        "freshness": {"enum": ["new", "changed", "unchanged", "missing"]},
+        "stage_id": {"$ref": "#/$defs/id"}
+      },
+      "allOf": [{"if": {"properties": {"freshness": {"const": "missing"}}}, "then": {"properties": {"sha256": {"type": "null"}}}, "else": {"properties": {"sha256": {"$ref": "#/$defs/sha256"}}}}]
+    },
+    "gap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "description", "source_entry_points", "stage_ids", "references"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["input", "software", "permission", "source_logic", "scope", "resource_limit", "runtime", "comparison", "other"]},
+        "description": {"type": "string", "minLength": 1},
+        "source_entry_points": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "stage_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "references": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "reference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "source", "sha256", "location", "description"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "source": {"type": "string", "minLength": 1},
+        "sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "location": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "metric": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "label", "stage_id", "observed", "reference", "reference_id", "absolute_tolerance", "relative_tolerance", "tolerance_basis", "matches"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "label": {"type": "string", "minLength": 1},
+        "stage_id": {"$ref": "#/$defs/id"},
+        "observed": {"type": ["number", "null"]},
+        "reference": {"type": ["number", "null"]},
+        "reference_id": {"$ref": "#/$defs/id"},
+        "absolute_tolerance": {"type": ["number", "null"], "minimum": 0},
+        "relative_tolerance": {"type": ["number", "null"], "minimum": 0},
+        "tolerance_basis": {"type": "string", "minLength": 1},
+        "matches": {"type": ["boolean", "null"]}
+      },
+      "allOf": [{"if": {"properties": {"matches": {"type": "boolean"}}}, "then": {
+        "properties": {"observed": {"type": "number"}, "reference": {"type": "number"}},
+        "anyOf": [{"properties": {"absolute_tolerance": {"type": "number"}}}, {"properties": {"relative_tolerance": {"type": "number"}}}]
+      }}]
+    },
+    "comparison": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "references", "metrics", "notes"],
+      "properties": {
+        "status": {"enum": ["not_assessed", "no_reference", "matches", "differs", "partial"]},
+        "references": {"type": "array", "items": {"$ref": "#/$defs/reference"}},
+        "metrics": {"type": "array", "items": {"$ref": "#/$defs/metric"}},
+        "notes": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      },
+      "allOf": [
+        {"if": {"properties": {"status": {"const": "no_reference"}}}, "then": {"properties": {"references": {"maxItems": 0}, "metrics": {"maxItems": 0}, "notes": {"minItems": 1}}}},
+        {"if": {"properties": {"status": {"const": "matches"}}}, "then": {"properties": {"references": {"minItems": 1}, "metrics": {"minItems": 1, "items": {"allOf": [{"$ref": "#/$defs/metric"}, {"properties": {"observed": {"type": "number"}, "reference": {"type": "number"}, "matches": {"const": true}}}]}}}}},
+        {"if": {"properties": {"status": {"enum": ["differs", "partial"]}}}, "then": {"properties": {"references": {"minItems": 1}, "notes": {"minItems": 1}}}}
+      ]
+    }
+  }
+}

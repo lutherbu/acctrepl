@@ -1,0 +1,1466 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-56d510b29e91",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 57/Issue 4/12267 - Director-Liability-Reduction-Laws-and-Conditional-Conservatism/bl-datasheet-and-code.zip",
+        "sha256": "95312e1f57249d8e9455aecb6adee06d8ef336a9dd8b7a2ab2c63c9ab024d8d7"
+      },
+      {
+        "path": "JAR-Volume 57/Issue 4/12267 - Director-Liability-Reduction-Laws-and-Conditional-Conservatism/bl-internet-appendix.pdf",
+        "sha256": "2d5503a78bfef6118502eca350f9049a1e894ce37a757236051533d803089daa"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "5ba2786b0edadb384522a06cd34a087c8de971ed2dbbb9b3bb5e325cd096fd7d"
+  },
+  "title": "Director-Liability-Reduction Laws and Conditional Conservatism",
+  "doi": "10.1111/1475-679X.12267",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "All supplied SAS preparation and companion Stata law-indicator code for the author-described workflow. Code_1 and Code_2 form ordered SAS preparation branches; Code_3 is a partial Stata robustness-code companion.",
+      "entry_points": [
+        "Code and Firm ID/Code_1.sas",
+        "Code and Firm ID/Code_2.sas",
+        "Code and Firm ID/Code_3.txt"
+      ],
+      "requirement_ids": [
+        "r-compan",
+        "r-crspmon",
+        "r-vwretd",
+        "r-cd-inc",
+        "r-tk-inc",
+        "r-mergent-inc",
+        "r-owner",
+        "r-dedcount",
+        "r-gindex89",
+        "r-gindex90",
+        "r-audit",
+        "r-irrc-inc",
+        "r-tenkhead",
+        "r-bushee-class"
+      ],
+      "software_ids": [
+        "sw-sas",
+        "sw-stata"
+      ],
+      "issue_ids": [
+        "i-analysis-driver",
+        "i-conserv-library",
+        "i-sas-runtime"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "ev-readme",
+        "ev-ds-software",
+        "ev-code1-lib",
+        "ev-code2-precondition",
+        "ev-code3",
+        "ev-cat-comp",
+        "ev-cat-crsp",
+        "ev-cat-risk",
+        "ev-bushee-range",
+        "ev-sraf-headers-range",
+        "ev-cik-list"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "r-compan",
+      "kind": "data",
+      "description": "Annual Compustat firm observations consumed as conserv.compan. Code_1 uses financial/accounting items, gvkey/cusip/cik, annual fyear and current incorporation/SIC fields; Code_2 then constructs lags and the 1976–2002 main sample.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-compan-funda-company",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.FUNDA + COMP.COMPANY in ${ACCTREPL_SAS_ROOT}/comp",
+          "description": "Both exact catalog-listed Compustat files passed bounded one-row reads. COMP.FUNDA provides the annual accounting fields; COMP.COMPANY provides current `incorp`, `sic`, and `cik` to join by GVKEY. This supports a candidate Compustat preparation route, but the required history and author extraction remain unverified. Current `incorp` is only the baseline/fallback component, not a substitute for historical incorporation mappings.",
+          "evidence_ids": [
+            "ev-cat-comp",
+            "ev-probe-comp-funda",
+            "ev-probe-comp-company"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "cusip",
+            "at",
+            "exchg",
+            "revt",
+            "ceq",
+            "prcc_f",
+            "csho",
+            "ib",
+            "fyr",
+            "act",
+            "lct",
+            "che",
+            "dlc",
+            "txditc",
+            "dltt",
+            "dp",
+            "cik",
+            "incorp",
+            "sic"
+          ],
+          "expected_period": "At least fyear 1975 for prior-year lags through the supplied 1976–2002 main sample; exact source coverage and firm-year continuity remain unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-crspmon",
+      "kind": "data",
+      "description": "Monthly CRSP stock returns consumed as conserv.crspmon and joined to annual Compustat/fiscal-year records through a numeric YYYYMM month key.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-crspmon-prepared",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author local SAS library `conserv.crspmon` (not included)",
+          "description": "Exact author-prepared table is named by Code_1 but not present in this release; the code requires months, CUSIP, PERMNO, return and historical SIC.",
+          "evidence_ids": [
+            "ev-code1-base",
+            "ev-code2-returns"
+          ],
+          "expected_fields": [
+            "months",
+            "cusip",
+            "permno",
+            "ret",
+            "hsiccd"
+          ],
+          "expected_period": "Monthly rows spanning all twelve fiscal-year return windows used for the supplied fyear 1976–2002 sample."
+        },
+        {
+          "id": "r-crspmon-msf-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+          "description": "Catalog-listed CRSP Monthly Stock product is readable and has DATE/CUSIP/PERMNO/RET/HSICCD. Code_1’s own year(date)*100+month(date) transformation on the companion market-index input supports creating the same YYYYMM month key from DATE as ordinary preparation. Historical coverage and exact author sample mapping remain unverified.",
+          "evidence_ids": [
+            "ev-cat-crsp",
+            "ev-probe-crsp-msf",
+            "ev-code1-base"
+          ],
+          "expected_fields": [
+            "DATE",
+            "CUSIP",
+            "PERMNO",
+            "RET",
+            "HSICCD"
+          ],
+          "expected_period": "Monthly CRSP records covering all twelve months for each fiscal-year return window in 1976–2002; sample coverage was not swept."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-vwretd",
+      "kind": "data",
+      "description": "Monthly CRSP value-weighted return series consumed as conserv.vwretd; Code_1 constructs months=year(date)*100+month(date) and merges by months.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-vwretd-msi-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msi.sas7bdat",
+          "description": "Catalog-listed CRSP monthly market-index table is readable and exposes DATE/vwretd, matching the fields used by Code_1; the author table’s expected month key is generated by the source code. Required historical coverage is not established by a bounded row read.",
+          "evidence_ids": [
+            "ev-cat-crsp",
+            "ev-probe-crsp-msi",
+            "ev-code1-base"
+          ],
+          "expected_fields": [
+            "DATE",
+            "vwretd"
+          ],
+          "expected_period": "Monthly dates aligning with all CRSP fiscal-year return windows used for 1976–2002."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-cd-inc",
+      "kind": "data",
+      "description": "Compact Disclosure incorporation records consumed as conserv.cd_inc.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-cd-inc-local",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author local SAS library `conserv` (table not included in this release)",
+          "description": "The exact Compact Disclosure annual incorporation-state table is not included. Compustat current `incorp` is a separate present-day fallback and cannot substitute for this historical CUSIP/fyear source.",
+          "evidence_ids": [
+            "ev-ds-incorp",
+            "ev-code1-incorp",
+            "ev-code1-output"
+          ],
+          "expected_fields": [
+            "cusip",
+            "fyear",
+            "cdinc"
+          ],
+          "expected_period": "Historical CUSIP/fiscal-year coverage sufficient to assign incorporation states in the 1976–2002 sample; exact earliest source coverage is unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-tk-inc",
+      "kind": "data",
+      "description": "Prepared annual incorporation-state records consumed as conserv.tk_inc and merged to Compustat by CIK/fyear. The datasheet attributes these records to 10-K headings and IRRC; exact author-prepared mapping and period coverage are not included.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-tk-inc-author-table",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author local SAS library `conserv.tk_inc` (not included)",
+          "description": "Code_1 requires CIK, fiscal year, and state-of-incorporation fields. The named input is not packaged or located; exact 10-K/IRRC preparation, historical rows, and duplicate/identifier treatment remain unverified.",
+          "evidence_ids": [
+            "ev-ds-incorp",
+            "ev-code1-tk",
+            "ev-code1-output"
+          ],
+          "expected_fields": [
+            "cik",
+            "fyear",
+            "stinc"
+          ],
+          "expected_period": "Historical CIK/fyear rows from the documented 10-K-heading/IRRC source for the supplied sample years; exact starts and mapping remain unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-mergent-inc",
+      "kind": "data",
+      "description": "Mergent Online incorporation-change rows consumed as conserv.incorpo and used to reconstruct pre-1989 state changes. The code requires CIK plus year_end (or fyear to derive year_end) and incorp_o; this is separate from the Compact Disclosure and 10-K/IRRC table inputs.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-mergent-inc-local",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author local SAS library `conserv` (table not included in this release)",
+          "description": "The exact author-prepared Mergent incorporation table is not included. The local catalog contains Mergent FISD bond tables, which are a different product and do not establish a route to Mergent Online company incorporation history.",
+          "evidence_ids": [
+            "ev-ds-incorp",
+            "ev-code1-mergent",
+            "ev-code1-output"
+          ],
+          "expected_fields": [
+            "cik",
+            "year_end",
+            "fyear",
+            "incorp_o"
+          ],
+          "expected_period": "Pre-1989 changes as needed for firms in the supplied analysis sample; exact event-date/coverage contract is unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-owner",
+      "kind": "data",
+      "description": "Thomson Reuters 13F ownership input consumed as conserv.owner. Code_2 filters June report dates and requires INSTOWN_PERC, CUSIP and rdate before joining on CUSIP/fyear.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-owner-author-table",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author local SAS library `conserv.owner` (not included)",
+          "description": "The exact prepared ownership table and its INSTOWN_PERC denominator/units are absent from the package. The datasheet identifies Thomson Reuters 13F via WRDS; current commercial access and the authors’ 2016 extraction are not verified.",
+          "evidence_ids": [
+            "ev-ds-own",
+            "ev-code2-owner"
+          ],
+          "expected_fields": [
+            "cusip",
+            "rdate",
+            "instown_perc"
+          ],
+          "expected_period": "June-report institutional ownership inputs aligned with the supplied 1976–2002 main sample; coverage is unverified."
+        },
+        {
+          "id": "r-owner-tfn-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat",
+          "description": "The catalog identifies the same Thomson-Reuters 13F holdings family and its schema includes RDATE/CUSIP/SHARES/SHROUT, but the bounded read timed out and the raw table does not expose Code_2’s INSTOWN_PERC column. Aggregation/denominator, current access, and author-vintage mapping remain unresolved.",
+          "evidence_ids": [
+            "ev-cat-tfn",
+            "ev-probe-tfn"
+          ],
+          "expected_fields": [
+            "rdate",
+            "cusip",
+            "shares",
+            "shrout1",
+            "shrout2"
+          ],
+          "expected_period": "13F holdings coverage for the Code_2 ownership branch; the catalog shows the product but the local read did not verify history."
+        },
+        {
+          "id": "r-owner-wrds-current",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS LSEG Institutional Managers (13f) Holdings",
+          "description": "Current WRDS product page reports 1978–2026 coverage. This does not establish access entitlement, the author’s 2016 vintage, complete 1976–2002 coverage, or how raw manager holdings become the required INSTOWN_PERC field.",
+          "evidence_ids": [
+            "ev-wrds-13f-product",
+            "ev-wrds-13f-period"
+          ],
+          "expected_period": "Authors report a 2016 13F download; the current product period begins in 1978 and the exact prepared input period/field mapping is unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-dedcount",
+      "kind": "data",
+      "description": "Bushee-classified dedicated institutional ownership data consumed as conserv.dedcount and merged to the owner records.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-dedcount-local",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author local SAS library `conserv` (table not included in this release)",
+          "description": "The supplied SAS program names this exact local-library table; no compatible table or successful probe is present in the package. Source origin and field/history compatibility remain unverified.",
+          "evidence_ids": [
+            "ev-ds-own",
+            "ev-code2-ded"
+          ],
+          "expected_fields": [
+            "cusip",
+            "rdate",
+            "shrout",
+            "dshare"
+          ],
+          "expected_period": "Date/CUSIP coverage needed for the supplied dedicated-ownership test branch; source coverage and units are unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-gindex89",
+      "kind": "data",
+      "description": "Pre-1990 G-index data consumed as conserv.gindex_89 and joined on GVKEY/fyear.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-gindex89-local",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author local SAS library `conserv` (table not included in this release)",
+          "description": "The exact pre-1990 Cremers G-index table is not included and no compatible local candidate was established. The appendix/datasheet identifies this as a distinct pre-1990 source; its fields, identifier crosswalk and history remain unverified.",
+          "evidence_ids": [
+            "ev-ds-gindex",
+            "ev-code2-gindex"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "year",
+            "gindex",
+            "gmissing"
+          ],
+          "expected_period": "Pre-1990 firm-year coverage in the supplied G-index branch; exact earliest year and field definitions are unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-gindex90",
+      "kind": "data",
+      "description": "1990-and-later ISS Governance Legacy G-index data consumed as conserv.gindex_90, keyed by CIK/year and expanded by the supplied code.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-gindex90-author-table",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author local SAS library `conserv.gindex_90` (not included)",
+          "description": "The exact Code_2 input is absent. The supplied code reads CIK/year, constructs fyear, and filters on gindex and gmissing; current catalog candidates do not establish the required gmissing field or the authors’ row expansion.",
+          "evidence_ids": [
+            "ev-ds-gindex",
+            "ev-code2-gindex"
+          ],
+          "expected_fields": [
+            "cik",
+            "year",
+            "gindex",
+            "gmissing"
+          ],
+          "expected_period": "ISS collection years and prior-year expansion described in Code_2 for the 1976–2002 branch; complete mapping remains unverified."
+        },
+        {
+          "id": "r-gindex90-risk-gset-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/riskmetrics/governance/gset.sas7bdat",
+          "description": "Readable RiskMetrics/ISS Governance Legacy candidate includes CIK/YEAR/GINDEX and state, with catalog label 1990–2006. It does not include the `gmissing` field actively read by Code_2; this product cannot be treated as the exact author table without resolving that contract.",
+          "evidence_ids": [
+            "ev-cat-risk",
+            "ev-probe-risk-gset",
+            "ev-code2-gindex"
+          ],
+          "expected_fields": [
+            "CIK",
+            "YEAR",
+            "GINDEX"
+          ],
+          "expected_period": "Catalog label indicates 1990–2006; Code_2’s supplied branch names collection years 1990, 1993, 1995, 1998, 2000 and 2002."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-audit",
+      "kind": "data",
+      "description": "Separately downloaded Compustat auditor data consumed as conserv.audit.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-audit-author-table",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author local SAS library `conserv.audit` (not included)",
+          "description": "Code_2 requires a separate annual Compustat auditor table with GVKEY/FYEAR/AU; no author table is packaged.",
+          "evidence_ids": [
+            "ev-code2-audit",
+            "ev-ds-comp"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "au"
+          ],
+          "expected_period": "Annual observations aligned with the supplied 1976–2002 auditor-selection branch."
+        },
+        {
+          "id": "r-audit-comp-funda-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "COMP.FUNDA is a readable Compustat annual product with GVKEY/FYEAR/AU and can be checked as a source for the separate author audit table. The period and the exact author extraction are not verified by the one-row probe.",
+          "evidence_ids": [
+            "ev-cat-comp",
+            "ev-probe-comp-funda",
+            "ev-code2-audit"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "au"
+          ],
+          "expected_period": "Annual auditor attributes needed for 1976–2002."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-irrc-inc",
+      "kind": "data",
+      "description": "IRRC/RiskMetrics annual state-of-incorporation records used with 10-K headings to create the Code_1 `conserv.tk_inc` table. This is a distinct required historical source component.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-irrc-risk-gset-candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/riskmetrics/governance/gset.sas7bdat",
+          "description": "Local RiskMetrics Governance Legacy data is a candidate IRRC product, with CIK/YEAR/STATE fields and a 1990–2006 catalog label; the one-row read verifies readability/columns only, not complete year/CIK population or exact author reconciliation.",
+          "evidence_ids": [
+            "ev-cat-risk",
+            "ev-probe-risk-gset",
+            "ev-ds-incorp"
+          ],
+          "expected_fields": [
+            "CIK",
+            "YEAR",
+            "STATE"
+          ],
+          "expected_period": "Historical incorporation-state records needed to support the Code_1 sample; catalog label covers 1990–2006, while 1989 and author-specific crosswalk remain unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-tenkhead",
+      "kind": "data",
+      "description": "10-K heading records used to construct the annual CIK/fyear/incorporation-state table consumed as `conserv.tk_inc`. The author datasheet reports a 1989-onward source and uses it jointly with IRRC; it is not a live input to Code_1 once an exact prepared `tk_inc` table is supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-tenkhead-sraf-current",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://sraf.nd.edu/sec-edgar-data/10-x-header-data/",
+          "description": "Notre Dame SRAF offers a downloadable current 10-X header data file for 1993–2025 with filer CIK, form, reporting period, and optional state-of-incorporation fields. It does not cover 1989–1992 and does not by itself establish the author’s CIK/fyear deduplication or joint IRRC mapping.",
+          "evidence_ids": [
+            "ev-sraf-headers-range",
+            "ev-sraf-incorp-field"
+          ],
+          "expected_fields": [
+            "filer_cik",
+            "filing_date",
+            "g_conformed_period_of_report",
+            "fv_form_type",
+            "cd_state_of_incorporation"
+          ],
+          "expected_period": "For the authors’ reported 1989-onward historical incorporation component through the supplied 2002 sample; this current route begins in 1993."
+        },
+        {
+          "id": "r-tenkhead-local-docs",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_RAW}; ${ACCTREPL_SEC_PARSED}; ${ACCTREPL_LM10X}/2002",
+          "description": "Bounded exact-path checks found the SEC raw/parsed roots and LM10X/2002 directory. The roots were not listed or scanned, and a bounded LM10X/1989 path check was unresolved. These checks do not verify coverage, 10-K header preservation, or an author-compatible state mapping.",
+          "evidence_ids": [
+            "ev-probe-sec-raw",
+            "ev-probe-sec-parsed",
+            "ev-probe-lm-2002",
+            "ev-probe-lm-1989"
+          ],
+          "expected_period": "The required historical input includes 1989–2002 rows; local content/coverage remains unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "r-bushee-class",
+      "kind": "data",
+      "description": "Brian Bushee dedicated/transient/quasi-indexer manager classifications used upstream to construct `conserv.dedcount` for Code_2’s dedicated-ownership branch. The author datasheet reports a 2016 download.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "r-bushee-current-public",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://accounting-faculty.wharton.upenn.edu/bushee/",
+          "description": "The current author page offers classification data for 1981–2025, updated in July 2026, and states that merging requires Thomson Reuters 13F Holdings. The authors used a 2016 version; current-vintage equivalence, exact data-file fields and the manager-to-holding link remain unverified.",
+          "evidence_ids": [
+            "ev-bushee-range",
+            "ev-bushee-subscription"
+          ],
+          "expected_period": "At least the dedicated-ownership branch years with available classifications; current page reports 1981–2025, but the study used a 2016 download."
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "sw-sas",
+      "name": "SAS",
+      "status": "unverified",
+      "description": "SAS 9.4 code requires Base SAS data steps, PROC SORT, PROC SQL, and PROC MEANS. The frozen environment probe failed during TKELS initialization, so runtime availability and version are unverified; this does not establish missing entitlement.",
+      "evidence_ids": [
+        "ev-code1-base",
+        "ev-code2-owner",
+        "ev-code2-gindex",
+        "ev-env"
+      ]
+    },
+    {
+      "id": "sw-stata",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 is available in the frozen environment. Code_3 uses native Stata generate/replace syntax; author release is unspecified, so compatibility remains for future validation.",
+      "evidence_ids": [
+        "ev-code3",
+        "ev-ds-software",
+        "ev-env"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "i-analysis-driver",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_analysis_driver_and_handoff",
+      "description": "The README calls Code_2 regression analysis and the datasheet says SAS and Stata perform all analyses, but the supplied Code_2 content prepares WORK datasets and ends at comments to export each branch to Stata. It contains no executable export commands or estimators. Code_3 assigns five law indicators but has no import, dataset handoff, or estimation driver. The appendix documents reported tables/checks whose estimation programs are not supplied. The resulting full workflow and required output mapping cannot be closed from this package.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "ev-readme",
+        "ev-ds-software",
+        "ev-code2-main",
+        "ev-code2-tail",
+        "ev-code3",
+        "ev-appendix-scope"
+      ]
+    },
+    {
+      "id": "i-conserv-library",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_library_configuration",
+      "description": "Code_1/Code_2 read multiple conserv.* datasets but provide no LIBNAME assignment or directory mapping. The datasheet says the files are saved in a local SAS library named conserv, without listing the table locations or SAS serialization/schema.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "ev-code1-lib",
+        "ev-code1-base",
+        "ev-code1-incorp",
+        "ev-code1-tk",
+        "ev-code1-mergent",
+        "ev-code2-owner",
+        "ev-code2-ded",
+        "ev-code2-gindex",
+        "ev-code2-audit"
+      ]
+    },
+    {
+      "id": "i-sas-runtime",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "software_availability_unverified",
+      "description": "SAS is required, but the frozen bounded startup probe failed at TKELS initialization and could not establish whether SAS is operational; it does not establish a licensing barrier.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "ev-env"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-ds-comp",
+      "kind": "source",
+      "description": "The datasheet identifies annual financial statement inputs from Compustat via WRDS.",
+      "file": "BL Datasheet.pdf",
+      "line_begin": 20,
+      "line_end": 23,
+      "quote": "          b) b. We obtained financial statement data from Compustat via Wharton Research\n             Data Services (WRDS). We downloaded the data (except for inventories INVT\n             and receivables RECT) on January 18, 2016. We downloaded the inventories and\n             receivables data on December 20, 2017."
+    },
+    {
+      "id": "ev-ds-crsp",
+      "kind": "source",
+      "description": "The datasheet identifies stock return inputs from CRSP via WRDS.",
+      "file": "BL Datasheet.pdf",
+      "line_begin": 24,
+      "line_end": 25,
+      "quote": "          c) c. We obtained stock return data from CRSP provided by WRDS. We\n             downloaded the data on January 18, 2016."
+    },
+    {
+      "id": "ev-ds-own",
+      "kind": "source",
+      "description": "The datasheet identifies institutional ownership through WRDS and Bushee investor classification data.",
+      "file": "BL Datasheet.pdf",
+      "line_begin": 26,
+      "line_end": 30,
+      "quote": "          d) d. We obtained institutional ownership data from Thomson Reuters Institutional\n             Holdings (13f) via WRDS. We downloaded the data on January 26, 2016.\n          e) e. We obtained institutional investor classification data from Brian Bushee’s\n             website (http://acct.wharton.upenn.edu/faculty/bushee/). We downloaded the data\n             on July 29, 2016."
+    },
+    {
+      "id": "ev-ds-incorp",
+      "kind": "source",
+      "description": "The datasheet documents the joint historical incorporation sources and the pre-1989 Mergent search.",
+      "file": "BL Datasheet.pdf",
+      "line_begin": 31,
+      "line_end": 39,
+      "quote": "          f) f. We obtained historical incorporation state data from (1) 10-K heading\n             (downloaded on February 21, 2017 from Bill McDonald’s website\n             http://www3.nd.edu/~mcdonald/10-K_Headers/10-K_Headers.html), (2) Compact\n             Disclosure company address data obtained on February 26, 2017, and (3) IRRC\n             database obtained on February 16, 2017. Because these sources only contain\n             incorporation state data as early as 1989, we further searched the company\n             profiles on Mergent Online to identify any additional incorporation-state changes\n             for the period before 1989. Our research assistant, Xinjie Ma, conducted the\n             search between March 6, 2017 and March 8, 2017."
+    },
+    {
+      "id": "ev-ds-gindex",
+      "kind": "source",
+      "description": "The datasheet identifies distinct pre-1990 and 1990-and-later G-index sources.",
+      "file": "BL Datasheet.pdf",
+      "line_begin": 43,
+      "line_end": 45,
+      "quote": "          h) h. We obtained G-index data for the years before 1990 from Professor Martijn\n             Cremers on May 14, 2018. We downloaded G-index data for the years including\n             and after 1990 from the ISS Governance Legacy database on May 14, 2018."
+    },
+    {
+      "id": "ev-ds-software",
+      "kind": "source",
+      "description": "The datasheet says SAS and Stata are used, and describes the CIK list as final-sample identifiers.",
+      "file": "BL Datasheet.pdf",
+      "line_begin": 76,
+      "line_end": 78,
+      "quote": "         We use SAS and STATA to convert the raw data and perform all analyses. The SAS\n          and STATA codes are included with this document. The file “List of CIKs.txt”\n          provides the CIKs of the firms in our final sample."
+    },
+    {
+      "id": "ev-readme",
+      "kind": "source",
+      "description": "The README assigns distinct roles to the CIK list and SAS/Stata files.",
+      "file": "Code and Firm ID/Readme.txt",
+      "line_begin": 3,
+      "line_end": 7,
+      "quote": "2. \"Code_1\" file contains the SAS code that we use to load data from the local SAS library and determine historical incorporation states.\n\n3. \"Code_2\" file contains the SAS code that we use for our regression analysis.\n\n4. \"Code_3\" file contains the STATA code (in text format) that we use to assign 5 separate POST indicator variables for 5 types of antitakeover laws for a robustness check."
+    },
+    {
+      "id": "ev-code1-lib",
+      "kind": "source",
+      "description": "Code_1 describes its SAS local library inputs and historical-incorporation preparation role.",
+      "file": "Code and Firm ID/Code_1.sas",
+      "line_begin": 4,
+      "line_end": 5,
+      "quote": "*This code loads data from local SAS library and assigns historical incorporation data to the observations to prepare for further sample selections;*****************************;\n*Before runing this code, all data files from the sources identified in the paper are downloaded and saved in the local SAS library \"conserv\";***********************************;"
+    },
+    {
+      "id": "ev-code1-base",
+      "kind": "source",
+      "description": "Code_1 reads Compustat, CRSP monthly returns and value-weighted monthly returns.",
+      "file": "Code and Firm ID/Code_1.sas",
+      "line_begin": 9,
+      "line_end": 43,
+      "quote": "*loading data from downloaded Compustat file;\ndata compan;\nset conserv.compan;\nif at^=.;\nif at>0;\nif incorp^='';\nif incorp^='PR';\nif incorp^='DC';\nif exchg=11 or exchg=12 or exchg=14;\nif SIC>6999 or SIC<6000;\nif revt>0;\nif ceq>0;\nif prcc_f^=.;\nif csho^=.;\nif ib^=.;\ncyear=fyear+1;\ncusip=substr(cusip,1,8);\ncik1=cik+0;\ndrop cik;\ndata comp_1;\nset compan;\ncik=cik1;\ndrop cik1;\nrun;\n\n*loading data from downloaded CRSP files: monthly return and value weighted market return;\ndata crsp;\nset conserv.crspmon;\ndata vwret;\nset conserv.vwretd;\nyear=year(date);\nmonth=month(date);\nmonths=year*100+month;\ndrop year month date;\nrun;"
+    },
+    {
+      "id": "ev-code1-incorp",
+      "kind": "source",
+      "description": "Code_1 reads Compact Disclosure incorporation records.",
+      "file": "Code and Firm ID/Code_1.sas",
+      "line_begin": 56,
+      "line_end": 61,
+      "quote": "*loading incorporation state data from Compact Disclosure;\ndata cd_inc;\nset conserv.cd_inc;\ncusip=substr(cusip,1,8);\nif cusip^='';\nrun;"
+    },
+    {
+      "id": "ev-code1-tk",
+      "kind": "source",
+      "description": "Code_1 reads the prepared 10-K-heading/IRRC incorporation table.",
+      "file": "Code and Firm ID/Code_1.sas",
+      "line_begin": 104,
+      "line_end": 107,
+      "quote": "*loading incorporation state data from 10-K headings and IRRC;\ndata tk_inc;\nset conserv.tk_inc;\nrun;"
+    },
+    {
+      "id": "ev-code1-mergent",
+      "kind": "source",
+      "description": "Code_1 reads Mergent incorporation changes and fills year_end from fyear when absent.",
+      "file": "Code and Firm ID/Code_1.sas",
+      "line_begin": 156,
+      "line_end": 160,
+      "quote": "*loading incorporation state change data from Mergent Online;\ndata incorpo;\nset conserv.incorpo;\nif year_end=. then year_end=fyear-1;\nrun;"
+    },
+    {
+      "id": "ev-code1-output",
+      "kind": "source",
+      "description": "Code_1 combines incorporation sources into the WORK comp table with historical incorp.",
+      "file": "Code and Firm ID/Code_1.sas",
+      "line_begin": 203,
+      "line_end": 218,
+      "quote": "*assign historical incorporation data;\ndata comp;\nset comp_7;\nincorp0=stinc;\nif incorp0='' then incorp0=cdinc;\nif incorp0='' then incorp0=mcdinc;\nif incorp0='' then incorp0=mtstinc;\nif incorp0='' then incorp0=incorp;\nif fyear<=year_end then incorp0=incorp_o;\ndrop incorp;\nrun;\n\ndata comp;\nset comp;\nincorp=incorp0;\nrun;"
+    },
+    {
+      "id": "ev-code2-precondition",
+      "kind": "source",
+      "description": "Code_2 explicitly requires Code_1 to run first to create comp.",
+      "file": "Code and Firm ID/Code_2.sas",
+      "line_begin": 3,
+      "line_end": 5,
+      "quote": "*For \"Director-Liablity-Reduction Laws and Conditional Conservatism\" by Sudipta Basu and Yi Liang;*******************************************************************************;\n*This code creates the sample used for our regressions;**************************************************************************************************************************;\n*Before runing this code, one must run Code_1 to load data from local library and assign historical incorporation states;********************************************************;"
+    },
+    {
+      "id": "ev-code2-sample",
+      "kind": "source",
+      "description": "Code_2 constructs lagged annual variables and retains only contiguous prior-year observations.",
+      "file": "Code and Firm ID/Code_2.sas",
+      "line_begin": 76,
+      "line_end": 107,
+      "quote": "*create lagged variables;\nproc sort data=comp;\nby gvkey fyear;\nrun;\ndata comp1;\nset comp;\nlgvkey=lag(gvkey);\nlfyear=lag(fyear);\nlat=lag(at);\nlact=lag(act);\nllct=lag(lct);\nlche=lag(che);\nldlc=lag(dlc);\nltxditc=lag(txditc);\nlprcc_f=lag(prcc_f);\nlcsho=lag(csho);\nlrevt=lag(revt);\nlceq=lag(ceq);\nldltt=lag(dltt);\nlib=lag(ib);\nif act=. then act=0;\nif lct=. then lct=0;\nif che=. then che=0;\nif dlc=. then dlc=0;\nif dltt=. then dltt=0;\nif dp=. then dp=0;\nif txditc=. then txditc=0;\ndata comp1;\nset comp1;\nif lgvkey=gvkey;\nif lfyear=fyear-1;\nrun;"
+    },
+    {
+      "id": "ev-code2-returns",
+      "kind": "source",
+      "description": "Code_2 joins monthly returns to fiscal-year records and requires 12 monthly observations.",
+      "file": "Code and Firm ID/Code_2.sas",
+      "line_begin": 162,
+      "line_end": 215,
+      "quote": "*next a few steps calculate annual buy-and-hold return, we first merge fiscal year end data with CRSP data;\ndata compan;\nset compan;\nkeep cusip gvkey fyear fyr;\ndata crsp;\nset crsp;\nfyear=int(months/100);\nrun;\n\nproc sort data=crsp;\nby cusip fyear;\nproc sort data=compan;\nby cusip fyear;\ndata mer;\nmerge crsp compan;\nby cusip fyear;\nrun;\n\ndata mer;\nset mer;\nif gvkey^=.;\nif permno^=.;\nmonth=months-100*fyear;\ncyear1=fyear;\ndrop fyear;\nrun;\n\ndata mer;\nset mer;\nfmonth=month+(12-fyr);\nif fmonth>12 then fmonth=fmonth-12;\nfyear=cyear1;\nif fyr>5 and month>fyr+3 then fyear=cyear1+1;\nif fyr<6 and month<=fyr+3 then fyear=cyear1-1;\nlogret=log(1+ret);\nlogmret=log(1+vwretd);\nrun;\n\n*calculate compound return;\nproc sql;\ncreate table returns as\nselect distinct cusip, fyear, sum(logret) as slogret, sum(logmret) as slogmret, count(cusip) as numobs, hsiccd from mer group by cusip, fyear;\nquit;\n\n*calculate market-adjusted return and assign bad news indicator;\ndata returns;\nset returns;\nif numobs=12;\nrets=exp(slogret)-exp(slogmret);\ndr=0;\nif rets<0 then dr=1;\ndrrets=dr*rets;\ngvkey1=gvkey+0;*encode gvkey to number;\nrun;"
+    },
+    {
+      "id": "ev-code2-main",
+      "kind": "source",
+      "description": "Code_2 sets its supplied main sample to 1976–2002 and ends this step with an export comment.",
+      "file": "Code and Firm ID/Code_2.sas",
+      "line_begin": 342,
+      "line_end": 349,
+      "quote": "*set sample period (main test 1976-2002, robustness tests 1976-1995 and 1976-2013) and ensure at least one observation before and after law changes;\ndata compa331;\nset compa33;\nif fyear>=1976;\nif fyear<=2002;\nif minyear<lawyear;\nif maxyear>lawyear;\nrun;***export data file to STATA for main tests and DCD tests;"
+    },
+    {
+      "id": "ev-code2-owner",
+      "kind": "source",
+      "description": "Code_2 reads June institutional ownership from conserv.owner.",
+      "file": "Code and Firm ID/Code_2.sas",
+      "line_begin": 351,
+      "line_end": 358,
+      "quote": "*load and merge institutional ownership and dedicated ownership data with main sample;\ndata own;\nset conserv.owner;\nif INSTOWN_PERC^=.;\nio=INSTOWN_PERC;\nif month(rdate)=6;\nfyear=year(rdate);\nrun;"
+    },
+    {
+      "id": "ev-code2-ded",
+      "kind": "source",
+      "description": "Code_2 reads dedicated ownership classification data and merges it by CUSIP/date.",
+      "file": "Code and Firm ID/Code_2.sas",
+      "line_begin": 406,
+      "line_end": 417,
+      "quote": "*load dedicated ownership (following Bushee's classification) data and merge with main sample;\ndata ded;\nset conserv.dedcount;\nrun;\n\nproc sort data=own;\nby cusip rdate;\nproc sort data=ded;\nby cusip rdate;\ndata dedown;\nmerge own ded;\nby cusip rdate;"
+    },
+    {
+      "id": "ev-code2-gindex",
+      "kind": "source",
+      "description": "Code_2 reads separate pre-1990 and ISS-era G-index data, then derives selected prior years.",
+      "file": "Code and Firm ID/Code_2.sas",
+      "line_begin": 478,
+      "line_end": 507,
+      "quote": "*load G-index data files (data before 1990 obtained from Martijn Cremers, after 1990 from ISS);\ndata gindex_89;\nset conserv.gindex_89;\nfyear=year;\ndrop year;\ndata gindex_90;\nset conserv.gindex_90;\nfyear=year;\ncik1=cik+0;*convert cik into number;\ndrop cik year;\nrun;\ndata gindex_90;\nset gindex_90;\ncik=cik1;\ndrop cik1 ticker cn6 CONAME;\nrun;\n*During our sample period, ISS collected data on 1990, 1993, 1995, 1998, 2000, and 2002.\n*G-index of the non-collection years are assigned with the most recent prior G-index;\ndata gindex_91;\nset gindex_90;\nfyear=fyear+1;\nrun;\ndata gindex_92;\nset gindex_90;\nfyear=fyear+2;\nif fyear=1992 or fyear=1997;\nrun;\ndata gindex_900;\nset gindex_90 gindex_91 gindex_92;\nrun;"
+    },
+    {
+      "id": "ev-code2-audit",
+      "kind": "source",
+      "description": "Code_2 reads a separately downloaded Compustat auditor dataset.",
+      "file": "Code and Firm ID/Code_2.sas",
+      "line_begin": 543,
+      "line_end": 547,
+      "quote": "*load auditor data (separatly downloaded from Compustat);\ndata audit;\nset conserv.audit;\nkeep gvkey fyear au;\nrun;"
+    },
+    {
+      "id": "ev-code2-tail",
+      "kind": "source",
+      "description": "The last supplied Code_2 branch prepares auditor controls and ends at an export comment.",
+      "file": "Code and Firm ID/Code_2.sas",
+      "line_begin": 584,
+      "line_end": 607,
+      "quote": "*winsorize auditor selection test control variables;\nproc means data=compa4 noprint;\nvar lnat turnover current roa;\noutput out=outlier p1=bot1-bot4 p99=top1-top4; run;\ndata outlier;\nset outlier; \nkeep bot1-bot4 top1-top4;\nrun;\nproc sql;\ncreate table compa5 as\nselect * from compa4,outlier;\nquit;\ndata compa5;\nset compa5;\nif lnat>top1 then lnat=top1;\nif lnat<bot1 then lnat=bot1;\nif turnover>top2 then turnover=top2;\nif turnover<bot2 then turnover=bot2;\nif current>top3 then current=top3;\nif current<bot3 then current=bot3;\nif roa>top4 then roa=top4;\nif roa<bot4 then roa=bot4;\ndrop top1-top4 bot1-bot4;\nrun;***export data file to STATA for auditor selection tests;"
+    },
+    {
+      "id": "ev-code3",
+      "kind": "source",
+      "description": "Code_3 is substantive Stata indicator-construction code using existing incorp and fyear variables.",
+      "file": "Code and Firm ID/Code_3.txt",
+      "line_begin": 1,
+      "line_end": 9,
+      "quote": "/This code assign 5 separate POST indicator variables for 5 types of antitakeover laws for a robustness check/\n\ngen bcyear=0\ngen ppyear=0\ngen csyear=0\ngen fpyear=0\ngen ddyear=0\n\nreplace bcyear=1 if incorp==\"AZ\" & fyear>=1987"
+    },
+    {
+      "id": "ev-appendix-scope",
+      "kind": "source",
+      "description": "The appendix documents multiple validation and specification analyses.",
+      "file": "_audit_supplements/bl-internet-appendix.pdf",
+      "line_begin": 5,
+      "line_end": 17,
+      "quote": "        We report several validation and specification checks in this Appendix. Our results are\n\nrobust to (1) using Byzalov and Basu’s [2016] asymmetric timeliness of accruals model, (2)\n\ncontrolling for the enactment of antitakeover laws and state-level macroeconomic characteristics,\n\n(3) the placebo test suggested by Patatoukas and Thomas [2016], (4) including additional firm\n\ncharacteristics as controls, (5) multiple alternative sample-selection criteria, (6) self-selection for\n\nstate of incorporation, and (7) including state-specific linear time trends in the fixed effects\n\nstructure of equation (3). We also verify the parallel trends assumption for our setting."
+    },
+    {
+      "id": "ev-appendix-gdp",
+      "kind": "source",
+      "description": "The appendix discusses a hazard analysis, but no provided program reads state GDP or population.",
+      "file": "_audit_supplements/bl-internet-appendix.pdf",
+      "line_begin": 170,
+      "line_end": 181,
+      "quote": "fixed-effects structure controls sufficiently. However, there may be other state-level time-varying\n\nvariables such as state gross domestic product (GDP) that simultaneously affect law enactment\n\nand conditional conservatism. To address this alternative explanation, we follow Jenkins [1995]\n\nand estimate a logit hazard model to examine whether the timing of the law enactments can be\n\npredicted by state-level time-varying variables. The dependent variable is an indicator of whether\n\nthe director-liability-reduction law was enacted for a particular state-year combination. Once a\n"
+    },
+    {
+      "id": "ev-appendix-bea",
+      "kind": "source",
+      "description": "The appendix records historical BEA GDP/population collection.",
+      "file": "_audit_supplements/bl-internet-appendix.pdf",
+      "line_begin": 251,
+      "line_end": 254,
+      "quote": "\n4\n   We obtain state-level GDP and population data from U.S. Bureau of Economic Analysis website\nhttps://www.bea.gov/regional/ (downloaded on 11/09/2017)."
+    },
+    {
+      "id": "ev-env",
+      "kind": "probe",
+      "description": "Frozen bounded environment probe: Stata 18 is available; SAS startup failed at TKELS initialization, leaving SAS availability/version unverified. The probe records no author-code or dataset execution.",
+      "artifact_path": "urn:sha256:52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "ev-cat-comp",
+      "kind": "catalog",
+      "description": "Frozen catalog lookup by Compustat product found COMP.FUNDA (Merged Fundamental Annual File; 941,340 catalog observations) and COMP.COMPANY (current company profile); the catalog fields show the annual accounting inputs plus current incorp/sic/cik. These are candidates, not historical incorporation replacements.",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "ev-cat-crsp",
+      "kind": "catalog",
+      "description": "Frozen catalog lookup by CRSP product found CRSP.MSF (Monthly Stock - Securities; DATE/CUSIP/PERMNO/RET/HSICCD) and CRSP.MSI (monthly market indexes with DATE/vwretd).",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "ev-cat-tfn",
+      "kind": "catalog",
+      "description": "Frozen catalog lookup found TFN.S34 (Thomson-Reuters 13f Holdings) with RDATE/CUSIP/SHARES/SHROUT fields; this is a raw holdings candidate, not a direct INSTOWN_PERC author table.",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "ev-cat-risk",
+      "kind": "catalog",
+      "description": "Frozen catalog lookup found RISK.GSET, labeled RiskMetrics Governance Legacy Data (1990–2006), with CIK/YEAR/STATE/GINDEX. It does not list the gmissing variable that Code_2 reads.",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "ev-cat-mergent",
+      "kind": "catalog",
+      "description": "The only cataloged Mergent-named local family found is Mergent FISD bond issuance data; that is not Mergent Online company incorporation history and is not treated as a substitute.",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "ev-cat-inventory",
+      "kind": "catalog",
+      "description": "Catalog lookup by author source/product families was used for Compustat, CRSP, Thomson Reuters 13F, RiskMetrics/IRRC, Bushee, and Mergent. No exact author-named Compact Disclosure, Mergent Online, pre-1990 Cremers G-index, or `conserv.*` prepared inputs were identified in the catalog; a catalog miss is not evidence of unavailable data or missing entitlement.",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "ev-probe-comp-funda",
+      "kind": "probe",
+      "description": "Bounded row_limit=1 read of exact catalog-listed COMP.FUNDA succeeded; expected annual accounting/identifier columns are readable. The sampled FY1961 row had several missing accounting values; no population or history sweep was made.",
+      "artifact_path": "urn:sha256:151c04f4d91a9cc3da569bf5f124784fbce59052d69f71fe78612c7334532ff4",
+      "sha256": "151c04f4d91a9cc3da569bf5f124784fbce59052d69f71fe78612c7334532ff4"
+    },
+    {
+      "id": "ev-probe-comp-company",
+      "kind": "probe",
+      "description": "Bounded row_limit=1 read of exact catalog-listed COMP.COMPANY succeeded and confirmed current incorp, sic, cik, gvkey, and fyrc columns. It does not establish historical state coverage.",
+      "artifact_path": "urn:sha256:cd3e4336e8d0231de86d6ecfe05c0aad4e76a33cbd69d5cd0e21de1668c22acd",
+      "sha256": "cd3e4336e8d0231de86d6ecfe05c0aad4e76a33cbd69d5cd0e21de1668c22acd"
+    },
+    {
+      "id": "ev-probe-crsp-msf",
+      "kind": "probe",
+      "description": "Bounded row_limit=1 read of exact catalog-listed CRSP.MSF succeeded and confirmed DATE/CUSIP/PERMNO/RET/HSICCD columns. The first sample row has missing RET; no data coverage sweep was made.",
+      "artifact_path": "urn:sha256:bb570bc6a42488bffb46b77ab3e1205acdda671ee8f76e97dfac79c6436ca9a4",
+      "sha256": "bb570bc6a42488bffb46b77ab3e1205acdda671ee8f76e97dfac79c6436ca9a4"
+    },
+    {
+      "id": "ev-probe-crsp-msi",
+      "kind": "probe",
+      "description": "Bounded row_limit=1 read of exact catalog-listed CRSP.MSI succeeded and confirmed DATE/vwretd columns. The first sample row has missing vwretd; no data coverage sweep was made.",
+      "artifact_path": "urn:sha256:510a7f5ecd76243a43ce1b75224405927770e0e74e3778f662d0c875bd286088",
+      "sha256": "510a7f5ecd76243a43ce1b75224405927770e0e74e3778f662d0c875bd286088"
+    },
+    {
+      "id": "ev-probe-tfn",
+      "kind": "probe",
+      "description": "The exact catalog-listed TFN.S34 row_limit=1 request timed out at 15 seconds. The helper recorded status unverified and explicitly says this does not prove data absence or missing license.",
+      "artifact_path": "urn:sha256:a1f1ae90fa313bc5630353248812969dc710bc477ef7b551bfd6088c084fceca",
+      "sha256": "a1f1ae90fa313bc5630353248812969dc710bc477ef7b551bfd6088c084fceca"
+    },
+    {
+      "id": "ev-probe-risk-gset",
+      "kind": "probe",
+      "description": "Bounded row_limit=1 read of exact catalog-listed RISK.GSET succeeded and confirmed CIK/YEAR/STATE/GINDEX columns. Coverage is not verified by this sample.",
+      "artifact_path": "urn:sha256:d377f4cd722e6ed421e04a2d9c7c8b7eef2df62c2e871fb48dfb54dad2206989",
+      "sha256": "d377f4cd722e6ed421e04a2d9c7c8b7eef2df62c2e871fb48dfb54dad2206989"
+    },
+    {
+      "id": "ev-probe-sec-raw",
+      "kind": "probe",
+      "description": "Bounded exact-path check found the documented SEC raw-download root is a directory; no listing or recursive discovery was performed.",
+      "artifact_path": "urn:sha256:2da87492e53d4214a25acf8f8173f140856f58bcac1bd0da9ba15fe216bde863",
+      "sha256": "2da87492e53d4214a25acf8f8173f140856f58bcac1bd0da9ba15fe216bde863"
+    },
+    {
+      "id": "ev-probe-sec-parsed",
+      "kind": "probe",
+      "description": "Bounded exact-path check found the documented SEC parsed-exhibit root is a directory; no listing or recursive discovery was performed.",
+      "artifact_path": "urn:sha256:1820e62498a9cddc78f44aa40bb1372b5d1c25205cb5983e934d63a3f2abd7ba",
+      "sha256": "1820e62498a9cddc78f44aa40bb1372b5d1c25205cb5983e934d63a3f2abd7ba"
+    },
+    {
+      "id": "ev-probe-lm-2002",
+      "kind": "probe",
+      "description": "Bounded exact-path check found the documented LM10X/2002 directory; it did not inspect content or establish header/state-of-incorporation compatibility.",
+      "artifact_path": "urn:sha256:886fb23ecbfcc806931dc6ac749334b22591e167dc838585ab3ced96ab6b1359",
+      "sha256": "886fb23ecbfcc806931dc6ac749334b22591e167dc838585ab3ced96ab6b1359"
+    },
+    {
+      "id": "ev-probe-lm-1989",
+      "kind": "probe",
+      "description": "The exact documented LM10X/1989 directory check did not resolve. The helper marks the probe unverified; this is not evidence that the corpus or data are unavailable.",
+      "artifact_path": "urn:sha256:7d84a72492510eaca35f7f0fbbe9e32005348552f4b12f1b8217db3aed2a8ea0",
+      "sha256": "7d84a72492510eaca35f7f0fbbe9e32005348552f4b12f1b8217db3aed2a8ea0"
+    },
+    {
+      "id": "ev-cik-list",
+      "kind": "inspection",
+      "description": "Bounded summary of the supplied CIK list: 1,736 lines including header `cik`, all nonempty; only first five IDs recorded. This is a sample identifier list, not a firm-year analysis dataset.",
+      "artifact_path": "urn:sha256:58a1e0810c4eb8ed0d85f69a2d654c9e8be10b10244bb206903d0cebb533ce27",
+      "sha256": "58a1e0810c4eb8ed0d85f69a2d654c9e8be10b10244bb206903d0cebb533ce27"
+    },
+    {
+      "id": "ev-bushee-range",
+      "kind": "public",
+      "description": "Brian Bushee’s current author page offers an institutional classification download for 1981–2025 and reports a July 2026 update. The study datasheet says the authors downloaded it in 2016, so the current vintage is not shown to match.",
+      "url": "https://accounting-faculty.wharton.upenn.edu/bushee/",
+      "checked_at": "2026-11-08",
+      "authority": "author",
+      "quote": "Institutional Investor Classification Data (1981 – 2025)"
+    },
+    {
+      "id": "ev-bushee-subscription",
+      "kind": "public",
+      "description": "The author page says the public classification file must be merged with Thomson Reuters 13F holdings and that those holdings require a subscription; no route is called blocked because a local holdings candidate exists and its probe was inconclusive.",
+      "url": "https://accounting-faculty.wharton.upenn.edu/bushee/",
+      "checked_at": "2026-11-08",
+      "authority": "author",
+      "quote": "must have a subscription to the Thomson Reuters Institutional (13F) Holdings database"
+    },
+    {
+      "id": "ev-wrds-13f-product",
+      "kind": "public",
+      "description": "WRDS lists the current LSEG institutional 13F product as a distinct product family.",
+      "url": "https://wrds-www.wharton.upenn.edu/pages/about/data-vendors/lseg/",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "quote": "LSEG Institutional Managers (13f) Holdings"
+    },
+    {
+      "id": "ev-wrds-13f-period",
+      "kind": "public",
+      "description": "The current WRDS page lists this date range for LSEG Institutional Managers 13f; it does not verify the authors’ 2016 extract or the prepared INSTOWN_PERC mapping.",
+      "url": "https://wrds-www.wharton.upenn.edu/pages/about/data-vendors/lseg/",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "quote": "1978-12-31 - 2026-03-31"
+    },
+    {
+      "id": "ev-sraf-headers-range",
+      "kind": "public",
+      "description": "Notre Dame SRAF offers a current downloadable 10-X header dataset for 1993–2025; this leaves 1989–1992 uncovered for the authors’ documented historical incorporation source.",
+      "url": "https://sraf.nd.edu/sec-edgar-data/10-x-header-data/",
+      "checked_at": "2026-11-08",
+      "authority": "repository",
+      "quote": "Download the data (1993-2025)"
+    },
+    {
+      "id": "ev-sraf-incorp-field",
+      "kind": "public",
+      "description": "The current SRAF page documents an optional, generally reported state-of-incorporation header field and filer CIK/filing-period fields; CIK/year/form selection and exact author mapping remain to be confirmed.",
+      "url": "https://sraf.nd.edu/sec-edgar-data/10-x-header-data/",
+      "checked_at": "2026-11-08",
+      "authority": "repository",
+      "quote": "cd_state_of_incorporation - state where the company was incorporated"
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-compan"
+      ],
+      "evidence_ids": [
+        "ev-code1-base"
+      ],
+      "description": "Code_1 reads the Compustat annual source; it is not generated by an included source."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-crspmon"
+      ],
+      "evidence_ids": [
+        "ev-code1-base"
+      ],
+      "description": "Code_1 reads monthly CRSP returns as an external local-library input."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-vwretd"
+      ],
+      "evidence_ids": [
+        "ev-code1-base"
+      ],
+      "description": "Code_1 reads the market return table and derives its monthly merge key from date."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-cd-inc"
+      ],
+      "evidence_ids": [
+        "ev-code1-incorp"
+      ],
+      "description": "Code_1 reads Compact Disclosure incorporation records."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-tk-inc"
+      ],
+      "evidence_ids": [
+        "ev-code1-tk"
+      ],
+      "description": "Code_1 reads a prepared annual CIK/fyear/state table."
+    },
+    {
+      "dependency_id": "D0006",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-mergent-inc"
+      ],
+      "evidence_ids": [
+        "ev-code1-mergent"
+      ],
+      "description": "Code_1 reads Mergent incorporation-change records."
+    },
+    {
+      "dependency_id": "D0007",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-owner"
+      ],
+      "evidence_ids": [
+        "ev-code2-owner"
+      ],
+      "description": "The institutional ownership table is read directly in the independent ownership branch."
+    },
+    {
+      "dependency_id": "D0008",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-dedcount"
+      ],
+      "evidence_ids": [
+        "ev-code2-ded"
+      ],
+      "description": "The dedicated ownership table is read directly and merged with the owner records."
+    },
+    {
+      "dependency_id": "D0009",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-gindex89"
+      ],
+      "evidence_ids": [
+        "ev-code2-gindex"
+      ],
+      "description": "Pre-1990 G-index records are read as an external input."
+    },
+    {
+      "dependency_id": "D0010",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-gindex90"
+      ],
+      "evidence_ids": [
+        "ev-code2-gindex"
+      ],
+      "description": "ISS-era G-index records are a separate external input and are transformed by the supplied branch."
+    },
+    {
+      "dependency_id": "D0011",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "r-audit"
+      ],
+      "evidence_ids": [
+        "ev-code2-audit"
+      ],
+      "description": "Auditor attributes are read as a separate Compustat input."
+    }
+  ],
+  "actions": [
+    {
+      "id": "a-resolve-input-tables",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "r-compan",
+        "r-crspmon",
+        "r-vwretd",
+        "r-cd-inc",
+        "r-tk-inc",
+        "r-mergent-inc",
+        "r-owner",
+        "r-dedcount",
+        "r-gindex89",
+        "r-gindex90",
+        "r-audit",
+        "r-irrc-inc",
+        "r-tenkhead",
+        "r-bushee-class"
+      ],
+      "kind": "data_acquisition",
+      "description": "Resolve the exact author-prepared SAS tables or verify compatible underlying products and mappings. Treat each source as a separate input: Compustat financial data; CRSP monthly returns and market returns; Compact Disclosure; 10-K/IRRC state records; Mergent pre-1989 changes; 13F ownership; Bushee classifications; pre/post-1990 G-index; and auditor data. Keep unknown author extraction and periods explicit.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev-ds-comp",
+        "ev-ds-crsp",
+        "ev-ds-own",
+        "ev-ds-incorp",
+        "ev-ds-gindex",
+        "ev-code1-base",
+        "ev-code2-owner",
+        "ev-code2-ded",
+        "ev-code2-gindex",
+        "ev-code2-audit",
+        "ev-cat-comp",
+        "ev-cat-crsp",
+        "ev-cat-risk",
+        "ev-cat-tfn",
+        "ev-cat-mergent",
+        "ev-probe-comp-funda",
+        "ev-probe-comp-company",
+        "ev-probe-crsp-msf",
+        "ev-probe-crsp-msi",
+        "ev-probe-risk-gset",
+        "ev-probe-tfn",
+        "ev-bushee-range",
+        "ev-bushee-subscription",
+        "ev-sraf-headers-range",
+        "ev-sraf-incorp-field"
+      ],
+      "edits": [],
+      "steps": [
+        "Locate each exact author-prepared conserv.* table, or document a compatible source-product-to-table mapping, including keys, fields, units, versions, and coverage.",
+        "Use COMP.FUNDA plus COMP.COMPANY only as the Compustat accounting/current-company source components; retain the distinct historical Compact Disclosure, 10-K/IRRC, and Mergent mapping. Do not apply current Company incorporation to all historical years.",
+        "The CRSP.MSF date-to-month key is ordinary preparation supported by Code_1’s companion market-index conversion; build the same YYYYMM key in a prepared copy and confirm it matches CRSP.MSI without changing returns or sample definitions.",
+        "For historical incorporation, resolve `cd_inc` by CUSIP/fyear, `tk_inc` by CIK/fyear, and Mergent `incorpo` by CIK/year_end; verify state codes, year-boundary rules, and source coverage. The local RISK.GSET file is a candidate for the 1990–2006 IRRC state component, while the exact `tk_inc` composition and 1989 rows remain unresolved.",
+        "For the 10-K component, the current SRAF 10-X header route covers 1993–2025 and supplies a state-of-incorporation field; confirm the CIK/fiscal-year/form selection and supply a compatible 1989–1992 source. Local SEC/LM path checks did not verify content or coverage.",
+        "For ownership, confirm the study’s 2016 13F and Bushee classification vintages, manager key and version handling, INSTOWN_PERC/dshare/shrout definitions, units, and date alignment. Do not treat the current 2026 classification file or a raw holdings table as the author-prepared outputs without that mapping.",
+        "For G-index, locate both distinct pre-1990 Cremers and post-1990 ISS inputs and resolve `gmissing` and the described collection-year expansion; do not substitute a governance table lacking that field.",
+        "For auditor analysis, locate the separate annual Compustat `au` extract or verify a same-product source mapping for `gvkey/fyear/au`."
+      ],
+      "validation": [
+        "Use bounded metadata/readability probes on exact located files and compare actual source fields against the expected_fields listed on each requirement.",
+        "After a future authorized run, validate required period/identifier coverage, CIK/CUSIP/GVKEY joins, 12-month return windows, and Code_2 filters; one-row reads alone do not establish full history/population."
+      ]
+    },
+    {
+      "id": "a-config-conserv",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "i-conserv-library"
+      ],
+      "kind": "configuration",
+      "description": "Configure the SAS `conserv` libref and run Code_1 before Code_2 in the same SAS session so the generated WORK tables remain available. Use a writable batch working directory with a coherent relative execution root and host-visible `[redacted-path-787be8080667]` or relative paths; the exact data directory must be established first.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "ev-code1-lib",
+        "ev-code2-precondition"
+      ],
+      "edits": [],
+      "steps": [
+        "Identify the actual directory holding the required SAS tables and define conserv there in the future batch configuration.",
+        "Start one SAS batch session in the selected writable run directory; execute Code_1, then Code_2 without ending the session between scripts."
+      ],
+      "validation": [
+        "Confirm the libref resolves each required input table and that Code_1 creates WORK.comp, WORK.compan, and the required return intermediates before Code_2 reads them."
+      ]
+    },
+    {
+      "id": "a-complete-analysis-driver",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "i-analysis-driver"
+      ],
+      "kind": "clarification",
+      "description": "Request the missing Stata estimation/output programs and the exact cross-language handoff specification. The needed package additions must identify which SAS WORK branch is exported, the file format/path and variables, how Code_3 is applied to its intended input, and which supplied/omitted scripts produce the paper and appendix analyses. Do not infer estimators or table scripts from reported output alone.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev-readme",
+        "ev-ds-software",
+        "ev-code2-main",
+        "ev-code2-tail",
+        "ev-code3",
+        "ev-appendix-scope",
+        "ev-cat-risk",
+        "ev-bushee-range",
+        "ev-sraf-headers-range"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain the exact author Stata export/import and estimation programs for all Code_2 branches that end at “export data file to STATA” comments.",
+        "Confirm which SAS WORK table and schema each ownership, G-index, auditor, main, and DCD test branch should hand to Stata, and which paper/appendix outputs each driver produces.",
+        "Obtain the producer/specification for Code_2’s consumed owner, dedicated count, G-index and auditor input tables when they are not delivered prepared.",
+        "For Code_3.txt, confirm its intended input dataset and placement in the Stata workflow; when packaging as a `.do` file, normalize the opening single-slash heading to a valid comment marker in a working copy, preserving all five law-indicator assignments."
+      ],
+      "validation": [
+        "After the completed drivers and prepared inputs are available, verify each intended output dataset/table is generated and matches the documented sample/specification."
+      ]
+    },
+    {
+      "id": "a-verify-sas",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sw-sas",
+        "i-sas-runtime"
+      ],
+      "kind": "software_setup",
+      "description": "Resolve SAS startup availability by an authorized administrator/environment check; the existing probe only establishes a TKELS initialization failure and cannot distinguish runtime setup from entitlement.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev-env"
+      ],
+      "edits": [],
+      "steps": [
+        "Have the SAS environment owner diagnose the existing TKELS initialization failure and confirm SAS 9.4 batch availability and Base SAS components."
+      ],
+      "validation": [
+        "Run a bounded SAS version/component check in a future authorized setup step before author code is considered."
+      ]
+    },
+    {
+      "id": "a-run-procedure",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [],
+      "kind": "run_procedure",
+      "description": "Once the exact inputs, SAS setup and missing analysis handoff are available, run the full supplied branch in dependency order.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev-code2-precondition",
+        "ev-code2-main",
+        "ev-code2-owner",
+        "ev-code2-ded",
+        "ev-code2-gindex",
+        "ev-code2-audit",
+        "ev-code3"
+      ],
+      "edits": [],
+      "steps": [
+        "Set a verified writable batch execution root using relative or [redacted-path-787be8080667] paths only, and configure the `conserv` libref to the located inputs.",
+        "Run Code_1 then Code_2 in the same SAS session; retain the main sample and every ownership, dedicated-ownership, G-index, and auditor preparation branch.",
+        "After the missing export/import and estimator drivers are supplied, execute each Stata branch in its documented order and apply Code_3 only to its author-confirmed input."
+      ],
+      "validation": [
+        "Compare generated tables and sample counts with author-provided expected outputs; no execution has been verified in this assessment."
+      ]
+    },
+    {
+      "id": "a-derive-crsp-month-key",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "r-crspmon"
+      ],
+      "kind": "data_preparation",
+      "description": "When preparing a local CRSP.MSF copy for Code_1, derive its YYYYMM `months` key from DATE using the same year(date)*100+month(date) construction that Code_1 applies to the companion CRSP.MSI value-weighted series. This is a supported key-preparation step; it does not resolve history or other author-table fields.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "ev-code1-base",
+        "ev-cat-crsp",
+        "ev-probe-crsp-msf"
+      ],
+      "edits": [],
+      "steps": [
+        "In the data preparation input table, retain DATE/CUSIP/PERMNO/RET/HSICCD and create months as year(DATE)*100+month(DATE).",
+        "Keep the prepared source in a working copy and preserve the author’s return values and key grain."
+      ],
+      "validation": [
+        "Confirm `months` is numeric YYYYMM and matches the corresponding CRSP.MSI month key before joining.",
+        "Check the full author-relevant month coverage in a later authorized validation; the bounded probe did not establish it."
+      ]
+    }
+  ],
+  "review_notes": [
+    "This expanded checkpoint was built from the complete author documentation/programs plus bounded catalog, one-row SAS, directory-existence, current author/repository-page, and CIK-list checks. It does not execute author code or reconstruct estimators.",
+    "Code_2 requires Code_1’s WORK comp and return tables in the same SAS session. Its comments promise export-to-Stata handoffs, but it contains no executable transfer or regression code. Code_3 is substantial Stata indicator-construction code; it has no data import or estimator, and its first single slash may require comment normalization when packaged as a .do file.",
+    "The CIK list has 1,735 identifiers plus its `cik` header and is not a firm-year analysis dataset. No analysis_only scope is supported because no prepared analysis dataset or working export/input route is included.",
+    "Catalog-listed COMP.FUNDA/COMP.COMPANY, CRSP.MSF/CRSP.MSI, and RISK.GSET were readable in bounded row_limit=1 probes. The probes establish columns/readability only. COMP.COMPANY contains current incorporation and is only a baseline/fallback source; historical states still require the separate CUSIP/fyear and CIK/fyear mappings, including Mergent pre-1989 history.",
+    "CRSP.MSF has DATE rather than Code_1’s `months` key; the companion market series code supplies the intended YYYYMM formula, so deriving that key is ordinary preparation. Annual/monthly population and fiscal-year windows remain unverified.",
+    "The local RiskMetrics Governance Legacy product is labeled 1990–2006 and contains CIK/YEAR/STATE/GINDEX. It is a candidate IRRC state source and G-index product, but it does not expose the active Code_2 `gmissing` field; the author gindex_90 table/expansion remains unresolved. No pre-1990 Cremers table was identified locally.",
+    "The local TFN.S34 13F row_limit=1 probe timed out at 15 seconds. Its catalog fields include holdings/shares-outstanding columns, but not the required prepared INSTOWN_PERC; this timeout does not establish data absence or a license barrier. The current WRDS source page describes a 1978–2026 product, while the study used a 2016 extract.",
+    "Brian Bushee’s current author page offers 1981–2025 classification data and requires 13F holdings for the merge. Its current vintage is not verified as equivalent to the authors’ 2016 download. Mergent FISD catalog data are a different product from Mergent Online incorporation history.",
+    "The official Notre Dame 10-X header file is downloadable for 1993–2025 and has an optional state-of-incorporation field. That is a candidate for part of the documented 1989-onward header history; it does not resolve 1989–1992 or the exact CIK/fyear/form and duplicate-filer mapping. SEC raw/parsed roots and LM10X/2002 exist locally, but the bounded checks did not verify their relevant content; the exact LM10X/1989 check was inconclusive and no broad scan was performed.",
+    "The appendix describes state GDP/population and further regression analyses, but no supplied code reads BEA data. These are not added as live inputs. Law enactment thresholds are hard-coded in Code_2/Code_3, so the historic Romano email/table is not treated as a live input. The “public sources” statement is not proof of current commercial entitlement."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "b09887b3ccddf3d492efcab6ff9807820e9980ef73c7081e3530ca8408805743",
+    "applied": false
+  }
+}

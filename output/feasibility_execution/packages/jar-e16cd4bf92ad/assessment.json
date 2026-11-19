@@ -1,0 +1,1413 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-e16cd4bf92ad",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 56/Issue 4/12209 - Zombie-Board-Board-Tenure-and-Firm-Performance/hh-datasheet-and-code.zip",
+        "sha256": "0dcc5bf1aff19f3d44616f52736615183346ee9455d04954f4f138749334471b"
+      },
+      {
+        "path": "JAR-Volume 56/Issue 4/12209 - Zombie-Board-Board-Tenure-and-Firm-Performance/hh-online-appendix.pdf",
+        "sha256": "2261a98c72ff612a950efb6526c4c0614ebda4cfc75d059923e8e894dcd7403d"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "52458dd9c92f5e84dbc4af17522d1fa626c6ab4be39899b3a5d06caf91cf6407"
+  },
+  "title": "Zombie Board: Board Tenure and Firm Performance",
+  "doi": "10.1111/1475-679X.12209",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Complete author-documented workflow: prepare author-cleaned IRRC director and SDC M&A datasets, assemble the 1998–2010 firm-year analysis panel, produce the main Table 3 specifications and lowess plot, and account for online appendix Tables A1–A9. The supplied Stata files only partially cover the documented outputs.",
+      "entry_points": [
+        "MainCode_JAR.DO",
+        "ProcessIRRC_SDCCode_JAR.DO"
+      ],
+      "requirement_ids": [
+        "R_GOV_LEGACY",
+        "R_GOV_CURRENT",
+        "R_IRRC_DIRECTOR",
+        "R_MEETING_MAP",
+        "R_COMP_SEG",
+        "R_COMP_ANNUAL",
+        "R_COMP_DISCLOSURE",
+        "R_CRSP_COMP",
+        "R_RET_FISCAL",
+        "R_EXEC_CEO",
+        "R_SDC_RAW",
+        "R_FIRMAGE",
+        "R_IPO",
+        "R_SPINOFF"
+      ],
+      "software_ids": [
+        "SW_STATA",
+        "SW_REGHDFE",
+        "SW_FTOOLS",
+        "SW_OUTREG2"
+      ],
+      "issue_ids": [
+        "IS_INPUT_CONTRACTS",
+        "IS_APPENDIX_WORKFLOW",
+        "IS_TABLE3_OVERWRITE"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "EV_DATASHEET_CODE",
+        "EV_MAIN_ANALYSIS",
+        "EV_PROCESS_IRRC",
+        "EV_PROCESS_SDC",
+        "EV_APPX_TOC",
+        "EV_CATALOG_PRODUCTS",
+        "EV_PKG_FIRMLIST",
+        "EV_ENV_STATA",
+        "EV_PACKAGE_INVENTORY",
+        "EV_AUTHOR_LINK_FIELDS"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_GOV_LEGACY",
+      "kind": "data",
+      "description": "Legacy IRRC/RiskMetrics governance observations for the cboard merge (`cn6`, `year`, `cboard`), author filename govlegacy19902006.dta.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_GOV_LEGACY",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/riskmetrics/governance/gset.sas7bdat",
+          "description": "Readable local RiskMetrics legacy governance product has the exact consumed CN6/YEAR/CBOARD columns and is labeled 1990–2006; standard Stata conversion is supported. Full row/history checks remain future validation, not a new author-confirmation requirement.",
+          "evidence_ids": [
+            "EV_P_RISK_GSET",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "CN6",
+            "YEAR",
+            "CBOARD"
+          ],
+          "expected_period": "1990–2006; required cboard join by CN6/year"
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_GOV_CURRENT",
+      "kind": "data",
+      "description": "2007–2015 governance observations for the cboard merge; the program creates CN6 from CUSIP and converts CBOARD values to an indicator.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_GOV_CURRENT",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/riskmetrics/governance/rmgovernance.sas7bdat",
+          "description": "Readable local RiskMetrics governance product has the exact consumed Year/CUSIP/CBOARD columns; standard Stata conversion and the code’s CUSIP-to-CN6/CBOARD indicator transforms are supported. Confirm the selected 2007–2015 extract during future preparation; the one-row probe is not a full coverage count.",
+          "evidence_ids": [
+            "EV_P_RISK_RMGOV",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "Year",
+            "CUSIP",
+            "CBOARD"
+          ],
+          "expected_period": "2007–2015"
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_IRRC_DIRECTOR",
+      "kind": "data",
+      "description": "Author-prepared `tenure_irrc19962010_did.dta` director panel. ProcessIRRC_SDCCode_JAR.DO expects director/firm identifiers, meeting/year, tenure and board/control fields; its comments describe manual GVKEY/CN6 mapping and unique did cleaning.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_IRRC_AUTHOR",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-836b95caddb5]",
+          "description": "Exact author-prepared primary input is not packaged. Request this file or its field contract and cleaning provenance; keep historical manual cleanup out of the live route when a compatible prepared file is supplied.",
+          "evidence_ids": [
+            "EV_PROCESS_IRRC",
+            "EV_PROCESS_MANUAL"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "year",
+            "meetingdate",
+            "did",
+            "outside_public_boards",
+            "dirsince",
+            "I_outsider",
+            "I_ind",
+            "I_busy",
+            "interlocking",
+            "female",
+            "ethnicity",
+            "age",
+            "I_insider",
+            "employment_cfo",
+            "employment_coo",
+            "employment_evp",
+            "employment_svp",
+            "employment_treasure",
+            "employment_vp",
+            "prop_ceo",
+            "non_employee_voting",
+            "I_ceochair",
+            "prop_age70",
+            "age_avg_outsider"
+          ],
+          "expected_period": "1996–2010 source file; code drops year<1998 before output"
+        },
+        {
+          "id": "RT_IRRC_RISK_LEGACY",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/riskmetrics/directors/directors.sas7bdat",
+          "description": "Readable raw RiskMetrics legacy director candidate supplies a subset of director fields, but not the prepared GVKEY/DID/categorical-variable contract; not a drop-in substitute.",
+          "evidence_ids": [
+            "EV_P_RISK_DIRECTORS",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "YEAR",
+            "LEGACY_PPS_ID",
+            "DIRECTOR_DETAIL_ID",
+            "CUSIP",
+            "MEETINGDATE",
+            "AGE",
+            "FEMALE",
+            "ETHNICITY",
+            "DIRSINCE",
+            "OUTSIDE_PUBLIC_BOARDS",
+            "INTERLOCKING",
+            "EMPLOYMENT_CFO",
+            "EMPLOYMENT_COO",
+            "EMPLOYMENT_EVP",
+            "EMPLOYMENT_SVP",
+            "EMPLOYMENT_TREASURER",
+            "EMPLOYMENT_VP"
+          ],
+          "expected_period": "1996–2006 legacy product; full required history not probed"
+        },
+        {
+          "id": "RT_IRRC_RISK_CURRENT",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/riskmetrics/directors/rmdirectors.sas7bdat",
+          "description": "Readable raw RiskMetrics director candidate supplies several source fields but has company_id rather than GVKEY and no established unique did/preparation crosswalk.",
+          "evidence_ids": [
+            "EV_P_RISK_RMDIRECTORS",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "year",
+            "company_id",
+            "CUSIP",
+            "MeetingDate",
+            "Age",
+            "Ethnicity",
+            "DirSince",
+            "Outside_Public_Boards",
+            "Female",
+            "Interlocking",
+            "Employment_CFO",
+            "Employment_COO",
+            "Employment_EVP",
+            "Employment_SVP",
+            "Employment_Treasurer",
+            "Employment_VP"
+          ],
+          "expected_period": "Period/coverage not independently verified"
+        },
+        {
+          "id": "RT_IRRC_LINKDATA",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://sites.temple.edu/lnaveen/data/",
+          "description": "Author page links another paper’s RiskMetrics/Compustat director link workbook with GVKEY/year, meeting/CUSIP keys and DIDOWN; the linked workbook was not decoded and is not confirmed to match this paper’s field names/cleaning.",
+          "evidence_ids": [
+            "EV_AUTHOR_DID_FIELDS"
+          ],
+          "expected_fields": [
+            "MTGDATE",
+            "PERMNO",
+            "GVKEY",
+            "YEAR",
+            "CUSIP6",
+            "CUSIP8",
+            "DIDOWN",
+            "LEGACY_DIRECTOR_ID",
+            "DIRECTOR_DETAIL_ID"
+          ],
+          "expected_period": "Page says 1996–2022; package requires 1996–2010 source window"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_MEETING_MAP",
+      "kind": "data",
+      "description": "Author-prepared `meetingdate_datadate_match` crosswalk used by the companion program; it must map GVKEY/meetingdate to datadate and provide diff_meetdate_datadate for the 720-day exclusion.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_MEETING_MAP_AUTHOR",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-649ae925de96]",
+          "description": "Crosswalk is consumed but absent from the package and has no supplied producer; request a compatible author-prepared file or exact construction/schema.",
+          "evidence_ids": [
+            "EV_PROCESS_CROSSWALK"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "meetingdate",
+            "datadate",
+            "diff_meetdate_datadate"
+          ],
+          "expected_period": "Rows required for director meeting dates joined to Compustat datadate; >720-day pairs dropped"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_COMP_SEG",
+      "kind": "data",
+      "description": "Compustat segment data input `compustatsegment19762010.dta` for BUSSEG segment counts and prior available segment observation.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_COMP_SEG",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_seghist/wrds_segmerged.sas7bdat",
+          "description": "Readable local Compustat merged-segments product has the exact columns used for BUSSEG selection/counting (GVKEY/DATADATE/STYPE/SNMS/SICS1); ordinary Stata conversion is supported. Validate the requested range and prior segment observation during future preparation.",
+          "evidence_ids": [
+            "EV_P_COMP_SEG",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "stype",
+            "snms",
+            "SICS1"
+          ],
+          "expected_period": "1976–2010 source; final panel 1998–2010 and nseg_lag uses preceding available segment observation"
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_COMP_ANNUAL",
+      "kind": "data",
+      "description": "Compustat annual goodwill input `compustat19502012.dta`, used to merge GVKEY/FYEAR/GDWL into financial data.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_COMP_ANNUAL",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "Readable local Compustat annual product has the exact GVKEY/FYEAR/GDWL columns consumed from this file; ordinary Stata conversion is supported. The route does not require an author-byte or vintage match. Confirm target years/keys during future preparation.",
+          "evidence_ids": [
+            "EV_P_COMP_FUNDA",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "gdwl"
+          ],
+          "expected_period": "Author file label 1950–2012; final sample 1998–2010 with lag construction before sample restriction"
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_COMP_DISCLOSURE",
+      "kind": "data",
+      "description": "Additional Compustat disclosure file `compustat19502010_disclosure`, merged 1:1 on GVKEY/FYEAR and used with the CRSP/Compustat file for accounting controls.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_COMP_DISCLOSURE",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "COMP.FUNDA is a readable same-product candidate containing many needed accounting columns, but the author-named supplemental disclosure file, exact field allocation, and 1950–2010 coverage are not established.",
+          "evidence_ids": [
+            "EV_P_COMP_FUNDA",
+            "EV_MAIN_COMP",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "sale",
+            "txdb",
+            "itcb",
+            "csho",
+            "prcc_f",
+            "at",
+            "dlc",
+            "dltt",
+            "ni",
+            "xido",
+            "ceq",
+            "capxv",
+            "lt",
+            "re",
+            "act",
+            "lct"
+          ],
+          "expected_period": "1950–2010; the code computes explicit prior-year and lagged-lagged accounting controls before 1998–2010 estimation"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CRSP_COMP",
+      "kind": "data",
+      "description": "CRSP/Compustat merged file `crspcomp19502010_prc0mth.dta`, consumed in both the IRRC preparation and main financial-variable construction.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CRSP_COMP",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/secm.sas7bdat + ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat + WRDS CRSP/Compustat link candidate",
+          "description": "Readable local security-month and CRSP monthly candidates have GVKEY/DATADATE/PRCCM/CSHOQ and PERMNO/DATE/PRC/RET, respectively. They are not the joined author DTA and require documented GVKEY/date/fiscal-year linkage and construction; no substitute is asserted.",
+          "evidence_ids": [
+            "EV_P_COMP_MONTHLY",
+            "EV_P_CRSP_MONTHLY",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "prccm",
+            "cshoq",
+            "permno",
+            "date",
+            "prc",
+            "ret"
+          ],
+          "expected_period": "Author input is labeled 1950–2010; ProcessIRRC merges by GVKEY/datadate; main financial controls include lagged variables before 1998–2010"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_RET_FISCAL",
+      "kind": "data",
+      "description": "Preprocessed `ret_fiscal_date.dta` with daily/fiscal-date returns used for standard deviation and compounded fiscal-year return, then one-year lags.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_RET_FISCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat",
+          "description": "Readable CRSP.DSF candidate has PERMNO/DATE/RET/PRC only; code input additionally requires GVKEY/FYEAR and fiscal-date mapping. No producer for ret_fiscal_date is supplied.",
+          "evidence_ids": [
+            "EV_P_CRSP_DAILY",
+            "EV_MAIN_RET",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "DATE",
+            "RET",
+            "PRC"
+          ],
+          "expected_period": "Daily observations covering 1997 or earlier predecessor fiscal year as required for 1998 lags through the 2010 sample end; exact start depends on fiscal year mapping"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_EXEC_CEO",
+      "kind": "data",
+      "description": "CEO/Execucomp input `ceo_Execucomp19922010.dta` for CEO demographics, ownership, tenure and founder indicator.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_EXEC_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/execcomp/anncomp.sas7bdat",
+          "description": "Readable local Execucomp candidate matches GVKEY/YEAR/EXECID/EXEC_FULLNAME/AGE/SHROWN_EXCL_OPTS/TDC1, but its catalog lacks CEOTENURE and I_CEOFOUNDER; it is not a complete direct substitute.",
+          "evidence_ids": [
+            "EV_P_EXEC",
+            "EV_CATALOG_PRODUCTS"
+          ],
+          "expected_fields": [
+            "GVKEY",
+            "YEAR",
+            "EXECID",
+            "EXEC_FULLNAME",
+            "AGE",
+            "SHROWN_EXCL_OPTS",
+            "TDC1"
+          ],
+          "expected_period": "Author file label 1992–2010; sample 1998–2010"
+        },
+        {
+          "id": "RT_EXEC_AUTHOR",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://sites.temple.edu/lnaveen/data/",
+          "description": "Author page links compensation data spanning 1992–2022 with GVKEY/YEAR/CO_PER_ROL/DELTA/VEGA/firm-related wealth, but it does not establish the code’s I_CEOFOUNDER/CEOTENURE fields or the exact Execucomp file.",
+          "evidence_ids": [
+            "EV_AUTHOR_COMP_URL",
+            "EV_AUTHOR_COMP_FIELDS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "year",
+            "co_per_rol",
+            "delta",
+            "vega"
+          ],
+          "expected_period": "1992–2022 page coverage; not confirmed compatible with 1992–2010 author input"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_SDC_RAW",
+      "kind": "data",
+      "description": "Raw SDC M&A input `[redacted-path-6fab2220e751]`; companion code filters/decorates deals and saves dataset_ma for the main count/lag merge.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_SDC_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/sdc_ma/wrds_ma_details.sas7bdat",
+          "description": "Readable current SDC MA details candidate supplies some deal columns but not the exact code input schema; the author processing program does not create GVKEY/FYEAR, which MainCode requires in its generated dataset_ma.",
+          "evidence_ids": [
+            "EV_P_SDC",
+            "EV_CATALOG_PRODUCTS",
+            "EV_PROCESS_SDC",
+            "EV_PROCESS_HANDOFF"
+          ],
+          "expected_fields": [
+            "MASTER_DEAL_NO",
+            "DATEANN",
+            "STATUS",
+            "DATEWITH",
+            "ACUSIP",
+            "TPUBLIC"
+          ],
+          "expected_period": "Author input label 1996–2010; for 1998–2010 main counts, 1997 is needed for one-year lags"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_FIRMAGE",
+      "kind": "data",
+      "description": "Relative path `firmage.dta` consumed by MainCode; required final field is LN_FIRMAGE at GVKEY/FYEAR. Author comment describes founding year from Ritter first, manual Capital IQ/Hoover follow-up, then first CRSP appearance.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_FIRMAGE_AUTHOR",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-c6b990284f6a]",
+          "description": "Prepared firm-age dataset is not packaged and has no producer; request the author-prepared file or schema/recipe, retaining the composite founding-year measure rather than substituting CRSP listing age.",
+          "evidence_ids": [
+            "EV_MAIN_FIRMAGE_IPO"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "ln_firmage"
+          ],
+          "expected_period": "1998–2010 sample"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IPO",
+      "kind": "data",
+      "description": "Relative path `ipo.dta` consumed by MainCode for `I_ipo_lag`, keyed by year and CN6.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_IPO_AUTHOR",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-1589732a5c71]",
+          "description": "Prepared IPO lag file is not packaged and no producer appears in either supplied do-file; request author data/schema, including year/CN6 join keys and I_ipo_lag.",
+          "evidence_ids": [
+            "EV_MAIN_FIRMAGE_IPO"
+          ],
+          "expected_fields": [
+            "year",
+            "cn6",
+            "I_ipo_lag"
+          ],
+          "expected_period": "At least 1997 predecessor data are needed for the 1998 sample lag"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_SPINOFF",
+      "kind": "data",
+      "description": "Relative path `spinoff.dta` consumed by MainCode for `I_spinoff_lag`, keyed by year and CN6.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_SPINOFF_AUTHOR",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-0528074de450]",
+          "description": "Prepared spinoff lag file is not packaged and no producer appears in either supplied do-file; request author data/schema, including year/CN6 join keys and I_spinoff_lag.",
+          "evidence_ids": [
+            "EV_MAIN_FIRMAGE_IPO"
+          ],
+          "expected_fields": [
+            "year",
+            "cn6",
+            "I_spinoff_lag"
+          ],
+          "expected_period": "At least 1997 predecessor data are needed for the 1998 sample lag"
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW_STATA",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 runtime is available; author datasheet specifies Stata without a release version. No author program was executed.",
+      "evidence_ids": [
+        "EV_ENV_STATA"
+      ]
+    },
+    {
+      "id": "SW_REGHDFE",
+      "name": "reghdfe",
+      "status": "available",
+      "description": "Required by two fixed-effects blocks; version 6.12.3 is present in the checked shared/default adopaths.",
+      "evidence_ids": [
+        "EV_ENV_STATA"
+      ]
+    },
+    {
+      "id": "SW_FTOOLS",
+      "name": "ftools",
+      "status": "available",
+      "description": "reghdfe dependency; version 2.49.1 is present in the checked shared/default adopaths.",
+      "evidence_ids": [
+        "EV_ENV_STATA"
+      ]
+    },
+    {
+      "id": "SW_OUTREG2",
+      "name": "outreg2",
+      "status": "preparation_required",
+      "description": "Invoked by every Table 3 regression export call and not found in the checked Stata adopaths.",
+      "evidence_ids": [
+        "EV_ENV_STATA",
+        "EV_MAIN_EXPORT"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "IS_INPUT_CONTRACTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "input_and_handoff_contract",
+      "description": "Several consumed inputs have no producer in either supplied program (meetingdate_datadate_match, compustat19502010_disclosure, firmage, ipo, spinoff and ret_fiscal_date). The companion SDC program reads the raw SDC dataset_ma under [redacted-path-ad3fb8f2201f] and writes a distinct dataset_ma under [redacted-path-fec4d2209add]; MainCode then expects gvkey/fyear/dealnumber in that output, but the producer does not construct gvkey/fyear. The generated dataset_irrc handoff also needs an author-confirmed schema for MainCode’s cn6/year, gvkey/fyear and datadate joins; the director keep list omits cn6 before the later CRSP/Compustat merge, which may or may not add it.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "EV_MAIN_GOV",
+        "EV_MAIN_MA",
+        "EV_MAIN_FIRMAGE_IPO",
+        "EV_MAIN_RET",
+        "EV_PROCESS_CROSSWALK",
+        "EV_PROCESS_HANDOFF"
+      ]
+    },
+    {
+      "id": "IS_APPENDIX_WORKFLOW",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_appendix_programs",
+      "description": "The online appendix reports Tables A1–A9 covering robustness, tenure diversity, death-event reconciliation/returns, matched restatements, additional controls and SEM, but the package contains no executable appendix analysis entry point. MainCode_JAR.DO produces its supplied Table 3 specifications and a lowess plot only; appendix narrative and results do not establish the missing program order, inputs or output schemas.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "EV_APPX_TOC",
+        "EV_APPX_SCOPE",
+        "EV_MAIN_ANALYSIS",
+        "EV_PACKAGE_INVENTORY"
+      ]
+    },
+    {
+      "id": "IS_TABLE3_OVERWRITE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "output_overwrite",
+      "description": "Each of the five Table 3 model groups writes to table3.xls with replace on its first regression call and append on its second. The later groups therefore overwrite earlier groups, leaving only the last group’s two estimates.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "EV_MAIN_EXPORT",
+        "EV_MAIN_ANALYSIS"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV_DATASHEET_SOURCES",
+      "kind": "source",
+      "description": "Datasheet names Execucomp, Compustat/CRSP, IRRC and SDC as historical source products and dates the downloads around May 2011.",
+      "file": "HH Datasheet.PDF",
+      "line_begin": 25,
+      "line_end": 32,
+      "quote": "The paper used data collected from various sources. The data are downloaded around May 2011:"
+    },
+    {
+      "id": "EV_DATASHEET_CODE",
+      "kind": "source",
+      "description": "Datasheet identifies Stata and MainCode_JAR as the final dataset and main-analysis program.",
+      "file": "HH Datasheet.PDF",
+      "line_begin": 68,
+      "line_end": 71,
+      "quote": "We use Stata to convert the raw data and perform all analyses. The Stata do-file “MainCode_JAR” uses the dataset obtained from various sources to construct the final dataset and yields the content of the main analysis as output."
+    },
+    {
+      "id": "EV_MAIN_CWD",
+      "kind": "source",
+      "description": "Main program sets its working directory to the JAR Code directory before using relative filenames.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 1,
+      "line_end": 5,
+      "quote": "cd \"[redacted-path-a7f56ffabd21]\""
+    },
+    {
+      "id": "EV_MAIN_GOV",
+      "kind": "source",
+      "description": "Main program reads legacy/new governance files and a prepared dataset_irrc, then saves relative intermediates and dataset.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 12,
+      "line_end": 38,
+      "quote": "use \"[redacted-path-e5a37b752c77]\",clear /*governance legacy file*/"
+    },
+    {
+      "id": "EV_MAIN_EXEC",
+      "kind": "source",
+      "description": "CEO input must include the fields the code renames, keeps and merges by gvkey/fyear, including ceotenure and I_ceofounder.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 42,
+      "line_end": 60,
+      "quote": "use \"[redacted-path-ce0b5d36b06e]\",clear /*execucomp for CEO*/"
+    },
+    {
+      "id": "EV_MAIN_SEG",
+      "kind": "source",
+      "description": "Segment input is filtered to BUSSEG and used to construct nseg and nseg_lag before merging into dataset.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 64,
+      "line_end": 88,
+      "quote": "use \"[redacted-path-273b9f54746f]\",clear /*compustat segment file*/"
+    },
+    {
+      "id": "EV_MAIN_COMP",
+      "kind": "source",
+      "description": "Compustat annual goodwill and CRSP/Compustat plus disclosure inputs feed firm-year financial variables; lag operators are constructed before estimation.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 91,
+      "line_end": 141,
+      "quote": "use \"[redacted-path-a3c9e9a560d3]\",clear"
+    },
+    {
+      "id": "EV_MAIN_MA",
+      "kind": "source",
+      "description": "Main program reads the companion program’s dataset_ma and uses gvkey/fyear/dealnumber to construct acquisition count and lags.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 145,
+      "line_end": 166,
+      "quote": "use \"[redacted-path-545d6d3e34a9]\",clear /*processed under ProcessIRRC_SDCCode.do*/"
+    },
+    {
+      "id": "EV_MAIN_FIRMAGE_IPO",
+      "kind": "source",
+      "description": "firmage, ipo and spinoff are separate consumed datasets with no producers in either supplied Stata program.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 168,
+      "line_end": 195,
+      "quote": "merge m:1 gvkey fyear using firmage"
+    },
+    {
+      "id": "EV_MAIN_RET",
+      "kind": "source",
+      "description": "Main program derives yearly return volatility/return and lag variables from a separately consumed fiscal-date return file.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 197,
+      "line_end": 218,
+      "quote": "use \"[redacted-path-c36169b26d70]\" ,clear"
+    },
+    {
+      "id": "EV_MAIN_SAMPLE_WINSOR",
+      "kind": "source",
+      "description": "Main program restricts to 1998–2010, then winsorizes outcomes and control globals; earlier lag inputs are built before the restriction.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 220,
+      "line_end": 255,
+      "quote": "keep if fyear>=1998&fyear<=2010"
+    },
+    {
+      "id": "EV_MAIN_ANALYSIS",
+      "kind": "source",
+      "description": "Supplied main analysis writes five Table 3 specification groups to table3.xls and creates a lowess residual plot.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 262,
+      "line_end": 311,
+      "quote": "*Baseline Specification"
+    },
+    {
+      "id": "EV_MAIN_EXPORT",
+      "kind": "source",
+      "description": "Each of five model groups resets table3.xls at its first outreg2 call, so later groups overwrite earlier group exports.",
+      "file": "MainCode_JAR.DO",
+      "line_begin": 265,
+      "line_end": 297,
+      "quote": "outreg2\tusing table3.xls,excel drop (_I*) tstat  aster(tstat) bdec(3) tdec(2) replace"
+    },
+    {
+      "id": "EV_PROCESS_IRRC",
+      "kind": "source",
+      "description": "Companion program consumes author-prepared cleaned IRRC director data and constructs board tenure variables.",
+      "file": "ProcessIRRC_SDCCode_JAR.DO",
+      "line_begin": 10,
+      "line_end": 20,
+      "quote": "use \"[redacted-path-f7f8499b411a]\",clear"
+    },
+    {
+      "id": "EV_PROCESS_CROSSWALK",
+      "kind": "source",
+      "description": "IRRC preparation also requires a meetingdate-to-datadate crosswalk and CRSP/Compustat merge; it writes dataset_irrc.dta in the JAR Code directory.",
+      "file": "ProcessIRRC_SDCCode_JAR.DO",
+      "line_begin": 118,
+      "line_end": 133,
+      "quote": "merge 1:1 gvkey meetingdate using \"[redacted-path-980b0b0322c5]\" /*match meetingdate to datadate*/"
+    },
+    {
+      "id": "EV_PROCESS_MANUAL",
+      "kind": "source",
+      "description": "Comment describes manual gvkey/cn6 and unique director-ID cleanup plus a complete-dirsince restriction; a compatible author-prepared input can bypass repeating that history.",
+      "file": "ProcessIRRC_SDCCode_JAR.DO",
+      "line_begin": 135,
+      "line_end": 141,
+      "quote": "/*We have mannually cleaned the IRRC dataset to fix following issues"
+    },
+    {
+      "id": "EV_PROCESS_SDC",
+      "kind": "source",
+      "description": "Companion program transforms and filters SDC M&A data, then writes [redacted-path-545d6d3e34a9].",
+      "file": "ProcessIRRC_SDCCode_JAR.DO",
+      "line_begin": 147,
+      "line_end": 200,
+      "quote": "use \"[redacted-path-411c711e6715]\",clear /*data from SDC download*/"
+    },
+    {
+      "id": "EV_PROCESS_HANDOFF",
+      "kind": "source",
+      "description": "SDC producer preserves existing columns but never constructs gvkey or fyear; MainCode consumes both from dataset_ma.",
+      "file": "ProcessIRRC_SDCCode_JAR.DO",
+      "line_begin": 181,
+      "line_end": 200,
+      "quote": "keep if Status==\"C\""
+    },
+    {
+      "id": "EV_APPX_TOC",
+      "kind": "source",
+      "description": "The online appendix lists Tables A1–A9, while the package supplies no additional Stata analysis program for those branches.",
+      "file": "_audit_supplements/hh-online-appendix.pdf",
+      "line_begin": 13,
+      "line_end": 29,
+      "quote": "Table A1 Robustness Tests"
+    },
+    {
+      "id": "EV_APPX_SCOPE",
+      "kind": "source",
+      "description": "Appendix describes separate death-event collection and supplementary event-study analyses; it is contextual evidence, not a substitute for missing executable workflows.",
+      "file": "_audit_supplements/hh-online-appendix.pdf",
+      "line_begin": 157,
+      "line_end": 168,
+      "quote": "Our initial sample of 565 deaths covers the 1998-2010 period and is not restricted to S&P"
+    },
+    {
+      "id": "EV_CATALOG_PRODUCTS",
+      "kind": "catalog",
+      "description": "Frozen sweep_01 catalog.json (SHA-256 4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27) indexes Compustat, CRSP, Execucomp, SDC Platinum, RiskMetrics/IRRC, ISS and Capital IQ product families. Candidate tables include COMP.FUNDA, COMPSEG.WRDS_SEGMERGED, CRSP.DSF/MSF, EXECCOMP.ANNCOMP, SDC.WRDS_MA_DETAILS, RISK.GSET/RMGOVERNANCE/DIRECTORS/RMDIRECTORS and CIQ.WRDS_PROFESSIONAL; this is metadata discovery, not evidence of full coverage, schema equivalence, or license entitlement."
+    },
+    {
+      "id": "EV_PKG_FIRMLIST",
+      "kind": "probe",
+      "description": "The only packaged data file firmlist.xlsx is a readable one-row probe with gvkey; it is an identifier list, not a full analysis panel and is not read in either do-file.",
+      "artifact_path": "urn:sha256:c6c75ba9db8d533aaedd95ed7277e5ffccf672daa3804d683196b902d968c68d",
+      "sha256": "c6c75ba9db8d533aaedd95ed7277e5ffccf672daa3804d683196b902d968c68d"
+    },
+    {
+      "id": "EV_P_RISK_GSET",
+      "kind": "probe",
+      "description": "One-row probe reads catalog-listed RISK.GSET with CN6, YEAR and CBOARD; historical coverage is not verified.",
+      "artifact_path": "urn:sha256:d604f3f622e8dbb630d15b2abe0725cd472c1da9f06a9e13b8d2fe5a498d0e7f",
+      "sha256": "d604f3f622e8dbb630d15b2abe0725cd472c1da9f06a9e13b8d2fe5a498d0e7f"
+    },
+    {
+      "id": "EV_P_RISK_RMGOV",
+      "kind": "probe",
+      "description": "One-row probe reads catalog-listed RISK.RMGOVERNANCE with Year, CUSIP and CBOARD; coverage is not verified.",
+      "artifact_path": "urn:sha256:f2b3602803b5333093795edc85bf75cae6d23c884e0799806c43bc475c9c19fa",
+      "sha256": "f2b3602803b5333093795edc85bf75cae6d23c884e0799806c43bc475c9c19fa"
+    },
+    {
+      "id": "EV_P_RISK_DIRECTORS",
+      "kind": "probe",
+      "description": "One-row probe reads selected catalog-listed legacy RiskMetrics director fields; it does not establish the custom gvkey/did cleaning contract or period coverage.",
+      "artifact_path": "urn:sha256:138508d36893029c581ba14302cf50e107d51da597c424a5bffc1a43c7803278",
+      "sha256": "138508d36893029c581ba14302cf50e107d51da597c424a5bffc1a43c7803278"
+    },
+    {
+      "id": "EV_P_RISK_RMDIRECTORS",
+      "kind": "probe",
+      "description": "One-row probe reads selected catalog-listed RiskMetrics director fields; it does not establish the custom gvkey/did cleaning contract or period coverage.",
+      "artifact_path": "urn:sha256:3614693a411bf89450ae16c2ac0ae34ec2f46dd45e67e531a104c5823cce3ca1",
+      "sha256": "3614693a411bf89450ae16c2ac0ae34ec2f46dd45e67e531a104c5823cce3ca1"
+    },
+    {
+      "id": "EV_P_COMP_FUNDA",
+      "kind": "probe",
+      "description": "One-row probe reads Compustat annual source fields including gvkey, datadate, fyear and requested accounting columns; historical coverage is not verified.",
+      "artifact_path": "urn:sha256:809b5a087118a011853d74e52bf17a50d0e5fead20ce64602cd2986668431fa7",
+      "sha256": "809b5a087118a011853d74e52bf17a50d0e5fead20ce64602cd2986668431fa7"
+    },
+    {
+      "id": "EV_P_COMP_SEG",
+      "kind": "probe",
+      "description": "One-row probe reads segment source fields gvkey, datadate, stype, snms and SICS1; historical coverage is not verified.",
+      "artifact_path": "urn:sha256:c1ce152e8ad9d9c1191ec668b4c3c56579608f4b0ac65abf6065c5387fada01a",
+      "sha256": "c1ce152e8ad9d9c1191ec668b4c3c56579608f4b0ac65abf6065c5387fada01a"
+    },
+    {
+      "id": "EV_P_EXEC",
+      "kind": "probe",
+      "description": "One-row probe reads EXECCOMP.ANNCOMP fields GVKEY, YEAR, EXECID, EXEC_FULLNAME, AGE, SHROWN_EXCL_OPTS and TDC1; ceotenure and I_ceofounder are not present in the catalog schema.",
+      "artifact_path": "urn:sha256:517ece3a5f6c22abfa811818997b0557071213fcc6129635dfd945b852264ee0",
+      "sha256": "517ece3a5f6c22abfa811818997b0557071213fcc6129635dfd945b852264ee0"
+    },
+    {
+      "id": "EV_P_CRSP_DAILY",
+      "kind": "probe",
+      "description": "One-row probe reads CRSP.DSF PERMNO, DATE, PRC and RET; it does not provide the consumed GVKEY/FYEAR fiscal-date return file.",
+      "artifact_path": "urn:sha256:8e4f25618952a017ffe557538dc09091975cccc89a42af9d2f06e1f8b6891c3c",
+      "sha256": "8e4f25618952a017ffe557538dc09091975cccc89a42af9d2f06e1f8b6891c3c"
+    },
+    {
+      "id": "EV_P_CRSP_MONTHLY",
+      "kind": "probe",
+      "description": "One-row probe reads CRSP.MSF PERMNO, DATE, PRC and RET; it is a candidate monthly product, not the consumed author-prepared merged file.",
+      "artifact_path": "urn:sha256:c485fb6fd5bc9722c9c97ed37d2090898d77b269ae9a3b346fab4fb6ce8cd983",
+      "sha256": "c485fb6fd5bc9722c9c97ed37d2090898d77b269ae9a3b346fab4fb6ce8cd983"
+    },
+    {
+      "id": "EV_P_COMP_MONTHLY",
+      "kind": "probe",
+      "description": "One-row probe reads COMPSEGD.SECM GVKEY, DATADATE, PRCCM and CSHOQ; this is not the author-named joined CRSP/Compustat input.",
+      "artifact_path": "urn:sha256:a9e2f6180190fdc79fc102ae354401c9b087f24971f94088fe386f0fa1c31f64",
+      "sha256": "a9e2f6180190fdc79fc102ae354401c9b087f24971f94088fe386f0fa1c31f64"
+    },
+    {
+      "id": "EV_P_SDC",
+      "kind": "probe",
+      "description": "One-row probe reads SDC.WRDS_MA_DETAILS MASTER_DEAL_NO, DATEANN, STATUS, DATEWITH, ACUSIP and TPUBLIC; required mapped fields and gvkey/fyear contract remain unverified.",
+      "artifact_path": "urn:sha256:d1a99ac69d6a412262bf66eaa313abeb931d0cd738e71fd8f7aae0c7d97d67eb",
+      "sha256": "d1a99ac69d6a412262bf66eaa313abeb931d0cd738e71fd8f7aae0c7d97d67eb"
+    },
+    {
+      "id": "EV_ENV_STATA",
+      "kind": "probe",
+      "description": "Same-run environment probe: Stata 18 is available; reghdfe 6.12.3 and ftools 2.49.1 are found in the checked adopaths; outreg2 is not found in either checked adopath.",
+      "artifact_path": "urn:sha256:52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "EV_AUTHOR_COMP_URL",
+      "kind": "public",
+      "description": "Author data page links compensation data for 1992–2022 and describes its public fields; the page does not establish the founder/tenure fields required by this program.",
+      "url": "https://sites.temple.edu/lnaveen/data/",
+      "checked_at": "2026-11-08T00:00:00+08:00",
+      "authority": "author",
+      "quote": "The data span 1992-2022."
+    },
+    {
+      "id": "EV_AUTHOR_COMP_FIELDS",
+      "kind": "public",
+      "description": "The author page lists gvkey, year, co_per_rol, delta, vega and firm-related wealth for its compensation data product; it does not confirm ceotenure or I_ceofounder.",
+      "url": "https://sites.temple.edu/lnaveen/data/",
+      "checked_at": "2026-11-08T00:00:00+08:00",
+      "authority": "author",
+      "quote": "Compensation Data (gvkey, year, co_per_rol, delta, vega, firm-related wealth)"
+    },
+    {
+      "id": "EV_AUTHOR_DID_FIELDS",
+      "kind": "public",
+      "description": "The author page documents a director-link dataset with GVKEY/year and generated DIDOWN plus legacy/director IDs; it belongs to another paper and is only an unverified candidate for this package’s custom did input.",
+      "url": "https://sites.temple.edu/lnaveen/data/",
+      "checked_at": "2026-11-08T00:00:00+08:00",
+      "authority": "author",
+      "quote": "DIDOWN: the director ID created by us as in Coles, Daniel, and Naveen. This should be unique for a given director in the dataset."
+    },
+    {
+      "id": "EV_PACKAGE_INVENTORY",
+      "kind": "inspection",
+      "description": "Frozen package inventory lists the two Stata programs, two PDFs and firmlist.xlsx as its only data file; the one-row xlsx probe confirms gvkey only.",
+      "artifact_path": "urn:sha256:52458dd9c92f5e84dbc4af17522d1fa626c6ab4be39899b3a5d06caf91cf6407",
+      "sha256": "52458dd9c92f5e84dbc4af17522d1fa626c6ab4be39899b3a5d06caf91cf6407"
+    },
+    {
+      "id": "EV_AUTHOR_LINK_FIELDS",
+      "kind": "public",
+      "description": "Author page documents fields in its separate director-link workbook, including GVKEY, meeting/CUSIP identifiers and the legacy/director ID keys.",
+      "url": "https://sites.temple.edu/lnaveen/data/",
+      "checked_at": "2026-11-08T00:00:00+08:00",
+      "authority": "author",
+      "quote": "GVKEY: Compustat identifier."
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_GOV_LEGACY"
+      ],
+      "evidence_ids": [
+        "EV_MAIN_GOV",
+        "EV_P_RISK_GSET"
+      ],
+      "description": "Mandatory legacy governance input; mapped to the candidate RISK.GSET product but period completeness remains unverified."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_GOV_CURRENT"
+      ],
+      "evidence_ids": [
+        "EV_MAIN_GOV",
+        "EV_P_RISK_RMGOV"
+      ],
+      "description": "Mandatory 2007–2015 governance input; candidate table has CUSIP/year/cboard, with coverage and code-side field mapping to validate."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_MAIN_GOV",
+        "EV_PROCESS_CROSSWALK"
+      ],
+      "description": "dataset_irrc.dta is generated by the companion process program in the same JAR Code directory; its exact output schema must support MainCode’s cn6/year and gvkey/fyear joins."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMP_SEG"
+      ],
+      "evidence_ids": [
+        "EV_MAIN_SEG",
+        "EV_P_COMP_SEG"
+      ],
+      "description": "Mandatory Compustat BUSSEG segment source, used to generate nseg and nseg_lag."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMP_ANNUAL"
+      ],
+      "evidence_ids": [
+        "EV_MAIN_COMP",
+        "EV_P_COMP_FUNDA"
+      ],
+      "description": "Mandatory annual Compustat goodwill input; current candidate has the required core fields but the exact author file and period remain unverified."
+    },
+    {
+      "dependency_id": "D0006",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_CRSP_COMP"
+      ],
+      "evidence_ids": [
+        "EV_MAIN_COMP",
+        "EV_PROCESS_CROSSWALK",
+        "EV_P_COMP_MONTHLY",
+        "EV_P_CRSP_MONTHLY"
+      ],
+      "description": "Mandatory author-named CRSP/Compustat merged data; consumed in both companion and main programs and not produced by supplied code."
+    },
+    {
+      "dependency_id": "D0007",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_RET_FISCAL"
+      ],
+      "evidence_ids": [
+        "EV_MAIN_RET",
+        "EV_P_CRSP_DAILY"
+      ],
+      "description": "Mandatory preprocessed fiscal-date return file; the local CRSP daily table does not itself provide gvkey/fyear mapping."
+    },
+    {
+      "dependency_id": "D0008",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_EXEC_CEO"
+      ],
+      "evidence_ids": [
+        "EV_MAIN_EXEC",
+        "EV_P_EXEC",
+        "EV_AUTHOR_COMP_FIELDS"
+      ],
+      "description": "Mandatory CEO source; local Execucomp covers only a subset of the code fields, and the author page’s linked compensation product is not a confirmed substitute."
+    },
+    {
+      "dependency_id": "D0009",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_MAIN_GOV"
+      ],
+      "description": "Relative dataset.dta is first saved by MainCode in the current JAR Code directory at line 38 and then updated/consumed by later stages; it is an internal intermediate, not a packaged external input."
+    },
+    {
+      "dependency_id": "D0010",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_MAIN_MA",
+        "EV_PROCESS_SDC",
+        "EV_PROCESS_HANDOFF"
+      ],
+      "description": "[redacted-path-37e93767376b] is produced by the companion SDC stage and consumed by MainCode; GVKEY/FYEAR must already be present because the producer does not create them."
+    },
+    {
+      "dependency_id": "D0011",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_IRRC_DIRECTOR"
+      ],
+      "evidence_ids": [
+        "EV_PROCESS_IRRC",
+        "EV_PROCESS_MANUAL",
+        "EV_P_RISK_DIRECTORS"
+      ],
+      "description": "Mandatory author-prepared cleaned IRRC director input; historical manual ID construction is provenance, not a required live rebuild when a compatible prepared input is furnished."
+    },
+    {
+      "dependency_id": "D0012",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "EV_PROCESS_CROSSWALK"
+      ],
+      "description": "Relative temp.dta is saved from the director/crosswalk merge at line 124 and used at line 126 in the same current JAR Code directory."
+    },
+    {
+      "dependency_id": "D0013",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_SDC_RAW"
+      ],
+      "evidence_ids": [
+        "EV_PROCESS_SDC",
+        "EV_P_SDC"
+      ],
+      "description": "Mandatory raw SDC M&A input; current local SDC details are a catalog-listed candidate but do not establish the author input schema or GVKEY/FYEAR mapping."
+    }
+  ],
+  "actions": [
+    {
+      "id": "ACT_INPUTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_GOV_LEGACY",
+        "R_GOV_CURRENT",
+        "R_IRRC_DIRECTOR",
+        "R_MEETING_MAP",
+        "R_COMP_SEG",
+        "R_COMP_ANNUAL",
+        "R_COMP_DISCLOSURE",
+        "R_CRSP_COMP",
+        "R_RET_FISCAL",
+        "R_EXEC_CEO",
+        "R_SDC_RAW",
+        "R_FIRMAGE",
+        "R_IPO",
+        "R_SPINOFF",
+        "IS_INPUT_CONTRACTS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Obtain the author-prepared inputs or confirm a compatible local-product mapping and required input schemas for the full pipeline.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "EV_DATASHEET_SOURCES",
+        "EV_MAIN_GOV",
+        "EV_MAIN_EXEC",
+        "EV_MAIN_SEG",
+        "EV_MAIN_COMP",
+        "EV_MAIN_MA",
+        "EV_MAIN_FIRMAGE_IPO",
+        "EV_MAIN_RET",
+        "EV_PROCESS_CROSSWALK",
+        "EV_PROCESS_MANUAL",
+        "EV_PROCESS_SDC",
+        "EV_PROCESS_HANDOFF",
+        "EV_CATALOG_PRODUCTS",
+        "EV_AUTHOR_COMP_FIELDS",
+        "EV_AUTHOR_DID_FIELDS",
+        "EV_PACKAGE_INVENTORY"
+      ],
+      "edits": [],
+      "steps": [
+        "Verify the RISK.GSET candidate against the legacy CN6/YEAR/CBOARD input and confirm the author-required 1990–2006 range; verify RISK.RMGOVERNANCE against the CUSIP/Year/CBOARD input and its 2007–2015 range. Convert only after those source and period mappings are confirmed.",
+        "Provide the author-prepared tenure_irrc19962010_did input with its actual fields and unique director IDs, plus meetingdate_datadate_match with gvkey, meetingdate, datadate and diff_meetdate_datadate. The local RiskMetrics director tables and the author’s separate Co-opted Boards link workbook are candidates, not confirmed substitutes for this cleaned input.",
+        "Provide or verify the Compustat segment source with gvkey, datadate, stype, snms and SICS1 for BUSSEG observations. Confirm history includes the prior available segment record used for nseg_lag.",
+        "Provide or map compustat19502012 and compustat19502010_disclosure to the code’s GVKEY/FYEAR accounting columns. Confirm lag construction retains the prior-year observations needed before the 1998–2010 estimation filter.",
+        "Provide the consumed crspcomp19502010_prc0mth author-prepared merge or a documented compatible construction mapping from local Compustat/CRSP sources; do not treat separate monthly tables as the merged author file.",
+        "Provide ret_fiscal_date with GVKEY/FYEAR/DATE/RET or its exact producer. Confirm prior fiscal observations needed for the 1998 return lags and coverage through 2010.",
+        "Provide ceo_Execucomp19922010 with the consumed GVKEY/YEAR/EXECID/CEO fields, including CEOTENURE and I_CEOFOUNDER. The linked author Compensation Data page lists a different Delta/Vega product and is not a direct replacement on current evidence.",
+        "Provide the SDC input schema or export so dataset_ma retains GVKEY, FYEAR and DealNumber/dealnumber through the companion stage; confirm the one-year predecessor required by MainCode’s acquisition lags.",
+        "Provide author-prepared firmage (GVKEY/FYEAR/LN_FIRMAGE), ipo (year/CN6/I_IPO_LAG) and spinoff (year/CN6/I_SPINOFF_LAG), or their exact producers. Preserve the documented Ritter/Capital IQ/Hoover/CRSP founding-year measure rather than replacing it with pure CRSP listing age.",
+        "Before a later authorized run, validate file readability, required keys/fields and periods, then inspect generated dataset_irrc and dataset_ma schemas against the consuming MainCode merge keys."
+      ],
+      "validation": [
+        "Confirm all named source files or mapped local routes contain the stated source columns and required period/history before running author code.",
+        "After a separately authorized run, inspect dataset_irrc and dataset_ma keys/columns and confirm MainCode merges complete without dropping required branches."
+      ]
+    },
+    {
+      "id": "ACT_APPENDIX",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "IS_APPENDIX_WORKFLOW"
+      ],
+      "kind": "clarification",
+      "description": "Request the appendix analysis entry points and data contracts needed to reproduce Tables A1–A9.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "EV_APPX_TOC",
+        "EV_APPX_SCOPE",
+        "EV_PACKAGE_INVENTORY"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the authors to identify the program(s), stage order, prepared inputs and output-to-table mapping for appendix Tables A1–A9.",
+        "Keep appendix source names and variable formulas as clarification leads until the authors provide a runnable workflow or exact prepared analysis inputs."
+      ],
+      "validation": [
+        "Map each appendix table A1–A9 to a supplied entry point and its input/output schema before marking full-pipeline closure complete."
+      ]
+    },
+    {
+      "id": "ACT_TABLE3_EXPORT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "IS_TABLE3_OVERWRITE"
+      ],
+      "kind": "source_edit",
+      "description": "Append model groups 2–5 to table3.xls so the file retains all five existing Table 3 specification groups.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "EV_MAIN_EXPORT",
+        "EV_MAIN_ANALYSIS"
+      ],
+      "edits": [
+        {
+          "file": "MainCode_JAR.DO",
+          "sha256": "b4eb3dc480f93e2a50495ceb1a7924a6f035f9817ccfea7b5a3d76be3cdfa1d6",
+          "line_begin": 272,
+          "line_end": 272,
+          "before": "\toutreg2\tusing table3.xls,excel drop (_I*) tstat  aster(tstat) bdec(3) tdec(2) replace\t",
+          "after": "\toutreg2\tusing table3.xls,excel drop (_I*) tstat  aster(tstat) bdec(3) tdec(2) append\t",
+          "reason": "Preserve this model group in table3.xls after earlier outreg2 model groups instead of resetting the file and discarding their results."
+        },
+        {
+          "file": "MainCode_JAR.DO",
+          "sha256": "b4eb3dc480f93e2a50495ceb1a7924a6f035f9817ccfea7b5a3d76be3cdfa1d6",
+          "line_begin": 280,
+          "line_end": 280,
+          "before": "\toutreg2\tusing table3.xls,excel drop (_I*) tstat  aster(tstat) bdec(3) tdec(2) replace",
+          "after": "\toutreg2\tusing table3.xls,excel drop (_I*) tstat  aster(tstat) bdec(3) tdec(2) append",
+          "reason": "Preserve this model group in table3.xls after earlier outreg2 model groups instead of resetting the file and discarding their results."
+        },
+        {
+          "file": "MainCode_JAR.DO",
+          "sha256": "b4eb3dc480f93e2a50495ceb1a7924a6f035f9817ccfea7b5a3d76be3cdfa1d6",
+          "line_begin": 288,
+          "line_end": 288,
+          "before": "\toutreg2\tusing table3.xls,excel drop (_I*) tstat  aster(tstat) bdec(3) tdec(2) replace \t",
+          "after": "\toutreg2\tusing table3.xls,excel drop (_I*) tstat  aster(tstat) bdec(3) tdec(2) append \t",
+          "reason": "Preserve this model group in table3.xls after earlier outreg2 model groups instead of resetting the file and discarding their results."
+        },
+        {
+          "file": "MainCode_JAR.DO",
+          "sha256": "b4eb3dc480f93e2a50495ceb1a7924a6f035f9817ccfea7b5a3d76be3cdfa1d6",
+          "line_begin": 295,
+          "line_end": 295,
+          "before": "\toutreg2\tusing table3.xls,excel drop (_I*) tstat  aster(tstat) bdec(3) tdec(2) replace\t\t",
+          "after": "\toutreg2\tusing table3.xls,excel drop (_I*) tstat  aster(tstat) bdec(3) tdec(2) append\t\t",
+          "reason": "Preserve this model group in table3.xls after earlier outreg2 model groups instead of resetting the file and discarding their results."
+        }
+      ],
+      "steps": [
+        "Apply the four exact MainCode_JAR.DO line changes shown below only in a later authorized source-edit step.",
+        "Keep the first group’s line 265 replace and its line 267 append; the four later group starts become append, while their existing second calls remain append."
+      ],
+      "validation": [
+        "After a separately authorized run, confirm table3.xls contains both dependent-variable estimates for all five named specification groups."
+      ]
+    },
+    {
+      "id": "ACT_OUTREG2",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW_OUTREG2"
+      ],
+      "kind": "software_setup",
+      "description": "Configure or obtain the free Stata outreg2 command in the Stata 18 adopath used for this run.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "EV_ENV_STATA",
+        "EV_MAIN_EXPORT"
+      ],
+      "edits": [],
+      "steps": [
+        "Make outreg2 available to Stata without changing the regression specifications.",
+        "Retain reghdfe 6.12.3 and ftools 2.49.1 as already available in the checked adopaths."
+      ],
+      "validation": [
+        "In Stata 18, verify `which outreg2` resolves to an ado file before any separately authorized author-code run."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Saved checkpoint after reading the datasheet, appendix, both native Stata programs, the frozen dependency list, product catalog, and bounded local/package/software probes. All new raw inputs and source paths are assessed as candidates only; one-row SAS reads do not establish population or historical coverage.",
+    "firmlist.xlsx is a one-column GVKEY identifier list and neither do-file imports it; it is not a final analysis panel.",
+    "No analysis_only scope is supported because there is no supplied complete analysis dataset or demonstrated compatible full panel bypass.",
+    "Manual IRRC/ID construction described in source comments is historical preparation. The preferred requirement is the author-prepared cleaned director input; do not add the original proxy/Capital IQ lookup as a live requirement when that compatible file is supplied.",
+    "Local SAS product probes use row_limit=1 and confirm only readability plus the listed sample columns; they do not establish full population or historical coverage. They do not create a SAS runtime requirement for this Stata-authored workflow.",
+    "The preparation code generates dataset_irrc and dataset_ma in separate, traceable locations, and MainCode generates num_acq/num_acq_lag from the produced dataset_ma. The unresolved concern is the required key/schema contract, not absence of these producer blocks.",
+    "MainCode’s `replace`→`append` proposal changes only output behavior; it leaves all five model groups and their specifications intact. No proposed edit was applied."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "ff1623f7863511022a951407a4da41aa88b2ea35960c301b2a1255d92e117e26",
+    "applied": false
+  }
+}

@@ -1,0 +1,1641 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-d449ab60ef14",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 58/Issue 2/12297 - Contracts-between-Firms-and-Stakeholders/schoenfeld-datasheet-code-and-identifiers.zip",
+        "sha256": "43df064974a4ef20f1769b5a4147e8f478b6a7266ccfe3a76ed2e7c73a204a71"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "a4f4da16fd6ac0154bc4a755cfdf7f83cb32c92921cb168aa7918ec34b33f775"
+  },
+  "title": "Contracts between Firms and Stakeholders",
+  "doi": "10.1111/1475-679X.12297",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Full author-supplied workflow: download SC 13D filings for the 1996–2018 Stata sample in Python, parse filings in Perl, manually import the pipe-delimited handoff in SAS Enterprise, merge SEC Analytics/Compustat-CRSP/CRSP/TFN/I-B/E/S inputs in SAS, export the master Stata file, and run the supplied Stata tables. The program sources are embedded in PDFs and there is no supported separate analysis-only route.",
+      "entry_points": [
+        "_1_EDGAR_DownloadForms.pdf",
+        "_1_EDGAR_Pac.pdf",
+        "_1_EDGAR_Forms.pdf",
+        "_1_General_Utilities.pdf",
+        "_2_Perl_Textual_Analysis.pdf",
+        "_3_SAS_Merge_Data.pdf",
+        "_4_Stata_Create_Tables.pdf"
+      ],
+      "requirement_ids": [
+        "sec_13d_filings",
+        "sec_analytics_jordan",
+        "compcrsp_merged",
+        "crsp_dsf",
+        "crsp_dsi",
+        "tfn_s34",
+        "ibes_eps_consensus",
+        "crsp_stocknames"
+      ],
+      "software_ids": [
+        "python",
+        "perl",
+        "perl_html_strip",
+        "sas",
+        "sas_connect",
+        "sas_pc_files",
+        "sas_enterprise_gui",
+        "stata",
+        "winsor",
+        "eststo",
+        "estpost",
+        "estadd",
+        "esttab",
+        "reghdfe",
+        "ftools"
+      ],
+      "issue_ids": [
+        "workflow_handoffs",
+        "form_and_period_config",
+        "python_api_compatibility",
+        "perl_html_strip_setup",
+        "sas_component_status",
+        "sec_analytics_contract",
+        "compcrsp_contract",
+        "tfn_access_history",
+        "ibes_input_contract",
+        "stata_input_field_provenance",
+        "table6_manual_recipe",
+        "pdf_program_extraction"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "src_overview",
+        "src_datasheet",
+        "src_python_dependencies",
+        "src_python_parameters",
+        "src_python_year_loop",
+        "src_python_clock",
+        "src_python_form_list",
+        "src_python_master_index",
+        "src_python_typo",
+        "src_python_download_helpers",
+        "src_python_urlopen",
+        "src_perl_inputs",
+        "src_perl_header",
+        "src_perl_result",
+        "src_sas_import",
+        "src_sas_sec",
+        "src_sas_comp",
+        "src_sas_crsp_pm5",
+        "src_sas_crsp_m365",
+        "src_sas_tfn_dsi",
+        "src_sas_industry_start",
+        "src_sas_industry_end",
+        "src_sas_ibes",
+        "src_sas_stocknames",
+        "src_sas_macro_export",
+        "src_stata_input_sample",
+        "src_stata_winsor",
+        "src_stata_readability",
+        "src_stata_ind_corporate",
+        "src_stata_industry_models",
+        "src_stata_industry_12",
+        "src_stata_output_path",
+        "src_table6"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "sec_13d_filings",
+      "kind": "data",
+      "description": "Raw EDGAR filing text for the supplied SAS target form SC 13D over the Stata sample period 1996–2018. The SAS branch deletes every SEC Analytics row whose form is not exactly SC 13D, so SC 13D/A amendments are outside this supplied target. The Perl parser consumes filing documents and writes the intermediate results table.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_sec_edgar_public",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.sec.gov/Archives/edgar/full-index/ and SEC EDGAR filing archives",
+          "description": "Official public source route for the requested filing type and period; EDGAR indexes begin in 1994Q3. Configure the downloaded documents as Perl input. Respect request limits and set an identifying User-Agent.",
+          "evidence_ids": [
+            "src_python_master_index",
+            "src_sas_sec",
+            "src_stata_input_sample",
+            "sec_access_public",
+            "sec_schedule_forms"
+          ],
+          "expected_period": "SC 13D filings in 1996–2018; actual document coverage and filename mapping remain to be validated."
+        },
+        {
+          "id": "route_sec_local_archives",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_RAW} and ${ACCTREPL_SEC_PARSED}",
+          "description": "Both approved local roots exist, but no listing, format, form coverage, date coverage or compatibility check was performed. Candidate only.",
+          "evidence_ids": [
+            "sec_raw_probe",
+            "sec_parsed_probe"
+          ],
+          "expected_period": "Unknown."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "sec_analytics_jordan",
+      "kind": "data",
+      "description": "Author-named homed.SEC_Analytics_Jordan table. The SAS source reads CIK, FORM, SECFNAME and FDATE to filter SC 13D, build a filename suffix, and establish the filing year; additional columns are carried downstream and need a full schema/lineage contract. Its filename2 key must match the Perl output filename2 transformation.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_sec_analytics_candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "Catalog candidate WRDSSEC.SEC_ITEM_SCORES at ${ACCTREPL_SAS_ROOT}/sec/premium/itemized/sec_item_scores.sas7bdat",
+          "description": "Catalog candidate has CIK, FORM, SECFNAME and FDATE but its product, population, history, extra fields, row coverage and compatibility with SEC_Analytics_Jordan are unverified. Do not assume raw SEC filings or this candidate supply the author linkage product.",
+          "evidence_ids": [
+            "src_sas_sec",
+            "cat_sec_candidate"
+          ],
+          "expected_fields": [
+            "CIK",
+            "FORM",
+            "SECFNAME",
+            "FDATE"
+          ],
+          "expected_period": "SC 13D filing records matching the 1996–2018 sample; history and completeness unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "compcrsp_merged",
+      "kind": "data",
+      "description": "Author-named homed.compcrsp_merged_jan2019 input. SAS derives YEAR from DATADATE and joins by CIK/YEAR; downstream code also uses GVKEY, LPERMNO, SIC, CUSIP and Compustat controls. The supplied package does not include its producer or the crosswalk/transformation contract.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_comp_funda_candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "Catalog candidate COMP.FUNDA at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "One-row probe verifies raw annual fundamentals columns, but this is not the author-prepared Compustat/CRSP merged input and does not establish CIK-year matching, LPERMNO/SIC linkage, source selection or required period coverage.",
+          "evidence_ids": [
+            "src_sas_comp",
+            "cat_comp_candidate",
+            "comp_funda_probe"
+          ],
+          "expected_fields": [
+            "GVKEY",
+            "DATADATE",
+            "CIK",
+            "AT",
+            "FINCF",
+            "IVNCF",
+            "OANCF",
+            "DV",
+            "DLTT",
+            "DLC",
+            "CH",
+            "CHE",
+            "PRCC_F",
+            "CSHO",
+            "CEQ",
+            "XRD",
+            "CAPX",
+            "INTAN"
+          ],
+          "expected_period": "Records matching 1996–2018 filing CIK/year; exact construction/history is unspecified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "crsp_dsf",
+      "kind": "data",
+      "description": "CRSP Daily Stock File fields PERMNO, DATE, RET, ASK, BID, PRC, SHROUT and VOL. The supplied SAS calculates the event window [−5,+5] weekdays and a pre-event window from 365 calendar days before the filing date up to but excluding five weekdays before it; Stata then samples filing years 1996–2018.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_crsp_dsf_local",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat",
+          "description": "Exact catalog-listed CRSP daily stock product is locally readable in a bounded one-row probe with all source-read fields. The current source uses the WRDS remote CRSP.DSF libref; using this local candidate requires configuring an equivalent local read while preserving the supplied SQL, and full coverage remains unverified.",
+          "evidence_ids": [
+            "src_sas_crsp_pm5",
+            "src_sas_crsp_m365",
+            "cat_crsp_candidates",
+            "crsp_dsf_probe"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "DATE",
+            "RET",
+            "ASK",
+            "BID",
+            "PRC",
+            "SHROUT",
+            "VOL"
+          ],
+          "expected_period": "For each 1996–2018 filing date: at least 365 calendar days before through five weekdays after; verify population/history."
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "crsp_dsi",
+      "kind": "data",
+      "description": "CRSP daily index fields DATE, VWRETD and EWRETD, joined to filing dates for cumulative market benchmark returns over [−5,+5] weekdays.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_crsp_dsi_local",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat",
+          "description": "Exact catalog-listed daily index table is locally readable in a bounded one-row probe with all source-read fields. The current code queries it inside a WRDS remote session; local execution requires a compatible local placement of the supplied query. Full coverage is unverified.",
+          "evidence_ids": [
+            "src_sas_tfn_dsi",
+            "cat_crsp_candidates",
+            "crsp_dsi_probe"
+          ],
+          "expected_fields": [
+            "DATE",
+            "VWRETD",
+            "EWRETD"
+          ],
+          "expected_period": "For each 1996–2018 filing date, at least five weekdays before through five weekdays after; verify history."
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "tfn_s34",
+      "kind": "data",
+      "description": "Thomson-Reuters 13F holdings table TFN.S34 with CUSIP, RDATE, SHARES and SHROUT1. SAS filters report dates before 1993, removes missing values, derives CUSIP6 and year-quarter, and joins holdings to filings by CUSIP6/year-quarter.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_tfn_s34_local",
+          "type": "local",
+          "status": "unverified",
+          "location": "Catalog candidate TFN.S34 at ${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat",
+          "description": "The exact product/schema is catalogued, but the bounded local read timed out; this does not establish absence or licensing. Verify actual readability and required period coverage before using it.",
+          "evidence_ids": [
+            "src_sas_tfn_dsi",
+            "cat_tfn_candidate",
+            "tfn_probe"
+          ],
+          "expected_fields": [
+            "CUSIP",
+            "RDATE",
+            "SHARES",
+            "SHROUT1"
+          ],
+          "expected_period": "1993 onward through filing quarters in 1996–2018; verify available coverage."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "ibes_eps_consensus",
+      "kind": "data",
+      "description": "Author-prepared I/B/E/S input ibes.eps_consensus_unadjusted_1994 with DATE, PERMNO and NUM_FORECAST. SAS keeps dates from 1993 onward, forms year-quarter, averages NUM_FORECAST by PERMNO/quarter and joins to the filing quarter.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_ibes_eps_candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "Catalog candidate IBES.STATSUMU_EPSUS at ${ACCTREPL_SAS_ROOT}/ibes/statsumu_epsus.sas7bdat",
+          "description": "The local unadjusted US EPS summary candidate is readable with TICKER, STATPERS, MEASURE, FPI and NUMEST, but it does not demonstrate the author-prepared PERMNO/DATE/NUM_FORECAST contract or a supported identifier mapping. It is not the same variable family as a GPS substitution.",
+          "evidence_ids": [
+            "src_sas_ibes",
+            "cat_ibes_candidate",
+            "ibes_probe"
+          ],
+          "expected_fields": [
+            "TICKER",
+            "STATPERS",
+            "MEASURE",
+            "FPI",
+            "NUMEST"
+          ],
+          "expected_period": "Candidate observations start in an unverified history; the author input is filtered to 1993 onward."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "crsp_stocknames",
+      "kind": "data",
+      "description": "CRSP stock-name effective history with PERMNO, ST_DATE and END_DATE. SAS sorts history, retains the first PERMNO start date, and joins an interval active on FILEDATE to derive company age.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_stocknames_local",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/stocknames.sas7bdat",
+          "description": "Exact catalog-listed table is locally readable in a bounded one-row probe with all source-read fields. The complete effective-date history and coverage for the 1996–2018 sample remain to be checked.",
+          "evidence_ids": [
+            "src_sas_stocknames",
+            "cat_crsp_candidates",
+            "stocknames_probe"
+          ],
+          "expected_fields": [
+            "PERMNO",
+            "ST_DATE",
+            "END_DATE"
+          ],
+          "expected_period": "Must include first available PERMNO date and effective-name intervals for the filing sample in 1996–2018."
+        }
+      ],
+      "outcome": "local_available"
+    }
+  ],
+  "software": [
+    {
+      "id": "python",
+      "name": "Python",
+      "status": "available",
+      "description": "Python 3.12.14 is available; the supplied code has separate legacy/API defects that need working-copy preparation.",
+      "evidence_ids": [
+        "env_probe",
+        "python_api_probe"
+      ]
+    },
+    {
+      "id": "perl",
+      "name": "Perl",
+      "status": "available",
+      "description": "Perl 5.40.1 is available; File::Find 1.44 and List::MoreUtils 0.430 with the required true import were verified.",
+      "evidence_ids": [
+        "perl_modules_probe"
+      ]
+    },
+    {
+      "id": "perl_html_strip",
+      "name": "Perl HTML::Strip module",
+      "status": "preparation_required",
+      "description": "The supplied Perl source imports HTML::Strip, which was not available in the checked Perl environment.",
+      "evidence_ids": [
+        "src_perl_inputs",
+        "perl_modules_probe"
+      ]
+    },
+    {
+      "id": "sas",
+      "name": "SAS Base 9.4",
+      "status": "unverified",
+      "description": "The source requires SAS DATA steps, PROC SQL, SORT, MEANS and UNIVARIATE. SAS 9.4 startup did not complete because TKELS initialization failed; runtime availability remains unverified. PROC UNIVARIATE alone does not establish a SAS/STAT dependency.",
+      "evidence_ids": [
+        "src_sas_import",
+        "env_probe"
+      ]
+    },
+    {
+      "id": "sas_connect",
+      "name": "SAS/CONNECT",
+      "status": "unverified",
+      "description": "The supplied merge program uses SIGNON, RSUBMIT, PROC UPLOAD and PROC DOWNLOAD to query WRDS; the component and remote entitlement were not verified.",
+      "evidence_ids": [
+        "src_sas_crsp_pm5",
+        "src_sas_tfn_dsi",
+        "sas_connect_doc",
+        "env_probe"
+      ]
+    },
+    {
+      "id": "sas_pc_files",
+      "name": "SAS PC Files Interface for Stata export",
+      "status": "unverified",
+      "description": "The source exports with PROC EXPORT DBMS=STATA. The SAS PC Files documentation describes this format, but component entitlement is not verified.",
+      "evidence_ids": [
+        "src_sas_macro_export",
+        "sas_stata_export_doc",
+        "sas_pcfiles_license_doc"
+      ]
+    },
+    {
+      "id": "sas_enterprise_gui",
+      "name": "SAS Enterprise manual import interface",
+      "status": "unverified",
+      "description": "The author specifies importing Perl results.txt into rawd.results using SAS Enterprise; availability of that GUI/import interface was not checked.",
+      "evidence_ids": [
+        "src_sas_import"
+      ]
+    },
+    {
+      "id": "stata",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 is available in the frozen environment probe.",
+      "evidence_ids": [
+        "env_probe"
+      ]
+    },
+    {
+      "id": "winsor",
+      "name": "winsor",
+      "status": "available",
+      "description": "The exact winsor command invoked by the analysis is available in Stata 18.",
+      "evidence_ids": [
+        "src_stata_winsor",
+        "winsor_probe"
+      ]
+    },
+    {
+      "id": "eststo",
+      "name": "eststo",
+      "status": "available",
+      "description": "The exact eststo command is available in Stata 18; checked with a self-written software probe.",
+      "evidence_ids": [
+        "src_stata_estout",
+        "eststo_probe"
+      ]
+    },
+    {
+      "id": "estpost",
+      "name": "estpost",
+      "status": "available",
+      "description": "The exact estpost command is available in Stata 18 per the frozen environment probe.",
+      "evidence_ids": [
+        "src_stata_estout",
+        "env_probe"
+      ]
+    },
+    {
+      "id": "estadd",
+      "name": "estadd",
+      "status": "available",
+      "description": "The exact estadd command is available in Stata 18 per the frozen environment probe.",
+      "evidence_ids": [
+        "src_stata_estout",
+        "env_probe"
+      ]
+    },
+    {
+      "id": "esttab",
+      "name": "esttab",
+      "status": "available",
+      "description": "The exact esttab command is available in Stata 18 per the frozen environment probe.",
+      "evidence_ids": [
+        "src_stata_estout",
+        "env_probe"
+      ]
+    },
+    {
+      "id": "reghdfe",
+      "name": "reghdfe",
+      "status": "available",
+      "description": "reghdfe 6.12.3 is available; the source invokes it for the fixed-effects regressions.",
+      "evidence_ids": [
+        "env_probe",
+        "src_stata_industry_models"
+      ]
+    },
+    {
+      "id": "ftools",
+      "name": "ftools",
+      "status": "available",
+      "description": "ftools 2.49.1 is available in the frozen environment and is a dependency of the invoked reghdfe package.",
+      "evidence_ids": [
+        "env_probe",
+        "src_stata_industry_models"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "workflow_handoffs",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "cross_language_paths_and_manual_import",
+      "description": "The full target crosses PDF-embedded Python helpers, Perl, a manual SAS Enterprise import, SAS data libraries/export and Stata. Author paths are Windows/Dropbox-specific. The handoff must preserve the Perl pipe schema, rawd.results, all SAS inputs and the master.dta producer/consumer order.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "src_overview",
+        "src_python_parameters",
+        "src_perl_inputs",
+        "src_sas_import",
+        "src_sas_macro_export",
+        "src_stata_input_sample",
+        "src_stata_output_path"
+      ]
+    },
+    {
+      "id": "form_and_period_config",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "downloader_target_configuration",
+      "description": "The active downloader sets PARM_FORMS to 10-K and PARM_BGNYEAR/PARM_ENDYEAR to 2018/1996; its ascending range is empty. The downstream SAS selector and Stata sample support configuring the working copy for SC 13D and inclusive years 1996–2018.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "src_python_parameters",
+        "src_python_year_loop",
+        "src_python_form_list",
+        "src_sas_sec",
+        "src_stata_input_sample",
+        "sec_schedule_forms"
+      ]
+    },
+    {
+      "id": "python_api_compatibility",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "python_compatibility",
+      "description": "The Python program calls time.clock(), which is absent in the available Python 3.12 runtime; the companion helper also calls misspelled time.strfime() in its retry-error path. These are working-copy compatibility fixes, not a need to alter the PDFs.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "src_python_clock",
+        "src_python_master_index",
+        "src_python_typo",
+        "python_api_probe"
+      ]
+    },
+    {
+      "id": "perl_html_strip_setup",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_perl_module",
+      "description": "HTML::Strip is imported by the Perl parser but was not found in the checked environment; File::Find and List::MoreUtils are available.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "src_perl_inputs",
+        "perl_modules_probe"
+      ]
+    },
+    {
+      "id": "sas_component_status",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "sas_runtime_and_component_verification",
+      "description": "SAS startup failed at TKELS, and availability of SAS/CONNECT, the SAS PC Files interface for DBMS=STATA and the author-described SAS Enterprise manual import interface is unverified. These findings do not establish a missing license.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "env_probe",
+        "src_sas_import",
+        "src_sas_crsp_pm5",
+        "src_sas_macro_export",
+        "sas_connect_doc",
+        "sas_pcfiles_license_doc"
+      ]
+    },
+    {
+      "id": "sec_analytics_contract",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "custom_sec_analytics_input_contract",
+      "description": "SEC_Analytics_Jordan is an exact author-named SAS input whose full field list, product lineage, filename convention, history/coverage and relation to local WRDSSEC candidates are unspecified. Raw filings and SEC_ITEM_SCORES are not proven substitutes.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src_sas_sec",
+        "cat_sec_candidate"
+      ]
+    },
+    {
+      "id": "compcrsp_contract",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "custom_compustat_crsp_input_producer",
+      "description": "The supplied SAS source consumes compcrsp_merged_jan2019 but does not provide its producer or complete CIK/year/GVKEY/PERMNO/SIC/CUSIP field, linking and coverage contract. COMP.FUNDA is a raw annual candidate, not a demonstrated replacement.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src_sas_comp",
+        "cat_comp_candidate",
+        "comp_funda_probe"
+      ]
+    },
+    {
+      "id": "tfn_access_history",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "tfn_readability_and_period",
+      "description": "TFN.S34 has a catalog-listed matching schema, but the exact bounded read timed out; local availability and coverage from 1993 through the filing quarters remain unverified.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src_sas_tfn_dsi",
+        "cat_tfn_candidate",
+        "tfn_probe"
+      ]
+    },
+    {
+      "id": "ibes_input_contract",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "ibes_prepared_input_mapping",
+      "description": "The author expects eps_consensus_unadjusted_1994 with DATE, PERMNO and NUM_FORECAST. The local unadjusted EPS summary candidate instead exposes TICKER, STATPERS and NUMEST; no mapping or equivalence is supplied.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src_sas_ibes",
+        "cat_ibes_candidate",
+        "ibes_probe"
+      ]
+    },
+    {
+      "id": "stata_input_field_provenance",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "stata_input_fields_without_supplied_producer",
+      "description": "The Stata program uses flesch_reading_ease and ind_corporate, and its industry regressions use ind_code1 through ind_code12. No producer for these fields is present in the supplied Perl/SAS code; SAS creates only scalar ind_code. A prepared input may supply them, but that contract is unknown.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src_stata_readability",
+        "src_stata_ind_corporate",
+        "src_stata_industry_models",
+        "src_stata_industry_12",
+        "src_sas_industry_start",
+        "src_sas_industry_end"
+      ]
+    },
+    {
+      "id": "table6_manual_recipe",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unprovided_manual_table_branch",
+      "description": "The Stata source says Table 6 is created manually but provides no recipe, input contract or validation checks. The supplied code alone cannot close the full documented table target.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "src_table6"
+      ]
+    },
+    {
+      "id": "pdf_program_extraction",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "embedded_program_working_copies",
+      "description": "Programs are embedded in PDFs rather than supplied as standalone runnable files. Extract working copies from all Python, Perl, SAS and Stata program PDFs and verify page-wrap-sensitive statements before any separately authorized run.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "src_datasheet",
+        "src_python_dependencies",
+        "src_perl_inputs",
+        "src_sas_import",
+        "src_stata_input_sample"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "src_overview",
+      "kind": "source",
+      "description": "Overview documents the four-stage order: SEC filing download, Perl textual analysis, manual SAS import/merge, and Stata analysis.",
+      "file": "_0_Overview.pdf",
+      "line_begin": 15,
+      "line_end": 42,
+      "quote": "14   STEP 1:             Download 13D filings from the SEC's EDGAR\n15   Relevant files:     All files with the prefix \"_1_\"\n16   Relevant programs: Python\n17   Description:        Use Python to execute these files. This will download all 13D\n     filings from the SEC to the defined local drive. Before executing the download, all\n     files with the prefix \"_1_\" should be stored in the same local directory. Note that\n     this code is adapted from the Loughran-McDonald data website (\n     https://sraf.nd.edu/textual-analysis/resources/).\n18\n19   STEP 2:             Perform textual analysis on the 13D filings.\n20   Relevant files:     _2_Perl_Textual_Analysis\n21   Relevant programs: Perl\n22   Description:        Use Perl to execute this file. This file produces a pipe-delimited\n     data set that identifies whether a 13D contains a shareholder contract and the other\n     linguistic attributes of the filings.\n23\n24   STEP 3:             Collect and merge additional data from CRSP, Compustat, Factset,\n     I/B/E/S, and the SEC.\n25   Relevant files:     _3_SAS_Merge_Data\n26   Relevant programs: SAS\n27   Description:        After importing the pipe-delimited data set from Step 2 into SAS,\n     this file merges in the other data. The data are then exported to Stata format.\n28\n29   STEP 4:              Conduct main statistical analyses in Stata and produce the tables.\n30   Relevant files:      _4_Stata_Create_Tables\n31   Relevant programs:   Stata\n32   Description:         This file creates variables and produces the main tables as denoted\n     in the code."
+    },
+    {
+      "id": "src_datasheet",
+      "kind": "source",
+      "description": "Datasheet names the Python, Perl, SAS and Stata stages and describes the identifiers file as filing IDs and dates.",
+      "file": "Schoenfeld Datasheet.pdf",
+      "line_begin": 54,
+      "line_end": 88,
+      "quote": "The code files included in the zip folder on the JAR website are described in detail below.\nFollowing these steps will download the data and generate the datasets.\n\nSTEP 1:               Download 13D filings from the SEC's EDGAR\nRelevant files:       All files with the prefix \"_1_\"\nRelevant programs: Python\nDescription:          Use Python to execute these files. This will download all 13D filings from\nthe SEC to the defined local drive. Before executing the download, all files with the prefix \"_1_\"\nshould be stored in the same local directory. Note that this code is adapted from the Loughran-\nMcDonald data website (https://sraf.nd.edu/textual-analysis/resources/).\n\nSTEP 2:                Perform textual analysis on the 13D filings.\nRelevant files:        _2_Perl_Textual_Analysis\nRelevant programs: Perl\nDescription:           Use Perl to execute this file. This file produces a pipe-delimited data set that\nidentifies whether a 13D contains a shareholder contract and the other linguistic attributes of the\nfilings.\n\nSTEP 3:               Collect and merge additional data from CRSP, Compustat, Factset, I/B/E/S,\nand the SEC.\nRelevant files:       _3_SAS_Merge_Data\nRelevant programs: SAS\nDescription:          After importing the pipe-delimited data set from Step 2 into SAS, this file\nmerges in the other data. The data are then exported to Stata format.\n\nSTEP 4:                Conduct main statistical analyses in Stata and produce the tables.\nRelevant files:        _4_Stata_Create_Tables\nRelevant programs:     Stata\nDescription:           This file creates variables and produces the main tables as denoted in the\ncode.\n\nSTEP 5:                Identifiers\nRelevant files:        _5_Identifiers\nDescription:           This file provides the ID of each observation based on the 13D file name as\nit was stored on the SEC's EDGAR server, accompanied by the 13D's filing date."
+    },
+    {
+      "id": "src_python_dependencies",
+      "kind": "source",
+      "description": "Python downloader requires the three companion modules in the same local module directory.",
+      "file": "_1_EDGAR_DownloadForms.pdf",
+      "line_begin": 6,
+      "line_end": 20,
+      "quote": " 6       Dependencies (i.e., modules you must already have downloaded)\n 7         EDGAR_Forms.py\n 8         EDGAR_Pac.py\n 9         General_Utilities.py\n10   \"\"\"\n11\n12   import os\n13   import time\n14   import sys\n15   # Modify the following statement to identify the path for local modules\n16   sys.path.append('[redacted-path-62918bd1529e]')\n17   # Since these imports are dynamically mapped your IDE might flag an error...it's OK\n18   import EDGAR_Forms # This module contains some predefined form groups\n19   import EDGAR_Pac\n20   import General_Utilities"
+    },
+    {
+      "id": "src_python_parameters",
+      "kind": "source",
+      "description": "Active Python configuration manually selects 10-K, sets begin year 2018/end year 1996, and writes to a Windows path.",
+      "file": "_1_EDGAR_DownloadForms.pdf",
+      "line_begin": 55,
+      "line_end": 72,
+      "quote": "53   # List target forms as strings separated by commas (case sensitive) or\n54   #   load from EDGAR_Forms. (See EDGAR_Forms module for predefined lists.)\n55\n56   # Use this one if you want to read in from EDGAR_Forms\n57   # PARM_FORMS = EDGAR_Forms.f_10X # or, for example, PARM_FORMS = ['8-K', '8-K/A']\n58\n59   # Use this to specify forms manually.. PARM_FORMS = ['8-K', '8-K/A']\n60   PARM_FORMS = ['10-K']\n61\n62   PARM_BGNYEAR = 2018 # User selected bgn period. Earliest available is 1994\n63   PARM_ENDYEAR = 1996 # User selected end period.\n64   PARM_BGNQTR = 1 # Beginning quarter of each year\n\n 65   PARM_ENDQTR = 4 # Ending quarter of each year\n 66   # Path where you will store the downloaded files\n 67   PARM_PATH = r'[redacted-path-8b91f3a1098f]'\n 68   # Change the file pointer below to reflect your location for the log file\n 69   #    (directory must already exist)"
+    },
+    {
+      "id": "src_python_year_loop",
+      "kind": "source",
+      "description": "Downloader iterates the ascending Python range from PARM_BGNYEAR through PARM_ENDYEAR and calls the master-index helper.",
+      "file": "_1_EDGAR_DownloadForms.pdf",
+      "line_begin": 86,
+      "line_end": 103,
+      "quote": " 83      # Download each year/quarter master.idx and save record for requested forms\n 84      f_log = open(PARM_LOGFILE, 'a')\n 85      f_log.write('BEGIN LOOPS: {0}\\n'.format(time.strftime('%c')))\n 86      n_tot = 0\n 87      n_errs = 0\n 88      for year in range(PARM_BGNYEAR, PARM_ENDYEAR + 1):\n 89          for qtr in range(PARM_BGNQTR, PARM_ENDQTR + 1):\n 90              startloop = time.clock()\n 91              n_qtr = 0\n 92              file_count = {}\n 93              # Setup output path\n 94              path = '{0}{1}\\\\QTR{2}\\\\'.format(PARM_PATH, str(year), str(qtr))\n 95              if not os.path.exists(path):\n 96                  os.makedirs(path)\n 97                  print('Path: {0} created'.format(path))\n 98              masterindex = EDGAR_Pac.download_masterindex(year, qtr, True)\n 99              if masterindex:\n100                  for item in masterindex:"
+    },
+    {
+      "id": "src_python_clock",
+      "kind": "source",
+      "description": "Downloader calls time.clock() for elapsed-loop timing.",
+      "file": "_1_EDGAR_DownloadForms.pdf",
+      "line_begin": 88,
+      "line_end": 94,
+      "quote": " 85      f_log.write('BEGIN LOOPS: {0}\\n'.format(time.strftime('%c')))\n 86      n_tot = 0\n 87      n_errs = 0\n 88      for year in range(PARM_BGNYEAR, PARM_ENDYEAR + 1):\n 89          for qtr in range(PARM_BGNQTR, PARM_ENDQTR + 1):\n 90              startloop = time.clock()\n 91              n_qtr = 0"
+    },
+    {
+      "id": "src_python_form_list",
+      "kind": "source",
+      "description": "Companion form module defines f_13D as 13-D, but the active downloader configuration does not select it.",
+      "file": "_1_EDGAR_Forms.pdf",
+      "line_begin": 1,
+      "line_end": 8,
+      "quote": "1   #![redacted-path-b33191bde1e5]\n2   \"\"\"\n3       Define SEC form strings\n4   \"\"\"\n5\n6   f_13D = ['13-D']\n7\n"
+    },
+    {
+      "id": "src_python_master_index",
+      "kind": "source",
+      "description": "Master-index helper uses SEC Archives full-index quarterly master.zip URLs and time.clock().",
+      "file": "_1_EDGAR_Pac.pdf",
+      "line_begin": 23,
+      "line_end": 33,
+      "quote": "23      PARM_ROOT_PATH = 'https://www.sec.gov/Archives/edgar/full-index/'\n24\n25      start = time.clock() # Note: using clock time not CPU\n26      masterindex = []\n27      # using the zip file is a little more complicated but orders of magnitude faster\n28      append_path = str(year) + '/QTR' + str(qtr) + '/master.zip' # /master.idx =>\n        nonzip version\n29      sec_url = PARM_ROOT_PATH + append_path\n30\n31       for i in range(1, number_of_tries + 1):\n32           try:"
+    },
+    {
+      "id": "src_python_typo",
+      "kind": "source",
+      "description": "Downloader exception path calls the misspelled time.strfime function before retry handling.",
+      "file": "_1_EDGAR_Pac.pdf",
+      "line_begin": 41,
+      "line_end": 48,
+      "quote": "38               if i == 1:\n39                    print('\\nError in download_masterindex')\n40               print(' {0}. _url: {1}'.format(i, sec_url))\n41\n42              print(' Warning: {0} [{1}]'.format(str(exc), time.strfime('%c')))\n43              if '404' in str(exc):\n44                  break\n45              if i == number_of_tries:"
+    },
+    {
+      "id": "src_python_download_helpers",
+      "kind": "source",
+      "description": "General utility downloads SEC resources with urlretrieve and logs retry errors.",
+      "file": "_1_General_Utilities.pdf",
+      "line_begin": 14,
+      "line_end": 30,
+      "quote": "14   def download_to_file(_url, _fname, _f_log=None):\n15       # download file from 'url' and write to '_fname'\n16       # Loop accounts for temporary server/ISP issues\n17\n18      number_of_tries = 10\n19      sleep_time = 10 # Note sleep time accumulates according to err\n20\n21      for i in range(1, number_of_tries + 1):\n22          try:\n23              urlretrieve(_url, _fname)\n24              return\n25          except Exception as exc:\n26              if i == 1:\n27                  print('\\n==>urlretrieve error in download_to_file.py')\n28              print(' {0}. _url: {1}'.format(i, _url))\n29              print('     _fname: {0}'.format(_fname))\n30              print('     Warning: {0} [{1}]'.format(str(exc), time.strftime('%c')))"
+    },
+    {
+      "id": "src_python_urlopen",
+      "kind": "source",
+      "description": "General utility also uses urlopen to retrieve and decode document content.",
+      "file": "_1_General_Utilities.pdf",
+      "line_begin": 49,
+      "line_end": 69,
+      "quote": "49   def download_to_doc(_url, _f_log=None):\n50       # Download url content to string doc\n51       # Loop accounts for temporary server/ISP issues\n52\n53      number_of_tries = 10\n54      sleep_time = 5 # Note sleep time is cumulative over loop\n55\n56      for i in range(1, number_of_tries + 1):\n57          try:\n58              doc = urlopen(_url).read().decode('utf-8', errors='ignore')\n59              return\n60          except Exception as exc:\n61              if i == 1:\n62                  print('\\n==>urlopen error in download_to_doc.py')\n63              print(' {0}. _url: {1}'.format(i, _url))\n64              print('     Warning: {0} [{1}]'.format(str(exc), time.strftime('%c')))\n65              if '404' in str(exc):\n66                  break\n\n67              print('     Retry in {0} seconds'.format(sleep_time))\n68              time.sleep(sleep_time)"
+    },
+    {
+      "id": "src_perl_inputs",
+      "kind": "source",
+      "description": "Perl imports File::Find, HTML::Strip and List::MoreUtils; hard-coded roots define filing input, file list and results output.",
+      "file": "_2_Perl_Textual_Analysis.pdf",
+      "line_begin": 9,
+      "line_end": 27,
+      "quote": " 7\n 8   # First create list of all files in subdirectories;\n 9   use File::Find;\n10   use HTML::Strip;\n11   use List::MoreUtils 'true';\n12\n13   # This is the directory where I want to look for all the 13D files.;\n14   my $localdir = '[redacted-path-d495162b2e01]';\n15\n16   # This is where I store the list of file names in the $localdir.;\n17   my $filelist = '[redacted-path-8c5b7279b6ca]';\n18\n19   # This is where I put the results.;\n20   my $resultfile = '[redacted-path-cdc3918cbda7]';\n21\n22   # Now parse through all the individual files using the locations in the text file I\n     made above;\n23   # FILE2 is where I write the results to. This will wipe out whatever is in FILE2.;\n24   open FILE2, \">\", $resultfile or die$!;"
+    },
+    {
+      "id": "src_perl_header",
+      "kind": "source",
+      "description": "Perl writes a pipe-delimited results header containing filename, file type, filing metadata and text/contract measures.",
+      "file": "_2_Perl_Textual_Analysis.pdf",
+      "line_begin": 25,
+      "line_end": 45,
+      "quote": "     made above;\n23   # FILE2 is where I write the results to. This will wipe out whatever is in FILE2.;\n24   open FILE2, \">\", $resultfile or die$!;\n25   # Print column headings;\n26   print FILE2\n     \"filename|filetype|doccount|target_cik|target_name|target_city|target_state|target_zip|ta\n     rget_cusip|target_cusip2|filer_cik|filer_name|filer_city|filer_state|filer_zip|lines|word\n     s|chars|filedate|conformdate|dateofchange|investor_agreement|investment_contract|stockhol\n     der_contract|cooperation|rights|exchange|covenant|investor_contract|any_agreement|contrac\n     t|support_agreement|investment_agreement|stockholder_agreement|merger|acquisition|tender|\n     tender_offer|shelf|block_size|compensation|exec_compensation|salary|source_sc|source_bk|s\n     ource_af|source_wc|source_pf|source_oo|reporting_type_bd|reporting_type_bk|reporting_type\n     _ic|reporting_type_iv|reporting_type_ia|reporting_type_ep|reporting_type_hc|reporting_typ\n     e_sa|reporting_type_cp|reporting_type_co|reporting_type_pn|reporting_type_in|reporting_ty\n     pe_oo|fcovenant|acovenant|ncovenant|info_confidential|info_confidentiality|info_informati\n     onrights|info_accessandinfo|info_accesstoinfo|info_accesstodocs|info_visitinspect|info_co\n     mmunication|info_communicate|info_communicationacct|info_nda|info_fullaccess|info_books|i\n     nvestment_purpose|shareholder_contract|roa|roe|net_income|earnings|revenue|sales|cash_flo\n     w|interest_coverage|interest|net_worth|debt|leverage|current_ratio|debt_to_equity|assets|\n     debt_to_cash_flow|ebit|ebitda|debt_service|book_value|shareholder_agreement|dividend|payo\n     ut|distribut\\n\";"
+    },
+    {
+      "id": "src_perl_result",
+      "kind": "source",
+      "description": "Perl writes the parsed filing and contract variables as pipe-delimited records to results.txt.",
+      "file": "_2_Perl_Textual_Analysis.pdf",
+      "line_begin": 1070,
+      "line_end": 1090,
+      "quote": "855   print FILE2 \"$filename|$item_info|$doccount|$cik_num|$item_info2|$item_info4|\n      $item_info6|$item_info8|$item_info10|$item_info11|$cik_num_filer|$item_info3|\n\n             $item_info5|$item_info7|$item_info9|$lines|$words|$charsadjusted|$filedate|\n             $conformdate|$dateofchange|$agreement|$investment_contract|$stockholder_contract\n             |$cooperation|$rights|$exchange|$covenant|$investor_contract|$any_agreement|\n             $contract|$support_agreement|$investment_agreement|$stockholder_agreement|\n             $merger|$acquisition|$tender|$tender_offer|$shelf|$percent_extract|$compensation\n             |$exec_compensation|$salary|$source_sc|$source_bk|$source_af|$source_wc|\n             $source_pf|$source_oo|$reporting_type_bd|$reporting_type_bk|$reporting_type_ic|\n             $reporting_type_iv|$reporting_type_ia|$reporting_type_ep|$reporting_type_hc|\n             $reporting_type_sa|$reporting_type_cp|$reporting_type_co|$reporting_type_pn|\n             $reporting_type_in|$reporting_type_oo|$fcovenant|$acovenant|$ncovenant|\n             $info_confidential|$info_confidentiality|$info_informationrights|\n             $info_accessandinfo|$info_accesstoinfo|$info_accesstodocs|$info_visitinspect|\n             $info_communication|$info_communicate|$info_communicationacct|$info_nda|\n             $info_fullaccess|$info_books|$investment_purpose|$shareholder_contract|$roa|$roe\n             |$net_income|$earnings|$revenue|$sales|$cash_flow|$interest_coverage|$interest|\n             $net_worth|$debt|$leverage|$current_ratio|$debt_to_equity|$assets|\n             $debt_to_cash_flow|$ebit|$ebitda|$debt_service|$book_value|\n             $shareholder_agreement|$dividend|$payout|$distribut\\n\";"
+    },
+    {
+      "id": "src_sas_import",
+      "kind": "source",
+      "description": "SAS librefs use a Windows project directory; the program expects manual SAS Enterprise import of Perl results.txt as rawd.results.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 7,
+      "line_end": 18,
+      "quote": " 6   libname rawd '[redacted-path-ea528f54aafe]';\n 7   libname homed '[redacted-path-ea528f54aafe]';\n 8\n 9   *****;\n10   * Import results.txt from the Perl output in the previous data step using SAS\n     Enterprise.;\n11   *****;\n12\n13   * Clean up data from Perl.;\n14   data results2;\n15       set rawd.results;\n16       id = _N_;"
+    },
+    {
+      "id": "src_sas_sec",
+      "kind": "source",
+      "description": "SAS filters SEC_Analytics_Jordan to form exactly SC 13D and links to Perl output through a normalized filename suffix.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 45,
+      "line_end": 68,
+      "quote": "40   * Start with SEC Analytics Suite as a base.;\n41   data secanalytics;\n42       set homed.SEC_Analytics_Jordan;\n43       * CIK in Compustat is numeric. Make it a char so it can be matched with SeekEdgar.;\n44       cik_num = input(cik,12.);\n45       cik_char = left(put(cik_num,$12.));\n46       * Only keep 13-D;\n47       if form ^= \"SC 13D\" then delete;\n48       * Get last digits for the file name since we will match by filename with the\n         Perl-based dataset.;\n49       new_filename = tranwrd(SECFNAME, \".txt\", \"\");\n50       filename2 = substr(new_filename, length(new_filename)-19);\n51       year = year(fdate);\n52   run;\n53\n54   * Merge perl results to SEC analytics by the filename.;\n55   proc sql;\n56       create table master_merged as\n57       select distinct a.*, b.*\n58       from secanalytics as a\n59       left join results2 as b\n60       on (a.filename2 = b.filename2);\n\n 61   quit;"
+    },
+    {
+      "id": "src_sas_comp",
+      "kind": "source",
+      "description": "SAS expects compcrsp_merged_jan2019, creates year from DATADATE and joins on CIK/year.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 75,
+      "line_end": 92,
+      "quote": " 68   * Prepare Compustat for merge.;\n 69   data compustat;\n 70       set homed.compcrsp_merged_jan2019;\n 71       year = year(datadate);\n 72       cik_num = input(cik,12.);\n 73       cik_char = left(put(cik_num,$12.));\n 74       comp_fdate = fdate;\n 75       drop fdate;\n 76   run;\n 77\n 78   * Merge in Compustat by CIK/year.;\n 79   proc sql;\n 80       create table master_merged3 as\n 81       select distinct a.*, b.*\n 82       from master_merged_2 as a\n 83       left join compustat as b\n 84       on (a.cik = b.cik) and (a.year = b.year);\n 85   quit;"
+    },
+    {
+      "id": "src_sas_crsp_pm5",
+      "kind": "source",
+      "description": "Remote CRSP.DSF query calculates firm measures in the filing-date weekday window from −5 to +5.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 169,
+      "line_end": 185,
+      "quote": "161   * Get firm measures from [-5, +5] around filedate;\n162   proc sql;\n163       create table for_crsp_firm_annc_pm5 as\n164       select a.id,\n165           EXP(sum(log(1+b.RET)))-1 as firmreturns_pm5,\n166           AVG((ask-bid)/((ask+bid)/2)) as firmspread_pm5,\n167           AVG(abs(prc)*abs(shrout*1000)) as firmvalue_pm5,\n168           AVG((abs(ret)/abs(vol*prc))*1000000) as firmamihud_pm5,\n169           AVG(abs(vol)) as firmvolume_pm5,\n170           AVG(abs(vol)/abs(shrout*1000)) as firmturnover_pm5,\n171           SQRT(VAR(b.RET)) as firmretsd_pm5\n172       from for_crsp as a\n173       left join crsp.dsf as b\n174       on (a.lpermno = b.permno and b.date <= intnx('weekday',a.fdate,+5) and b.date >=\n          intnx('weekday',a.fdate,-5))\n175       group by a.id;\n176   quit;"
+    },
+    {
+      "id": "src_sas_crsp_m365",
+      "kind": "source",
+      "description": "Remote CRSP.DSF query calculates firm measures from 365 calendar days before filing up to but excluding five weekdays before filing.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 187,
+      "line_end": 204,
+      "quote": "178   * Get firm measures from [-365, -5] around filedate;\n179   proc sql;\n180       create table for_crsp_firm_annc_m365 as\n181       select a.id,\n182           EXP(sum(log(1+b.RET)))-1 as firmreturns_m365,\n183           AVG((ask-bid)/((ask+bid)/2)) as firmspread_m365,\n184           AVG(abs(prc)*abs(shrout*1000)) as firmvalue_m365,\n185           AVG((abs(ret)/abs(vol*prc))*1000000) as firmamihud_m365,\n186           AVG(abs(vol)) as firmvolume_m365,\n187           AVG(abs(vol)/abs(shrout*1000)) as firmturnover_m365,\n188           SQRT(VAR(b.RET)) as firmretsd_m365\n189       from for_crsp as a\n190       left join crsp.dsf as b\n191       on (a.lpermno = b.permno and b.date < intnx('weekday',a.fdate,-5) and b.date >=\n\n          intnx('day',a.fdate,-365))\n192       group by a.id;\n193   quit;"
+    },
+    {
+      "id": "src_sas_tfn_dsi",
+      "kind": "source",
+      "description": "SAS consumes TFN.S34 fields CUSIP/RDATE/SHARES/SHROUT1 from 1993 onward and CRSP.DSI VWRETD/EWRETD around the filing date.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 210,
+      "line_end": 245,
+      "quote": "199   * Get firm-level institutional holdings data;\n200   data s34_2;\n201       set tfn.s34 (keep = cusip rdate shares shrout1);\n202       if year(rdate) < 1993 then delete;\n203       if missing(cusip) then delete;\n204       if missing(shrout1) then delete;\n205       if shrout1 = 0 then shrout1 = 1000000;\n206       if missing(shares) then delete;\n207       shares_pct = shares/(shrout1*1000000);\n208       cusip6 = substr(cusip, 1, 6);\n209       yearq = (year(rdate)*10)+qtr(rdate);\n210   run;\n211\n212   proc sql;\n213       create table iiholdings as\n214       select cusip6, yearq, sum(shares_pct) as ii_shares_pct\n215       from s34_2\n216       group by cusip6, yearq;\n217   quit;\n218\n219   proc download data = iiholdings out = homed.iiholdings; quit;\n220   * End firm-level institutional holdings data;\n221\n222   * Get value-weighted returns;\n223   proc sql;\n224       create table for_crsp_vwew_annc_pm5 as\n225       select a.id,\n226           EXP(sum(log(1+b.VWRETD)))-1 as vwreturns_filedate_pm5,\n227           EXP(sum(log(1+b.EWRETD)))-1 as ewreturns_filedate_pm5\n228       from for_crsp as a\n229       left join crsp.dsi as b\n230       on (b.date <= intnx('weekday',a.fdate,+5) and b.date >= intnx('weekday',a.fdate,-5))\n231       group by a.id;\n232   quit;\n233\n234   proc download data = for_crsp_vwew_annc_pm5 out = for_crsp_vwew_annc_pm5; quit;"
+    },
+    {
+      "id": "src_sas_industry_start",
+      "kind": "source",
+      "description": "SAS industry construction assigns a scalar ind_code value.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 284,
+      "line_end": 286,
+      "quote": "272            if sic ge    0100 and sic le  0999    then ind_code=1;\n273            if sic ge    2000 and sic le  2399    then ind_code=1;\n274            if sic ge    2700 and sic le  2749    then ind_code=1;"
+    },
+    {
+      "id": "src_sas_industry_end",
+      "kind": "source",
+      "description": "SAS completes the industry classifier as ind_code=12; it does not create ind_code1 through ind_code12.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 354,
+      "line_end": 357,
+      "quote": "341\n342   *12 Other Other -- Mines, Constr, BldMt, Trans, Hotels, Bus Serv, Entertainment;\n343            if sic > .    and ind_code = .    then ind_code=12;\n344   run;"
+    },
+    {
+      "id": "src_sas_ibes",
+      "kind": "source",
+      "description": "SAS expects prepared eps_consensus_unadjusted_1994 with DATE/PERMNO/NUM_FORECAST, aggregates by PERMNO/year-quarter, then joins to the filing quarter.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 380,
+      "line_end": 425,
+      "quote": "367   * Merge in analyst following data;\n368   libname ibes '[redacted-path-ea528f54aafe]';\n369   * Create yearq avg;\n370   data ibes2;\n371       set ibes.eps_consensus_unadjusted_1994;\n372       if year(date) < 1993 then delete;\n373       yearq = (year(date)*10)+qtr(date);\n374       if missing(permno) then delete;\n375   run;\n376\n377   proc univariate data=ibes2 freq;\n378      var yearq;\n379   run;\n380\n381   proc sql;\n382       create table ibes3 as\n383       select permno, yearq, avg(num_forecast) as analyst_following\n384       from ibes2 as a\n385       group by permno, yearq;\n386   quit;\n387\n388   data results8;\n\n389       set results7;\n390       ibes_filedate_yearq = filedate_yearq;\n391       format ibes_filedate_yearq date9.;\n392       if missing(ii_shares_pct) = 1 then ii_shares_pct = 0;\n393   run;\n394\n395   proc univariate data=results8 freq;\n396      var filedate_yearq;\n397   run;\n398\n399   proc univariate data=results8 freq;\n400      var ibes_filedate_yearq;\n401   run;\n402\n403   * Merge analyst following to main data set;\n404   proc sql;\n405       create table results9 as\n406       select a.*,\n407           b.analyst_following\n408       from results8 as a\n409       left join ibes3 as b\n410       on (a.lpermno = b.permno and a.ibes_filedate_yearq = b.yearq);\n411   quit;"
+    },
+    {
+      "id": "src_sas_stocknames",
+      "kind": "source",
+      "description": "SAS consumes CRSP stocknames history, keeps the first PERMNO date and joins an active name interval to FILEDATE.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 472,
+      "line_end": 487,
+      "quote": "453   * Pull date when firm first appeared on CRSP to get company age;\n454   libname crspsk \"[redacted-path-ea528f54aafe]\";\n455   proc sort data = crspsk.stocknames; by permno st_date; run;\n456   data stocknames2;\n457       set crspsk.stocknames;\n458       by permno st_date;\n459       if first.permno ^= 1 then delete;\n460   run;\n461\n462   proc sql;\n463       create table results15 as\n464       select distinct a.*, b.st_date\n465       from results11 as a\n466       left join stocknames2 as b\n467       on (a.lpermno = b.permno) and (b.st_date <= a.filedate <= b.end_date);\n468   quit;"
+    },
+    {
+      "id": "src_sas_macro_export",
+      "kind": "source",
+      "description": "SAS macro reads variable names from the master dataset and lowercases them; SAS exports homed.master as a Stata file.",
+      "file": "_3_SAS_Merge_Data.pdf",
+      "line_begin": 493,
+      "line_end": 520,
+      "quote": "474   * Make all variable names lowercase;\n475   options mprint;\n476   %macro lowcase(dsn);\n477        %let dsid=%sysfunc(open(&dsn));\n478        %let num=%sysfunc(attrn(&dsid,nvars));\n479        %put &num;\n480        data &dsn;\n481              set &dsn(rename=(\n482           %do i = 1 %to &num;\n483           %let var&i=%sysfunc(varname(&dsid,&i));      /*function of varname returns the\n              name of a SAS data set variable*/\n484           &&var&i=%sysfunc(lowcase(&&var&i))         /*rename all variables*/\n485           %end;));\n486           %let close=%sysfunc(close(&dsid));\n487     run;\n488   %mend lowcase;\n489\n490   %lowcase(master)\n491\n492   data homed.master;\n493       set master;\n494   run;\n495\n496   * Master Stata file;\n497   PROC EXPORT DATA=homed.master\n498               OUTFILE= \"[redacted-path-67de41fd124e]\"\n499               DBMS=STATA REPLACE;\n500   RUN;"
+    },
+    {
+      "id": "src_stata_input_sample",
+      "kind": "source",
+      "description": "Stata reads the SAS-exported master.dta and restricts filing dates to 1996–2018.",
+      "file": "_4_Stata_Create_Tables.pdf",
+      "line_begin": 8,
+      "line_end": 16,
+      "quote": " 7   * Import the data set that was exported at the end of the SAS file in the previous step.\n 8   use \"[redacted-path-67de41fd124e]\", clear\n 9\n10   * Create variables for sample from 1996 to 2018\n11   gen fdate_year = year(fdate)\n12   drop if fdate_year < 1996\n13   drop if fdate_year > 2018\n14\n15   gen log_at = log(1+at)"
+    },
+    {
+      "id": "src_stata_winsor",
+      "kind": "source",
+      "description": "Stata invokes winsor and constructs the downstream cash-flow measure.",
+      "file": "_4_Stata_Create_Tables.pdf",
+      "line_begin": 29,
+      "line_end": 37,
+      "quote": "28   gen abn_returns_pm5 = firmreturns_pm5 - vwreturns_filedate_pm5\n29   label variable abn_returns_pm5 \"[-5, +5] Abn. Returns\\varend\"\n30\n31   winsor abn_returns_pm5, gen(Wabn_returns_pm5) p(.01)\n32   label variable Wabn_returns_pm5 \"[-5, +5] Abn. Returns\\varend\"\n33\n34   egen cashflows = rowtotal(fincf ivncf oancf)\n35   gen net_cashflows = cashflows/at\n36   label variable net_cashflows \"Net Cash Flows\\varend\""
+    },
+    {
+      "id": "src_stata_readability",
+      "kind": "source",
+      "description": "Stata Table 5 directly reads flesch_reading_ease, which has no producer in the supplied Perl/SAS programs.",
+      "file": "_4_Stata_Create_Tables.pdf",
+      "line_begin": 316,
+      "line_end": 320,
+      "quote": "294   * TABLE 5: Linguistic measure of contract complexity\n295   mean flesch_reading_ease\n296   mean flesch_reading_ease if iagreement == 1\n297   mean flesch_reading_ease if corporate == 1 & iagreement == 1\n298   mean flesch_reading_ease if noncorporate2 == 1 & iagreement == 1"
+    },
+    {
+      "id": "src_stata_ind_corporate",
+      "kind": "source",
+      "description": "Stata Table 5 groups by ind_corporate, a field not generated by the supplied Stata/SAS source.",
+      "file": "_4_Stata_Create_Tables.pdf",
+      "line_begin": 372,
+      "line_end": 375,
+      "quote": "342   eststo diff: quietly estpost ttest ///\n343       $acctwords if missing(ind_corporate) != 1 & iagreement == 1, by(ind_corporate)\n          unequal\n344   esttab all iagreement corpiagreement actiagreement diff using \"$saveto\\acctword.tex\", ///"
+    },
+    {
+      "id": "src_stata_industry_models",
+      "kind": "source",
+      "description": "Stata industry regressions consume ind_code1 and other indicator fields.",
+      "file": "_4_Stata_Create_Tables.pdf",
+      "line_begin": 417,
+      "line_end": 421,
+      "quote": "371   eststo clear\n372   eststo ind1: reg iagreement ind_code1 corporate Wlog_zip_distance\n      missing_log_zip_distance Wlog_firmretsd_m365 ii_holdings Wlog_analyst_following\n      $controls_used, robust absorb(raw_year)\n373   estadd local othervar \"Y\""
+    },
+    {
+      "id": "src_stata_industry_12",
+      "kind": "source",
+      "description": "Stata includes industry models and output ordering through ind_code12.",
+      "file": "_4_Stata_Create_Tables.pdf",
+      "line_begin": 496,
+      "line_end": 512,
+      "quote": "427   eststo ind12: reg iagreement ind_code12 corporate Wlog_zip_distance\n      missing_log_zip_distance Wlog_firmretsd_m365 ii_holdings Wlog_analyst_following\n      $controls_used, robust absorb(raw_year)\n428   estadd local othervar \"Y\"\n429   estadd local yfixed \"Y\"\n430   estadd local industryfe \"N\"\n431\n432   esttab ind1 ind2 ind3 ind4 ind5 ind6 ind7 ind8 ind9 ind10 ind11 ind12 using\n      \"$saveto\\regressions_industry.tex\", ///\n433       nonotes stats(othervar yfixed N r2, label(\"\\tabledeterminants~Variables Included\"\n          \"Year-Fixed Effects\" \"Observations\" \"\\$R^2$\") fmt(0 0 %20.0fc 2)) label replace\n          t(2) b(3) se star(* 0.10 ** 0.05 *** 0.01) booktabs noconstant collabels(none)\n          eqlabels(none) mlabels(none) ///\n434       drop(_cons corporate Wlog_zip_distance missing_log_zip_distance Wlog_firmretsd_m365\n          ii_holdings Wlog_analyst_following $controls_used) ///\n435       order(ind_code1 ind_code2 ind_code3 ind_code4 ind_code5 ind_code6 ind_code7\n          ind_code8 ind_code9 ind_code10 ind_code11 ind_code12) ///"
+    },
+    {
+      "id": "src_stata_output_path",
+      "kind": "source",
+      "description": "Stata saves tables to a hard-coded ShareLaTeX/Dropbox path.",
+      "file": "_4_Stata_Create_Tables.pdf",
+      "line_begin": 322,
+      "line_end": 325,
+      "quote": "300   * Define path to where tables are saved\n301   global saveto \"[redacted-path-3e998148a461]\n      Contracts\\investoragreements\\tables\"\n302"
+    },
+    {
+      "id": "src_table6",
+      "kind": "source",
+      "description": "Stata source says Table 6 is created manually and supplies no recipe.",
+      "file": "_4_Stata_Create_Tables.pdf",
+      "line_begin": 529,
+      "line_end": 531,
+      "quote": "451   * Ending notes: Table 5 tables are produced above. Table 6 is created manually.\n452\n453   * End of code"
+    },
+    {
+      "id": "env_probe",
+      "kind": "probe",
+      "description": "Frozen environment probe: Stata 18 and Python 3.12.14 available; SAS startup did not establish runtime readiness (TKELS initialization failure).",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "python_api_probe",
+      "kind": "probe",
+      "description": "Self-written Python API check: time.clock and time.strfime absent; time.perf_counter present; no author code or data were read.",
+      "artifact_path": "probes/python_api_probe.json",
+      "sha256": "921417b493983890ab41d963bba07343e6f328af750d5e63e1c22498013617b4"
+    },
+    {
+      "id": "perl_modules_probe",
+      "kind": "probe",
+      "description": "Perl 5.40.1, File::Find and List::MoreUtils true import work; HTML::Strip is missing; no author code or data were run.",
+      "artifact_path": "probes/perl_modules_probe.json",
+      "sha256": "41cd40e040075b2ea828c121e9cc8a2e1ba8a2ac0b51348f2fab5ff3d508af95"
+    },
+    {
+      "id": "winsor_probe",
+      "kind": "probe",
+      "description": "Exact Stata winsor command was found in Stata 18 using the frozen software helper.",
+      "artifact_path": "probes/software_winsor.json",
+      "sha256": "381b151e2633aa249f2fa977cc04df947e55e9aaeb6355168f380c7738451a93"
+    },
+    {
+      "id": "identifier_inventory",
+      "kind": "inspection",
+      "description": "Streaming SHA/count and bounded first/last samples: 26,486 cached lines of filing IDs and dates; not analysis data.",
+      "artifact_path": "probes/identifier_inventory.json",
+      "sha256": "e3c0c95830a721339b8f3d4ea5687badacde897a0347054b0c945b84d5dbda3f"
+    },
+    {
+      "id": "sec_raw_probe",
+      "kind": "probe",
+      "description": "Approved exact-path check confirms the local raw SEC directory exists; no file listing, coverage or readability check was performed.",
+      "artifact_path": "probes/sec_raw.json",
+      "sha256": "d1172fa41e466d4954f3f181ec6bacd8d137011946d1f4fc544088b34a37161e"
+    },
+    {
+      "id": "sec_parsed_probe",
+      "kind": "probe",
+      "description": "Approved exact-path check confirms the local parsed SEC directory exists; no file listing, coverage or readability check was performed.",
+      "artifact_path": "probes/sec_parsed.json",
+      "sha256": "80560775555ef4a6206744cf1f5cc7dab99af0d8abb29f2900de063f1f204302"
+    },
+    {
+      "id": "lm10x_probe",
+      "kind": "probe",
+      "description": "Approved exact-path check confirms ${ACCTREPL_LM10X}/2018 exists; no listing or coverage check was performed, and the catalog describes this as cleaned 10-X.",
+      "artifact_path": "probes/lm10x_2018.json",
+      "sha256": "23bdb78c3621270ede3ad1b380c0a90e5c3002ddfc1e7040db6ee7776b89406b"
+    },
+    {
+      "id": "crsp_dsf_probe",
+      "kind": "probe",
+      "description": "One-row bounded CRSP.DSF read was successful with PERMNO, DATE, PRC, VOL, RET, BID, ASK and SHROUT; history/population coverage is unverified.",
+      "artifact_path": "probes/crsp_dsf.json",
+      "sha256": "d27387742db0f097854c5ed82a8c67bcacac44ff36109893e5b318b00546cb3b"
+    },
+    {
+      "id": "crsp_dsi_probe",
+      "kind": "probe",
+      "description": "One-row bounded CRSP.DSI read was successful with DATE, VWRETD and EWRETD; history/population coverage is unverified.",
+      "artifact_path": "probes/crsp_dsi.json",
+      "sha256": "16f5d0091484ff2433899cb36a7a23e974ee94f5f208859b3c5e2a1ef1b02b77"
+    },
+    {
+      "id": "stocknames_probe",
+      "kind": "probe",
+      "description": "One-row bounded CRSP.STOCKNAMES read was successful with PERMNO, ST_DATE and END_DATE; full history coverage is unverified.",
+      "artifact_path": "probes/crsp_stocknames.json",
+      "sha256": "689f90bfb7f25c5da3e47035c8cad068352d524577f5bb30dcf50a78018d0da9"
+    },
+    {
+      "id": "tfn_probe",
+      "kind": "probe",
+      "description": "Exact TFN.S34 bounded probe timed out; the result is unverified and does not show missing data or an absent license.",
+      "artifact_path": "probes/tfn_s34.json",
+      "sha256": "169b5bbe35f04f960da31a136f09a579b1c9f40b319142fc69c1be48811b93c5"
+    },
+    {
+      "id": "comp_funda_probe",
+      "kind": "probe",
+      "description": "One-row bounded COMP.FUNDA read was successful with requested annual fundamentals fields; it is not the author-named Compustat/CRSP merged input.",
+      "artifact_path": "probes/comp_funda.json",
+      "sha256": "2739c7e71afdc2c0fdcc93311d5caed4c31e62a504e611ccbc82745aa6791668"
+    },
+    {
+      "id": "ibes_probe",
+      "kind": "probe",
+      "description": "One-row bounded IBES.STATSUMU_EPSUS read was successful with TICKER/STATPERS/MEASURE/FPI/NUMEST; it does not demonstrate the author-specific PERMNO/NUM_FORECAST extract.",
+      "artifact_path": "probes/ibes_statsumu_epsus.json",
+      "sha256": "60c17128e1b83c53c15f4496ee6a25a4b967ef3243bba16131eeebfa477eb96a"
+    },
+    {
+      "id": "cat_sec_candidate",
+      "kind": "catalog",
+      "description": "Catalog identifies WRDSSEC.SEC_ITEM_SCORES with CIK, FORM, SECFNAME and FDATE metadata; candidate only, not demonstrated compatible with SEC_Analytics_Jordan.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "cat_comp_candidate",
+      "kind": "catalog",
+      "description": "Catalog identifies COMP.FUNDA as annual Compustat fundamentals; candidate only, not the author-named compcrsp_merged_jan2019 preparation.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "cat_crsp_candidates",
+      "kind": "catalog",
+      "description": "Catalog identifies CRSP.DSF, CRSP.DSI and CRSP.STOCKNAMES with the fields used by the SAS workflow.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "cat_tfn_candidate",
+      "kind": "catalog",
+      "description": "Catalog identifies TFN.S34 (Thomson-Reuters 13F holdings) with CUSIP, RDATE, SHARES and SHROUT1.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "cat_ibes_candidate",
+      "kind": "catalog",
+      "description": "Catalog identifies IBES.STATSUMU_EPSUS as unadjusted US EPS summary statistics with TICKER, STATPERS and NUMEST; it is not proven to contain PERMNO or the author variable NUM_FORECAST.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "sec_access_public",
+      "kind": "public",
+      "description": "SEC EDGAR public access is free; the official page states the maximum request rate and separately provides access conditions including an identifying User-Agent.",
+      "url": "https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data",
+      "checked_at": "2026-11-08",
+      "quote": "Anyone can access and download this information for free … Current max request rate: 10 requests/second.",
+      "authority": "official"
+    },
+    {
+      "id": "sec_schedule_forms",
+      "kind": "public",
+      "description": "SEC Filer Manual form list distinguishes Schedule 13D submissions from amendments; the supplied SAS filter retains SC 13D only.",
+      "url": "https://www.sec.gov/files/edgar/filermanual/edgarfm-vol2-v70.pdf",
+      "checked_at": "2026-11-08",
+      "quote": "SC 13D, SC 13D/A",
+      "authority": "official"
+    },
+    {
+      "id": "sas_stata_export_doc",
+      "kind": "public",
+      "description": "SAS PC Files documentation lists Stata format export syntax used by the supplied PROC EXPORT.",
+      "url": "https://support.sas.com/documentation/cdl/en/acpcref/63184/HTML/default/a003103776.htm",
+      "checked_at": "2026-11-08",
+      "quote": "DBMS=STATA REPLACE",
+      "authority": "official"
+    },
+    {
+      "id": "sas_pcfiles_license_doc",
+      "kind": "public",
+      "description": "SAS documentation ties the Stata export format to SAS PC Files licensing; actual entitlement is unknown.",
+      "url": "https://support.sas.com/documentation/cdl/en/acpcref/63184/HTML/default/a003102702.htm",
+      "checked_at": "2026-11-08",
+      "quote": "If you do not have a license, only delimited files and JMP are supported.",
+      "authority": "official"
+    },
+    {
+      "id": "sas_connect_doc",
+      "kind": "public",
+      "description": "SAS/CONNECT documentation includes the SIGNON statement used by the supplied program; component availability is unverified.",
+      "url": "https://documentation.sas.com/api/docsets/connref/9.4/content/connref.pdf?locale=en",
+      "checked_at": "2026-11-08",
+      "quote": "SIGNON Statement",
+      "authority": "official"
+    },
+    {
+      "id": "src_stata_estout",
+      "kind": "source",
+      "description": "Stata source invokes eststo, estpost, estadd and esttab for its descriptive statistics and table outputs.",
+      "file": "_4_Stata_Create_Tables.pdf",
+      "line_begin": 327,
+      "line_end": 352,
+      "quote": "304   eststo clear\n305\n306   global descriptives \"iagreement Wlog_zip_distance missing_log_zip_distance\n      Wlog_firmretsd_m365 ii_holdings Wlog_analyst_following $controls_used\"\n307\n308   * TABLE 1, Panel A: n, means, s.d., and test for differences in descriptive statistics\n309   eststo all: quietly estpost summarize ///\n310       $descriptives\n\n311   eststo iagreement: quietly estpost summarize ///\n312       $descriptives if iagreement == 1\n313\n314   eststo corporate: quietly estpost summarize ///\n315       $descriptives if corporate == 1\n316   eststo corporatei: quietly estpost summarize ///\n317       $descriptives if iagreement == 1 & corporate == 1\n318\n319   eststo noncorporate2: quietly estpost summarize ///\n320       $descriptives if noncorporate2 == 1\n321   eststo noncorporate2i: quietly estpost summarize ///\n322       $descriptives if iagreement == 1 & noncorporate2 == 1\n323\n324   eststo diff: quietly estpost ttest ///\n325       $descriptives, by(iagreement) unequal\n326\n327   esttab all iagreement corporate corporatei noncorporate2 noncorporate2i using"
+    },
+    {
+      "id": "eststo_probe",
+      "kind": "probe",
+      "description": "Exact Stata eststo command check succeeded in Stata 18 using the frozen software helper.",
+      "artifact_path": "probes/software_eststo.json",
+      "sha256": "e9d9f88303f24e09e5c8c441694a299828118fa721c7bda8e6f2787765ff7e28"
+    }
+  ],
+  "dependency_review": [],
+  "actions": [
+    {
+      "id": "a_working_copy_paths",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "workflow_handoffs",
+        "pdf_program_extraction"
+      ],
+      "kind": "configuration",
+      "description": "Extract the embedded programs to working copies and configure a single relative execution root that preserves every producer and consumer directory. Do not edit the source PDFs.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "src_datasheet",
+        "src_python_dependencies",
+        "src_perl_inputs",
+        "src_sas_import",
+        "src_sas_macro_export",
+        "src_stata_input_sample",
+        "src_stata_output_path"
+      ],
+      "edits": [],
+      "steps": [
+        "Use a runtime working directory of ./replication_work and create code/python, code/perl, code/sas, code/stata, data/edgar, logs, intermediate/perl, sasdata/rawd, sasdata/homed, sasdata/ibes, sasdata/crspsk, stata and stata/tables beneath it.",
+        "Extract the _1_ Python driver and all three helpers into code/python together; extract the Perl, SAS and Stata programs from their PDF containers to their respective code directories, checking page wraps and statement boundaries.",
+        "Point PARM_PATH and the Perl recursive input root at data/edgar; put Perl filelist.txt and results.txt under intermediate/perl. Preserve the parser header and pipe delimiter.",
+        "Import intermediate/perl/results.txt manually in SAS Enterprise as rawd.results under sasdata/rawd. Set homed, ibes and crspsk to the corresponding sasdata subdirectories while preserving the exact SEC_Analytics_Jordan, compcrsp_merged_jan2019, EPS and stocknames table names.",
+        "Set SAS PROC EXPORT output to stata/master.dta; set the Stata use path to the same file and its table-output global to stata/tables. Keep the source remote CRSP/TFN branch and all other merge steps until a compatible input route is verified."
+      ],
+      "validation": [
+        "Before any separately authorized run, verify each configured directory is visible and writable from the SAS and Stata batch processes.",
+        "After Perl output is produced, compare the pipe header and record structure with the manual SAS import variables; verify rawd.results is the imported producer table.",
+        "After SAS export, verify master.dta exists at the Stata consumer path and contains all expected upstream columns before running Stata."
+      ]
+    },
+    {
+      "id": "a_form_period_config",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "form_and_period_config",
+        "sec_13d_filings"
+      ],
+      "kind": "configuration",
+      "description": "Configure the extracted downloader for the exact form and sample that the supplied SAS and Stata branch retains. Set the start year before the end year because the author loop is ascending and inclusive.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "src_python_parameters",
+        "src_python_year_loop",
+        "src_python_form_list",
+        "src_sas_sec",
+        "src_stata_input_sample",
+        "sec_schedule_forms",
+        "sec_access_public"
+      ],
+      "edits": [],
+      "steps": [
+        "In the extracted working copy, set PARM_FORMS to the exact EDGAR form string SC 13D, PARM_BGNYEAR to 1996 and PARM_ENDYEAR to 2018; retain the inclusive end-year loop and do not select SC 13D/A, which the downstream SAS filter deletes.",
+        "Keep the four-quarter annual loop and point its form/year output under data/edgar. Do not rely on the inactive EDGAR_Forms.f_13D alternative.",
+        "Configure an identifying User-Agent for SEC requests and keep request pacing within the SEC published maximum rate."
+      ],
+      "validation": [
+        "Review generated master-index selections for form SC 13D and years 1996–2018 before filing downloads.",
+        "Compare downloaded filing names with the suffix normalization used to build filename2 in SAS; verify SC 13D/A is not included in the retained SAS sample."
+      ]
+    },
+    {
+      "id": "a_python_compatibility",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "python_api_compatibility",
+        "python"
+      ],
+      "kind": "data_preparation",
+      "description": "Make the Python code compatible with the verified runtime by repairing only timing and logging API calls in extracted working copies.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "src_python_clock",
+        "src_python_master_index",
+        "src_python_typo",
+        "python_api_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "In extracted _1_EDGAR_DownloadForms and _1_EDGAR_Pac working copies, replace each elapsed-duration use of time.clock() with time.perf_counter(); keep the surrounding timing logic intact.",
+        "In the _1_EDGAR_Pac exception handler, correct the misspelled time.strfime() call to time.strftime() so the retry path can log errors.",
+        "Leave the PDF originals unchanged and preserve the download/filter logic."
+      ],
+      "validation": [
+        "Use a self-written Python 3.12 syntax and API check on extracted helper copies; confirm timing and error-log function names resolve without importing author modules.",
+        "After a later authorized run, exercise normal logging and a controlled non-network exception path; do not download files during preparation."
+      ]
+    },
+    {
+      "id": "a_html_strip_setup",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "perl_html_strip_setup",
+        "perl_html_strip"
+      ],
+      "kind": "software_setup",
+      "description": "Provide the HTML::Strip module required by the Perl parser in the selected Perl 5.40.1 environment.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "src_perl_inputs",
+        "perl_modules_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "Install HTML::Strip through the approved Perl environment/package channel, or configure PERL5LIB to an already-approved compatible module location. Do not replace the parser HTML stripping behavior.",
+        "Keep the verified File::Find and List::MoreUtils dependencies in the same Perl environment."
+      ],
+      "validation": [
+        "Run an isolated Perl module require/version check for HTML::Strip and the two existing modules; do not execute the author parser."
+      ]
+    },
+    {
+      "id": "a_sas_components",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sas_component_status",
+        "sas",
+        "sas_connect",
+        "sas_pc_files",
+        "sas_enterprise_gui"
+      ],
+      "kind": "software_setup",
+      "description": "Establish the SAS runtime and each component used by the manual import, remote merge and Stata export stages. Current probes are unverified, not evidence of an absent license.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "env_probe",
+        "src_sas_import",
+        "src_sas_crsp_pm5",
+        "src_sas_tfn_dsi",
+        "src_sas_macro_export",
+        "sas_connect_doc",
+        "sas_stata_export_doc",
+        "sas_pcfiles_license_doc"
+      ],
+      "edits": [],
+      "steps": [
+        "Resolve the observed TKELS startup failure or otherwise verify the installed SAS 9.4 batch runtime with the Base SAS procedures in the supplied source.",
+        "Confirm SAS/CONNECT availability and WRDS access for SIGNON, RSUBMIT, UPLOAD and DOWNLOAD, including the expected interactive credential handoff.",
+        "Confirm the licensed SAS PC Files Interface supports DBMS=STATA export and that the author-described SAS Enterprise manual import interface is available for the pipe-delimited results.txt handoff."
+      ],
+      "validation": [
+        "Before running author code, verify SAS startup in the intended batch environment and confirm each required component through product documentation or local entitlement records.",
+        "Use a small authorized-format check only after the runtime is established; do not execute the author merge or export during this assessment."
+      ]
+    },
+    {
+      "id": "a_sec_acquisition",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sec_13d_filings"
+      ],
+      "kind": "data_acquisition",
+      "description": "Acquire only the public filing text needed for the configured SC 13D, 1996–2018 branch and place it in the configured Perl input tree.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "src_python_master_index",
+        "src_python_download_helpers",
+        "src_perl_inputs",
+        "sec_access_public",
+        "sec_schedule_forms"
+      ],
+      "edits": [],
+      "steps": [
+        "Use SEC EDGAR full-index records for SC 13D in 1996–2018 and retrieve the corresponding filing text; preserve the SEC accession/file suffix used by the Perl-to-SAS filename2 link.",
+        "Use a descriptive User-Agent and comply with the published request limit. The existing local SEC roots may be checked later for coverage, but directory existence alone is not a filing corpus."
+      ],
+      "validation": [
+        "Check form and year bounds against index metadata and verify document readability and filename compatibility before Perl parsing.",
+        "Confirm the downstream SAS exact-form filter retains the intended records and report linkage coverage; do not broaden to amendments without a separate supplied target."
+      ]
+    },
+    {
+      "id": "a_sec_analytics_contract",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sec_analytics_jordan",
+        "sec_analytics_contract"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the exact author-prepared SEC Analytics input and its linkage contract before the SAS merge.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src_sas_sec",
+        "src_perl_header",
+        "src_perl_result",
+        "cat_sec_candidate"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain SEC_Analytics_Jordan or its documented product, format, full schema, identifier and filename rules, and 1996–2018 coverage. Preserve CIK, FORM, SECFNAME and FDATE plus any fields required downstream.",
+        "Confirm how SECFNAME and the Perl filename are normalized to filename2 and which records are in scope under the exact SC 13D filter.",
+        "Treat WRDSSEC.SEC_ITEM_SCORES as a catalog candidate only; shared metadata columns do not establish equal population, additional fields or equivalence. Raw SEC filings do not supply this linkage table by themselves."
+      ],
+      "validation": [
+        "After authorized receipt or access, compare full schema and coverage with SAS reads and report matched/unmatched filenames and duplicate keys before analysis."
+      ]
+    },
+    {
+      "id": "a_compcrsp_contract",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "compcrsp_merged",
+        "compcrsp_contract"
+      ],
+      "kind": "clarification",
+      "description": "Recover the author-specific Compustat and CRSP merged input contract instead of substituting a raw fundamentals table.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src_sas_comp",
+        "cat_comp_candidate",
+        "comp_funda_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain compcrsp_merged_jan2019 or its documented producer, source products, merge keys and variable construction. Confirm CIK/year matching and required fields such as GVKEY, DATADATE, LPERMNO, SIC, CUSIP and the downstream annual controls.",
+        "Preserve the source distinction between computed calendar YEAR from DATADATE and Compustat FYEAR; do not infer a fiscal-year alias.",
+        "Treat COMP.FUNDA as a raw annual candidate only; the bounded probe does not supply the author combined link file or establish history."
+      ],
+      "validation": [
+        "After authorized input availability, compare field types, join keys, duplicate behavior and coverage for filing years 1996–2018 against the supplied SAS consumer."
+      ]
+    },
+    {
+      "id": "a_crsp_route",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "crsp_dsf",
+        "crsp_dsi",
+        "crsp_stocknames"
+      ],
+      "kind": "data_preparation",
+      "description": "Configure the actual CRSP tables with the supplied measures and date windows. The exact local tables are readable, but the current measure queries execute inside a remote SAS/CONNECT session.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src_sas_crsp_pm5",
+        "src_sas_crsp_m365",
+        "src_sas_tfn_dsi",
+        "src_sas_stocknames",
+        "cat_crsp_candidates",
+        "crsp_dsf_probe",
+        "crsp_dsi_probe",
+        "stocknames_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "Either verify the existing WRDS remote CRSP route or, if authorized, place the same supplied SQL against the exact readable local CRSP.DSF and CRSP.DSI candidates; preserve all measures, joins and date predicates.",
+        "Use CRSP.STOCKNAMES with PERMNO, ST_DATE and END_DATE and retain the supplied first-date and active-interval logic.",
+        "Confirm that the data cover every 1996–2018 filing, CRSP.DSF has at least 365 calendar days before and five weekdays after each filing date, and CRSP.DSI has the required plus/minus five weekday event window."
+      ],
+      "validation": [
+        "With authorized inputs, compare requested columns and types and verify coverage/history for the analysis sample; do not treat one-row probe ranges as full-history evidence."
+      ]
+    },
+    {
+      "id": "a_tfn_access",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "tfn_s34",
+        "tfn_access_history"
+      ],
+      "kind": "data_preparation",
+      "description": "Verify and configure the catalog-listed TFN.S34 table for the supplied field, date and quarter construction.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src_sas_tfn_dsi",
+        "cat_tfn_candidate",
+        "tfn_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "The catalog lists TFN.S34 with CUSIP, RDATE, SHARES and SHROUT1, but the bounded read timed out. Recheck only this exact approved catalog table through a bounded metadata/readability probe or use the supplied remote WRDS route if available.",
+        "Preserve the supplied missing-value handling, CUSIP6 construction, 1993 date filter, year-quarter aggregation and match to filing quarter. Do not widen the target or replace the product."
+      ],
+      "validation": [
+        "Verify table readability, exact field types and required 1993-through-2018 filing-quarter coverage using authorized metadata/coverage checks before execution."
+      ]
+    },
+    {
+      "id": "a_ibes_contract",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ibes_eps_consensus",
+        "ibes_input_contract"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the author-prepared I/B/E/S consensus input and its PERMNO and NUM_FORECAST mapping.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src_sas_ibes",
+        "cat_ibes_candidate",
+        "ibes_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain eps_consensus_unadjusted_1994 or its producer and confirm DATE, PERMNO and NUM_FORECAST fields, measure family and coverage from 1993 onward.",
+        "If using IBES.STATSUMU_EPSUS as a candidate, obtain documented identifier mapping and variable derivation for TICKER, STATPERS and NUMEST to the author DATE, PERMNO and NUM_FORECAST contract; do not guess NUMEST is an alias or substitute a GPS series.",
+        "Preserve the supplied quarter construction and average NUM_FORECAST by PERMNO/year-quarter."
+      ],
+      "validation": [
+        "Compare prepared fields, identifiers and quarter aggregation to the SAS consumer, then verify the 1993–2018 history needed by the filing sample."
+      ]
+    },
+    {
+      "id": "a_stata_fields",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "stata_input_field_provenance"
+      ],
+      "kind": "clarification",
+      "description": "Identify the producer for Stata fields consumed but not generated by the delivered programs.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src_stata_readability",
+        "src_stata_ind_corporate",
+        "src_stata_industry_models",
+        "src_stata_industry_12",
+        "src_sas_industry_start",
+        "src_sas_industry_end"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm whether the intended master input supplies flesch_reading_ease, ind_corporate and ind_code1 through ind_code12, and provide their documented producer, definitions and source columns.",
+        "The supplied SAS creates scalar ind_code and the supplied Stata source creates corporate; do not infer that either is equivalent to the missing fields or manufacture indicators."
+      ],
+      "validation": [
+        "After the documented producer or input is available, compare the exported master.dta schema to every Stata field reference before executing the tables."
+      ]
+    },
+    {
+      "id": "a_table6_recipe",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "table6_manual_recipe"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the author manual Table 6 procedure and required inputs to close the full documented table target.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "src_table6",
+        "src_overview"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the manual Table 6 recipe, source fields and inputs, transformations, table layout and verification checks.",
+        "Do not infer the table construction from the paper or substitute a new analysis."
+      ],
+      "validation": [
+        "Compare the provided recipe and input contract with the supplied master data and confirm Table 6 checks before claiming full table coverage."
+      ]
+    },
+    {
+      "id": "a_run_sequence",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "workflow_handoffs"
+      ],
+      "kind": "run_procedure",
+      "description": "After the required inputs, code working copies, paths and software are prepared, run the author workflow in its actual cross-language order.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "src_overview",
+        "src_datasheet",
+        "src_perl_header",
+        "src_sas_import",
+        "src_sas_macro_export",
+        "src_stata_input_sample",
+        "src_table6"
+      ],
+      "edits": [],
+      "steps": [
+        "From ./replication_work, run the extracted Python downloader and produce the configured SEC filing tree.",
+        "Run the extracted Perl parser against that tree and produce intermediate/perl/results.txt.",
+        "Manually import results.txt in SAS Enterprise as rawd.results, then run the supplied SAS merges, including the WRDS branch and all source inputs, and export stata/master.dta.",
+        "Run the extracted Stata program against stata/master.dta and save supplied tables under stata/tables. Complete Table 6 only after its manual recipe is supplied."
+      ],
+      "validation": [
+        "At each handoff, verify producer file, schema, key variables, expected period and consumer path before advancing.",
+        "Record software versions, manual import settings, record/linkage counts and unresolved rows; execution remains unverified until performed under separate authorization."
+      ]
+    }
+  ],
+  "review_notes": [
+    "The frozen dependency checklist is empty and the static audit reports no supported code. The actual PDF-embedded programs were traced directly; code-derived inputs and handoffs are recorded here rather than treating parser silence as closure.",
+    "The 26,486-line identifiers PDF is a filing-ID/date list only. It is not a prepared analysis dataset and does not justify an analysis_only scope.",
+    "FactSet is named in documentation but no supplied SAS input read for FactSet was found. Audit Analytics appears only as a Stata cross-check comment; neither is added as a live input requirement.",
+    "The SAS local-data probes are one-row readability/field checks only. They do not establish historical coverage or author-specific prepared dataset equivalence.",
+    "Source references use the work item cached text line ranges; program code is embedded in PDF containers and is not directly executable.",
+    "The existing local CRSP one-row probes verify table readability and required columns, not full event/history coverage. Their locations can support a local route only after configuring the supplied queries appropriately; current code places the source queries inside SAS/CONNECT RSUBMIT.",
+    "The SEC filing target follows the explicit SAS SC 13D selector. The companion 13-D constant is inactive, and the SAS branch excludes SC 13D/A by exact form matching; no amendment-scope clarification is required for this supplied branch.",
+    "The SEC form/year configuration is a routine working-copy choice supported by the downstream exact SC 13D filter and inclusive 1996–2018 sample. The code current 2018-to-1996 ascending range is empty; no descending-loop rewrite is proposed.",
+    "Actions that mention code changes apply only to extracted working copies; no PDF or author code was modified or executed. No data were downloaded and no packages were installed.",
+    "The complete source closure is not established because SEC_Analytics_Jordan and compcrsp_merged_jan2019 have no supplied producers/contracts, TFN and I/B/E/S routes remain unresolved, Stata has unproduced field references, and Table 6 is manual.",
+    "SAS/STAT is not listed as a separate dependency because the source uses PROC UNIVARIATE, which the frozen rules attribute to Base SAS.",
+    "Exact Stata software checks cover winsor, eststo, estpost, estadd, esttab, reghdfe and ftools; all are separated by the command keys used in the probes."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "53a8bf0526c0642828afa449e0acf6a061cc8b787a466a1b0586a41b4ab8928e",
+    "applied": false
+  }
+}

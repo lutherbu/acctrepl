@@ -1,0 +1,1883 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-3e9670be661e",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 64/Issue 1/70018 - Accounting-for-Cryptocurrencies/afms-datasheet-code-identifier-and-log-files.zip",
+        "sha256": "442f29e66fbca62ceee668908d2c024cf18058655e06f19dd71ddd1c8a0db481"
+      },
+      {
+        "path": "JAR-Volume 64/Issue 1/70018 - Accounting-for-Cryptocurrencies/afms-internet-appendix-20250731.pdf",
+        "sha256": "a1a929f1ff0cc734e3727f658fd3db57b9210064fa11cd99817accf8a93167f2"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "b44d1ab3b3d5f005fd9723448386ffc9b76b241e68a80d5269fd5d92afff49a5",
+    "work_item_sha256": "5eef960a33488d5ade6c1854e2111558a87c8fb70161c2102c1430b0c333aec0"
+  },
+  "title": "Accounting for Cryptocurrencies",
+  "doi": "10.1111/1475-679X.70018",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Author-documented keyword search, manual filing review and hand collection, Compustat/CRSP/Audit Analytics/I/B/E/S joins, cryptocurrency series construction, and Stata analyses.",
+      "entry_points": [
+        "Identify Crypto Mentions in XBRL.py",
+        "AFMS Accounting for Cryptocurrencies DO File.do"
+      ],
+      "requirement_ids": [
+        "R_SAMPLE_LIST",
+        "R_SEC_NOTES",
+        "R_SEC_FILINGS",
+        "R_COMP_FUNDQ_UNIVERSE",
+        "R_COMP_FUNDQ_MAIN",
+        "R_COMP_SIC_MAP",
+        "R_AA_OPINIONS",
+        "R_IBES_DETAIL",
+        "R_CRSP_RETURNS",
+        "R_CRSP_MARKET_INDEX",
+        "R_CUSIP_DATE_MAP",
+        "R_NONCRSP_STOCK_PRICES",
+        "R_CRYPTO_PRICE_VOLUME",
+        "R_COMBINED_ANALYSIS_DATA"
+      ],
+      "software_ids": [
+        "SW_PYTHON",
+        "SW_PANDAS",
+        "SW_NUMPY",
+        "SW_SWIFTER",
+        "SW_MULTIPROCESS",
+        "SW_STATA18",
+        "SW_RANGESTAT",
+        "SW_ASROL",
+        "SW_WINSOR2",
+        "SW_UNIVAR",
+        "SW_OUTREG2"
+      ],
+      "issue_ids": [
+        "I_HANDOFF",
+        "I_SOURCE_CLOSURE",
+        "I_COMP_SIC_MAPPING",
+        "I_AA_CURRENT_AUDITOR",
+        "I_CRSP_PRODUCERS",
+        "I_PANDAS_API"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_WORKFLOW_SEARCH",
+        "E_WORKFLOW_HANDCOLLECT",
+        "E_WORKFLOW_STATA",
+        "E_APPENDIX_PERIOD",
+        "E_DATASHEET_FILES",
+        "E_PACKAGE_INVENTORY"
+      ],
+      "execution_verified": false,
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_SAMPLE_LIST",
+      "kind": "data",
+      "description": "The final-sample firm-quarter CIK/date list used to select Compustat firm-quarters and align Audit Analytics, I/B/E/S and CRSP work.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_SAMPLE_LIST_PACKAGED",
+          "type": "packaged",
+          "status": "verified",
+          "location": "AFMS Final Sample CIKs and Datadate.xlsx",
+          "description": "The package contains the titled final-sample workbook; its bounded first-sheet probe reads cik and datadate. Staging it under the author import name CIK & datadate.xlsx is preparation. The one-row probe does not establish the full sample population independently.",
+          "expected_fields": [
+            "cik",
+            "datadate"
+          ],
+          "expected_period": "Final-sample CIK and fiscal-period dates; appendix reports full sample 2013Q4–2022Q4.",
+          "evidence_ids": [
+            "E_PACKAGE_INVENTORY",
+            "E_PACKAGE_SAMPLE_PROBE",
+            "E_SAMPLE_IMPORT",
+            "E_APPENDIX_PERIOD"
+          ]
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_SEC_NOTES",
+      "kind": "data",
+      "description": "Public SEC financial-statement and notes data used by the Python keyword search, including the text value field.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_SEC_NOTES_PUBLIC",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.sec.gov/data-research/sec-markets-data/financial-statement-notes-data-sets",
+          "description": "The official SEC source provides downloadable monthly text and numeric financial-statement/notes data; the guide documents a TXT text table with value. The published 2009–2026 window covers the study period, but ZIP-member normalization and local directory setup remain preparation.",
+          "expected_fields": [
+            "value"
+          ],
+          "expected_period": "Official page states January 2009–October 2026; author sample is 2013Q4–2022Q4.",
+          "evidence_ids": [
+            "E_SEC_NOTES_TEXT",
+            "E_SEC_NOTES_COVERAGE",
+            "E_SEC_NOTES_MONTHLY",
+            "E_SEC_TXT_FORMAT",
+            "E_SEC_TXT_VALUE"
+          ]
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_SEC_FILINGS",
+      "kind": "data",
+      "description": "SEC filing documents used for manual verification and hand collection after keyword hits are identified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_SEC_FILINGS_PUBLIC",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.sec.gov/files/aqfsn_1.pdf",
+          "description": "The SEC guide documents complete filing submissions in the EDGAR archive. Specific CIK/accession selection and the resulting hand-collected workbook content remain to be prepared from the final sample list.",
+          "expected_fields": [],
+          "expected_period": "Filing dates associated with the author sample; full analysis sample is 2013Q4–2022Q4.",
+          "evidence_ids": [
+            "E_SEC_ARCHIVE",
+            "E_WORKFLOW_HANDCOLLECT",
+            "E_APPENDIX_PERIOD"
+          ]
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_COMP_FUNDQ_UNIVERSE",
+      "kind": "data",
+      "description": "Quarterly Compustat universe records used to count firms by fiscal quarter and historical SIC2 for NFirms.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_COMP_FUNDQ_UNIVERSE",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.FUNDQ, with COMP.CO_INDUSTRY as a possible historical SIC supplement",
+          "description": "COMP.FUNDQ is catalog-listed and one-row readable, but its native schema lacks sic. COMP.CO_INDUSTRY has gvkey/datadate/sich; the historical SIC-to-quarter join and coverage needed to construct the author input are not established.",
+          "expected_fields": [
+            "datadate",
+            "sic"
+          ],
+          "expected_period": "Quarterly Compustat universe over the sample years, plus historical SIC classification by quarter.",
+          "evidence_ids": [
+            "E_COMP_FUNDQ_PROBE",
+            "E_COMP_FUNDQ_COMPARE_UNIVERSE",
+            "E_COMP_CO_INDUSTRY_PROBE",
+            "E_FUNDQ_UNIVERSE_INPUT",
+            "E_FUNDQ_NFIRMS_OUTPUT"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_COMP_FUNDQ_MAIN",
+      "kind": "data",
+      "description": "Quarterly Compustat fundamentals, identifiers and SIC used to match sample firm-quarters, calculate prior-quarter assets and create the firm-quarter handoff.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_COMP_FUNDQ_MAIN",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.FUNDQ, with historical SIC mapping to be resolved separately",
+          "description": "COMP.FUNDQ is readable and its comparison covers all requested fundamental fields except sic. The sample-aligned coverage and compatible SIC mapping into the author input are not established.",
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "cik",
+            "fyearq",
+            "tic",
+            "cusip",
+            "sic",
+            "atq",
+            "lctq",
+            "dlcq",
+            "dlttq",
+            "ltq",
+            "seqq",
+            "cshoq",
+            "prccq",
+            "ibq"
+          ],
+          "expected_period": "Firm-quarter observations matching the final-sample CIK/date list.",
+          "evidence_ids": [
+            "E_COMP_FUNDQ_PROBE",
+            "E_COMP_FUNDQ_COMPARE_MAIN",
+            "E_FUNDQ_MAIN_FIELDS"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_COMP_SIC_MAP",
+      "kind": "data",
+      "description": "Historical SIC classification needed by both Compustat input stages and the NFirms join.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_COMP_CO_INDUSTRY_SIC",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.CO_INDUSTRY (candidate historical classification product)",
+          "description": "The bounded probe shows gvkey, datadate and native historical SIC field sich. Exact mapping into the source sic field and the quarterly population/date selection have not been demonstrated.",
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "sich"
+          ],
+          "expected_period": "Historical SIC aligned to each Compustat firm-quarter used in the study.",
+          "evidence_ids": [
+            "E_COMP_CO_INDUSTRY_PROBE",
+            "E_FUNDQ_UNIVERSE_INPUT",
+            "E_FUNDQ_MAIN_FIELDS"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_AA_OPINIONS",
+      "kind": "data",
+      "description": "Audit Analytics opinion records needed to identify current auditor fields and merge audit information to the final sample by firm/fiscal year.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_AA_FEED34",
+          "type": "local",
+          "status": "unverified",
+          "location": "AUDIT.FEED34_REVISED_AUDIT_OPINIONS",
+          "description": "One-row metadata/readability is confirmed. The table has FISCAL_YEAR_END_OP and COMPANY_FKEY but not CURR_AUD_FKEY or CURR_AUD_NAME; its AUDITOR_FKEY/AUDITOR_NAME fields are not assumed to mean the source current-auditor fields without record/date semantics.",
+          "expected_fields": [
+            "FISCAL_YEAR_END_OP",
+            "COMPANY_FKEY",
+            "CURR_AUD_FKEY",
+            "CURR_AUD_NAME"
+          ],
+          "expected_period": "Audit opinions aligned to the final sample fiscal years; exact selection/effective dates remain unknown.",
+          "evidence_ids": [
+            "E_AA_PROBE",
+            "E_AA_COMPARE",
+            "E_AA_FIELDS",
+            "E_AA_YEAR_STAGE"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IBES_DETAIL",
+      "kind": "data",
+      "description": "US I/B/E/S detail history with actuals, used to select estimates and create analyst counts, estimate averages and actual EPS for each CUSIP/forecast period.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_IBES_DET_EPSUS",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/ibes/det_epsus.sas7bdat",
+          "description": "The selected US Detail History with Actuals product is readable and the full consumed-field comparison supports FPEDATS, CUSIP, ESTIMATOR, ACTDATS, ACTTIMS, VALUE, ACTUAL and ANNDATS_ACT. Native CUSIP capitalization is ordinary staging and the author code already normalizes its spelling. Sample-date history, selection and Stata conversion remain future preparation checks; they do not block the compatible underlying raw route.",
+          "expected_fields": [
+            "FPEDATS",
+            "CUSIP",
+            "ESTIMATOR",
+            "ACTDATS",
+            "ACTTIMS",
+            "VALUE",
+            "ACTUAL",
+            "ANNDATS_ACT"
+          ],
+          "expected_period": "I/B/E/S detail observations matching the author CUSIP/forecast-period list for 2013Q4–2022Q4.",
+          "evidence_ids": [
+            "E_IBES_PROBE",
+            "E_IBES_COMPARE",
+            "E_IBES_FIELDS",
+            "E_IBES_HANDOFF",
+            "E_APPENDIX_PERIOD"
+          ]
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_CRSP_RETURNS",
+      "kind": "data",
+      "description": "Daily CRSP security returns/prices with CUSIP, PERMNO and effective-date ticker fields, plus value-weighted market returns, needed to construct the author crsp_returns.dta and return metrics.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CRSP_COMPOSITE",
+          "type": "local",
+          "status": "unverified",
+          "location": "CRSP.DSF + CRSP.DSENAMES (dated ticker source) + CRSP.DSI (market return source)",
+          "description": "The bounded probes show DSF PERMNO/DATE/CUSIP/PRC/RET, DSENAMES PERMNO/TICKER with NAMEDT/NAMEENDT, and DSI DATE/vwretd. The missing author-prepared crsp_returns.dta producer, effective-date name join, identifier/population selection and period coverage are unknown. TICKER is present in CRSP name history; it is not treated as absent from CRSP.",
+          "expected_fields": [
+            "PERMNO",
+            "DATE",
+            "CUSIP",
+            "PRC",
+            "RET",
+            "TICKER",
+            "vwretd"
+          ],
+          "expected_period": "Daily security and market observations needed for the study’s return-history windows and sample filing dates.",
+          "evidence_ids": [
+            "E_CRSP_DSF_PROBE",
+            "E_CRSP_DSF_COMPARE",
+            "E_CRSP_DSENAMES_PROBE",
+            "E_CRSP_DSENAMES_COMPARE",
+            "E_CRSP_DSI_PROBE",
+            "E_CRSP_DSI_COMPARE",
+            "E_CRSP_CORE",
+            "E_CRSP_METRICS"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CRSP_MARKET_INDEX",
+      "kind": "data",
+      "description": "Daily CRSP value-weighted market returns needed by the non-CRSP stock-price branch and market-adjusted return calculations.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CRSP_DSI",
+          "type": "local",
+          "status": "verified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat",
+          "description": "The local CRSP.DSI daily market product is readable and supplies native DATE and vwretd. Renaming DATE to caldt preserves the same date contract used by the non-CRSP branch. Field-preserving format/path staging and sample-date coverage remain future preparation checks; the author-prepared filename producer is not supplied, but that does not make this compatible raw product unavailable.",
+          "expected_fields": [
+            "DATE",
+            "vwretd"
+          ],
+          "expected_period": "Daily market-return history over the non-CRSP stock price dates and study return windows.",
+          "evidence_ids": [
+            "E_CRSP_DSI_PROBE",
+            "E_CRSP_DSI_COMPARE",
+            "E_HC_STOCK_INPUT"
+          ]
+        }
+      ],
+      "outcome": "local_available"
+    },
+    {
+      "id": "R_CUSIP_DATE_MAP",
+      "kind": "data",
+      "description": "The CUSIP/forecast-date and CUSIP/filing-date map used to select I/B/E/S and CRSP observations for the study sample.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CUSIP_DATE_PACKAGED",
+          "type": "packaged",
+          "status": "unverified",
+          "location": "CRSP returns_CUSIP & Date.xlsx (referenced by the Stata source; not listed in package inventory)",
+          "description": "The Stata source imports the same workbook twice, retaining CUSIP/fdate for I/B/E/S and CUSIP/date for CRSP. The referenced workbook and its producer/contents are not present in the frozen package inventory.",
+          "expected_fields": [
+            "CUSIP",
+            "fdate",
+            "date"
+          ],
+          "expected_period": "Sample firm forecast and filing dates.",
+          "evidence_ids": [
+            "E_CUSIP_FDATE_STAGE",
+            "E_CUSIP_DATE_STAGE",
+            "E_PACKAGE_INVENTORY"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_NONCRSP_STOCK_PRICES",
+      "kind": "data",
+      "description": "Daily non-CRSP stock prices imported as Date, Ticker and Close to calculate returns and market-adjusted metrics.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_YAHOO_PREMIUM",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Yahoo Finance historical price CSV product (official Premium page)",
+          "description": "The official Yahoo search result advertises CSV historical price export, but direct plan-page access returned HTTP 429 and the specific ticker set, daily frequency/date history, export fields and user account entitlement were not verified. The assessment makes no account or product request.",
+          "expected_fields": [
+            "Date",
+            "Ticker",
+            "Close"
+          ],
+          "expected_period": "Daily observations after 2010 for the non-CRSP study firms.",
+          "evidence_ids": [
+            "E_YAHOO_CSV",
+            "E_YAHOO_PLAN",
+            "E_HC_STOCK_INPUT"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CRYPTO_PRICE_VOLUME",
+      "kind": "data",
+      "description": "Daily cryptocurrency close, volume and market-capitalization series needed for 91-day rolling liquidity/volatility measures and quarterly Bitcoin variables.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CMC_OHLCV",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "CoinMarketCap Pro OHLCV Historical API documentation",
+          "description": "The official API docs describe historical OHLCV and market-cap data and require a Pro API key. The selected coin IDs, coverage under an eligible plan, units and compatibility with the missing author workbook have not been established; no key or endpoint was tested.",
+          "expected_fields": [
+            "close",
+            "volume",
+            "market_cap"
+          ],
+          "expected_period": "Daily selected-coin history sufficient for the author’s 91-day rolling windows and sample period.",
+          "evidence_ids": [
+            "E_CMC_OHLCV",
+            "E_CMC_KEY",
+            "E_CMC_INPUT_FIELDS",
+            "E_CMC_ROLLING"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_COMBINED_ANALYSIS_DATA",
+      "kind": "data",
+      "description": "The author-prepared combined workbook that hand-joins filing hand collection and prepared Compustat, audit, I/B/E/S and CRSP outputs, then supplies the primary Crypto sample data.dta analysis dataset.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_COMBINED_WORKBOOK",
+          "type": "packaged",
+          "status": "unverified",
+          "location": "Crypto sample data_COMBINED.xlsx (referenced by Stata source; not listed in package inventory)",
+          "description": "The source imports this workbook, merges generated NFirms and CRYPTO_LIQUIDITY, and saves Crypto sample data.dta. The expected minimum columns include SIC2, datadate, accounting/crypto variables, IBES actual/estimate/price variables, CRSP outcome fields and sample flags. The workbook’s exact schema, manual handoff definitions, source history and population are unknown.",
+          "expected_fields": [
+            "SIC2",
+            "datadate",
+            "ASSETS",
+            "CSHO",
+            "PRC",
+            "CRYPTO_CAP",
+            "BV_EQUITY",
+            "NI",
+            "Objective",
+            "FILE_TYPE",
+            "DISCL_CAT",
+            "CARR_VALUE",
+            "IMPAIR",
+            "RGL",
+            "UGL",
+            "CURR_DEBT",
+            "LT_DEBT",
+            "PQ_ASSETS",
+            "INTANG",
+            "GOODWILL",
+            "TRADING_INV",
+            "AFS_INV",
+            "HTM_INV",
+            "YR_QTR",
+            "FS_LINEITEM",
+            "BIG4",
+            "IBES_ACTUAL_EPS",
+            "EST_AVG",
+            "PRC_ANN2",
+            "SAB121",
+            "ASC946",
+            "ACAR11",
+            "YEAR"
+          ],
+          "expected_period": "Author full-sample panel for 2013Q4–2022Q4, with pre-guidance observations through 2018Q2.",
+          "evidence_ids": [
+            "E_COMBINED_IMPORT",
+            "E_COMBINED_FIELDS_A",
+            "E_COMBINED_FIELDS_B",
+            "E_COMBINED_MERGE_OUTPUT",
+            "E_ANALYSIS_FIELDS",
+            "E_MARKET_ANALYSIS_FIELDS",
+            "E_PACKAGE_INVENTORY",
+            "E_APPENDIX_PERIOD"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW_PYTHON",
+      "name": "Python",
+      "status": "available",
+      "description": "The typed environment helper reports Python 3.12.14 available; no author script was run.",
+      "evidence_ids": [
+        "E_ENVIRONMENT_PROBE",
+        "E_PYTHON_DISTRIBUTIONS"
+      ]
+    },
+    {
+      "id": "SW_PANDAS",
+      "name": "pandas",
+      "status": "preparation_required",
+      "description": "pandas 3.0.6 is installed, but the source uses error_bad_lines, removed from read_csv in pandas 2.0; use the documented on_bad_lines option in a source edit.",
+      "evidence_ids": [
+        "E_PYTHON_DISTRIBUTIONS",
+        "E_PYTHON_READCSV",
+        "E_PANDAS_REMOVAL",
+        "E_PANDAS_ON_BAD_LINES",
+        "E_PANDAS_SKIP"
+      ]
+    },
+    {
+      "id": "SW_NUMPY",
+      "name": "NumPy",
+      "status": "available",
+      "description": "Existing importlib.metadata lists NumPy 2.5.3 in the selected Python distribution set; this establishes package availability only, not an import or compatibility test.",
+      "evidence_ids": [
+        "E_NUMPY_METADATA_PROJECTION",
+        "E_PYTHON_IMPORTS"
+      ]
+    },
+    {
+      "id": "SW_SWIFTER",
+      "name": "swifter",
+      "status": "preparation_required",
+      "description": "The module is imported but no further use was found in the screened program; it is absent from package metadata and can be removed from the import line.",
+      "evidence_ids": [
+        "E_PYTHON_DISTRIBUTIONS",
+        "E_PYTHON_IMPORTS"
+      ]
+    },
+    {
+      "id": "SW_MULTIPROCESS",
+      "name": "multiprocess",
+      "status": "preparation_required",
+      "description": "The program imports and invokes multiprocess.Pool; package metadata reports it missing.",
+      "evidence_ids": [
+        "E_PYTHON_DISTRIBUTIONS",
+        "E_PYTHON_IMPORTS",
+        "E_PYTHON_POOL_OUTPUT"
+      ]
+    },
+    {
+      "id": "SW_STATA18",
+      "name": "Stata",
+      "status": "available",
+      "description": "The typed environment helper reports Stata 18 available; the datasheet specifies Stata 18 SE.",
+      "evidence_ids": [
+        "E_ENVIRONMENT_PROBE",
+        "E_WORKFLOW_STATA"
+      ]
+    },
+    {
+      "id": "SW_RANGESTAT",
+      "name": "rangestat",
+      "status": "available",
+      "description": "The source calls rangestat for return covariance and variance; the Stata software helper reports it available.",
+      "evidence_ids": [
+        "E_STATA_RANGESTAT",
+        "E_CRSP_METRICS"
+      ]
+    },
+    {
+      "id": "SW_ASROL",
+      "name": "asrol",
+      "status": "preparation_required",
+      "description": "The cryptocurrency construction block calls asrol; the Stata software helper reports it unavailable.",
+      "evidence_ids": [
+        "E_STATA_ASROL",
+        "E_CMC_ROLLING"
+      ]
+    },
+    {
+      "id": "SW_WINSOR2",
+      "name": "winsor2",
+      "status": "preparation_required",
+      "description": "The analysis calls winsor2; the typed environment probe reports it unavailable.",
+      "evidence_ids": [
+        "E_ENVIRONMENT_PROBE",
+        "E_ANALYSIS_FIELDS",
+        "E_MARKET_ANALYSIS_FIELDS"
+      ]
+    },
+    {
+      "id": "SW_UNIVAR",
+      "name": "univar",
+      "status": "preparation_required",
+      "description": "The descriptive statistics block calls univar; the Stata software helper reports it unavailable.",
+      "evidence_ids": [
+        "E_STATA_UNIVAR",
+        "E_ANALYSIS_FIELDS"
+      ]
+    },
+    {
+      "id": "SW_OUTREG2",
+      "name": "outreg2",
+      "status": "preparation_required",
+      "description": "The market tests call outreg2 to write tables; the typed environment probe reports it unavailable.",
+      "evidence_ids": [
+        "E_ENVIRONMENT_PROBE",
+        "E_MARKET_ANALYSIS_FIELDS"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "I_HANDOFF",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_author_prepared_handoff",
+      "description": "The Stata source requires Crypto sample data_COMBINED.xlsx and CRSP returns_CUSIP & Date.xlsx, while the frozen package inventory does not list either file. The combined workbook holds manual filing and prepared vendor outputs; its exact schema, data provenance, and output-to-column mapping are not supplied.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_COMBINED_IMPORT",
+        "E_CUSIP_FDATE_STAGE",
+        "E_CUSIP_DATE_STAGE",
+        "E_IBES_HANDOFF",
+        "E_CRSP_METRICS",
+        "E_PACKAGE_INVENTORY"
+      ]
+    },
+    {
+      "id": "I_SOURCE_CLOSURE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_claimed_program",
+      "description": "The datasheet names a Plots for Paper code file among the package code; no such source appears in the frozen inventory. Its role and whether it is necessary for the target outputs are not established.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_DATASHEET_FILES",
+        "E_PACKAGE_INVENTORY"
+      ]
+    },
+    {
+      "id": "I_COMP_SIC_MAPPING",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_field_owner_join",
+      "description": "The Compustat universe and main-file stages require sic, but COMP.FUNDQ lacks it. COMP.CO_INDUSTRY provides historical sich and datadate/gvkey; the source-compatible field/date join and universe selection are not specified.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_COMP_FUNDQ_COMPARE_MAIN",
+        "E_COMP_FUNDQ_COMPARE_UNIVERSE",
+        "E_COMP_CO_INDUSTRY_PROBE",
+        "E_FUNDQ_UNIVERSE_INPUT",
+        "E_FUNDQ_MAIN_FIELDS"
+      ]
+    },
+    {
+      "id": "I_AA_CURRENT_AUDITOR",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_field_meaning",
+      "description": "The source requires CURR_AUD_FKEY and CURR_AUD_NAME. The candidate audit product has AUDITOR_FKEY/AUDITOR_NAME instead, but their record-level meaning and date relationship to the current-auditor fields are not established.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_AA_COMPARE",
+        "E_AA_PROBE",
+        "E_AA_FIELDS"
+      ]
+    },
+    {
+      "id": "I_CRSP_PRODUCERS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_preparation_producers",
+      "description": "The source consumes prepared crsp_returns.dta and crsp_mkt returns.dta, but the supplied program does not establish their producers or all joins. The raw daily CRSP.DSI market product is locally verified; the missing prepared filename still needs field-preserving date staging. For the security-return composite, CRSP name history supplies TICKER, while the PERMNO/effective-date mapping, population and required history remain unresolved.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_CRSP_CORE",
+        "E_CRSP_METRICS",
+        "E_HC_STOCK_INPUT",
+        "E_CRSP_DSF_COMPARE",
+        "E_CRSP_DSENAMES_COMPARE",
+        "E_CRSP_DSI_COMPARE"
+      ]
+    },
+    {
+      "id": "I_PANDAS_API",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "source_runtime_compatibility",
+      "description": "The Python source passes error_bad_lines to pandas.read_csv, which was removed in pandas 2.0 and is incompatible with the installed pandas 3.0.6 API. The official replacement is on_bad_lines; no author program was run.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_PYTHON_READCSV",
+        "E_PYTHON_DISTRIBUTIONS",
+        "E_PANDAS_REMOVAL",
+        "E_PANDAS_ON_BAD_LINES",
+        "E_PANDAS_SKIP"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_WORKFLOW_SEARCH",
+      "kind": "source",
+      "description": "The datasheet describes the Python footnote search stage.",
+      "file": "AFMS datasheet.pdf",
+      "line_begin": 67,
+      "line_end": 68,
+      "quote": "   We used a Python script to systematically search through financial statement footnotes for\n   a set of keywords we identified that relate to cryptocurrency. We then manually verified"
+    },
+    {
+      "id": "E_WORKFLOW_HANDCOLLECT",
+      "kind": "source",
+      "description": "The datasheet says hits are manually verified and cryptocurrency data are hand collected from SEC filings.",
+      "file": "AFMS datasheet.pdf",
+      "line_begin": 69,
+      "line_end": 72,
+      "quote": "   these matches and hand collected the cryptocurrency-related data from the SEC filings\n   identified from the search process described in item #2 above and in Section 3 of the\n   manuscript. We used STATA 18 SE to merge the Compustat, CRSP, Audit Analytics, and\n   IBES data with the hand collected data. We also used STATA 18 SE to perform the"
+    },
+    {
+      "id": "E_WORKFLOW_STATA",
+      "kind": "source",
+      "description": "The datasheet identifies Stata 18 SE for merges and regressions.",
+      "file": "AFMS datasheet.pdf",
+      "line_begin": 72,
+      "line_end": 74,
+      "quote": "   IBES data with the hand collected data. We also used STATA 18 SE to perform the\n   multiple regression analyses. We describe the variable construction in the Appendix of the\n   manuscript."
+    },
+    {
+      "id": "E_APPENDIX_PERIOD",
+      "kind": "source",
+      "description": "The appendix states the full-sample dates.",
+      "file": "_audit_supplements/afms-internet-appendix-20250731.pdf",
+      "line_begin": 337,
+      "line_end": 337,
+      "quote": "Columns 1 and 3 report the results for the full sample period (i.e., 2013Q4 to 2022Q4) while columns 2 and 4 report"
+    },
+    {
+      "id": "E_DATASHEET_FILES",
+      "kind": "source",
+      "description": "The datasheet names the supplied programs and final-sample CIK/date list.",
+      "file": "AFMS datasheet.pdf",
+      "line_begin": 108,
+      "line_end": 112,
+      "quote": "   We are attaching the code files, titled “Identify Crypto Mentions in XBRL,” “Plots for\n   Paper,” and “AFMS Accounting for Cryptocurrencies DO File” used to identify crypto\n   mentions in regulatory filings, generate plots, and conduct all analyses in the paper. We\n   are also attaching a list of CIKs for all firms in the final sample used in the analyses, titled\n   “AFMS Final Sample CIKs and Datadate.”"
+    },
+    {
+      "id": "E_SAMPLE_IMPORT",
+      "kind": "source",
+      "description": "The Stata file imports the CIK/date workbook and writes its staging dataset.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 19,
+      "line_end": 20,
+      "quote": "import excel using \"CIK & datadate.xlsx\", firstrow\nsave \"sample firms_CIK & FS dates.dta\", replace"
+    },
+    {
+      "id": "E_FUNDQ_UNIVERSE_INPUT",
+      "kind": "source",
+      "description": "The Stata file reads the Compustat universe and derives quarter dates from datadate.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 2,
+      "line_end": 5,
+      "quote": "use \"compustat_fundq_SIC.dta\", clear\ngen SIC2=substr(sic,1,2)\ngen MONTH=month(datadate)\ngen YEAR=year(datadate)"
+    },
+    {
+      "id": "E_FUNDQ_NFIRMS_OUTPUT",
+      "kind": "source",
+      "description": "The Stata file writes the quarter/SIC2 firm count later merged into the hand-collected workbook.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 11,
+      "line_end": 15,
+      "quote": "egen NFirms=count(SIC2), by(FQTR SIC2)\nkeep datadate SIC2 NFirms\nduplicates drop datadate SIC2 NFirms, force\ndestring SIC2, replace\nsave \"compustat_fundq_NFIRMS.dta\", replace"
+    },
+    {
+      "id": "E_FUNDQ_MAIN_FIELDS",
+      "kind": "source",
+      "description": "The Stata file consumes Compustat fundamentals, SIC, identifiers, dates and lagged assets.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 23,
+      "line_end": 31,
+      "quote": "use \"compustat_fundq.dta\", clear\ngsort gvkey datadate\nduplicates drop cik datadate, force\nby gvkey:gen PQ_ASSETS=atq[_n-1]\nmerge 1:1 cik datadate using \"sample firms_CIK & FS dates.dta\"\nkeep if _merge==3\nkeep gvkey datadate fyearq cik gvkey tic cusip sic atq PQ_ASSETS lctq dlcq dlttq ltq seqq cshoq prccq ibq \norder gvkey datadate fyearq cik gvkey tic cusip sic atq PQ_ASSETS lctq dlcq dlttq ltq seqq cshoq prccq ibq \nsave \"compustat_fundq_MERGED.dta\", replace"
+    },
+    {
+      "id": "E_AA_FIELDS",
+      "kind": "source",
+      "description": "The Stata file requires fiscal-year-end, company and current-auditor fields, then maps company/date identifiers.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 35,
+      "line_end": 38,
+      "quote": "use \"aa_opinions.dta\", clear\nkeep FISCAL_YEAR_END_OP COMPANY_FKEY CURR_AUD_FKEY CURR_AUD_NAME\nrename COMPANY_FKEY cik\nrename FISCAL_YEAR_END_OP datadate"
+    },
+    {
+      "id": "E_AA_YEAR_STAGE",
+      "kind": "source",
+      "description": "The Stata file derives fiscal years, merges audit data to the sample list and writes the prepared audit handoff.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 39,
+      "line_end": 58,
+      "quote": "gen fyear=year(datadate)\ngen DAY=day(datadate)\ngen MONTH=month(datadate)\nreplace MONTH=MONTH-1 if DAY<15\nreplace fyear=fyear-1 if MONTH<6\ndrop MONTH DAY datadate\nduplicates drop\nsave \"AA_OPINIONS_FYEAR.dta\", replace\nuse \"sample firms_CIK & FS dates.dta\", clear\ngen fyear=year(datadate)\ngen DAY=day(datadate)\ngen MONTH=month(datadate)\nreplace MONTH=MONTH-1 if DAY<15\nreplace fyear=fyear-1 if MONTH<6\ndrop MONTH DAY\nduplicates drop\nmerge m:1 cik fyear using \"AA_OPINIONS_FYEAR.dta\"\ndrop if _merge==2\ndrop _merge\nsave \"AA_OPINIONS_MERGED.dta\", replace"
+    },
+    {
+      "id": "E_CUSIP_FDATE_STAGE",
+      "kind": "source",
+      "description": "The first CUSIP/date workbook import prepares the I/B/E/S forecast-period match list.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 63,
+      "line_end": 66,
+      "quote": "import excel using \"CRSP returns_CUSIP & Date.xlsx\", firstrow\nkeep CUSIP fdate\nduplicates drop CUSIP fdate, force\nsave \"sample firms_CUSIP & FS dates.dta\", replace"
+    },
+    {
+      "id": "E_CUSIP_DATE_STAGE",
+      "kind": "source",
+      "description": "The second CUSIP/date workbook import prepares the CRSP filing-date match list.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 89,
+      "line_end": 92,
+      "quote": "import excel using \"CRSP returns_CUSIP & Date.xlsx\", firstrow\nkeep CUSIP date\nduplicates drop CUSIP date, force\nsave \"sample firms_CUSIP & file dates.dta\", replace"
+    },
+    {
+      "id": "E_IBES_FIELDS",
+      "kind": "source",
+      "description": "The Stata file consumes forecast period, CUSIP, estimator, activation date/time, estimate, actual and announcement date.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 69,
+      "line_end": 81,
+      "quote": "use \"ibes_detail.dta\", clear\nrename FPEDATS fdate\nrename cusip CUSIP\nduplicates report CUSIP fdate ESTIMATOR ACTDATS ACTTIMS\ngsort CUSIP fdate ESTIMATOR -ACTDATS -ACTTIMS\nduplicates drop CUSIP fdate ESTIMATOR, force\nmerge m:1 CUSIP fdate using \"sample firms_CUSIP & FS dates.dta\"\ngen ANALYST=1\nreplace ANALYST=0 if _merge==2\ndrop if _merge==1\negen NUM_ANALYST=count(ESTIMATOR), by(CUSIP fdate) \negen EST_AVG=mean(VALUE), by(CUSIP fdate)\nkeep CUSIP fdate ANALYST ACTUAL EST_AVG NUM_ANALYST ANNDATS_ACT"
+    },
+    {
+      "id": "E_IBES_HANDOFF",
+      "kind": "source",
+      "description": "The prepared I/B/E/S output is copied into the main hand-collected Excel file.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 84,
+      "line_end": 85,
+      "quote": "save \"IBES_MERGED AFE.dta\", replace\n* Copy into main excel data file with other hand collected data *"
+    },
+    {
+      "id": "E_CRSP_CORE",
+      "kind": "source",
+      "description": "The Stata file reads the prepared CRSP returns input and uses PERMNO, date and price history.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 95,
+      "line_end": 97,
+      "quote": "use \"crsp_returns.dta\", clear\nsort PERMNO date\nby PERMNO: gen PRC2=PRC[_n-2]"
+    },
+    {
+      "id": "E_CRSP_METRICS",
+      "kind": "source",
+      "description": "The Stata file uses return and market-return history, computes volatility/CAR/beta, writes an output and copies it to the main Excel file.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 101,
+      "line_end": 123,
+      "quote": "quietly forval i=1/91 {\n\tby PERMNO:gen LAG_VWRETD_`i'=vwretd[_n-`i']\n}\negen FirmVolatility=rowsd(RET LAG_RET_1-LAG_RET_63)\negen MarketVolatility=rowsd(vwretd LAG_VWRETD_1-LAG_VWRETD_63)\nquietly forval i=1/91 {\n\tby PERMNO:gen LEAD_RET_`i'=RET[_n+`i']\n}\nquietly forval i=1/91 {\n\tby PERMNO:gen LEAD_VWRETD_`i'=vwretd[_n+`i']\n}\ngen CAR_1_1=RET-vwretd\nquietly forval i=1/1 {\n\treplace CAR_1_1=CAR_1_1+LAG_RET_`i'-LAG_VWRETD_`i'+LEAD_RET_`i'-LEAD_VWRETD_`i'\n}\nrename CAR_1_1 CAR\nrangestat (cov) RET vwretd, interval(date -365 -60) by(PERMNO)\nrangestat (variance) vwretd, interval(date -365 -60) by(PERMNO)\ngen Beta=cov_x/vwretd_variance\nduplicates drop CUSIP date, force\nkeep PERMNO date TICKER CUSIP PRC2 FirmVolatility MarketVolatility CAR Beta\nsave \"CRSP_MERGED RETURNS.dta\", replace \n* Copy into main excel data file with other hand collected data *"
+    },
+    {
+      "id": "E_HC_STOCK_INPUT",
+      "kind": "source",
+      "description": "The Stata file imports non-CRSP daily stock prices and merges the market-return handoff by date.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 127,
+      "line_end": 133,
+      "quote": "import excel using \"Crypto sample stock prices.xlsx\", firstrow\nkeep if year(Date)>2010\ngsort Ticker Date \nby Ticker: gen PRC2=Close[_n-2]\nby Ticker: gen RET=Close/(Close[_n-1])-1\nrename Date caldt\nmerge m:1 caldt using \"crsp_mkt returns.dta\""
+    },
+    {
+      "id": "E_HC_STOCK_OUTPUT",
+      "kind": "source",
+      "description": "The Stata file derives non-CRSP return metrics and copies the output into the main Excel file.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 158,
+      "line_end": 163,
+      "quote": "rangestat (cov) RET vwretd, interval(DATE -365 -60) by(Ticker)\nrangestat (variance) vwretd, interval(DATE -365 -60) by(Ticker)\ngen Beta=cov_x/vwretd_variance\nkeep Ticker DATE PRC2 FirmVolatility MarketVolatility CAR Beta \nsave \"HC_returns.dta\", replace\n* Copy into main excel data file with other hand collected data *"
+    },
+    {
+      "id": "E_CMC_INPUT_FIELDS",
+      "kind": "source",
+      "description": "The Stata file imports coin/date/volume/market-cap/close data and derives daily measures.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 167,
+      "line_end": 174,
+      "quote": "import excel using \"Crypto prices_volume.xlsx\", firstrow\ngsort Coin Date\nreplace Volume=. if Volume==0\nrename Volume TOT_VOL\nrename MarketCap MKT_CAP\ngen VOL_MKT=TOT_VOL/MKT_CAP\nby Coin: gen RET=Close/(Close[_n-1])-1\ngen AMIHUD=abs(RET)*1000000000/TOT_VOL"
+    },
+    {
+      "id": "E_CMC_ROLLING",
+      "kind": "source",
+      "description": "The Stata file uses 91-day rolling windows and price history before building quarterly crypto measures.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 175,
+      "line_end": 190,
+      "quote": "bysort Coin: asrol TOT_VOL, stat(mean) window (Date 91) min(91)\nrename TOT_VOL_mean91 TOT_VOL_AVG_\nbysort Coin: asrol MKT_CAP, stat(mean) window (Date 91) min(91)\nrename MKT_CAP_mean91 MKT_CAP_\nbysort Coin: asrol VOL_MKT, stat(mean) window (Date 91) min(91)\nrename VOL_MKT_mean91 VOL_MKT_AVG_\nbysort Coin: asrol AMIHUD, stat(mean) window (Date 91) min(91)\nrename AMIHUD_mean91 AMIHUD_AVG_\nbysort Coin: asrol RET, stat(sd) window (Date 91) min(91)\nrename RET_sd91 RET_VOL_\nbysort Coin: asrol Close, stat(mean) window (Date 91) min(91)\nrename Close_mean91 AVG_CLOSE_\ngsort Coin Date\nby Coin: gen QTR_BEG_PRC=Close[_n-91]\ngen RET_AVG_=(Close-QTR_BEG_PRC)/QTR_BEG_PRC\nrename Date datadate"
+    },
+    {
+      "id": "E_CMC_OUTPUT",
+      "kind": "source",
+      "description": "The Stata file keeps Bitcoin outputs and writes CRYPTO_LIQUIDITY.dta.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 204,
+      "line_end": 208,
+      "quote": "rename RET_AVG_BTC BitcoinReturn\nrename RET_VOL_BTC BitcoinVolatility \nrename TOT_VOL_AVG_BTC BitcoinVolume \nkeep datadate Close_BTC BitcoinReturn BitcoinVolatility BitcoinVolume VOL_MKT_AVG_BTC AMIHUD_AVG_BTC\nsave \"CRYPTO_LIQUIDITY.dta\", replace"
+    },
+    {
+      "id": "E_COMBINED_IMPORT",
+      "kind": "source",
+      "description": "The Stata file imports the combined hand-collected workbook and joins the Compustat firm-count staging output.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 212,
+      "line_end": 216,
+      "quote": "import excel using \"Crypto sample data_COMBINED.xlsx\", firstrow\ndestring SIC2, replace\nmerge m:1 datadate SIC2 using \"compustat_fundq_NFIRMS.dta\"\nkeep if _merge==3\ndrop _merge"
+    },
+    {
+      "id": "E_COMBINED_FIELDS_A",
+      "kind": "source",
+      "description": "The Stata file consumes assets, shares, price, crypto capitalization, book equity, income and objective fields.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 217,
+      "line_end": 228,
+      "quote": "gen LN_ASSET=ln(ASSETS)\nreplace LN_ASSET=0 if LN_ASSET==.\ngen MVE=ln(CSHO*PRC)\nreplace MVE=0 if MVE==.\ngen LN_FV_CRYP=ln(CRYPTO_CAP)\nreplace LN_FV_CRYP=0 if LN_FV_CRYP==.\ngen MTB=CSHO*PRC/BV_EQUITY\nreplace MTB=0 if MTB==.\ngen Loss=0 \nreplace Loss=1 if NI<0\ngen Mine=0\nreplace Mine=1 if Objective==\"MINE\""
+    },
+    {
+      "id": "E_COMBINED_FIELDS_B",
+      "kind": "source",
+      "description": "The Stata file consumes filing type, disclosure category, crypto carrying values, debt, prior assets, intangibles and investments.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 229,
+      "line_end": 240,
+      "quote": "gen Q4=1\nreplace Q4=0 if FILE_TYPE==\"10-Q\"\nreplace Q4=0 if FILE_TYPE==\"6-K\"\ngen FV=0\nreplace FV=1 if DISCL_CAT==1\ngen CryptoBV=CARR_VALUE/ASSETS\ngen CryptoHoldings=CRYPTO_CAP/ASSETS\ngen CryptoIncome=(abs(IMPAIR)+abs(RGL)+abs(UGL))/abs(NI)\ngen Leverage=(CURR_DEBT+LT_DEBT)/ASSETS\ngen ROA=NI/((ASSETS+PQ_ASSETS)/2)\ngen Intangibles=(INTANG+GOODWILL)/ASSETS\ngen Investments=(TRADING_INV+AFS_INV+HTM_INV)/ASSETS"
+    },
+    {
+      "id": "E_COMBINED_MERGE_OUTPUT",
+      "kind": "source",
+      "description": "The Stata file merges generated crypto liquidity, uses quarter/line-item/auditor variables and writes the analysis dataset.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 241,
+      "line_end": 251,
+      "quote": "merge m:1 datadate using \"CRYPTO_LIQUIDITY.dta\"\nkeep if _merge==3\ndrop _merge\ngen PreGuidance=1\nreplace PreGuidance=0 if YR_QTR>201802\nreplace BitcoinVolume=BitcoinVolume/1000000000\nrename AMIHUD_AVG_BTC BTC_AMIHUD\nrename VOL_MKT_AVG_BTC BTC_VOL_MKT\nrename FS_LINEITEM LineItem\nrename BIG4 Big4\nsave \"Crypto sample data.dta\", replace"
+    },
+    {
+      "id": "E_ANALYSIS_FIELDS",
+      "kind": "source",
+      "description": "The analysis consumes the generated dataset, excludes two categories, constructs UE and calls winsor2 and univar.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 254,
+      "line_end": 265,
+      "quote": "use \"Crypto sample data.dta\", clear\ndrop if SAB121==1|ASC946==1\ngen REG_SAMPLE=0\nreg FirmVolatility FV BitcoinVolatility BitcoinReturn CryptoHoldings CryptoIncome Leverage MVE MTB ROA\nreplace REG_SAMPLE=1 if e(sample)\n\ngen UE=(IBES_ACTUAL_EPS-EST_AVG)/PRC_ANN2\n\nreplace BitcoinVolatility=. if REG_SAMPLE==0\n\nwinsor2 CAR FirmVolatility Investments Intangibles BitcoinVolume UE BitcoinReturn CryptoHoldings CryptoIncome Leverage MTB MVE ROA Beta NFirms BitcoinVolatility MarketVolatility, replace cuts(1 99)\nunivar FV LineItem FirmVolatility CAR Investments Intangibles Big4 BitcoinVolume UE BitcoinReturn CryptoHoldings CryptoIncome MVE MTB ROA Leverage Loss NFirms Q4 Beta BitcoinVolatility MarketVolatility, dec(2)"
+    },
+    {
+      "id": "E_MARKET_ANALYSIS_FIELDS",
+      "kind": "source",
+      "description": "The market tests consume the generated dataset and call winsor2 and outreg2.",
+      "file": "AFMS Accounting for Cryptocurrencies DO File.do",
+      "line_begin": 325,
+      "line_end": 347,
+      "quote": "use \"Crypto sample data.dta\", clear\ndrop if SAB121==1|ASC946==1\ndrop if CAR==.\ndrop CAR\nrename ACAR11 CAR\n\ngen UE=(IBES_ACTUAL_EPS-EST_AVG)/PRC_ANN2\n\nquietly foreach v of varlist(UE CAR MVE MTB BitcoinReturn CryptoHoldings NFirms Beta MarketVolatility FirmVolatility BitcoinVolatility) {\n\twinsor2 `v', replace cuts(1 99)\n\tsumm `v'\n\tgen `v'_STD=(`v'-r(mean))/r(sd) \n}\n\n* Volatility *\nlocal tableoptions_OLS \"excel tstat bdec(4) tdec(2) rdec(4)\"\nreg FirmVolatility FV MVE MTB Loss NFirms Q4 Beta BitcoinReturn CryptoHoldings MarketVolatility\noutreg2 using table, `tableoptions_OLS' replace\nreg FirmVolatility FV MVE MTB Loss NFirms Q4 Beta BitcoinReturn CryptoHoldings MarketVolatility BitcoinVolatility\noutreg2 using table, `tableoptions_OLS' append\nreg FirmVolatility FV MVE MTB Loss NFirms Q4 Beta BitcoinReturn CryptoHoldings MarketVolatility i.YEAR\noutreg2 using table, `tableoptions_OLS' append\nreg FirmVolatility FV MVE MTB Loss NFirms Q4 Beta BitcoinReturn CryptoHoldings MarketVolatility BitcoinVolatility i.YEAR"
+    },
+    {
+      "id": "E_PYTHON_IMPORTS",
+      "kind": "source",
+      "description": "The Python program imports pandas and NumPy, imports swifter, and uses multiprocess.Pool.",
+      "file": "Identify Crypto Mentions in XBRL.py",
+      "line_begin": 1,
+      "line_end": 5,
+      "quote": "import pandas as pd, zipfile, numpy as np, csv, re, swifter, os\nfrom zipfile import ZipFile\nfrom os import scandir\nfrom io import StringIO, BytesIO\nfrom multiprocess import Pool"
+    },
+    {
+      "id": "E_PYTHON_READCSV",
+      "kind": "source",
+      "description": "The Python reader opens txt.tsv and passes error_bad_lines to pandas.read_csv.",
+      "file": "Identify Crypto Mentions in XBRL.py",
+      "line_begin": 13,
+      "line_end": 13,
+      "quote": "    df = pd.read_csv(BytesIO(input_zip.read('txt.tsv')),sep='\\t',error_bad_lines=False) # Error bad lines = false will skip offending lines"
+    },
+    {
+      "id": "E_PYTHON_VALUE_FIELD",
+      "kind": "source",
+      "description": "The search filters and matches text in the SEC TXT value field.",
+      "file": "Identify Crypto Mentions in XBRL.py",
+      "line_begin": 17,
+      "line_end": 22,
+      "quote": "def findMentions(df):\n    hits = df[df['value'].notna()]\n    hits = hits[(hits['value'].astype(str).str.contains(cryptorx))|(hits['value'].astype(str).str.contains(cryptorxTics))]\n    hits['matches'] = hits['value'].apply(lambda x: \"|\".join(r[0] for r in re.findall(cryptorx,x) + re.findall(cryptorxTics,x)))\n    hits['matchCount'] = hits['matches'].str.count(r'\\|')+1\n    return hits"
+    },
+    {
+      "id": "E_PYTHON_DRIVER",
+      "kind": "source",
+      "description": "The Python driver opens each input archive and returns verified keyword hits.",
+      "file": "Identify Crypto Mentions in XBRL.py",
+      "line_begin": 24,
+      "line_end": 28,
+      "quote": "def mainDriver(fname):\n    print(fname)\n    df = unzipAndOpen(xbrlPath+fname)\n    hits = findMentions(df)\n    return hits"
+    },
+    {
+      "id": "E_PYTHON_POOL_OUTPUT",
+      "kind": "source",
+      "description": "The Python program parallelizes input ZIP processing and writes the FootnoteHits workbook.",
+      "file": "Identify Crypto Mentions in XBRL.py",
+      "line_begin": 56,
+      "line_end": 64,
+      "quote": "datafiles = sorted([f for f in os.listdir(xbrlPath) if f.endswith('zip')])\n\npool = Pool(processes=2) # set to desired number of cores\nallhits = pool.map(mainDriver,datafiles)\npool.close()\npool.join()\n\nallhits2 = pd.concat(allhits).reset_index(drop=True)\nallhits2.to_excel('OUTPUTDIR/FootnoteHits_updated_2023-5-15.xlsx',index=False)"
+    },
+    {
+      "id": "E_PACKAGE_INVENTORY",
+      "kind": "inspection",
+      "description": "Frozen work-item inventory and package provenance; proves only the inventoried package contents.",
+      "artifact_path": "work_item.json",
+      "sha256": "5eef960a33488d5ade6c1854e2111558a87c8fb70161c2102c1430b0c333aec0"
+    },
+    {
+      "id": "E_PACKAGE_SAMPLE_PROBE",
+      "kind": "probe",
+      "description": "Bounded workbook probe: the packaged final-sample sheet is readable with cik and datadate headers; one row only, no full population count.",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "ad4afca13339ba71571d0e58d90342744674563e92a116ad8784590fc21b8969"
+    },
+    {
+      "id": "E_ENVIRONMENT_PROBE",
+      "kind": "probe",
+      "description": "Typed local environment helper result; software/version evidence only, not an execution result.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "E_PYTHON_DISTRIBUTIONS",
+      "kind": "probe",
+      "description": "Python distribution metadata check only; no third-party imports or compatibility trial.",
+      "artifact_path": "probes/python_distributions.json",
+      "sha256": "a8a11cfd19acea63e188e8d2b7c2521365c56d8ea0918368e0e2a52a390e7978"
+    },
+    {
+      "id": "E_NUMPY_METADATA_PROJECTION",
+      "kind": "inspection",
+      "description": "Normalized inspection projection of the existing NumPy importlib.metadata record only; it is not a new environment probe or import test.",
+      "artifact_path": "probes/python_numpy_distribution_projection.json",
+      "sha256": "784f5d34b205705ce17e0c53d45c5f9dd24986861966e1c9947cde722cb4e268"
+    },
+    {
+      "id": "E_COMP_FUNDQ_PROBE",
+      "kind": "probe",
+      "description": "One-row COMP.FUNDQ metadata/readability probe; full catalog schema matched; whole-file count and period coverage remain unknown.",
+      "artifact_path": "probes/sas_COMP_FUNDQ.json",
+      "sha256": "832672a666cb33c1af1b39a133ddbccbfe2786f338213514a8961f346c8eba55"
+    },
+    {
+      "id": "E_COMP_FUNDQ_COMPARE_MAIN",
+      "kind": "probe",
+      "description": "Exact comparison for fields consumed by compustat_fundq.dta: sic is absent from COMP.FUNDQ.",
+      "artifact_path": "probes/field_compare_COMP_FUNDQ_main.json",
+      "sha256": "985ba474aa4528dd7d5c4235bd4a66ae2c88f67221e8883f215082a530841af8"
+    },
+    {
+      "id": "E_COMP_FUNDQ_COMPARE_UNIVERSE",
+      "kind": "probe",
+      "description": "Exact comparison for the Compustat universe stage: datadate is present but sic is absent from COMP.FUNDQ.",
+      "artifact_path": "probes/field_compare_COMP_FUNDQ_universe.json",
+      "sha256": "b686c9bf6785d9b409b824c06498736fae62b839274b5e76fc54d7fb135d5e2e"
+    },
+    {
+      "id": "E_COMP_CO_INDUSTRY_PROBE",
+      "kind": "probe",
+      "description": "One-row COMP.CO_INDUSTRY metadata/readability probe; native historic field is sich and exact merge coverage was not tested.",
+      "artifact_path": "probes/sas_COMP_CO_INDUSTRY.json",
+      "sha256": "63428d0b1391c7a18870e75f6d5de75d2a4543793e831fdbc5345b847e72bba8"
+    },
+    {
+      "id": "E_AA_PROBE",
+      "kind": "probe",
+      "description": "One-row Audit Analytics metadata/readability probe; no full-file count or period coverage.",
+      "artifact_path": "probes/sas_AUDIT_FEED34.json",
+      "sha256": "5e74e4953a032d5630dd36eb144192e83ed1c103d7b06ddbd48d3d45598eb791"
+    },
+    {
+      "id": "E_AA_COMPARE",
+      "kind": "probe",
+      "description": "Exact audit field comparison: current-auditor fields expected by the source are not native fields in this candidate table.",
+      "artifact_path": "probes/field_compare_AUDIT_FEED34.json",
+      "sha256": "822be32b32bc31674d57bd4bd07fcb2405453287f3716e0a387eafb6bc02f192"
+    },
+    {
+      "id": "E_IBES_PROBE",
+      "kind": "probe",
+      "description": "One-row I/B/E/S DET_EPSUS metadata/readability probe; no full-file count or period coverage.",
+      "artifact_path": "probes/sas_IBES_DET_EPSUS.json",
+      "sha256": "ff3c088439533b092de9a18bdf587d803b0ee04aef396d995c187eb0568267d7"
+    },
+    {
+      "id": "E_IBES_COMPARE",
+      "kind": "probe",
+      "description": "Full consumed-field comparison for DET_EPSUS; native CUSIP is uppercase and every other requested field is present.",
+      "artifact_path": "probes/field_compare_IBES_DET_EPSUS.json",
+      "sha256": "466b6d7bc44dc7c09e07d27854878536f27f5b27dd95bae0379632bc23da3db4"
+    },
+    {
+      "id": "E_CRSP_DSF_PROBE",
+      "kind": "probe",
+      "description": "One-row CRSP.DSF metadata/readability probe; no full-file count or period coverage.",
+      "artifact_path": "probes/sas_CRSP_DSF.json",
+      "sha256": "2bba8216f5b5e01b6fda1d68429344e79ee88c8cf998b1c6cc59be73b4df274a"
+    },
+    {
+      "id": "E_CRSP_DSF_COMPARE",
+      "kind": "probe",
+      "description": "Base CRSP.DSF field comparison: DATE is the native date column; source spelling date is case-fold-compatible.",
+      "artifact_path": "probes/field_compare_CRSP_DSF_base.json",
+      "sha256": "9fed5e87e86207cdbed3710888db736153309ae2327b8d230b169701eabaaa58"
+    },
+    {
+      "id": "E_CRSP_DSI_PROBE",
+      "kind": "probe",
+      "description": "One-row CRSP.DSI metadata/readability probe; no full-file count or period coverage.",
+      "artifact_path": "probes/sas_CRSP_DSI.json",
+      "sha256": "0f15178e3e88a9d8fdf0d299e4b00afd8e53ab21ccb74c651d48c4796d71e5ef"
+    },
+    {
+      "id": "E_CRSP_DSI_COMPARE",
+      "kind": "probe",
+      "description": "CRSP.DSI supplies DATE and vwretd; caldt is an intermediate name produced by date staging.",
+      "artifact_path": "probes/field_compare_CRSP_DSI_v2.json",
+      "sha256": "f417cfd120f2c89508aa563591af8a66289df0441d2a220b11be2da883a88d5b"
+    },
+    {
+      "id": "E_CRSP_DSENAMES_PROBE",
+      "kind": "probe",
+      "description": "One-row CRSP.DSENAMES metadata/readability probe; includes PERMNO, name effective dates and TICKER.",
+      "artifact_path": "probes/sas_CRSP_DSENAMES.json",
+      "sha256": "471660fad399e4698f3238b0ca659b9a8889d7c0caf7508e19b2dc60bf338649"
+    },
+    {
+      "id": "E_CRSP_DSENAMES_COMPARE",
+      "kind": "probe",
+      "description": "Exact name-history comparison confirms native PERMNO and TICKER fields.",
+      "artifact_path": "probes/field_compare_CRSP_DSENAMES.json",
+      "sha256": "a5dbe92f9740a09756b5c96bdaf90d056ea279da0f7ea1298e389b9996ecd700"
+    },
+    {
+      "id": "E_STATA_RANGESTAT",
+      "kind": "probe",
+      "description": "Stata software helper confirms rangestat is available in the detected Stata 18 runtime.",
+      "artifact_path": "probes/software_rangestat.json",
+      "sha256": "f2226cc69b4aa26d48606819995dd034273dcf198be52f59acb0b2829af5fa18"
+    },
+    {
+      "id": "E_STATA_ASROL",
+      "kind": "probe",
+      "description": "Stata software helper reports asrol unavailable.",
+      "artifact_path": "probes/software_asrol.json",
+      "sha256": "7e2d979633a358bccf7e5affbff77166a70a590844fc14eec615221c74104e6c"
+    },
+    {
+      "id": "E_STATA_UNIVAR",
+      "kind": "probe",
+      "description": "Stata software helper reports univar unavailable.",
+      "artifact_path": "probes/software_univar.json",
+      "sha256": "e77b4f5fb0eebf7b3a90c6ed7c1df38a5f1f7de76790d7ecb18d1c98517183c2"
+    },
+    {
+      "id": "E_SEC_NOTES_TEXT",
+      "kind": "public",
+      "description": "SEC official page describes the financial-statement and notes dataset text content.",
+      "url": "https://www.sec.gov/data-research/sec-markets-data/financial-statement-notes-data-sets",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "text and detailed numeric information from all financial statements and their notes"
+    },
+    {
+      "id": "E_SEC_NOTES_COVERAGE",
+      "kind": "public",
+      "description": "SEC official page states the published dataset coverage dates.",
+      "url": "https://www.sec.gov/data-research/sec-markets-data/financial-statement-notes-data-sets",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "January 2009 - October 2026"
+    },
+    {
+      "id": "E_SEC_NOTES_MONTHLY",
+      "kind": "public",
+      "description": "SEC official page states the dataset update frequency.",
+      "url": "https://www.sec.gov/data-research/sec-markets-data/financial-statement-notes-data-sets",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "updated monthly"
+    },
+    {
+      "id": "E_SEC_TXT_FORMAT",
+      "kind": "public",
+      "description": "SEC guide describes plain-text facts in the TXT table.",
+      "url": "https://www.sec.gov/files/aqfsn_1.pdf",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "plain (no HTML) text of each non-numeric XBRL fact"
+    },
+    {
+      "id": "E_SEC_TXT_VALUE",
+      "kind": "public",
+      "description": "SEC guide documents the text table value field.",
+      "url": "https://www.sec.gov/files/aqfsn_1.pdf",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "value The value, with all whitespace normalized"
+    },
+    {
+      "id": "E_SEC_ARCHIVE",
+      "kind": "public",
+      "description": "SEC guide documents complete filing submissions in the archive.",
+      "url": "https://www.sec.gov/files/aqfsn_1.pdf",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "complete submission files for a given filing"
+    },
+    {
+      "id": "E_YAHOO_CSV",
+      "kind": "public",
+      "description": "Official Yahoo search result advertises CSV export for historical stock-price data; direct page and account entitlement were not verified.",
+      "url": "https://finance.yahoo.com/about/plans/compare/",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "Download CSV files for exportable stock price history"
+    },
+    {
+      "id": "E_YAHOO_PLAN",
+      "kind": "public",
+      "description": "Official Yahoo search result describes its Premium plan; no account or ticker access check was made.",
+      "url": "https://finance.yahoo.com/about/plans/compare/",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "Upgrade to Yahoo Finance premium news, data, and tools"
+    },
+    {
+      "id": "E_CMC_OHLCV",
+      "kind": "public",
+      "description": "Official CoinMarketCap API documentation describes historical OHLCV data and market capitalization.",
+      "url": "https://coinmarketcap.com/api/documentation/pro-api-reference/cryptocurrency",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "Returns historical OHLCV (Open, High, Low, Close, Volume) data along with market cap"
+    },
+    {
+      "id": "E_CMC_KEY",
+      "kind": "public",
+      "description": "Official CoinMarketCap documentation identifies the Pro API key requirement; no key or endpoint was tested.",
+      "url": "https://coinmarketcap.com/api/documentation/pro-api-reference/cryptocurrency",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "Your CoinMarketCap Pro API key"
+    },
+    {
+      "id": "E_PANDAS_REMOVAL",
+      "kind": "public",
+      "description": "Official pandas 2.0 release notes document removal of error_bad_lines from read_csv.",
+      "url": "https://pandas.pydata.org/pandas-docs/stable/whatsnew/v2.0.0.html",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "Removed arguments `prefix`, `squeeze`, `error_bad_lines` and `warn_bad_lines` from `read_csv()`"
+    },
+    {
+      "id": "E_PANDAS_ON_BAD_LINES",
+      "kind": "public",
+      "description": "Official current pandas documentation lists on_bad_lines and skip behavior.",
+      "url": "https://pandas.pydata.org/docs/user_guide/io.html?highlight=datetime+time",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "on_bad_lines{‘error’, ‘warn’, ‘skip’} or Callable, default ‘error’"
+    },
+    {
+      "id": "E_PANDAS_SKIP",
+      "kind": "public",
+      "description": "Official current pandas documentation defines skip behavior for bad lines.",
+      "url": "https://pandas.pydata.org/docs/user_guide/io.html?highlight=datetime+time",
+      "checked_at": "2026-11-13",
+      "authority": "official",
+      "quote": "‘skip’, skip bad lines without raising or warning"
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMP_FUNDQ_UNIVERSE",
+        "R_COMP_SIC_MAP"
+      ],
+      "evidence_ids": [
+        "E_FUNDQ_UNIVERSE_INPUT",
+        "E_FUNDQ_NFIRMS_OUTPUT",
+        "E_COMP_FUNDQ_COMPARE_UNIVERSE",
+        "E_COMP_CO_INDUSTRY_PROBE"
+      ],
+      "description": "The source reads the Compustat universe to derive SIC2/year/quarter NFirms; COMP.FUNDQ supplies dates but not sic. COMP.CO_INDUSTRY is only a possible historical SIC provider because the source-compatible join is unresolved."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMP_FUNDQ_MAIN",
+        "R_COMP_SIC_MAP"
+      ],
+      "evidence_ids": [
+        "E_FUNDQ_MAIN_FIELDS",
+        "E_COMP_FUNDQ_COMPARE_MAIN",
+        "E_COMP_CO_INDUSTRY_PROBE"
+      ],
+      "description": "The main Compustat stage needs quarterly fundamentals and sic; all compared fundamentals are present in COMP.FUNDQ except sic, which needs a separate verified mapping."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_AA_OPINIONS"
+      ],
+      "evidence_ids": [
+        "E_AA_FIELDS",
+        "E_AA_PROBE",
+        "E_AA_COMPARE"
+      ],
+      "description": "Required audit input; current-auditor token equivalence is unresolved."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_SAMPLE_IMPORT",
+        "E_FUNDQ_MAIN_FIELDS",
+        "E_AA_YEAR_STAGE"
+      ],
+      "description": "Generated staging file sample firms_CIK & FS dates.dta is written from the CIK/date workbook and later consumed in Compustat and Audit Analytics stages; it is not an independent raw-input requirement."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_IBES_DETAIL"
+      ],
+      "evidence_ids": [
+        "E_IBES_FIELDS",
+        "E_IBES_PROBE",
+        "E_IBES_COMPARE",
+        "E_IBES_HANDOFF"
+      ],
+      "description": "Required I/B/E/S detail/actuals input. DET_EPSUS has the full consumed native-field contract and a successful bounded read; CUSIP spelling is ordinary staging, while sample-period coverage remains a future validation in A_IBES_COVERAGE."
+    },
+    {
+      "dependency_id": "D0006",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_CRSP_RETURNS"
+      ],
+      "evidence_ids": [
+        "E_CRSP_CORE",
+        "E_CRSP_METRICS",
+        "E_CRSP_DSF_PROBE",
+        "E_CRSP_DSENAMES_PROBE",
+        "E_CRSP_DSI_PROBE"
+      ],
+      "description": "Required prepared daily CRSP returns input; raw source tables are local, but its dated-name joins, population, producer and history are not demonstrated."
+    },
+    {
+      "dependency_id": "D0007",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_COMBINED_MERGE_OUTPUT",
+        "E_ANALYSIS_FIELDS",
+        "E_MARKET_ANALYSIS_FIELDS"
+      ],
+      "description": "Crypto sample data.dta is generated at the end of the hand-collected workbook/CRYPTO_LIQUIDITY/NFirms joins, then consumed by descriptive, discretion and market-test branches; it is not an independent raw-input requirement."
+    },
+    {
+      "dependency_id": "D0008",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_SAMPLE_LIST"
+      ],
+      "evidence_ids": [
+        "E_SAMPLE_IMPORT",
+        "E_PACKAGE_SAMPLE_PROBE",
+        "E_PACKAGE_INVENTORY"
+      ],
+      "description": "The parser fragment datadate.xlsx maps to the source import CIK & datadate.xlsx; the packaged final-sample CIK/date workbook is the matching underlying input and requires ordinary filename staging."
+    },
+    {
+      "dependency_id": "D0009",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_CUSIP_DATE_MAP"
+      ],
+      "evidence_ids": [
+        "E_CUSIP_FDATE_STAGE",
+        "E_CUSIP_DATE_STAGE",
+        "E_PACKAGE_INVENTORY"
+      ],
+      "description": "The parser fragment Date.xlsx maps to the full CRSP returns_CUSIP & Date.xlsx reference; it is absent from the package inventory and supports two distinct CUSIP/date staging branches."
+    },
+    {
+      "dependency_id": "D0010",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_NONCRSP_STOCK_PRICES"
+      ],
+      "evidence_ids": [
+        "E_HC_STOCK_INPUT",
+        "E_YAHOO_CSV",
+        "E_PACKAGE_INVENTORY"
+      ],
+      "description": "Required non-CRSP stock-price workbook; the author expects Date, Ticker and Close, while exact product access/history remains unverified."
+    },
+    {
+      "dependency_id": "D0011",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_CRYPTO_PRICE_VOLUME"
+      ],
+      "evidence_ids": [
+        "E_CMC_INPUT_FIELDS",
+        "E_CMC_ROLLING",
+        "E_CMC_KEY",
+        "E_PACKAGE_INVENTORY"
+      ],
+      "description": "Required crypto price/volume/capitalization workbook; the source uses its values to generate CRYPTO_LIQUIDITY.dta, so that generated file is not a separate raw input."
+    },
+    {
+      "dependency_id": "D0012",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMBINED_ANALYSIS_DATA"
+      ],
+      "evidence_ids": [
+        "E_COMBINED_IMPORT",
+        "E_COMBINED_FIELDS_A",
+        "E_COMBINED_FIELDS_B",
+        "E_COMBINED_MERGE_OUTPUT",
+        "E_PACKAGE_INVENTORY"
+      ],
+      "description": "Required author-prepared combined hand-collected workbook; its import, required variables and generated Crypto sample data.dta consumers are documented, but the workbook is absent from the package inventory."
+    }
+  ],
+  "actions": [
+    {
+      "id": "A_SEC_ACQUIRE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_SEC_NOTES",
+        "R_SEC_FILINGS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Acquire the SEC notes/text datasets for the study years and identify the sample filings for manual verification using the final CIK/date list. Configure the Python input directory and confirm the SEC ZIP member layout expected by the source.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_SEC_NOTES_TEXT",
+        "E_SEC_NOTES_COVERAGE",
+        "E_SEC_TXT_VALUE",
+        "E_SEC_ARCHIVE",
+        "E_WORKFLOW_SEARCH",
+        "E_WORKFLOW_HANDCOLLECT"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the official SEC Financial Statement and Notes data releases covering 2013Q4–2022Q4.",
+        "Verify the downloaded source members expose the documented TXT value field in the exact archive layout expected by the Python reader.",
+        "Select filings by the packaged final-sample CIK/date list, manually verify keyword hits, and record the hand-collected values in the author-defined workbook once its schema is supplied."
+      ],
+      "validation": [
+        "Compare selected filing dates and CIKs with the final sample list.",
+        "Check TXT field and archive member names before any full author-program run."
+      ]
+    },
+    {
+      "id": "A_COMP_SIC_PREP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_COMP_FUNDQ_UNIVERSE",
+        "R_COMP_FUNDQ_MAIN",
+        "R_COMP_SIC_MAP",
+        "I_COMP_SIC_MAPPING"
+      ],
+      "kind": "data_preparation",
+      "description": "Resolve the historical SIC owner and the date/key mapping needed to build both Compustat inputs and NFirms without changing the study’s quarter, SIC2 or firm-count definitions.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_COMP_FUNDQ_COMPARE_MAIN",
+        "E_COMP_FUNDQ_COMPARE_UNIVERSE",
+        "E_COMP_CO_INDUSTRY_PROBE",
+        "E_FUNDQ_UNIVERSE_INPUT",
+        "E_FUNDQ_MAIN_FIELDS",
+        "E_FUNDQ_NFIRMS_OUTPUT"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm whether COMP.CO_INDUSTRY.sich is the intended historical SIC source and document the join keys/date rule for each Compustat quarter.",
+        "Prepare the source-required sic field for compustat_fundq_SIC.dta and compustat_fundq.dta only after the mapping is established.",
+        "Keep compustat_fundq_NFIRMS.dta as a generated output of the universe stage, not a separately sourced input."
+      ],
+      "validation": [
+        "Compare the selected SIC values and dates to the author’s source contract before generating NFirms.",
+        "Confirm the main Compustat file contains every source-consumed field, including the mapped sic, and all final-sample CIK/date keys."
+      ]
+    },
+    {
+      "id": "A_AA_MAP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_AA_OPINIONS",
+        "I_AA_CURRENT_AUDITOR"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the Audit Analytics product/record definition that maps current auditor key/name to opinion-level fields and confirms the fiscal-year-date selection.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_AA_COMPARE",
+        "E_AA_PROBE",
+        "E_AA_FIELDS",
+        "E_AA_YEAR_STAGE"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm whether the selected Audit Analytics product has current-auditor values and how those values relate to AUDITOR_FKEY/AUDITOR_NAME on an opinion record.",
+        "Document the record selection and effective-date rule before creating aa_opinions.dta."
+      ],
+      "validation": [
+        "Compare exact current-auditor semantics, company key type and fiscal-year coverage before the author merge."
+      ]
+    },
+    {
+      "id": "A_IBES_COVERAGE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_IBES_DETAIL"
+      ],
+      "kind": "data_preparation",
+      "description": "Use the supported US detail-with-actuals source and confirm sample-period history, then stage it as the author’s ibes_detail.dta. The source’s CUSIP case-normalizing rename is existing preparation.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_IBES_PROBE",
+        "E_IBES_COMPARE",
+        "E_IBES_FIELDS",
+        "E_IBES_HANDOFF",
+        "E_APPENDIX_PERIOD"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm DET_EPSUS contains observations spanning the required forecast periods and the CUSIP/date keys in the author’s sample list.",
+        "Convert the selected native detail fields to the expected Stata input while preserving estimator, activation date/time, value, actual and actual-announcement date.",
+        "Use the source’s existing CUSIP normalization and produce the copied analyst/estimate/actual fields for the hand-collected workbook."
+      ],
+      "validation": [
+        "Compare all eight consumed fields and date coverage before running the Stata entry point.",
+        "Check that the existing field renames resolve native FPEDATS and CUSIP correctly."
+      ]
+    },
+    {
+      "id": "A_CRSP_PREP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_CRSP_RETURNS",
+        "R_CRSP_MARKET_INDEX",
+        "I_CRSP_PRODUCERS"
+      ],
+      "kind": "data_preparation",
+      "description": "Obtain the author’s prepared security-return producer/join specification and stage the supported CRSP.DSI market fields into the author merge contract without changing variables or return windows.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CRSP_DSF_PROBE",
+        "E_CRSP_DSF_COMPARE",
+        "E_CRSP_DSENAMES_PROBE",
+        "E_CRSP_DSENAMES_COMPARE",
+        "E_CRSP_DSI_PROBE",
+        "E_CRSP_DSI_COMPARE",
+        "E_CRSP_METRICS",
+        "E_HC_STOCK_INPUT"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm the CRSP security population, required dates and producer for crsp_returns.dta; use DSF daily security fields and DSENAMES PERMNO/TICKER plus NAMEDT/NAMEENDT only with the documented effective-date mapping.",
+        "For the verified local DSI market series, rename native DATE to caldt and preserve vwretd when staging crsp_mkt returns.dta.",
+        "Keep all author return, CAR and beta windows unchanged."
+      ],
+      "validation": [
+        "Check effective-date ticker mapping, PERMNO/CUSIP uniqueness and date coverage before constructing CRSP_MERGED RETURNS.dta.",
+        "Check that the DSI date rename preserves the DATE/caldt contract and vwretd values; validate file format, path and sample-date coverage before using the market handoff."
+      ]
+    },
+    {
+      "id": "A_MISSING_HANDOFFS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_CUSIP_DATE_MAP",
+        "R_COMBINED_ANALYSIS_DATA",
+        "I_HANDOFF",
+        "I_SOURCE_CLOSURE"
+      ],
+      "kind": "clarification",
+      "description": "Request the missing author-prepared workbooks and the named plot program, together with their field definitions, provenance and producer/consumer mapping.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_PACKAGE_INVENTORY",
+        "E_CUSIP_FDATE_STAGE",
+        "E_CUSIP_DATE_STAGE",
+        "E_COMBINED_IMPORT",
+        "E_COMBINED_FIELDS_A",
+        "E_COMBINED_FIELDS_B",
+        "E_COMBINED_MERGE_OUTPUT",
+        "E_DATASHEET_FILES",
+        "E_IBES_HANDOFF",
+        "E_CRSP_METRICS",
+        "E_HC_STOCK_OUTPUT"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain CRSP returns_CUSIP & Date.xlsx and confirm the CUSIP/fdate and CUSIP/date column meanings and producer.",
+        "Obtain Crypto sample data_COMBINED.xlsx with column definitions and provenance for manual filing data and copied prepared CRSP/Audit Analytics/I/B/E/S/Yahoo outputs.",
+        "Obtain the named Plots for Paper code or confirm its role and whether it is needed for the stated output set.",
+        "Do not reconstruct the unavailable hand-collected workbook from regression outputs or synthetic records."
+      ],
+      "validation": [
+        "Map all required workbook columns to the source variable construction and analysis consumers.",
+        "Confirm hand-collected observations, sample flags and analyst/auditor/return handoffs preserve the author sample."
+      ]
+    },
+    {
+      "id": "A_YAHOO_ACCESS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_NONCRSP_STOCK_PRICES"
+      ],
+      "kind": "access_request",
+      "description": "Confirm access to the needed Yahoo historical CSV product and the precise non-CRSP ticker/date coverage before preparing the author workbook.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_YAHOO_CSV",
+        "E_YAHOO_PLAN",
+        "E_HC_STOCK_INPUT"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm that the user’s available Yahoo plan supplies daily Date, Ticker and Close observations for the required tickers and post-2010 sample dates.",
+        "Prepare Crypto sample stock prices.xlsx from the confirmed product without changing the source’s return/beta windows."
+      ],
+      "validation": [
+        "Check ticker, date frequency, field units and coverage before creating the workbook."
+      ]
+    },
+    {
+      "id": "A_CMC_ACCESS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_CRYPTO_PRICE_VOLUME"
+      ],
+      "kind": "access_request",
+      "description": "Confirm the cryptocurrency identifiers, CoinMarketCap plan coverage and required daily history before preparing the author crypto-price workbook.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CMC_OHLCV",
+        "E_CMC_KEY",
+        "E_CMC_INPUT_FIELDS",
+        "E_CMC_ROLLING"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm the coin IDs/symbols and eligible plan fields for daily close, volume and market capitalization.",
+        "If an authorized plan covers the study inputs, prepare Crypto prices_volume.xlsx with the source-required series and date granularity.",
+        "Do not test API keys or call the endpoint as part of this assessment."
+      ],
+      "validation": [
+        "Check selected coin identities, units, dates and sufficient observations for the source’s 91-day windows."
+      ]
+    },
+    {
+      "id": "A_PYTHON_SOURCE_EDIT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW_PANDAS",
+        "SW_SWIFTER",
+        "I_PANDAS_API"
+      ],
+      "kind": "source_edit",
+      "description": "Propose the smallest Python source edits supported by the current import and pandas API evidence; no source file was modified.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_PYTHON_IMPORTS",
+        "E_PYTHON_READCSV",
+        "E_PYTHON_DISTRIBUTIONS",
+        "E_PANDAS_REMOVAL",
+        "E_PANDAS_ON_BAD_LINES",
+        "E_PANDAS_SKIP"
+      ],
+      "edits": [
+        {
+          "file": "Identify Crypto Mentions in XBRL.py",
+          "sha256": "84ca80551dc47b4a2ec7e2bce7b40db8d0ab10073663f0f3bcefd8ff79603d6f",
+          "line_begin": 1,
+          "line_end": 1,
+          "before": "import pandas as pd, zipfile, numpy as np, csv, re, swifter, os",
+          "after": "import pandas as pd, zipfile, numpy as np, csv, re, os",
+          "reason": "swifter is not referenced outside its import and its distribution is missing; remove only the unused import rather than adding an unnecessary dependency."
+        },
+        {
+          "file": "Identify Crypto Mentions in XBRL.py",
+          "sha256": "84ca80551dc47b4a2ec7e2bce7b40db8d0ab10073663f0f3bcefd8ff79603d6f",
+          "line_begin": 13,
+          "line_end": 13,
+          "before": "    df = pd.read_csv(BytesIO(input_zip.read('txt.tsv')),sep='\\t',error_bad_lines=False) # Error bad lines = false will skip offending lines",
+          "after": "    df = pd.read_csv(BytesIO(input_zip.read('txt.tsv')),sep='\\t',on_bad_lines='skip') # Skip offending lines",
+          "reason": "pandas removed error_bad_lines from read_csv in version 2.0; the current documented on_bad_lines option with skip preserves the stated behavior."
+        }
+      ],
+      "steps": [
+        "Apply the two proposed changes in a working copy only after review.",
+        "Keep the SEC TXT selection, matching, multiprocessing and output semantics unchanged."
+      ],
+      "validation": [
+        "Check the edited lines against the frozen source hash and current pandas documentation.",
+        "After all required input data and multiprocess are configured, run the author script only under the project’s normal user-approved workflow and confirm the output workbook is created."
+      ]
+    },
+    {
+      "id": "A_SOFTWARE_SETUP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW_MULTIPROCESS",
+        "SW_ASROL",
+        "SW_UNIVAR",
+        "SW_WINSOR2",
+        "SW_OUTREG2"
+      ],
+      "kind": "software_setup",
+      "description": "Prepare the missing Python and Stata packages required by the supplied programs; no install was attempted.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_PYTHON_DISTRIBUTIONS",
+        "E_PYTHON_IMPORTS",
+        "E_PYTHON_POOL_OUTPUT",
+        "E_STATA_ASROL",
+        "E_STATA_UNIVAR",
+        "E_ENVIRONMENT_PROBE",
+        "E_CMC_ROLLING",
+        "E_ANALYSIS_FIELDS",
+        "E_MARKET_ANALYSIS_FIELDS"
+      ],
+      "edits": [],
+      "steps": [
+        "Install or otherwise provide the multiprocess Python distribution in the selected Python environment.",
+        "Provide Stata add-ons asrol, univar, winsor2 and outreg2 in the Stata 18 environment.",
+        "Keep rangestat as the already available Stata add-on."
+      ],
+      "validation": [
+        "Use the frozen version/which and distribution-metadata helpers to confirm each required command/module is available in the runtime used for the author workflow."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Full pipeline is the only supported scope. The package includes a Python keyword-search program and a Stata preparation/analysis program; no complete analysis-only prepared dataset and entry point is supplied.",
+    "The SEC/filing/manual hand-collection workflow, Compustat, Audit Analytics, I/B/E/S, CRSP, non-CRSP stock prices and crypto series all feed the missing author-prepared combined workbook. The appendix reports 2013Q4–2022Q4 full sample and 2013Q4–2018Q2 pre-guidance period.",
+    "Producer/consumer accounting: sample firms_CIK & FS dates.dta is generated from the packaged sample CIK/date workbook and consumed in Compustat/Audit Analytics matching; compustat_fundq_NFIRMS.dta is generated at the Compustat universe stage and consumed by the combined workbook; CRYPTO_LIQUIDITY.dta is generated from Crypto prices_volume.xlsx and consumed by the combined workbook; Crypto sample data.dta is generated after those joins and consumed by the descriptive, discretion and market-test blocks.",
+    "The Stata source also writes Compustat merged, Audit Analytics, I/B/E/S, CRSP and non-CRSP return staging outputs and comments that some are copied into the main Excel handoff. The CRSP market handoff crsp_mkt returns.dta is consumed by the non-CRSP branch although its producer is not established in the supplied source/static dependency checklist; it is covered as a required CRSP market input and unresolved preparation issue, not as an invented frozen dependency ID.",
+    "DET_EPSUS is the selected I/B/E/S raw candidate: the full consumed-field comparison and one-row readable probe support the verified local raw route. Native CUSIP capitalization is ordinary staging; sample-date history/selection remains in A_IBES_COVERAGE as future validation.",
+    "CRSP.DSENAMES supplies native PERMNO/TICKER and name effective-date fields, so TICKER is not treated as absent from CRSP. CRSP.DSI DATE/vwretd is a verified local raw market route; DATE-to-caldt naming, format/path and sample-date checks are preparation. The security-return composite’s producer, name join and population remain unresolved.",
+    "Only successful typed JSON probe artifacts and exact screened source/public quotations are cited. Bounded one-row reads establish schema/readability, not population, time coverage or file counts. The source quote capture excludes masked lines; the machine-specific Python input path is not reproduced.",
+    "Process failures and capture limitations are preserved in process_history_manifest_v2.json and individual process artifacts, but none are referenced as scientific evidence or used to infer data/software barriers. No author code, author imports, models or regressions were run; no datasets were downloaded; no software was installed; no edits were applied; execution_verified remains false."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "0c91bcd7d83a7e8d2507d592336ed06bfcd03cf46e1f4eafe12a66ec1e97583e",
+    "applied": false
+  }
+}

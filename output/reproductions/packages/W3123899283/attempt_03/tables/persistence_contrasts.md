@@ -1,0 +1,23 @@
+
+|                      |          (1)    |          (2)    |
+|                      |  Table 2 h=1    | Table 4 five-year sum    |
+|                      |          b/p    |          b/p    |
+| -------------------- | :-------------: | :-------------: |
+| Earnings\_t           |        0.927*** |        4.306*** |
+|                      |      (0.000)    |      (0.000)    |
+| Earnings-volatility quintile (1=low, 5=high)=1 |        0.000    |        0.000    |
+|                      |          (.)    |          (.)    |
+| Earnings-volatility quintile (1=low, 5=high)=5 |       -0.005    |        0.009    |
+|                      |      (0.253)    |      (0.594)    |
+| Earnings-volatility quintile (1=low, 5=high)=1 # Earnings\_t |        0.000    |        0.000    |
+|                      |          (.)    |          (.)    |
+| Earnings-volatility quintile (1=low, 5=high)=5 # Earnings\_t |       -0.296*** |       -2.708*** |
+|                      |      (0.000)    |      (0.000)    |
+| Constant             |        0.001    |        0.006    |
+|                      |      (0.875)    |      (0.629)    |
+| N                    |         4426    |         2032    |
+| R-squared            |        0.226    |        0.262    |
+| Adjusted R-squared   |        0.226    |        0.260    |
+| Q1 minus Q5 beta     |        0.296    |        2.708    |
+| Two-sided p-value    |        0.000    |        0.000    |
+

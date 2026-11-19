@@ -1,0 +1,1010 @@
+{
+  "actions": [
+    {
+      "addresses": [
+        "R_USASPENDING"
+      ],
+      "certainty": "conditional",
+      "description": "Obtain the author-specified full annual USASpending contract-award CSV source. The official documentation identifies Contracts_Full, but exact annual availability and compatibility remain to be checked.",
+      "edits": [],
+      "evidence_ids": [
+        "E_README_ACCESS",
+        "E_DATASHEET_ARCHIVE",
+        "E_PREP_IMPORT",
+        "E_PUBLIC_USASPENDING_GUIDE",
+        "E_PUBLIC_DOCS_TRACE"
+      ],
+      "id": "A_USASPENDING",
+      "kind": "data_acquisition",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "steps": [
+        "Use the authors' documented USASpending.gov contract-award download workflow for FY2013 through FY2020 and choose Full files rather than Delta/changes.",
+        "Stage the annual CSVs under Data/USASpending/ using filenames recognized by the preparation script's directory loop.",
+        "Verify the downloaded years, all-agency population, headers, and unique Stata varlist resolution for every author `keep` token; retain file metadata and do not require byte identity with the authors' 2020 download."
+      ],
+      "validation": [
+        "Confirm one compatible full contract-award CSV for each FY2013-FY2020 year and that all required transaction, date, agency, pricing and contract fields map to the source headers.",
+        "If any year, field or population is not supported, leave the public route unresolved and preserve the specific gap; do not infer unavailability from the catalog miss."
+      ]
+    },
+    {
+      "addresses": [
+        "R_AWARD_KEYS"
+      ],
+      "certainty": "supported",
+      "description": "Retain and use the supplied author transaction-key list at its documented merge point. The exact local file and required field names are present; its sampled probe does not establish population count.",
+      "edits": [],
+      "evidence_ids": [
+        "E_README_FILES",
+        "E_PREP_KEYS_COMPILED",
+        "E_KEYS_PROBE",
+        "E_PREP_COMPILED_PRODUCER",
+        "E_PUBLIC_DOCS_TRACE"
+      ],
+      "id": "A_AWARD_KEYS",
+      "kind": "data_preparation",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "steps": [
+        "Keep Data/Unique IDs/usaspending_awards_list.dta with the package; do not replace it with a synthetic or inferred key list.",
+        "After the annual source files are available, run the author merge on contract_transaction_unique_key and action_date and retain the supplied primary_key for author ordering.",
+        "Record actual matched/unmatched rows and confirm the merged key types and first_award ordering during the normal preparation run; treat any mismatch as a concrete source-compatibility gap rather than a reason to require author approval or historical byte identity."
+      ],
+      "validation": [
+        "Confirm the author key-list fields are available and the actual preparation merge consumes them without changing the authors' first-award construction.",
+        "The one-row probe is a readability/field check only; no full-population count or historical coverage is claimed."
+      ]
+    },
+    {
+      "addresses": [
+        "SW_TEXSAVE",
+        "SW_DISTINCT",
+        "SW_FINDNAME",
+        "SW_XTPQML"
+      ],
+      "certainty": "supported",
+      "description": "Prepare the four invoked Stata commands that the direct local `which` checks did not find.",
+      "edits": [],
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_TEXSAVE",
+        "E_SOFT_DISTINCT",
+        "E_SOFT_FINDNAME",
+        "E_SOFT_XTPQML",
+        "E_PUBLIC_TEXSAVE",
+        "E_PUBLIC_DISTINCT",
+        "E_PUBLIC_FINDNAME",
+        "E_PUBLIC_XTPQML"
+      ],
+      "id": "A_SOFTWARE_SETUP",
+      "kind": "software_setup",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "steps": [
+        "Install/enable texsave from its author-documented SSC route or author repository.",
+        "Obtain distinct from the Stata Journal archive, following Stata's documented search guidance.",
+        "Install/enable findname from SSC, following the author's package announcement.",
+        "Install/enable xtpqml from SSC using the RePEc module record's documented package route.",
+        "Do not change the estimators or omit outputs that invoke these commands."
+      ],
+      "validation": [
+        "In the same Stata 18 environment planned for the run, use `which texsave`, `which distinct`, `which findname`, and `which xtpqml` and record the resolved command locations/versions.",
+        "Confirm available reghdfe and ftools remain on the active Stata adopath; no package installation was performed during this assessment."
+      ]
+    },
+    {
+      "addresses": [
+        "R_USASPENDING",
+        "R_AWARD_KEYS",
+        "SW_STATA",
+        "SW_REGHDFE",
+        "SW_FTOOLS",
+        "SW_ESTTAB",
+        "SW_ESTADD",
+        "SW_ESTSTO",
+        "SW_COEFPLOT",
+        "SW_TEXSAVE",
+        "SW_DISTINCT",
+        "SW_FINDNAME",
+        "SW_XTPQML"
+      ],
+      "certainty": "conditional",
+      "description": "After data and software preparation, follow the authors' complete supplied workflow in package-relative order.",
+      "edits": [],
+      "evidence_ids": [
+        "E_README_SEQUENCE",
+        "E_README_OUTPUTS",
+        "E_PREP_IMPORT",
+        "E_PREP_KEYS_COMPILED",
+        "E_PREP_ANALYSIS_DATA",
+        "E_ANALYSIS_INCLUDE",
+        "E_AUX_MERGEMODELS",
+        "E_PREP_MAIN_PRODUCER",
+        "E_WORKFLOW_TRACE"
+      ],
+      "id": "A_RUN",
+      "kind": "run_procedure",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "steps": [
+        "Set the working directory to the package root so the relative `Data/` and `Results/` paths point into this package.",
+        "Run JAR_show_your_hand_prepare_data_for_analysis.do first; retain the generated per-CSV files, compiled transactions, single-offer lookup and Data/data_ready_for_analysis.dta.",
+        "Then run JAR_show_your_hand_analyze_data.do; it loads Additional Code/00_Auxiliar Define Programs.do and produces the supplied body and online-appendix outputs under Results/.",
+        "Confirm mixed forward/backslash path literals resolve in the local Stata environment before treating either entry point as attempted.",
+        "Create Figures 1, 2 and Online Appendix Figure A.1 manually as the README specifies; they are contextual manual outputs, not omitted estimators."
+      ],
+      "validation": [
+        "Record actual exit codes/messages and verify the main analysis dataset is produced before the analyzer reads it.",
+        "Confirm every generated dependency D0002-D0008 has its direct producer and consumer in the executed sequence; assess observed data/software compatibility without replacing inputs or changing the research design.",
+        "Execution remains unverified until a later authorized run is actually completed."
+      ]
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "description": "The required bundled mergemodels source include is present and loaded by the analyzer; the Stata runtime used to execute it is independently available in the local software probe.",
+      "disposition": "software",
+      "evidence_ids": [
+        "E_ANALYSIS_INCLUDE",
+        "E_AUX_MERGEMODELS",
+        "E_SOFTWARE_PROBE"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "target_ids": [
+        "SW_STATA"
+      ]
+    },
+    {
+      "dependency_id": "D0002",
+      "description": "Analysis-produced Results intermediate: direct postfile producer at line 430 and later reader at line 475.",
+      "disposition": "generated",
+      "evidence_ids": [
+        "E_RES_D2_PRODUCER",
+        "E_RES_D2_CONSUMER"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "target_ids": []
+    },
+    {
+      "dependency_id": "D0003",
+      "description": "Analysis-produced Results intermediate: direct postfile producer at line 548 and later reader at line 608.",
+      "disposition": "generated",
+      "evidence_ids": [
+        "E_RES_D3_PRODUCER",
+        "E_RES_D3_CONSUMER"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "target_ids": []
+    },
+    {
+      "dependency_id": "D0004",
+      "description": "Analysis-produced Results intermediate: direct postfile producer at line 1556 and later reader at line 1625.",
+      "disposition": "generated",
+      "evidence_ids": [
+        "E_RES_D4_PRODUCER",
+        "E_RES_D4_CONSUMER"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "target_ids": []
+    },
+    {
+      "dependency_id": "D0005",
+      "description": "Analysis-produced Results intermediate: direct postfile producer at line 1885 and later reader at line 1954.",
+      "disposition": "generated",
+      "evidence_ids": [
+        "E_RES_D5_PRODUCER",
+        "E_RES_D5_CONSUMER"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "target_ids": []
+    },
+    {
+      "dependency_id": "D0006",
+      "description": "Analysis-produced Results intermediate: direct postfile producer at line 2025 and later reader at line 2108.",
+      "disposition": "generated",
+      "evidence_ids": [
+        "E_RES_D6_PRODUCER",
+        "E_RES_D6_CONSUMER"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "target_ids": []
+    },
+    {
+      "dependency_id": "D0007",
+      "description": "Preparation-produced compiled transaction dataset: direct writer at line 91 and later preparation-stage reader at line 128.",
+      "disposition": "generated",
+      "evidence_ids": [
+        "E_PREP_COMPILED_PRODUCER",
+        "E_PREP_COMPILED_READ"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "target_ids": []
+    },
+    {
+      "dependency_id": "D0008",
+      "description": "Per-CSV Stata intermediates are written from annual CSVs and enumerated/read by the same preparation stage; the `fn` macro supplies the dynamic filename.",
+      "disposition": "generated",
+      "evidence_ids": [
+        "E_PREP_CSV_DTA_SAVE",
+        "E_PREP_CSV_DTA_READ"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "target_ids": []
+    }
+  ],
+  "doi": "10.1111/1475-679X.12561",
+  "evidence": [
+    {
+      "description": "README access instructions name the public USASpending.gov archive and registration.",
+      "file": "README.pdf",
+      "id": "E_README_ACCESS",
+      "kind": "source",
+      "line_begin": 5,
+      "line_end": 8,
+      "quote": "register for a free account at USASpending.gov, then download the data from the Award Data\nArchive. See this paper’s datasheet for details on how to download the data.\n\n"
+    },
+    {
+      "description": "README gives the annual input period, extraction folder and preparation-to-analysis order.",
+      "file": "README.pdf",
+      "id": "E_README_SEQUENCE",
+      "kind": "source",
+      "line_begin": 15,
+      "line_end": 23,
+      "quote": "USASpending.gov for fiscal years 2013-2020. Unzip each year’s .csv files to the “Data>USASpending”\nfolder.\n3.)      Open “JAR_show_your_hand_prepare_data_for_analysis.do” in Stata. Run all the code in this\ndo-file. The main output is “data_ready_for_analysis.dta” (in the “Data” folder), which is the input to\nthe next step.\n4.)     Open “JAR_show_your_hand_analyze_data.do” in Stata. Run all the code in this do-file. The\nfigures and tables from the paper will be output to the “Results” folder.\n\n"
+    },
+    {
+      "description": "README describes the supplied preparation and analysis drivers and the prepared output; its file-list section also contains a second output-folder label.",
+      "file": "README.pdf",
+      "id": "E_README_FILES",
+      "kind": "source",
+      "line_begin": 28,
+      "line_end": 38,
+      "quote": "       - This code replicates the figures and tables in the body and online appendix (listed\nseparately, below). It should be run after creating “data_ready_for_analysis.dta” using the\n“JAR_show_your_hand_prepare_data_for_analysis.do” code, below. This do-file applies the remaining\nsample filters before creating the tables and figures.\n\n2.)     Stata Preparation code: “JAR_show_your_hand_prepare_data_for_analysis.do”\n        - This code creates the input dataset (“data_ready_for_analysis.dta”) used by\n“JAR_show_your_hand_analyze_data.do”. This do-file imports the raw contract awards data\ndownloaded from USASpending.gov, which should be stored in the “Data” folder. It then applies time\nperiod and contract type filters and creates variables used in the analysis before outputting the\n“data_ready_for_analysis.dta” file to the “Stata Output Datasets” folder."
+    },
+    {
+      "description": "README identifies the supplied body/online-appendix program outputs and the three manually created figures.",
+      "file": "README.pdf",
+      "id": "E_README_OUTPUTS",
+      "kind": "source",
+      "line_begin": 59,
+      "line_end": 63,
+      "quote": "1.)     Program: All figures and tables (in both the body and the online appendix) are generated by\nthe program “JAR_show_your_hand_analyze_data.do” and will be saved to the \"Results\" folder,\nexcept for Figures 1, 2, and A.1 (which were created manually).\n2.)     Program: The do-file “JAR_show_your_hand_prepare_data_for_analysis.do” imports the raw\ndata, creates the analysis variables, and outputs the “data_ready_for_analysis.dta” dataset used in"
+    },
+    {
+      "description": "Datasheet records the author’s historical acquisition and annual Full archive selection for FY2013–FY2020.",
+      "file": "Nathan datasheet.pdf",
+      "id": "E_DATASHEET_ARCHIVE",
+      "kind": "source",
+      "line_begin": 24,
+      "line_end": 32,
+      "quote": "    Brad obtained the data for all contracts in this study in .csv format from USASpending.gov between\n    October and December 2020, using the following steps:\n\n    i.   Go to www.usaspending.gov and select the tab (and drop-down): Download > Custom Award\n         Data.\n    ii. Select “Award Data Archive” on the left-hand side.\n    iii. Set agencies to “All” and award type as “Contracts” using the drop-downs, then choose a single\n         fiscal year at a time. Repeat this for each fiscal year needed (i.e., 2013-2020), downloading the\n         “Full” (NOT “changes”) zip file each time."
+    },
+    {
+      "description": "Preparation driver imports the staged annual CSVs, keeps the fields used downstream, converts to Stata files and saves them.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_IMPORT",
+      "kind": "source",
+      "line_begin": 19,
+      "line_end": 38,
+      "quote": "local filenames : dir \"Data/USASpending\" files \"*.csv\"\ndi `filenames'\n\n* Convert csv's and append:\n\n\tforeach fn of local filenames {\n\n\t\tcapture clear\n\t\t\n\t\tglobal fn `fn'\n\n\t\tdi \"`fn'\"\n\t\tdi \"Data/USASpending/${fn}\"\n\t\t\n\t\t  import delimited using \"Data\\USASpending/${fn}\", varnames(1) bindquote(strict) \n\t\t  \n\t\tkeep contract_transaction_unique_key contract_award_unique_key modification_number action_type_code action_date action_date_fiscal_year ///\n\t\t\t base_and_all_options_value base_and_exercised_options_value federal_action_obligation awarding_agency_name awarding_agency_code /// \n\t\t\taction_type_code period_of_performance_start_date period_of_performance_current_en ///\n\t\t\tnumber_of_offers_received type_of_contract_pricing_code cost_or_pricing_data_code extent_competed_code type_of_set_aside_code ///"
+    },
+    {
+      "description": "Preparation driver merges the packaged primary-key list before first-award ordering and writes the compiled dataset.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_KEYS_COMPILED",
+      "kind": "source",
+      "line_begin": 80,
+      "line_end": 91,
+      "quote": "gen signed_date = date(substr(action_date,1,10),\"YMD\")\nformat signed_date %td\n  merge 1:1 contract_transaction_unique_key action_date using \"Data/Unique IDs/usaspending_awards_list.dta\", keepusing(primary_key)\nkeep if _merge!=2\ndrop _merge\nsort contract_award_unique_key primary_key\n* Finish creating first award variable:\nby contract_award_unique_key: gen n = _n\ngen first_award = cond(n == 1 & modification_number == \"0\", 1, 0)  \ndrop primary_key n\n\n  save \"Data/usaspending_data_compiled.dta\", replace"
+    },
+    {
+      "description": "Preparation driver merges the generated PSC lookup and writes the analysis dataset consumed by the analysis driver.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_ANALYSIS_DATA",
+      "kind": "source",
+      "line_begin": 214,
+      "line_end": 263,
+      "quote": "drop product_or_service_code \n\n* Merge high single offer indicator:\nsort prod2\n  merge m:1 prod2 using \"Data\\hi_single_offer.dta\", keepusing(hi_one_offer_prod2)\ndrop if _merge==2\ndrop _merge\n \n \n*** Create PERFORMANCE variables:\n* Contract modifications:\ngen mod = cond(first_award==0 & modification_num!=\"\", 1, cond(modification_num!=\"\", 0, .))\ngen mod_perf = cond((1-inlist(action_type_code, \"A\",\"J\",\"V\",\"W\",\"G\")) & mod==1, 1, 0)\t\nbys contract_award_unique_key signed_date: egen first_award_date = total(first_award)  \nreplace mod_perf = 0 if first_award_date>=1\t\t// mod on first day often implies standardized contract\nbys contract_award_unique_key post: egen num_mods_perf = total(mod_perf) \t\t\ngen ln_num_mods_perf = log(1+num_mods_perf) \n\n* Create variable that is 1 in period of first_award:\nbys contract_award_unique_key post: egen first_award_tot = total(first_award) if inlist(evt_year,\"- 3\", \"-2\", \"-1\", \"0\", \"+1\")\n\n* Price changes due to modifications:\ngen action_price_c_perf = base_and_exercised_val/1000 if mod_perf==1\nby contract_award_unique_key: egen price_c_perf = total(action_price_c_perf) if first_award_tot>0 & first_award_tot!=.\ngen cost_over_perf = cond(price_c_perf>0 & price_c_perf!=., 100, 0)\ngen ge_one_mod_perf = cond(num_mods_perf>=1 & num_mods_perf!=., 100, 0)\ndrop modification_number mod_perf action_price_c_perf base_and_exercised_val curr_start_date curr_end_date mod first_award_tot price_c_perf \n\nlabel variable cp \"CP Data (\\%)\"\nlabel variable cp_w \"CP Data Waived (\\%)\"\nlabel variable fp_award \"Fixed Price (\\%)\"\nlabel variable cp_award \"Cost-Plus (\\%)\"\nlabel variable num_offers \"Number of Offers\"\nlabel variable ln_num_offers \"Log(Number of Offers)\"\nlabel variable ge_two_offers \"Multiple Offers (\\%)\"\nlabel variable ss \"Sole Source (\\%)\"\nlabel variable open_comp \"Open Competition (\\%)\"\nlabel variable aside \"Set Aside (\\%)\"\nlabel variable small_biz_aside \"Small Biz Set Aside (\\%)\"\nlabel variable supplies \"Supplies (\\%)\"\nlabel variable service \"Services (\\%)\"\nlabel variable dod_big3 \"Army, Air Force, and Navy (\\%)\"\nlabel variable num_mods_perf \"Number of Modifications\"\nlabel variable ln_num_mods_perf \"Log(Number of Modifications)\"\nlabel variable cost_over_perf \"Cost Overrun (\\%)\"\nlabel variable duration \"Initial Duration (Days)\"\n\ncompress \n  save \"Data/data_ready_for_analysis.dta\", replace\n"
+    },
+    {
+      "description": "Analysis driver loads the bundled coefficient-merging helper; add-on install lines are comments.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_ANALYSIS_INCLUDE",
+      "kind": "source",
+      "line_begin": 5,
+      "line_end": 12,
+      "quote": "clear\nclear all\n\n* Install or load commands needed to run below code:\n*ssc install coefplot\n*ssc install estout\n*ssc install texsave\ndo \"Additional Code/00_Auxiliar Define Programs.do\" \t// load mergemodels program to memory"
+    },
+    {
+      "description": "Analysis driver reads the prepared dataset from the package Data directory.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_ANALYSIS_DATA_READ",
+      "kind": "source",
+      "line_begin": 154,
+      "line_end": 157,
+      "quote": "global varlist early_adopter price evt_year other_than_sb comm first_award pre post research awarding_sub_agency_code dod_big3 cp def_po service signed_date awarding_agency_name awarding_sub_agency_code rnd bundle aside\n\n*** Create Figure 3, Panels (a), (b), and (c): $750,000 cutoff:\n  use ${varlist} using \"Data\\data_ready_for_analysis.dta\" if ${Keep_If}, clear\t "
+    },
+    {
+      "artifact_path": "probes/source_screen_001/screen_report.json",
+      "description": "Byte-first source screening for the three registered Stata program files. No candidate credential, API, or connection-statement lines were flagged; report includes hashes and screened-view paths.",
+      "id": "E_SCREEN",
+      "kind": "inspection",
+      "sha256": "aa5b6beecf43f9fe08f03bf89a46e8cce8f694841a6e9f99208c04664d15e2e4"
+    },
+    {
+      "artifact_path": "probes/workflow_trace_final_002.json",
+      "description": "Expanded native workflow and dependency trace, including source screen status, producer/consumer edges, manual outputs and remaining bounded checks.",
+      "id": "E_WORKFLOW_TRACE",
+      "kind": "inspection",
+      "sha256": "8c30e9d9818c304cc05b586d87486adcc1cd58b19dd60bb60c108f7d161e209b"
+    },
+    {
+      "description": "The bundled helper defines the mergemodels program loaded by the analyzer.",
+      "file": "Additional Code/00_Auxiliar Define Programs.do",
+      "id": "E_AUX_MERGEMODELS",
+      "kind": "source",
+      "line_begin": 2,
+      "line_end": 2,
+      "quote": "prog mergemodels, eclass"
+    },
+    {
+      "description": "The preparation program writes per-CSV Stata intermediates in the USASpending directory.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_CSV_DTA_SAVE",
+      "kind": "source",
+      "line_begin": 48,
+      "line_end": 48,
+      "quote": "capture save \"Data/USASpending/${fn}.dta\", replace"
+    },
+    {
+      "description": "The preparation program reads the generated per-CSV Stata intermediates.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_CSV_DTA_READ",
+      "kind": "source",
+      "line_begin": 65,
+      "line_end": 65,
+      "quote": "use \"Data/USASpending/${fn}\", clear"
+    },
+    {
+      "description": "The preparation program writes the compiled transaction dataset.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_COMPILED_PRODUCER",
+      "kind": "source",
+      "line_begin": 91,
+      "line_end": 91,
+      "quote": "save \"Data/usaspending_data_compiled.dta\", replace"
+    },
+    {
+      "description": "The preparation program reads the compiled dataset for the main analysis dataset.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_COMPILED_READ",
+      "kind": "source",
+      "line_begin": 128,
+      "line_end": 128,
+      "quote": "use \"Data\\usaspending_data_compiled.dta\" if action_date_fiscal_year >= 2015, clear"
+    },
+    {
+      "description": "The preparation program writes the high-single-offer product-code lookup.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_HI_SINGLE_PRODUCER",
+      "kind": "source",
+      "line_begin": 118,
+      "line_end": 118,
+      "quote": "save \"Data\\hi_single_offer.dta\", replace"
+    },
+    {
+      "description": "The preparation program merges the generated product-code lookup into the analysis dataset.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_HI_SINGLE_READ",
+      "kind": "source",
+      "line_begin": 218,
+      "line_end": 218,
+      "quote": "merge m:1 prod2 using \"Data\\hi_single_offer.dta\", keepusing(hi_one_offer_prod2)"
+    },
+    {
+      "description": "The preparation program writes the main analysis dataset consumed by the analyzer.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_PREP_MAIN_PRODUCER",
+      "kind": "source",
+      "line_begin": 262,
+      "line_end": 262,
+      "quote": "save \"Data/data_ready_for_analysis.dta\", replace"
+    },
+    {
+      "description": "Direct postfile producer for D0002.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D2_PRODUCER",
+      "kind": "source",
+      "line_begin": 430,
+      "line_end": 430,
+      "quote": "postfile desc str82 agency str13 adopter `pf_list' str20 total str8 perc_agency str12 total1 str12 total2 using Results\\agency_descriptives_"
+    },
+    {
+      "description": "Direct read of D0002 after the postfile is closed.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D2_CONSUMER",
+      "kind": "source",
+      "line_begin": 475,
+      "line_end": 475,
+      "quote": "use  Results\\agency_descriptives_price.dta, clear"
+    },
+    {
+      "description": "Direct postfile producer for D0003.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D3_PRODUCER",
+      "kind": "source",
+      "line_begin": 548,
+      "line_end": 548,
+      "quote": "postfile desc str40 variable str12 All str13 m750 str21 m2000 using Results\\descriptive_prices.dta, replace"
+    },
+    {
+      "description": "Direct read of D0003 after the postfile is closed.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D3_CONSUMER",
+      "kind": "source",
+      "line_begin": 608,
+      "line_end": 608,
+      "quote": "use \"Results\\descriptive_prices.dta\", clear"
+    },
+    {
+      "description": "Direct postfile producer for D0004.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D4_PRODUCER",
+      "kind": "source",
+      "line_begin": 1556,
+      "line_end": 1556,
+      "quote": "postfile desc str40 variable str12 m750cp str13 m2000cp str21 m750m str21 m2000m using Results\\descriptive_prices_cp_mult_offers.dta, replac"
+    },
+    {
+      "description": "Direct read of D0004 after the postfile is closed.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D4_CONSUMER",
+      "kind": "source",
+      "line_begin": 1625,
+      "line_end": 1625,
+      "quote": "use \"Results\\descriptive_prices_cp_mult_offers.dta\", clear"
+    },
+    {
+      "description": "Direct postfile producer for D0005.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D5_PRODUCER",
+      "kind": "source",
+      "line_begin": 1885,
+      "line_end": 1885,
+      "quote": "postfile desc str40 variable str13 m750d str21 m2000d str13 m750i str21 m2000i using Results\\descriptive_prices_def_po_idv.dta, replace"
+    },
+    {
+      "description": "Direct read of D0005 after the postfile is closed.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D5_CONSUMER",
+      "kind": "source",
+      "line_begin": 1954,
+      "line_end": 1954,
+      "quote": "use \"Results\\descriptive_prices_def_po_idv.dta\", clear"
+    },
+    {
+      "description": "Direct postfile producer for D0006.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D6_PRODUCER",
+      "kind": "source",
+      "line_begin": 2025,
+      "line_end": 2025,
+      "quote": "postfile desc str40 variable str13 m750sup str21 m2000sup str13 m750serv str21 m2000serv str13 m750c str21 m2000c using Results\\descriptive_"
+    },
+    {
+      "description": "Direct read of D0006 after the postfile is closed.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_RES_D6_CONSUMER",
+      "kind": "source",
+      "line_begin": 2108,
+      "line_end": 2108,
+      "quote": "use \"Results\\descriptive_prices_supplies_services.dta\", clear"
+    },
+    {
+      "description": "The preparation entry point invokes findname to identify imported numeric variables.",
+      "file": "JAR_show_your_hand_prepare_data_for_analysis.do",
+      "id": "E_SOFT_FINDNAME",
+      "kind": "source",
+      "line_begin": 42,
+      "line_end": 42,
+      "quote": "findname, type(numeric) local(nums)"
+    },
+    {
+      "description": "The analysis entry point invokes distinct.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_SOFT_DISTINCT",
+      "kind": "source",
+      "line_begin": 417,
+      "line_end": 417,
+      "quote": "distinct total"
+    },
+    {
+      "description": "The analysis entry point invokes coefplot.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_SOFT_COEFPLOT",
+      "kind": "source",
+      "line_begin": 1397,
+      "line_end": 1397,
+      "quote": "coefplot (counts, keep(1.price_bin#1.post 2.price_bin#1.post 3.price_bin#1.post 4.price_bin#1.post 5.price_bin#1.post 6.price_bin#1.post 7.p"
+    },
+    {
+      "description": "The analysis entry point invokes xtpqml.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_SOFT_XTPQML",
+      "kind": "source",
+      "line_begin": 1745,
+      "line_end": 1745,
+      "quote": "eststo: xtpqml count_`cut_val' interact1-interact3 year1-year5 bin1-bin`bin_count', cluster(price_bin)"
+    },
+    {
+      "description": "The analysis entry point invokes texsave to write a LaTeX table.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_SOFT_TEXSAVE",
+      "kind": "source",
+      "line_begin": 514,
+      "line_end": 514,
+      "quote": "texsave using Results\\aux_agency_descriptives_price.tex, replace varlabels frag headerlines(\"& & & \\multicolumn{5}{c}{Fiscal Year} & \\\\ \\cmi"
+    },
+    {
+      "description": "The analysis entry point invokes reghdfe and eststo.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_SOFT_REGHDFE",
+      "kind": "source",
+      "line_begin": 563,
+      "line_end": 563,
+      "quote": "eststo: reghdfe ss treat1 int1 treat_int1 ${controls} if abs(int1)<`band1', absorb(${rdd_fe_list}) cluster(agency_office)"
+    },
+    {
+      "description": "The analysis entry point invokes estadd.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_SOFT_ESTADD",
+      "kind": "source",
+      "line_begin": 705,
+      "line_end": 705,
+      "quote": "estadd local h=string(`band1',\"%9.0fc\")"
+    },
+    {
+      "description": "The analysis entry point invokes esttab.",
+      "file": "JAR_show_your_hand_analyze_data.do",
+      "id": "E_SOFT_ESTTAB",
+      "kind": "source",
+      "line_begin": 732,
+      "line_end": 732,
+      "quote": "esttab * using \"Results\\aux_table_rdd_cp_comp.tex\", se nonotes label replace booktabs gap compress ///"
+    },
+    {
+      "artifact_path": "probes/packaged_2.json",
+      "description": "Bounded readstat probe of the packaged author transaction-key list; status ok, readable, one row read, required key columns present, coverage_verified false.",
+      "id": "E_KEYS_PROBE",
+      "kind": "probe",
+      "sha256": "ddc735effe50ded9d53903ad120a912fc2162540bea21cf323c805b74ca88e4a"
+    },
+    {
+      "artifact_path": "probes/software_probe_summary_002.json",
+      "description": "Sanitized summary of existing Stata version/which probes and direct command checks; status ok; raw Stata log fields and values omitted.",
+      "id": "E_SOFTWARE_PROBE",
+      "kind": "probe",
+      "sha256": "379c6035fdb18220824b75a46684fa7014c9aa3d008048149459a0d9e7d3ea31"
+    },
+    {
+      "artifact_path": "probes/catalog_lookup_batch_001.json",
+      "description": "Frozen exact-name and alias catalog lookups returned zero records; discovery only and not evidence of absence or licensing.",
+      "id": "E_USASPENDING_CATALOG",
+      "kind": "catalog",
+      "sha256": "636887fb1a5d52c8b366815414c37343ca47973bdef4d57a0f18ca096f397827"
+    },
+    {
+      "artifact_path": "probes/public_docs_check_002.json",
+      "description": "Bounded record of official/public static documentation checks and explicit product/field/coverage limits.",
+      "id": "E_PUBLIC_DOCS_TRACE",
+      "kind": "inspection",
+      "sha256": "8168719a4b4927890fa6609730a84cfdd22ffc119c0307a1bf72c05bc0dc5287"
+    },
+    {
+      "authority": "official",
+      "checked_at": "2026-11-12",
+      "description": "Official guide identifies the Contracts_Full product for Contracts award type; detailed field, fiscal-year and population fit remains unverified.",
+      "id": "E_PUBLIC_USASPENDING_GUIDE",
+      "kind": "public",
+      "quote": "The Contracts_Full and Contracts_Delta files are returned if the Award Type is set to \"Contracts.\"",
+      "url": "https://www.usaspending.gov/federal-spending-guide"
+    },
+    {
+      "authority": "official",
+      "checked_at": "2026-11-12",
+      "description": "Stata's FAQ identifies distinct as a user-written command available from the Stata Journal archive and directs users to search for it.",
+      "id": "E_PUBLIC_DISTINCT",
+      "kind": "public",
+      "quote": "distinct reports on distinct values",
+      "url": "https://www.stata.com/support/faqs/data-management/number-of-distinct-observations/index.html"
+    },
+    {
+      "authority": "author",
+      "checked_at": "2026-11-12",
+      "description": "Author announcement gives the SSC package route for findname; use the installed-command check after setup.",
+      "id": "E_PUBLIC_FINDNAME",
+      "kind": "public",
+      "quote": "A new program -findname- is available on SSC.",
+      "url": "https://www.stata.com/statalist/archive/2010-03/msg01906.html"
+    },
+    {
+      "authority": "repository",
+      "checked_at": "2026-11-12",
+      "description": "RePEc module record describes xtpqml and identifies its SSC installation route.",
+      "id": "E_PUBLIC_XTPQML",
+      "kind": "public",
+      "quote": "This module should be installed from within Stata by typing \"ssc install xtpqml\".",
+      "url": "https://ideas.repec.org/c/boc/bocode/s456821.html"
+    },
+    {
+      "authority": "author",
+      "checked_at": "2026-11-12",
+      "description": "Author documentation describes texsave's LaTeX output and documents a package route.",
+      "id": "E_PUBLIC_TEXSAVE",
+      "kind": "public",
+      "quote": "texsave is a Stata command that outputs the dataset currently in memory to a file in LaTeX format.",
+      "url": "https://julianreif.com/texsave/"
+    },
+    {
+      "authority": "repository",
+      "checked_at": "2026-11-12",
+      "description": "Primary reghdfe repository states that ftools is a package dependency.",
+      "id": "E_PUBLIC_REGHDFE",
+      "kind": "public",
+      "quote": "reghdfe depends on the ftools package",
+      "url": "https://github.com/sergiocorreia/reghdfe"
+    },
+    {
+      "artifact_path": "probes/source_screen_noncode_001.json",
+      "description": "Byte-first screen of registered PDF/text originals and cached text completed before decoding; candidate lines are withheld in safe views.",
+      "id": "E_SCREEN_NONCODE",
+      "kind": "inspection",
+      "sha256": "4dd913f88705df7dd21e288021109ea246eb40c75261730c4e28aff63eaf32f2"
+    }
+  ],
+  "issues": [],
+  "package_id": "jar-cfa99a155f1b",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 62/Issue 4/12561 - Show-Your-Hand-The-Impacts-of-Fair-Pricing-Requirements-in-Procurement-Contracting/Nathan datasheet code and identifiers.zip",
+        "sha256": "44eb92afb6fc5803eab6e44d399f9fafe11ba315ebf7782fe3a886f87637c442"
+      },
+      {
+        "path": "JAR-Volume 62/Issue 4/12561 - Show-Your-Hand-The-Impacts-of-Fair-Pricing-Requirements-in-Procurement-Contracting/nathan-online-appendix.pdf",
+        "sha256": "02e85c8ba752acda979d4234252aab693d8a58d55602b4ea5f7c82502a6dd11f"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "b44d1ab3b3d5f005fd9723448386ffc9b76b241e68a80d5269fd5d92afff49a5",
+    "work_item_sha256": "5b4bc637e0429b5178bd43a6dbef6601677ca2d6ec40e31154b325c72a424e47"
+  },
+  "requirements": [
+    {
+      "description": "The preparation program requires annual full USASpending.gov contract-award CSV files for FY2013-FY2020 and retains the author-listed transaction, award, action, fiscal-year, valuation, agency, performance, offer, pricing, competition, set-aside, product/service and related fields. The `keep` names are Stata varlist tokens; verify each maps uniquely to the official file header rather than assuming truncated tokens are literal column names.",
+      "id": "R_USASPENDING",
+      "kind": "data",
+      "routes": [
+        {
+          "description": "The authors document downloading the full annual contract-award CSVs from USASpending. The official guide confirms the Contracts_Full product for Contracts award type. Static archive access and complete FY2013-FY2020 field, population, and construction compatibility are not established by the bounded page checks; preserve this as an unverified public route, not an access barrier.",
+          "evidence_ids": [
+            "E_README_ACCESS",
+            "E_DATASHEET_ARCHIVE",
+            "E_PREP_IMPORT",
+            "E_PREP_CSV_DTA_SAVE",
+            "E_PUBLIC_USASPENDING_GUIDE",
+            "E_PUBLIC_DOCS_TRACE"
+          ],
+          "expected_fields": [
+            "contract_transaction_unique_key",
+            "contract_award_unique_key",
+            "modification_number",
+            "action_type_code",
+            "action_date",
+            "action_date_fiscal_year",
+            "base_and_all_options_value",
+            "base_and_exercised_options_value",
+            "federal_action_obligation",
+            "awarding_agency_name",
+            "awarding_agency_code",
+            "period_of_performance_start_date",
+            "period_of_performance_current_en",
+            "number_of_offers_received",
+            "type_of_contract_pricing_code",
+            "cost_or_pricing_data_code",
+            "extent_competed_code",
+            "type_of_set_aside_code",
+            "undefinitized_action_code",
+            "commercial_item_acquisition_proc",
+            "solicitation_procedures_code",
+            "product_or_service_code",
+            "award_type_code",
+            "awarding_office_code",
+            "research",
+            "awarding_sub_agency_name",
+            "awarding_sub_agency_code",
+            "contract_bundling_code"
+          ],
+          "expected_period": "FY2013-FY2020; the datasheet records an Oct-Dec 2020 download as provenance. Do not impose a byte-identical 2020 archive requirement.",
+          "id": "R_USASPENDING_PUBLIC",
+          "location": "https://www.usaspending.gov/download_center/award_data_archive",
+          "status": "unverified",
+          "type": "public"
+        }
+      ],
+      "scopes": [
+        "full_pipeline"
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "description": "The preparation program merges the packaged author transaction-key list on contract_transaction_unique_key and action_date, retaining primary_key to preserve the documented sort order before first-award construction.",
+      "id": "R_AWARD_KEYS",
+      "kind": "data",
+      "routes": [
+        {
+          "description": "The documented author key-list file is present, readable as Stata data, and its bounded probe reports all three columns used by the source merge. README/datasheet evidence describes its intended role in the author's complete downloaded transaction set. The one-row probe does not establish count/history; ordinary later preparation should record compatibility with the retrieved annual files. This route is credited as the exact supplied author input without a byte-identity or additional author-confirmation gate.",
+          "evidence_ids": [
+            "E_README_FILES",
+            "E_PREP_KEYS_COMPILED",
+            "E_KEYS_PROBE"
+          ],
+          "expected_fields": [
+            "contract_transaction_unique_key",
+            "action_date",
+            "primary_key"
+          ],
+          "expected_period": "Author list of transaction IDs associated with the documented Q4 2020 USASpending full-data download; actual population count is not established by the one-row probe.",
+          "id": "R_AWARD_KEYS_PACKAGED",
+          "location": "Data/Unique IDs/usaspending_awards_list.dta",
+          "status": "verified",
+          "type": "packaged"
+        }
+      ],
+      "scopes": [
+        "full_pipeline"
+      ],
+      "outcome": "local_available"
+    }
+  ],
+  "review_notes": [
+    "The assessment follows only the supplied native Stata workflow and its full_pipeline scope. The preparation entry point is required before the analysis entry point; the auxiliary mergemodels program is supplied and must remain included.",
+    "The USASpending guide confirms the Contracts_Full product for Contracts award type. Exact FY2013-FY2020 file availability, all required source columns, all-agency coverage and construction compatibility remain unresolved; this is not evidence of a license or access barrier.",
+    "The packaged usaspending_awards_list.dta probe reads one row and confirms contract_transaction_unique_key, action_date and primary_key. Author documentation supports its intended key-list role; the probe does not establish a total row count, and no historical byte-identity or author-approval condition is imposed.",
+    "The separate analysis_awards_list.dta is not read by either entry point and is reference-only. No analysis_only scope is supported because no prepared analysis dataset is supplied; the packaged lists alone are not an analysis panel.",
+    "The README describes Figures 1, 2 and Online Appendix Figure A.1 as manual outputs. They remain contextual manual work, not an inferred missing estimator. All five Results DTA files and the preparation intermediates have direct producer/consumer evidence.",
+    "Stata 18 and the available invoked commands were checked through bounded metadata/which probes. texsave, distinct, findname and xtpqml were not found and need setup before execution. Raw Stata log contents were excluded from the sanitized evidence summary.",
+    "The source uses relative paths with mixed slash styles and declares no directory change. Run from the package root and verify path resolution under local Stata before any future execution; no source change is proposed without an observed failure.",
+    "No author code, model, statistical estimation or SAS executable was run; no data were downloaded and no software was installed. The frozen catalog alias miss is discovery-only.",
+    "Registered document and note sources were byte-screened in original format before cached text decoding; candidate contact/private-path lines were withheld. Source citations were checked against screened safe views."
+  ],
+  "schema_version": "1.0",
+  "scopes": [
+    {
+      "closure_complete": true,
+      "data_required": true,
+      "description": "Full native author workflow: acquire/convert/compile annual contract-award source data, use the supplied author key list, prepare the analysis dataset, then run both supplied Stata entry points and the bundled helper.",
+      "entry_points": [
+        "JAR_show_your_hand_prepare_data_for_analysis.do",
+        "JAR_show_your_hand_analyze_data.do"
+      ],
+      "evidence_ids": [
+        "E_ANALYSIS_INCLUDE",
+        "E_AUX_MERGEMODELS",
+        "E_DATASHEET_ARCHIVE",
+        "E_KEYS_PROBE",
+        "E_PREP_COMPILED_PRODUCER",
+        "E_PREP_COMPILED_READ",
+        "E_PREP_CSV_DTA_READ",
+        "E_PREP_CSV_DTA_SAVE",
+        "E_PREP_HI_SINGLE_PRODUCER",
+        "E_PREP_HI_SINGLE_READ",
+        "E_PREP_IMPORT",
+        "E_PREP_KEYS_COMPILED",
+        "E_PREP_MAIN_PRODUCER",
+        "E_PUBLIC_DISTINCT",
+        "E_PUBLIC_DOCS_TRACE",
+        "E_PUBLIC_FINDNAME",
+        "E_PUBLIC_REGHDFE",
+        "E_PUBLIC_TEXSAVE",
+        "E_PUBLIC_USASPENDING_GUIDE",
+        "E_PUBLIC_XTPQML",
+        "E_README_ACCESS",
+        "E_README_FILES",
+        "E_README_OUTPUTS",
+        "E_README_SEQUENCE",
+        "E_RES_D2_CONSUMER",
+        "E_RES_D2_PRODUCER",
+        "E_RES_D3_CONSUMER",
+        "E_RES_D3_PRODUCER",
+        "E_RES_D4_CONSUMER",
+        "E_RES_D4_PRODUCER",
+        "E_RES_D5_CONSUMER",
+        "E_RES_D5_PRODUCER",
+        "E_RES_D6_CONSUMER",
+        "E_RES_D6_PRODUCER",
+        "E_SCREEN",
+        "E_SCREEN_NONCODE",
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_COEFPLOT",
+        "E_SOFT_DISTINCT",
+        "E_SOFT_ESTADD",
+        "E_SOFT_ESTTAB",
+        "E_SOFT_FINDNAME",
+        "E_SOFT_REGHDFE",
+        "E_SOFT_TEXSAVE",
+        "E_SOFT_XTPQML",
+        "E_USASPENDING_CATALOG",
+        "E_WORKFLOW_TRACE"
+      ],
+      "has_code": true,
+      "id": "full_pipeline",
+      "issue_ids": [],
+      "requirement_ids": [
+        "R_USASPENDING",
+        "R_AWARD_KEYS"
+      ],
+      "software_ids": [
+        "SW_STATA",
+        "SW_REGHDFE",
+        "SW_FTOOLS",
+        "SW_ESTTAB",
+        "SW_ESTADD",
+        "SW_ESTSTO",
+        "SW_COEFPLOT",
+        "SW_TEXSAVE",
+        "SW_DISTINCT",
+        "SW_FINDNAME",
+        "SW_XTPQML"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "software": [
+    {
+      "description": "The local Stata runtime probe reports Stata 18. No author program or model was run.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE"
+      ],
+      "id": "SW_STATA",
+      "name": "Stata",
+      "status": "available"
+    },
+    {
+      "description": "The analysis invokes reghdfe; the local direct command probe reports version 6.12.3.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_REGHDFE"
+      ],
+      "id": "SW_REGHDFE",
+      "name": "reghdfe",
+      "status": "available"
+    },
+    {
+      "description": "Primary reghdfe documentation identifies ftools as a dependency; the local probe reports version 2.49.1.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_REGHDFE",
+        "E_PUBLIC_REGHDFE"
+      ],
+      "id": "SW_FTOOLS",
+      "name": "ftools",
+      "status": "available"
+    },
+    {
+      "description": "The analysis invokes esttab; the local probe reports version 2.1.1.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_ESTTAB"
+      ],
+      "id": "SW_ESTTAB",
+      "name": "esttab",
+      "status": "available"
+    },
+    {
+      "description": "The analysis invokes estadd; the local probe reports version 2.3.5.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_ESTADD"
+      ],
+      "id": "SW_ESTADD",
+      "name": "estadd",
+      "status": "available"
+    },
+    {
+      "description": "The analysis invokes eststo and the bounded `which` probe succeeds; no separate version was returned.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_REGHDFE"
+      ],
+      "id": "SW_ESTSTO",
+      "name": "eststo",
+      "status": "available"
+    },
+    {
+      "description": "The analysis invokes coefplot and the bounded `which` probe succeeds; no separate version was returned.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_COEFPLOT"
+      ],
+      "id": "SW_COEFPLOT",
+      "name": "coefplot",
+      "status": "available"
+    },
+    {
+      "description": "The analysis invokes texsave to create LaTeX outputs; the local `which` check reports it unavailable.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_TEXSAVE",
+        "E_PUBLIC_TEXSAVE"
+      ],
+      "id": "SW_TEXSAVE",
+      "name": "texsave",
+      "status": "preparation_required"
+    },
+    {
+      "description": "The analysis invokes distinct; the local `which` check reports it unavailable.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_DISTINCT",
+        "E_PUBLIC_DISTINCT"
+      ],
+      "id": "SW_DISTINCT",
+      "name": "distinct",
+      "status": "preparation_required"
+    },
+    {
+      "description": "The preparation program invokes findname; the local `which` check reports it unavailable.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_FINDNAME",
+        "E_PUBLIC_FINDNAME"
+      ],
+      "id": "SW_FINDNAME",
+      "name": "findname",
+      "status": "preparation_required"
+    },
+    {
+      "description": "The analysis invokes xtpqml in its supplied bunching analysis; the local `which` check reports it unavailable.",
+      "evidence_ids": [
+        "E_SOFTWARE_PROBE",
+        "E_SOFT_XTPQML",
+        "E_PUBLIC_XTPQML"
+      ],
+      "id": "SW_XTPQML",
+      "name": "xtpqml",
+      "status": "preparation_required"
+    }
+  ],
+  "title": "Show Your Hand: The Impacts of Fair Pricing Requirements in Procurement Contracting",
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "5dea3ca0f7b4a6b199945279ef0d9b0572d9fccabfa573cc975e7c3955443e76",
+    "applied": false
+  }
+}

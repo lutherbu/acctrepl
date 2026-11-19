@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Measuring Reporting Conservatism",
+  "doi": "10.2308/accr.2007.82.1.65",
+  "route": "reconstruction",
+  "paper_id": "W3125487088",
+  "years": 5,
+  "sources_checked": [
+    "COMP.FUNDA current local file ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat (launch-captured mtime 2026-07-22 UTC); filtered source audit in work/runtime/20261118T103704917671Z/build.lst reports FYEAR 1950–2006 and DATADATE 1950-06-30–2007-05-31.",
+    "COMP.SEC_DPRC current local file ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_dprc.sas7bdat (launch-captured mtime 2026-08-14 UTC); accepted historical-HIID currency rows used by the build span DATADATE 1983-12-30–2008-12-31 in the aggregate coverage block.",
+    "COMP.SEC_MTHPRC current local file ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat (launch-captured mtime 2026-08-14 UTC); accepted historical-HIID currency rows used by the build span DATADATE 1962-01-31–2008-12-31 in the aggregate coverage block.",
+    "CRSP.CCMXPF_LINKTABLE current local file ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat (launch-captured mtime 2026-08-14 UTC); accepted link-row summary reports LINKDT 1949-07-01–2025-12-22 and LINKENDDT through 2026-01-30; the native construction records date-effective eligible links by fiscal year.",
+    "CRSP.DSI current local file ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat (launch-captured mtime 2025-12-05 UTC); filtered trading calendar spans DATE 1948-01-02–2008-12-31.",
+    "CRSP.DSF current local file ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat (launch-captured mtime 2025-12-05 UTC); candidate-PERMNO price/return rows used by the build span DATE 1948-01-02–2008-12-31.",
+    "The current-vintage paths, sizes and modification times were sealed in launch.json; the six exact local tables are the sources declared in work/submission.json. No observation-level data were copied into the report."
+  ],
+  "changes": [
+    "Extended the annual pooled sample on its original FYEAR clock from 1951–2001 through FYEAR 2006, with FYEAR 1950 retained as lag support.",
+    "Moved the accepted CRSP DSI/DSF and Compustat security daily/monthly source filters from 31 December 2003 to 31 December 2008, retaining the 1 January 1948 lower bound so current DATADATE windows and prior-price lookups remain covered.",
+    "Added aggregate source date coverage summaries to the SAS build and counted the original and added ranges on the actual Stata e(sample); retained the handoff FYEAR column and emitted the required EXT_SAMPLE line.",
+    "Saved a fresh aggregate coefficient and sample-count table at work/artifacts/annual_pooled_eq1.csv. The pooled OLS terms, price/return construction, date-effective link and currency screens, annual trimming, and accepted best-effort choices were retained."
+  ],
+  "limitations": [
+    "Inherited specification ambiguity remains: the paper gives alternative annual Return windows without identifying which produced the pooled fit and does not identify the estimator or inference procedure. The accepted construction continues to use fiscal-year returns compounded over actual adjacent DATADATE endpoints and pooled OLS with conventional standard errors.",
+    "The original study used Compustat 2001 products and its cited CRSP data file. The replay uses the named current merged Compustat and CRSP vintages; it is not a vintage-identical reconstruction of the historical source population. The fit remains the accepted best-effort implementation.",
+    "This assignment covers only the pooled annual Equation 1 coefficient. The paper’s quarterly estimates, simulations, and subsequent robustness or event analyses are outside this assigned scope.",
+    "The paper reports β2 = 0.302; the accepted predecessor reconstruction reported 0.2837306. The current pooled replay reports 0.300660. These comparisons do not resolve the paper’s return-window ambiguity or vintage differences."
+  ],
+  "analyses": [
+    {
+      "scope_id": "annual_pooled_dt / annual_pooled_eq1",
+      "key": "s1",
+      "label": "annual_pooled_dt / annual_pooled_eq1",
+      "sample_ids": [
+        "annual_compustat_crsp"
+      ],
+      "status": "extended_full",
+      "reason": "The single controller run rebuilt the accepted annual Compustat/CRSP construction jointly over FYEAR 1951–2006, and the original pooled OLS fit succeeded on 139,737 original-period and 21,017 added-period firm-years. The maximum contributing added period is FY 2006. Aggregate current-source coverage reaches FYEAR 2006 (Compustat DATADATE through 2007-05-31, with the accepted market, quote, and currency streams available through 2008-12-31); the requested endpoint is fully supported.",
+      "source_evidence": [
+        "output/samples/records/W3125487088.json: sample_period evidence on p. 5 states annual earnings availability 1951–2001 and identifies Compustat and CRSP.",
+        "output/models/records/W3125487088.json: annual_pooled_dt Equation 1 on p. 4; annual pooled β2 = 0.302 and annual sample/results on p. 5.",
+        "output/reproductions/packages/W3125487088/attempt_02/outcome.json: accepted predecessor marks annual_pooled_dt / annual_pooled_eq1 as executed using the assigned cell 6756ee91.",
+        "work/build.sas: lines 10–14 extend the filtered Compustat records through FYEAR 2006; line 131 selects the pooled FYEAR 1951–2006 analysis period; lines 296–300, 378–386, 522–524, and 582–584 shift required market and security source bounds through 2008-12-31.",
+        "work/runtime/20261118T103704917671Z/build.lst: aggregate current-vintage source coverage block (pp. 24–29) records the filtered date ranges; the SAS build ends with FULL_BUILD_DONE and the Stata handoff succeeds, including its nonempty and GVKEY/FYEAR uniqueness checks.",
+        "work/reg.dta metadata (pyreadstat metadata-only): FYEAR is an int16 fiscal-year variable labelled “Data Year - Fiscal”; GVKEY is string and the model variables retain their expected case and types.",
+        "work/stata.ipynb cell 6756ee91 and work/runtime/20261118T103704917671Z/cell_6756ee91.log: the original estimator is regress eps_price dum ret dum_return; the native log contains one computed marker, EXT_SAMPLE s1 139737 21017 2006.",
+        "work/artifacts/annual_pooled_eq1.csv: fresh aggregate extended coefficients and original/added estimation counts."
+      ],
+      "original_begin": "1951",
+      "original_end": "2001",
+      "requested_end": "2006",
+      "supported_end": "2006",
+      "last_added": "2006",
+      "count_unit": "Firm-year observations in the pooled Stata OLS estimation sample (e(sample)), counted by FYEAR.",
+      "original_n": 139737,
+      "added_n": 21017,
+      "artifacts": [
+        "results/artifacts/annual_pooled_eq1.csv"
+      ],
+      "comparison": {
+        "parameter": "β2 on DUM × Return (differential-timeliness coefficient)",
+        "unit": "EPS per prior-period price per unit raw stock return; same coefficient scale across fits.",
+        "saved_original_estimate": 0.2837306,
+        "saved_original_location": "output/reproductions/packages/W3125487088/attempt_02/tables/annual_pooled_eq1.csv, “DUM times Return” row; native cell log cell_6756ee91.",
+        "extended_estimate": 0.30066,
+        "extended_location": "work/artifacts/annual_pooled_eq1.csv, “DUM times Return” row; work/runtime/20261118T103704917671Z/cell_6756ee91.log.",
+        "paper_reported_estimate": 0.302,
+        "paper_location": "output/models/records/W3125487088.json, annual_pooled_eq1 result evidence on p. 5.",
+        "note": "The original-period e(sample) count matches the saved predecessor count. Coefficients remain subject to the inherited return-window and source-vintage limitations."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:5b25350ed1b07b1297ffcb5d0cc0dc707fbaf2dd0c914d561dcb852510721f43",
+        "sha256": "5b25350ed1b07b1297ffcb5d0cc0dc707fbaf2dd0c914d561dcb852510721f43",
+        "marker": "EXT_SAMPLE s1 139737 21017 2006"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 1
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ee32-e42a-7782-8728-475e57831b36",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3125487088.json",
+    "models": "output/models/records/W3125487088.json",
+    "predecessor": "output/reproductions/packages/W3125487088/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3125487088.json"
+  },
+  "input_hashes": {
+    "sample": "2641faf5820edb1a94a9e625980930be7396d783dcf99d74b7843c2615d18d79",
+    "models": "ec141f4be8848f32b90b83a5cc2e5c5869197ec8a52aea12a9bc006335cdd915",
+    "predecessor": "7f8d7e67c4c65d63d45c0181c59ec483218a764f9c200cc94702e141b12ddeeb",
+    "feasibility": "2b1ab569f419d99e2e189c9028a6aa92061ed40b4e4e95b713304f2cbd07c8c6"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:25c457cb43ff8889a0ad0624f6b3a4f7369f39046ac8e5492d2d637f83520acf",
+    "sha256": "25c457cb43ff8889a0ad0624f6b3a4f7369f39046ac8e5492d2d637f83520acf",
+    "ok": true,
+    "state_sha256": "95f60fa50a5ca4c6b788463bae85943ba65353a75a73475df5dc325b43c03ea1",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.SEC_DPRC",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_dprc.sas7bdat",
+        "bytes": 20562706432,
+        "mtime_ns": 1786704729902110610
+      },
+      {
+        "dataset": "COMP.SEC_MTHPRC",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat",
+        "bytes": 598212608,
+        "mtime_ns": 1786704756970478757
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.DSI",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat",
+        "bytes": 2490368,
+        "mtime_ns": 1764951110019635009
+      },
+      {
+        "dataset": "CRSP.DSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat",
+        "bytes": 17251565568,
+        "mtime_ns": 1764950931963294339
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "da3f005ac762f375b640093fa90d608bf6b32e2a7da4f213612c5957fe67ba18",
+      "work/stata.ipynb": "485e87c521a265ed32f17f58449d2062d075b10685f4179d7eadbdd86374c5ec",
+      "work/submission.json": "28a9179e87c3c37fdf5e27394facd07f5d71acbdfc5c087a53b5a7fc0852487a"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "fe0f6284483d48865aeec96e2765d611982269a5905d3d2cf947ca83a874551b",
+      "predecessor": "output/reproductions/packages/W3125487088/attempt_02/build.sas",
+      "predecessor_sha256": "13374ed05dbf1bf8db783e5f1b00acdf3910ebaa0ab4f26a278d4f3afed71afa",
+      "executed_sha256": "da3f005ac762f375b640093fa90d608bf6b32e2a7da4f213612c5957fe67ba18",
+      "historical_predecessor_sha256": "c2077e1097f41b7bb793341627990c6ca507c7bd795dd5470d3d5cbeba110216"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "485e87c521a265ed32f17f58449d2062d075b10685f4179d7eadbdd86374c5ec",
+      "predecessor": "output/reproductions/packages/W3125487088/attempt_02/stata.ipynb",
+      "predecessor_sha256": "eed5dca2afca8f5044020f70dddf0245fcf55597e25d407a565281de42150623",
+      "historical_predecessor_sha256": "4cec17f39c02ddf58086ce1eb8f2631bb222427ede2659be4a14feccb0d992b9"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "28a9179e87c3c37fdf5e27394facd07f5d71acbdfc5c087a53b5a7fc0852487a",
+      "predecessor": "output/reproductions/packages/W3125487088/attempt_02/submission.json",
+      "predecessor_sha256": "3b47cbffab9afabbe58a0af32ec9eec74031c6115ab4aa1b3d4bd23c27f2760e"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "daf77d296729170927ca4cf5029bc37543fff436ddd29324312303b95d7cc403",
+    "predecessor": "6a8c1f1559fe842e065c30805dd040fb94fbc3eadef1203a868c4b49bdfbe518",
+    "feasibility": "11fca0aa18b747780c5d3a8f5c85ecfb2a0d4a1feaab0d964f84b529498983d6"
+  }
+}

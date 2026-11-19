@@ -1,0 +1,144 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "The Quality of Accruals and Earnings: The Role of Accrual Estimation Errors",
+  "doi": "10.2308/accr.2002.77.s-1.35",
+  "route": "reconstruction",
+  "paper_id": "W3122547505",
+  "years": 5,
+  "sources_checked": [
+    "Current local Compustat North America merged annual fundamentals file COMP.FUNDA: ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; matched against output/feasibility_reproduction/resources/catalog.json (941,340 catalogued rows; 949 variables). The replay uses the named fields gvkey, fyear, at, oancf, recch, invch, apalch, txach, aoloch, ibc, curcd and the accepted INDL/STD/C/D filters.",
+    "Bounded aggregate read of COMP.FUNDA after the accepted population filters, FY1985-FY2005: 229,533 source rows and zero duplicate gvkey-fyear keys. FY2000-FY2005 each have source coverage; complete rows for at, oancf, recch, invch, apalch, txach, aoloch, ibc and curcd are 5,640; 5,285; 4,989; 4,779; 4,832; and 4,715, respectively.",
+    "The catalog and read-only metadata identify gvkey as character, fyear as numeric fiscal year, datadate as a SAS date with YYMMDDN8 format, the monetary items as numeric, and curcd as character. The accepted Stata handoff metadata confirms case-sensitive names gvkey, fyear, d_wc_scaled, cfo_lag, cfo_cur and cfo_lead, with integer fyear and complete numeric model fields.",
+    "Accepted provider crosswalk extract: output/reproductions/packages/W3122547505/attempt_03/documentation/compustat_2004_p71.txt (CURRTR definition); current signed item mappings and currency treatment are retained from the accepted work/design.md and work/build.sas.",
+    "Original paper and accepted run records: output/samples/records/W3122547505.json, output/models/records/W3122547505.json, output/reproductions/packages/W3122547505/attempt_03/outcome.json, and output/reproductions/packages/W3122547505/attempt_03/tables/table3_panel_a_crossfirm_means.md.",
+    "Native replay receipt work/runtime/latest.json: SAS build, handoff and Stata cell all returned code 0; current working inputs were unchanged; generated handoff and table outputs are SHA-256 recorded in the receipt."
+  ],
+  "changes": [
+    "Pooled observation-year window extended from FY1987-FY1999 to FY1987-FY2004, preserving the original start and the same fiscal-year clock; the requested end is five calendar years after 1999.",
+    "SAS source window now reads FY1985-FY2005 to preserve the original two-year lag history and the FY2005 lead/average-assets inputs needed for FY2004 outcomes; currency-denominator diagnostics extend through FY2005.",
+    "Retained the accepted signed Compustat item mapping, current-vintage INDL/STD/C/D population translation, pooled 1st/99th percentile trimming, CFO and constructed Earn lead/lag interpretation, minimum eight firm-years, asreg firm-specific OLS, and cross-firm coefficient summaries.",
+    "Added per-firm original-window and added-window counts before asreg, and emit the required EXT_SAMPLE line after keeping only successful firm fits. The period variable fyear remains in the SAS-to-Stata handoff.",
+    "Native replay completed with 2,298 successful firm fits, 18,704 original-period and 7,035 added-period firm-year observations; the last added outcome year is FY2004. The extended pooled screens also qualify firms that did not meet the eight-year minimum in the original-length window."
+  ],
+  "limitations": [
+    "The source is the current local Compustat vintage and the modern INDL/STD/C/D filters are a best-effort translation of the paper’s historical annual industrial/research files; historical population equivalence is unverified.",
+    "The paper does not specify the individual-fit estimator, the denominator date for lagged/leading CFO, which earnings series is screened at leads/lags or trimmed (Prof versus constructed Earn), or percentile interpolation. Page 8 sample prose and Table 1’s lead/lag row differ; the accepted Earn-at-leads/lags interpretation is retained.",
+    "The paper does not specify currency handling. Unlike-currency or unknown-CURCD average-assets denominators remain unavailable because the provider description of CURRTR does not establish arithmetic direction or its use in these annual constructions.",
+    "The paper’s original outcome window begins in 1987, while the predecessor’s actual screened estimation rows begin in 1988. The extended pooled replay preserves 1987 as the design start and reports the actual contributing years separately.",
+    "The SAS eligible fit sample had 2,299 firms and 25,747 firm-year rows, but Stata retained 2,298 complete firm-level result rows. One eight-year SAS-eligible group did not contribute a complete coefficient/adjusted-R-squared result and was excluded; the available output does not establish why."
+  ],
+  "analyses": [
+    {
+      "scope_id": "firm_specific_accrual_quality / table3_panel_a_firm_specific",
+      "key": "s1",
+      "label": "Firm-specific working-capital accrual estimation model (Equation 5; Table 3 Panel A)",
+      "sample_ids": [
+        "compustat_accrual_quality_panel"
+      ],
+      "status": "extended_full",
+      "reason": "Fresh pooled FY1987-FY2004 native replay succeeded for the assigned Table 3 Panel A firm-specific model. It retained 2,298 successful firm-level coefficient results and contributed 18,704 original-period plus 7,035 added-period firm-year observations through FY2004; verified current-source support reaches FY2004.",
+      "source_evidence": [
+        "Original paper PDF, physical p. 6, Equation (5): ΔWC_t is regressed on CFO_(t−1), CFO_t and CFO_(t+1), with an intercept; the residual standard deviation is the firm-level accrual-quality measure.",
+        "Original paper PDF, physical p. 10, Table 3 Panel A and note: reports coefficient and adjusted-R-squared distributions across 1,725 firm-specific fits; cross-firm t-statistics use the distribution of firm coefficients and each firm requires at least eight observations.",
+        "Original paper PDF, physical pp. 7–8, sample selection and Table 1: Compustat annual industrial/research observations in 1987–1999; the surrounding prose requires past/future cash flows and earnings, while the Table 1 row names lead/lag CFO only.",
+        "Accepted construction work/build.sas lines 7-17, 92-107, 154-160, 397-465: exact COMP.FUNDA population filters, raw FY1985-FY2005 bounds, denominator/lead/lag construction, FY1987-FY2004 anchors, firm-year eligibility and final key checks.",
+        "Accepted Stata notebook cell table3_panel_a_firm_specific, especially lines 31-50 and 60-80: by-gvkey asreg minimum(8), actual successful-fit period counts, and coefficient means/tests and coefficient/adjusted-R-squared distributions.",
+        "Native SAS log work/runtime/20261118T083931976028Z/build.log and aggregate listing: filtered source had 229,533 rows and zero duplicate gvkey-fyear keys; the SAS eligible fit sample had 25,747 firm-years across 2,299 firms and 25,747 unique final keys.",
+        "Native Stata log work/runtime/20261118T083931976028Z/cell_table3_panel_a_firm_specific.log and receipt work/runtime/latest.json: successful cell return code 0; EXT_SAMPLE s1        18704         7035 2004; 2,298 successful firm fits and aggregate coefficient means/tests."
+      ],
+      "original_begin": "1987",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-year observations used by successful firm-specific OLS fits, summed across firms",
+      "original_n": 18704,
+      "added_n": 7035,
+      "artifacts": [
+        "results/tables/table3_panel_a_crossfirm_means.md",
+        "results/tables/table3_panel_a_distribution.md"
+      ],
+      "comparison": "Saved original attempt_03 cross-firm means at output/reproductions/packages/W3122547505/attempt_03/tables/table3_panel_a_crossfirm_means.md (regression coefficient units): intercept 0.031, CFO(t-1) 0.143, CFO(t) -0.548, CFO(t+1) 0.122. Extended native means at work/tables/table3_panel_a_crossfirm_means.md and work/artifacts/s1_extended_results.md: intercept 0.0226381, CFO(t-1) 0.1372265, CFO(t) -0.4918663, CFO(t+1) 0.1222983. The artifact reports three-decimal differences and units. The comparison changes both the period and eligibility/cutoffs because pooled screens and the eight-year minimum are reapplied over the extended window.",
+      "native_evidence": {
+        "path": "urn:sha256:9539746f15cef7ca2cef1b2521bd10f368c739ea9cb242195a67f125c88c827f",
+        "sha256": "9539746f15cef7ca2cef1b2521bd10f368c739ea9cb242195a67f125c88c827f",
+        "marker": "EXT_SAMPLE s1 18704 7035 2004"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 1
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1edc2-a1b5-7ec1-a2bf-8a201b9596c8",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3122547505.json",
+    "models": "output/models/records/W3122547505.json",
+    "predecessor": "output/reproductions/packages/W3122547505/attempt_03/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3122547505.json"
+  },
+  "input_hashes": {
+    "sample": "cbbbde29b0a5cc481b0d98f4671be90625d33322c159a34ac17e487866b71252",
+    "models": "61a0f59e7e17b9afa419125e075d8b0af9367df3010504126686b23840fe6178",
+    "predecessor": "a0866681e405c6a34f61429b5be5506db9ef11c84c621547d69708f4627d63c9",
+    "feasibility": "1c91c279c43adc1d648b03f3f4bd928192b729cd0b1d9960fee1940270e6d58f"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:ccd13bbc4271029a740cb7f4742aa705189a1358b4d5051cee5022dc02d10b6f",
+    "sha256": "ccd13bbc4271029a740cb7f4742aa705189a1358b4d5051cee5022dc02d10b6f",
+    "ok": true,
+    "state_sha256": "a3e394ca744f76652ef8fd6127ca95771f94e715ae091520d88c4fd9a5d136dc",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "366e438a2e7a588045852a474265337357f99a7d89c71c59937934373ab8af2d",
+      "work/stata.ipynb": "aaf2444bbd224a129a3f384bf56c73e36d29b1a9b44fdc25c0f0b481615e0a84",
+      "work/submission.json": "a851fd72175f9489ce7fdc9deeb99ef9be0628c366d7caf619fe8b337bab5409"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "9975e1ecf0386f21014a001306fd35a99391b0c83fc59e46e349dd734080d84d",
+      "predecessor": "output/reproductions/packages/W3122547505/attempt_03/build.sas",
+      "predecessor_sha256": "d309a1f25bdec1a6bf9d9f8b0377bad4cf384182d114b61387807f114d9c761b",
+      "executed_sha256": "366e438a2e7a588045852a474265337357f99a7d89c71c59937934373ab8af2d",
+      "historical_predecessor_sha256": "8bb8f46ec8c3b123c7c1f4f2d1861436253964258c35a7e4b34f329e7a878a45"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "a0aa40d563e91a3959be202c2c95eb715c52f221948cbc9f258a115558510407",
+      "predecessor": "output/reproductions/packages/W3122547505/attempt_03/stata.ipynb",
+      "predecessor_sha256": "fcadbb3fee6adf3371851137959eacab8417502d39084e68bd262f1025675b3b",
+      "executed_sha256": "aaf2444bbd224a129a3f384bf56c73e36d29b1a9b44fdc25c0f0b481615e0a84",
+      "historical_predecessor_sha256": "943887e9e31513621211a93d801e0e736ddfa05a264877a42e0d7e7ebfb6b71a"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "e0b22b866f02ed4c2e69776835f7dafb5cc02041f7dacfe08adfdcba031f5085",
+    "predecessor": "36210fe136491392078eb0708a999063d112c8bc2b8211e5f264376ffc92b01f",
+    "feasibility": "18cdd9da5041dd979ae52a0d65753cfb2140a69fe826c8ea2b1c644dbb264463"
+  }
+}

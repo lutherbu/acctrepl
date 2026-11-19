@@ -1,0 +1,488 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Biases and Lags in Book Value and Their Effects on the Ability of the Book-to-Market Ratio to Predict Book Return on Equity",
+  "doi": "10.2307/2672925",
+  "route": "reconstruction",
+  "paper_id": "W2065676679",
+  "years": 5,
+  "sources_checked": [
+    "COMP.FUNDA current local version, read-only 2026-11-18; ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat, 941,340 rows and 949 fields. Under accepted POPSRC=D, CONSOL=C, DATAFMT=STD and INDFMT INDL/FS filters, INDL-first and latest-DATADATE selection gives unique GVKEY/FYEAR rows for FY1984–1998. FY1998 has 12,557 selected keys; DATADATE spans 1998-06-30 through 1999-05-31; 11,465 selected rows have IBCOM and 11,466 have CEQ.",
+    "COMP.SEC_MTHPRC current local version; ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat, 8,285,814 rows with DATADATE from 1962-01-31 through 2026-07-31. The fresh SAS controller checked exact fiscal-close price dates for the required FY1984–1993 formation years.",
+    "CRSP.CCMXPF_LINKTABLE current local version; ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat, 92,711 rows. The accepted USEDflag=1, LC/LU, P/C code-path subset has 13,539 link rows overlapping FY1984–1993.",
+    "CRSP.DSF current local version; ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat, 107,663,470 rows and 20 fields including PERMNO, DATE, RET. The controller's fresh SAS build used daily security returns with DSI session dates and link windows; its aggregate return-window check reports 5,105 linked windows and 5,019 complete windows for fiscal 1993, dated through 1994-05-31.",
+    "CRSP.DSI current local version; ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat, 26,051 sessions from 1925-12-31 through 2024-12-31. The 1987–1993 calendar has 252–254 sessions each year; SAS uses the date-matched sessions in the exact return windows.",
+    "CRSP.DSEDELIST current local version; ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsedelist.sas7bdat, 38,872 events dated 1926-02-24 through 2024-12-31, including 3,933 event dates in 1987–1993.",
+    "COMP.SEC_MSHARE current local version; ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mshare.sas7bdat, 5,933,324 rows and 9 fields. It is named in the predecessor inventory but is not read by the accepted build; the existing primary-price × company-shares route was retained.",
+    "Accepted predecessor outcome record output/reproductions/packages/W2065676679/attempt_02/outcome.json reports all ten assigned Table 5 fits executed; predecessor aggregate tables were read only for like-for-like focal-estimate comparison."
+  ],
+  "changes": [
+    "Extended the assigned Table 5 formation-year clock from FY1984–1988 to FY1984–1993, pooled with the original years. The source catalog's 1974–1993 period describes Annual PST coverage, while Table 5's actual regression unit is the formation-year firm-year.",
+    "Expanded COMP.FUNDA construction through FY1998 to supply the five subsequent ROE outcomes for FY1993 formations; actual FY1998 DATADATEs extend through 1999-05-31. Kept fiscal-year labels and actual reporting dates distinct.",
+    "Extended rolling Equation (4) component construction and exact fiscal-close price diagnostics through formation FY1993. CRSP daily returns remain bounded through FY1993 because later forecast outcomes require accounting ROE only.",
+    "Retained the existing pooled OLS model terms, fixed winsorization, White-style robust standard errors, and Panel B contrasts/tests. Added computed EXT_SAMPLE diagnostics from each horizon's live Stata e(sample). No data source or estimator substitution was made."
+  ],
+  "limitations": [
+    "Current-vintage FUNDA cannot establish membership in the 1993 Annual PST tape or reproduce its survivor population; current active status is not used as a historical screen.",
+    "The extended current-vintage sample has 10,522 complete firm-years (4,409 original-window plus 6,113 added) versus the paper's 6,044 common observations. The gap cannot be assigned only to data vintage because the current construction also retains its supported currency, price, and return coverage rules.",
+    "IBCOM is the closest available annual net-income-for-common item, but the paper's wording does not resolve treatment of extraordinary items and discontinued operations.",
+    "Market equity remains fiscal-close PRCC_F times company CSHO. Historical MKVALT is missing and the accepted code does not construct a total across multiple common issues; no unverified FX conversion is applied.",
+    "CRSP daily returns remain a current-vintage, price-supported USD primary-issue route. Foreign-market and incomplete-session windows remain unavailable. Returns are needed through the latest formation year FY1993; FY1994–1998 forecast outcomes use Compustat ROE.",
+    "The separate Stata absorbed-FE rank-audit cell was extended in the working notebook but was not one of the two assigned cells executed by the single controller run. The SAS seven-slope guard passed all ten formation fits and the rowwise decomposition identity had zero failures (maximum absolute error 4.7e-11); an independent new Stata rank-audit result for FY1989–1993 is not claimed.",
+    "The predecessor's documented Table 5 Panel B four-year c-d arithmetic discrepancy and the three-year ROE t-statistic prose/table discrepancy remain unchanged in work/design.md.",
+    "Table 1 descriptive summaries were not among the ten assigned scopes; the retained descriptive cell still lists the original selected years."
+  ],
+  "analyses": [
+    {
+      "scope_id": "roe_btm_benchmark / panel_a_h1",
+      "key": "s1",
+      "label": "Table 5 Panel A, 1-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_btm_benchmark, Table 5 Panel A, horizon 1, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv, executed predecessor Table 5 estimate for horizon 1; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-a: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_a.csv"
+      ],
+      "comparison": "Focal BTM slope (forecast ROE per unit of BTM): predecessor estimate -0.119*** at N=4 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv; extended pooled estimate -0.091*** at N=10522 from work/tables/table5_panel_a.csv. Both are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "sha256": "db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "marker": "EXT_SAMPLE s1 4409 6113 1993"
+      }
+    },
+    {
+      "scope_id": "roe_btm_benchmark / panel_a_h2",
+      "key": "s2",
+      "label": "Table 5 Panel A, 2-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_btm_benchmark, Table 5 Panel A, horizon 2, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv, executed predecessor Table 5 estimate for horizon 2; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-a: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_a.csv"
+      ],
+      "comparison": "Focal BTM slope (forecast ROE per unit of BTM): predecessor estimate -0.098*** at N=4 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv; extended pooled estimate -0.085*** at N=10522 from work/tables/table5_panel_a.csv. Both are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "sha256": "db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "marker": "EXT_SAMPLE s2 4409 6113 1993"
+      }
+    },
+    {
+      "scope_id": "roe_btm_benchmark / panel_a_h3",
+      "key": "s3",
+      "label": "Table 5 Panel A, 3-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_btm_benchmark, Table 5 Panel A, horizon 3, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv, executed predecessor Table 5 estimate for horizon 3; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-a: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_a.csv"
+      ],
+      "comparison": "Focal BTM slope (forecast ROE per unit of BTM): predecessor estimate -0.065*** at N=4 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv; extended pooled estimate -0.059*** at N=10522 from work/tables/table5_panel_a.csv. Both are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "sha256": "db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "marker": "EXT_SAMPLE s3 4409 6113 1993"
+      }
+    },
+    {
+      "scope_id": "roe_btm_benchmark / panel_a_h4",
+      "key": "s4",
+      "label": "Table 5 Panel A, 4-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_btm_benchmark, Table 5 Panel A, horizon 4, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv, executed predecessor Table 5 estimate for horizon 4; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-a: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_a.csv"
+      ],
+      "comparison": "Focal BTM slope (forecast ROE per unit of BTM): predecessor estimate -0.060*** at N=4 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv; extended pooled estimate -0.048*** at N=10522 from work/tables/table5_panel_a.csv. Both are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "sha256": "db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "marker": "EXT_SAMPLE s4 4409 6113 1993"
+      }
+    },
+    {
+      "scope_id": "roe_btm_benchmark / panel_a_h5",
+      "key": "s5",
+      "label": "Table 5 Panel A, 5-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_btm_benchmark, Table 5 Panel A, horizon 5, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv, executed predecessor Table 5 estimate for horizon 5; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-a: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_a.csv"
+      ],
+      "comparison": "Focal BTM slope (forecast ROE per unit of BTM): predecessor estimate -0.079*** at N=4 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_a.csv; extended pooled estimate -0.057*** at N=10522 from work/tables/table5_panel_a.csv. Both are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "sha256": "db91069805f32003d4b3f845d6d4315b046d263aa25076bf5f9f2ab553e817a8",
+        "marker": "EXT_SAMPLE s5 4409 6113 1993"
+      }
+    },
+    {
+      "scope_id": "roe_components_full / panel_b_h1",
+      "key": "s6",
+      "label": "Table 5 Panel B, 1-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_components_full, Table 5 Panel B, horizon 1, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b.csv, executed predecessor Table 5 estimate for horizon 1; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-b: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_b.csv",
+        "results/tables/table5_panel_b_tests.csv"
+      ],
+      "comparison": "Focal c-d contrast (BC minus LC; forecast ROE coefficient difference per unit component): predecessor estimate 0.097 at N=4409 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b_tests.csv; extended pooled estimate 0.057 at N=10522 from work/tables/table5_panel_b_tests.csv, with p=0.000. Both estimates are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "sha256": "935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "marker": "EXT_SAMPLE s6 4409 6113 1993"
+      }
+    },
+    {
+      "scope_id": "roe_components_full / panel_b_h2",
+      "key": "s7",
+      "label": "Table 5 Panel B, 2-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_components_full, Table 5 Panel B, horizon 2, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b.csv, executed predecessor Table 5 estimate for horizon 2; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-b: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_b.csv",
+        "results/tables/table5_panel_b_tests.csv"
+      ],
+      "comparison": "Focal c-d contrast (BC minus LC; forecast ROE coefficient difference per unit component): predecessor estimate 0.092 at N=4409 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b_tests.csv; extended pooled estimate 0.026 at N=10522 from work/tables/table5_panel_b_tests.csv, with p=0.043. Both estimates are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "sha256": "935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "marker": "EXT_SAMPLE s7 4409 6113 1993"
+      }
+    },
+    {
+      "scope_id": "roe_components_full / panel_b_h3",
+      "key": "s8",
+      "label": "Table 5 Panel B, 3-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_components_full, Table 5 Panel B, horizon 3, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b.csv, executed predecessor Table 5 estimate for horizon 3; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-b: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_b.csv",
+        "results/tables/table5_panel_b_tests.csv"
+      ],
+      "comparison": "Focal c-d contrast (BC minus LC; forecast ROE coefficient difference per unit component): predecessor estimate -0.009 at N=4409 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b_tests.csv; extended pooled estimate -0.022 at N=10522 from work/tables/table5_panel_b_tests.csv, with p=0.085. Both estimates are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "sha256": "935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "marker": "EXT_SAMPLE s8 4409 6113 1993"
+      }
+    },
+    {
+      "scope_id": "roe_components_full / panel_b_h4",
+      "key": "s9",
+      "label": "Table 5 Panel B, 4-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_components_full, Table 5 Panel B, horizon 4, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b.csv, executed predecessor Table 5 estimate for horizon 4; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-b: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_b.csv",
+        "results/tables/table5_panel_b_tests.csv"
+      ],
+      "comparison": "Focal c-d contrast (BC minus LC; forecast ROE coefficient difference per unit component): predecessor estimate 0.006 at N=4409 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b_tests.csv; extended pooled estimate -0.026 at N=10522 from work/tables/table5_panel_b_tests.csv, with p=0.043. Both estimates are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "sha256": "935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "marker": "EXT_SAMPLE s9 4409 6113 1993"
+      }
+    },
+    {
+      "scope_id": "roe_components_full / panel_b_h5",
+      "key": "s10",
+      "label": "Table 5 Panel B, 5-year-ahead ROE",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 5 is indexed by fiscal formation year t. The paper/model record and accepted code identify original t=1984–1988; the task's 1974–1993 source-data interval is not the regression's formation clock. The pooled native e(sample) contains 4409 firm-year observations from FY1984–1988 and 6113 from FY1989–1993, with the last added formation year FY1993. Each year FY1989–1993 has positive complete-case observations, and the Compustat input provides the required five future ROEs through FY1998.",
+      "source_evidence": [
+        "output/models/records/W2065676679.json, model roe_components_full, Table 5 Panel B, horizon 5, physical p. 18: original formation years 1984–1988 and common five-future-ROE sample.",
+        "output/samples/records/W2065676679.json, main sample evidence, physical p. 8: Annual PST source years 1974–1993; that source interval differs from the Table 5 formation-year clock.",
+        "output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b.csv, executed predecessor Table 5 estimate for horizon 5; compared with the fresh extended native output.",
+        "work/stata.ipynb, cell panel-b: accepted horizon regression terms and Stata robust inference; `fyear` is the retained fiscal-year formation clock in the accepted handoff."
+      ],
+      "original_begin": "1984",
+      "original_end": "1988",
+      "requested_end": "1993",
+      "supported_end": "1993",
+      "last_added": "1993",
+      "count_unit": "firm-year estimation observations in Stata e(sample), one unique GVKEY × FYEAR row",
+      "original_n": 4409,
+      "added_n": 6113,
+      "artifacts": [
+        "results/tables/table5_panel_b.csv",
+        "results/tables/table5_panel_b_tests.csv"
+      ],
+      "comparison": "Focal c-d contrast (BC minus LC; forecast ROE coefficient difference per unit component): predecessor estimate -0.020 at N=4409 from output/reproductions/packages/W2065676679/attempt_02/tables/table5_panel_b_tests.csv; extended pooled estimate -0.041 at N=10522 from work/tables/table5_panel_b_tests.csv, with p=0.003. Both estimates are displayed to three decimals.",
+      "native_evidence": {
+        "path": "urn:sha256:935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "sha256": "935b46bea74a01ff02df29a96ac5da45210b5457c73f0506a74e64a8e2386a74",
+        "marker": "EXT_SAMPLE s10 4409 6113 1993"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 10
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed5f-0d4d-7a71-8aec-410fd04915fb",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W2065676679.json",
+    "models": "output/models/records/W2065676679.json",
+    "predecessor": "output/reproductions/packages/W2065676679/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W2065676679.json"
+  },
+  "input_hashes": {
+    "sample": "d7c25b0973ebf1470bf3a7a16278f7d9c4c488cc254d26e4d044bfbc5d067d0a",
+    "models": "700fc7b51920c4b230f37c547b84077036eb8dd14f6755f93efa5a3efeef5525",
+    "predecessor": "58f7297a7a9917c1d79a8f85557c39db2b83c2395f518b4bb985d4896699caee",
+    "feasibility": "073901147f8410a64ad1a5e664b4b8aad3a7277868e8aac104ae06fd3716c30e"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:0ee12c3dcaf0f385bb018f06a9595c52d8d866670d6be79ea74a98888cf4477f",
+    "sha256": "0ee12c3dcaf0f385bb018f06a9595c52d8d866670d6be79ea74a98888cf4477f",
+    "ok": true,
+    "state_sha256": "82c3d1ba461420178a4b817b0be28cf318e31abab8383b3b1804000a8ac50f6e",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.SEC_MTHPRC",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat",
+        "bytes": 598212608,
+        "mtime_ns": 1786704756970478757
+      },
+      {
+        "dataset": "COMP.SEC_MSHARE",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mshare.sas7bdat",
+        "bytes": 381026304,
+        "mtime_ns": 1786704743742298822
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.DSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat",
+        "bytes": 17251565568,
+        "mtime_ns": 1764950931963294339
+      },
+      {
+        "dataset": "CRSP.DSEDELIST",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsedelist.sas7bdat",
+        "bytes": 6094848,
+        "mtime_ns": 1764950801576115988
+      },
+      {
+        "dataset": "CRSP.DSI",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat",
+        "bytes": 2490368,
+        "mtime_ns": 1764951110019635009
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "7064f9dc16cd65a3ac7965b7d0456bb29cd3c025c01be45e588bd163d6001da1",
+      "work/stata.ipynb": "48d13d27a19491ef2728b07e73fed47d61bc3fecd950c3f082a4148192eb2fda",
+      "work/submission.json": "fc7777c8c3e629d103af3e4c1f379b4ce755f56d14a5977277ff827dd95e314a"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "fb7fdd67b5b975a050a91ac51e75bc880d9a05caa7749ba17f2a070974756f25",
+      "predecessor": "output/reproductions/packages/W2065676679/attempt_02/build.sas",
+      "predecessor_sha256": "4f599ad009d8068f87b21084d53d8ec676c37eb760d059df3f4c1945d2f76333",
+      "executed_sha256": "7064f9dc16cd65a3ac7965b7d0456bb29cd3c025c01be45e588bd163d6001da1",
+      "historical_predecessor_sha256": "69ddab1583beb7f2e5ee277b1eafaa1fd34d75570a5ae14e6d4ab18897dd2626"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "48d13d27a19491ef2728b07e73fed47d61bc3fecd950c3f082a4148192eb2fda",
+      "predecessor": "output/reproductions/packages/W2065676679/attempt_02/stata.ipynb",
+      "predecessor_sha256": "f31801df0df38f5b84947dfdb7ee7dcfad43abfc693e3d80ef1d3fcec4f65e4d",
+      "historical_predecessor_sha256": "6b3a536a1188aa202ca3e01db1bb4b675d7bc5252f3219f5916955f0bf1b2a64"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "fc7777c8c3e629d103af3e4c1f379b4ce755f56d14a5977277ff827dd95e314a",
+      "predecessor": "output/reproductions/packages/W2065676679/attempt_02/submission.json",
+      "predecessor_sha256": "35b0324c041ed895004a29865f3d8f10ed159e0962088b4fc3e32861daa5d3bc"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "987f291ca1b50dbfd5a699f06dfc85344c1dac659be4185029bcdd52c7103b2b",
+    "predecessor": "0e4f47971ec63480f18a43476251b95a98d9cce07aed1d275d37d77393f6cec4",
+    "feasibility": "840068f7c7dee7976a0cfd9b20403d66e4d11c693f98006ed8d0a8c988e117e5"
+  }
+}

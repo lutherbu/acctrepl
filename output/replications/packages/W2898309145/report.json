@@ -1,0 +1,217 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Corporate tax avoidance: data truncation and loss firms",
+  "doi": "10.1007/s11142-018-9448-0",
+  "route": "reconstruction",
+  "paper_id": "W2898309145",
+  "years": 5,
+  "sources_checked": [
+    "Resource catalog: output/feasibility_reproduction/resources/catalog.json (SHA256 4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27; generated 2026-10-27). The catalog identifies the exact named COMP datasets and physical local paths but no provider release identifier. The native launch manifest records each current local file size/mtime; receipt confirms inputs_unchanged=true through the replay.",
+    "COMP.FUNDA — ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; local mtime 2026-07-22T07:44:45Z, 7,258,374,144 bytes; catalog 941,340 rows/949 variables. Read-only selected-field scan under INDFMT=INDL, CONSOL=C, POPSRC=D, DATAFMT=STD found 11,618 FYEAR 2019 rows with DATADATE from 2019-06-30 through 2020-05-31; the controller build listing confirms max FYEAR 2019 under the extended bound.",
+    "COMP.FUNDQ — ${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat; local mtime 2026-07-22T07:45:15Z, 11,168,514,048 bytes; catalog 2,130,133 rows/648 variables. The same standard product screens contain calendar-date rows through 2019 and the local file overall through 2026-06-30; added-period GVKEY×DATADATE duplicate keys are excluded by the copied qprice_uk route.",
+    "COMP.SEC_MTHPRC — ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat; local mtime 2026-08-14T10:52:36Z, 598,212,608 bytes; catalog 8,285,814 rows/10 variables. Selected date/key coverage includes 2019 and runs through 2026-07-31; no duplicate GVKEY×IID×DATADATE keys were found in the checked 2013–2019 interval.",
+    "COMP.COMPANY — ${ACCTREPL_SAS_ROOT}/comp/d_na/company/company.sas7bdat; local mtime 2026-07-22T07:45:16Z, 173,408,256 bytes; catalog 58,112 rows/40 variables. All 58,112 GVKEYs were unique in the bounded key check; FIC and STKO are current, undated classifications in this source.",
+    "COMP.SEC_IDHIST — ${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_idhist.sas7bdat; local mtime 2026-08-14T10:52:18Z, 55,508,992 bytes; catalog 861,868 rows/6 variables. CUSIP effective-date records include FY2019-era ranges; checked effective-from values run through 2026-07-20 and effective-through includes the provider 2900 sentinel for open-ended ranges.",
+    "COMP.G_EXRT_DLY — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat; local mtime 2026-08-14T10:15:13Z, 71,630,848 bytes; catalog 2,221,564 rows/5 variables. Positive GBP-origin rate rows cover 2019 and 2020 (56,288 and 56,364); the exact maximum required annual DATADATE 2020-05-31 has 154 positive GBP-target rows including the USD leg, with no duplicate date/currency keys in 2013–2020.",
+    "COMP.G_EXRT_MTH — ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat; local mtime 2026-08-14T10:15:13Z, 12,976,128 bytes; catalog 75,838 rows/22 variables. Positive GBP-origin rate rows cover 2019 and 2020 (1,842 and 1,848); 2020-05-31 has 154 positive GBP-target rows including the USD leg, with no duplicate date/currency keys in 2013–2020."
+  ],
+  "changes": [
+    "Extended the pooled outcome clock from FY1988–2014 to FY1988–2019 using the accepted FYEAR observation-year definition and TIME=FYEAR−1988. Rebuilt historical and added observations together; preserved the FY1987 TXR lag input and all original sample, denominator, CTE, currency, and corporation screens.",
+    "Extended FUNDA through FYEAR 2019, quarterly and monthly security-price bounds through 2019, and SEC_IDHIST plus daily/monthly exchange-rate date bounds through 2020-12-31 because FYEAR 2019 DATADATEs extend to 2020-05-31. The native handoff confirms FYEAR 1988–2019 and TIME 0–31.",
+    "Retained the accepted pooled 1st/99th percentile winsorization before the ≥5 firm-history rule, pooled OLS with intercept, ivreg2 small-sample inference, and two-way firm/year clustered standard errors. Added computed Stata e(sample) counts by original and added FYEAR periods; no model term, estimator, fixed effect, or weight changed."
+  ],
+  "limitations": [
+    "The accepted build’s current-header approximations remain: current FUNDA FIC=USA for historical FINC=0, undated COMPANY.STKO and FUNDA.CONM for historical ownership/name screens, and FUNDA/header CUSIP fallback where no unique effective SEC_IDHIST CUSIP is available. These are not dated historical classifications.",
+    "Bounded source checks found ambiguous source keys in added-period inputs: one standard-format FUNDA GVKEY×FYEAR duplicate key in each FY2015–2019; standard-format FUNDQ GVKEY×DATADATE duplicate keys by calendar year were 37 (2015), 30 (2016), 35 (2017), 29 (2018), and 12 (2019). The accepted build excludes ambiguous annual, quarterly, security, identifier, and FX join keys rather than choosing a new tie winner; no handoff GVKEY-year duplication or missing DV/TIME was reported.",
+    "The paper’s Section 3.1 reports 124,514 nonmissing one-year Δ/MVA1 observations, while the accepted predecessor construction had 118,611 common-eligible rows; Table 6 Panel C reports N=111,558 while the saved predecessor fit had N=106,162. These gaps remain unexplained and are not attributed to this extension. The new joint fit has N=121,240, including 107,604 original-period and 13,636 added-period rows.",
+    "The paper does not name the estimator beyond a regression on a linear trend or specify the exact two-way finite-sample correction, pooled versus period-specific percentile grouping, percentile algorithm, or cutpoint order. The accepted best-effort choices remain OLS via ivreg2 small, pooled SAS PCTLDEF=5 cutoffs before the five-row firm filter, and FYEAR as the observation clock.",
+    "The paper’s TXR meaning differs between Section 2.2 and Table 4, and its printed 34% interval says “1998 through 1992.” The accepted construction preserves these discrepancies and applies 34% to FY1988–1992 as its documented interpretation.",
+    "The assignment retains only the all-firms Table 6 Panel C fit. Its multinational/domestic subgroup fits and the article’s other tables are outside this predecessor scope and were not run here.",
+    "The new and saved coefficients do not hold the estimation sample fixed: the ≥5 observation firm rule and pooled winsorization cutoffs are recalculated on the joint FY1988–2019 sample. The 1,442-row increase in the FY1988–2014 part of e(sample) is therefore part of the pooled extension, not an isolated time-window-only coefficient change."
+  ],
+  "analyses": [
+    {
+      "scope_id": "full_sample_delta_trend / table6_panel_c_all_firms",
+      "key": "s1",
+      "label": "full_sample_delta_trend / table6_panel_c_all_firms",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Rebuilt the accepted all-firms Table 6 Panel C Δ/MVA1-on-TIME fit jointly for FY1988–2019 from the named current local Compustat sources. The successful native Stata e(sample) contains 107,604 FY1988–2014 firm-years and 13,636 FY2015–2019 firm-years, with last contribution FY2019.",
+      "source_evidence": [
+        "output/samples/records/W2898309145.json, sample main: firm-year observations, 1988–2014; Section 3.1 evidence at paper p. 13.",
+        "output/models/records/W2898309145.json, model full_sample_delta_trend / result_set table6_panel_c_all_firms: Table 6 Panel C all-firms Δ/MVA1 on TIME, five-observation firm rule, two-way firm/year clustering, published N=111,558 and page 24.",
+        "output/reproductions/packages/W2898309145/attempt_02/outcome.json: accepted predecessor executed cell t6c_reg; output/reproductions/packages/W2898309145/attempt_02/design.md records the retained estimator, source choices, predecessor estimate, and sample-count discrepancies.",
+        "work/build.sas lines 14, 23, 31, 43, 50, 58, 339, 351–353, 531–562, 581–619: extended input bounds, FYEAR observation clock, retained lag/statutory-rate construction, pooled winsorization, five-observation rule, handoff and key checks.",
+        "work/stata.ipynb cell t6c_reg: accepted ivreg2 pooled regression with firm/year clustering and computed e(sample) period diagnostics; cell output tables/table6c_all.md.",
+        "work/runtime/20261118T074104897159Z/cell_t6c_reg.log: native EXT_SAMPLE marker, N, coefficient, standard error, t statistic, p value, and year-cluster count; work/tables/table6c_all.md is the fresh aggregate export.",
+        "work/runtime/20261118T074104897159Z/build.lst, final handoff checks: FYEAR range 1988–2019, TIME range 0–31, no missing dependent variable or TIME."
+      ],
+      "original_begin": "1988",
+      "original_end": "2014",
+      "requested_end": "2019",
+      "supported_end": "2019",
+      "last_added": "2019",
+      "count_unit": "U.S. firm-year observations in the active Stata ivreg2 e(sample), counted by FYEAR via the handoff year variable.",
+      "original_n": 107604,
+      "added_n": 13636,
+      "artifacts": [
+        "results/tables/table6c_all.md"
+      ],
+      "comparison": {
+        "saved_predecessor": {
+          "time_slope": 0.000244,
+          "standard_error": 0.0001087,
+          "t_statistic": 2.25,
+          "p_value": 0.0335,
+          "observations": 106162,
+          "unit": "Δ/MVA1 ratio per one-year increase in FYEAR/TIME",
+          "location": "output/reproductions/packages/W2898309145/attempt_02/design.md; output/reproductions/packages/W2898309145/attempt_02/tables/table6c_all.md"
+        },
+        "extended_fit": {
+          "time_slope": 0.0002719,
+          "standard_error": 6.8e-05,
+          "t_statistic": 4.0,
+          "p_value": "<0.001",
+          "observations": 121240,
+          "original_period_n": 107604,
+          "added_period_n": 13636,
+          "last_added": "2019",
+          "year_clusters": 32,
+          "unit": "Δ/MVA1 ratio per one-year increase in FYEAR/TIME",
+          "location": "work/runtime/20261118T074104897159Z/cell_t6c_reg.log; work/tables/table6c_all.md"
+        },
+        "paper": {
+          "time_slope": 0.0001,
+          "t_statistic": 1.15,
+          "observations": 111558,
+          "location": "Table 6 Panel C, page 24, output/models/records/W2898309145.json"
+        },
+        "interpretation": "The extended trend remains positive and is larger and more statistically precise under the retained ivreg2, small, two-way clustered inference. This is not a fixed-sample comparison: the accepted ≥5-observation firm rule and pooled 1st/99th percentile cutoffs are recomputed on the joint FY1988–2019 common-eligible sample; the extended fit retains 1,442 more FY1988–2014 estimation rows than the saved predecessor."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:5a9616be11c91bce3657f76f3a8670eb1ac7d6aba302887df6075ecc66216025",
+        "sha256": "5a9616be11c91bce3657f76f3a8670eb1ac7d6aba302887df6075ecc66216025",
+        "marker": "EXT_SAMPLE s1 107604 13636 2019"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 1
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed8e-0ee4-7d53-aa61-78200ac2b989",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W2898309145.json",
+    "models": "output/models/records/W2898309145.json",
+    "predecessor": "output/reproductions/packages/W2898309145/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W2898309145.json"
+  },
+  "input_hashes": {
+    "sample": "c7305400e2f71c311f74f819e59504d552e7591b82b7c902eb818694d3b6db76",
+    "models": "c55ce3cc0f3f28da2c583a4a9dcd03d32c7181c99445357ab0376e12a9df45cd",
+    "predecessor": "5fab3f96628380d1bb9ca563b44c48ff972a8aaf85404d5a67538b5d10c9a97b",
+    "feasibility": "5d62b9ed318c4a29731e405b126595548e23e0b0734654b5694c05be4f74ee1d"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:432c224b6aa00830c735a38ff05b37f8cf5ff6db74d7080f3ca2a8bb1790da4b",
+    "sha256": "432c224b6aa00830c735a38ff05b37f8cf5ff6db74d7080f3ca2a8bb1790da4b",
+    "ok": true,
+    "state_sha256": "2ae05ac66a2c1ae660f2551313505939b94d45f84bd1d9ef2b795189c4d3dd91",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.FUNDQ",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+        "bytes": 11168514048,
+        "mtime_ns": 1784706315462178578
+      },
+      {
+        "dataset": "COMP.COMPANY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/company/company.sas7bdat",
+        "bytes": 173408256,
+        "mtime_ns": 1784706316542204460
+      },
+      {
+        "dataset": "COMP.SEC_IDHIST",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_idhist.sas7bdat",
+        "bytes": 55508992,
+        "mtime_ns": 1786704738522227827
+      },
+      {
+        "dataset": "COMP.SEC_MTHPRC",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/security/sec_mthprc.sas7bdat",
+        "bytes": 598212608,
+        "mtime_ns": 1786704756970478757
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "afb64a611481523567de1ddd0f8cb334c67b5222e1317d0490d1795cd607347a",
+      "work/stata.ipynb": "23807f3c41a0ea351fcd74564de74519be3cc1cb2ae907103631b9fa3a4b7359",
+      "work/submission.json": "1e69ad4bcadb532e688c2f88246b151ad1b67cc9d3e8f93f139b09b947ae0186"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "c0b6d5fa92a4ed29ef5ce83010becf25297a6631041dfd66c05f8580ad62ff94",
+      "predecessor": "output/reproductions/packages/W2898309145/attempt_02/build.sas",
+      "predecessor_sha256": "a56ae282f87e9409b181d7009f141b6b97e66ca087eaefeacc2681002bd0da65",
+      "executed_sha256": "afb64a611481523567de1ddd0f8cb334c67b5222e1317d0490d1795cd607347a",
+      "historical_predecessor_sha256": "c0e9dad941ce5ea006804f718facc5013c4f5a3443c868a632391121be24465e"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "23807f3c41a0ea351fcd74564de74519be3cc1cb2ae907103631b9fa3a4b7359",
+      "predecessor": "output/reproductions/packages/W2898309145/attempt_02/stata.ipynb",
+      "predecessor_sha256": "94a85d00770f8b8d83fe72a246228d936c72166c88adc6a3ff90bee31062ea82",
+      "historical_predecessor_sha256": "492a702524847b774dc7feaf070a19cfb8b07e3ac4a61c086d6a85bdd2d77912"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "1e69ad4bcadb532e688c2f88246b151ad1b67cc9d3e8f93f139b09b947ae0186",
+      "predecessor": "output/reproductions/packages/W2898309145/attempt_02/submission.json",
+      "predecessor_sha256": "470d8444168d25a0e4ad2027b4bb46feb752733eb8cd81c9c54c2a5e25f1cfa3"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "b68ed00ee4698232f38750d92402c20b1c8d8fe38ec941d6f26ff3f344e5a277",
+    "predecessor": "d1e2fe069c69d163398b9fa4e8120a38b944876a00b7164aedd8890fabe5d2c3",
+    "feasibility": "21392d1c1de7e9c5580e8d26f3fd87d801e01267c977855012bd7f388abf2559"
+  }
+}

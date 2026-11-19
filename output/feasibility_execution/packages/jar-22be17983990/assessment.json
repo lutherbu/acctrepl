@@ -1,0 +1,2368 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-22be17983990",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 60/Issue 1/12398 - The-Innovation-and-Reporting-Consequences-of-Financial-Regulation-for-Young-Life-Cycle-Firms/alv-datasheet-code-and-identifiers.zip",
+        "sha256": "74c4d0e9de4a2cf288324ead86638a713666d60ae054992c377708509e8eb0ed"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "b27a13e5107ad64aa7d573bd0d83eddda9fef42731cdc1c8d8677c1738fa296f",
+    "work_item_sha256": "41c8f19b6375df5242ed4e85a6a010ee752fb6bdf658680b676f903e77c4f613"
+  },
+  "title": "The Innovation and Reporting Consequences of Financial Regulation for Young Life-Cycle Firms",
+  "doi": "10.1111/1475-679X.12398",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Complete author-documented workflow across SAS and Stata: accrual-quality and financial-constraint construction, PatentsView/KPSS/claims patent preparation, main and pseudo SOX samples, manually run 17 Zhang and 7 EHW WRDS Eventus events, final regressions, extra-years branch and entropy-balanced footnote panels.",
+      "entry_points": [
+        "1a-FRQ variables.sas",
+        "1b-citations.sas",
+        "1c-patent variables.do",
+        "1d-financial_constraints.sas",
+        "2a-variable creation and sample selection.sas",
+        "2b-event study.sas",
+        "3-dataset compilation and regressions.do"
+      ],
+      "requirement_ids": [
+        "R_COMPUSTAT",
+        "R_LINKTABLE",
+        "R_CRSP_MSF",
+        "R_AUDIT_RESTATE",
+        "R_AUDIT_ACCEL",
+        "R_AUDIT_SOX",
+        "R_PV_CITATIONS",
+        "R_PV_CPC",
+        "R_PV_PATENT",
+        "R_PV_APPLICATION",
+        "R_KPSS",
+        "R_PATENT_CLAIMS",
+        "R_BENFORDS",
+        "R_DGTW",
+        "R_IO",
+        "R_EVENTUS_RESULTS"
+      ],
+      "software_ids": [
+        "S_STATA",
+        "S_SAS",
+        "S_SAS_STAT",
+        "S_EVENTUS",
+        "S_WINSOR2",
+        "S_OUTREG2",
+        "S_MIPOLATE",
+        "S_EBALANCE",
+        "S_REGHDFE",
+        "S_ESTTAB",
+        "S_ESTPOST",
+        "S_ESTADD",
+        "S_ESTSTO",
+        "S_FTOOLS",
+        "S_UNIVAR",
+        "S_SAS_ACCESS_PCFILES"
+      ],
+      "issue_ids": [
+        "I_INITIAL_CLOSURE",
+        "I_TRIMWINSOR",
+        "I_PSEUDO_EVENT_RULE",
+        "I_EXTRA_YEAR_HANDOFF",
+        "I_AUDIT_FIELD_MAP",
+        "I_SHARED_PATHS"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_README_ORDER",
+        "E_DATASHEET_INPUTS",
+        "E_CATALOG",
+        "E_CATALOG_SLICE",
+        "E_SAMPLE_ID",
+        "E_FRQ_SOURCE",
+        "E_PV_SOURCE",
+        "E_PREPARED_INPUTS",
+        "E_EVENT_SETTINGS",
+        "E_ENTROPY"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_COMPUSTAT",
+      "kind": "data",
+      "description": "Compustat annual fundamentals used by accrual quality, financial-constraint construction, main/pseudo samples, and Eventus controls.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "LOCAL_FUNDA",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "Readable local COMP.FUNDA candidate with sampled source fields used by supplied programs. Several analysis regressors such as working capital and sales changes are constructed in author code and are not source columns. The author programs use WRDS.FUNDA; alias and full required historical coverage are unverified.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_FUNDA_PROBE",
+            "E_FRQ_SOURCE",
+            "E_2A_COMP_SOURCE"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "indfmt",
+            "datafmt",
+            "popsrc",
+            "consol",
+            "fic",
+            "fyr",
+            "sich",
+            "at",
+            "oancf",
+            "fincf",
+            "ivncf",
+            "csho",
+            "prcc_f",
+            "ceq",
+            "txdb",
+            "dltt",
+            "dlc",
+            "oibdp",
+            "ib",
+            "txt",
+            "dv",
+            "rect",
+            "invt",
+            "ppegt",
+            "ppent",
+            "sale",
+            "cogs",
+            "xrd"
+          ],
+          "expected_period": "fyear > 1985 in 1a; 1998-2009 pull for the main 2a sample; Eventus uses 2001 controls and 2002 events."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_LINKTABLE",
+      "kind": "data",
+      "description": "CRSP/Compustat CCM link table needed to map GVKEY observations to PERMNO using valid link periods.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "LOCAL_CCM",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+          "description": "Readable local CCM candidate has sampled join fields; full date coverage and WRDS library alias are unverified.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_LINK_PROBE",
+            "E_LINK_SOURCE"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "linktype",
+            "lpermno",
+            "linkdt",
+            "linkenddt"
+          ],
+          "expected_period": "Periods required by the 1998-2009 Compustat pull and 2002 Eventus sample."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CRSP_MSF",
+      "kind": "data",
+      "description": "CRSP monthly stock file needed for 12 monthly observations around 2001 controls and Eventus-related return measures.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "LOCAL_MSF",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+          "description": "Readable local CRSP MSF candidate has sampled fields; required history and author alias are unverified.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_MSF_PROBE",
+            "E_EVENT_FINAL"
+          ],
+          "expected_fields": [
+            "permno",
+            "date",
+            "ret",
+            "vol",
+            "shrout"
+          ],
+          "expected_period": "Monthly observations from 11 months before through 1 month after each 2001 datadate; extra time may be required for event calculations."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_AUDIT_RESTATE",
+      "kind": "data",
+      "description": "Audit Analytics restatement notices and author KEEP-list fields required for restatement outcomes.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "LOCAL_FEED39",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/audit/audit_comp/feed39_financial_restatements.sas7bdat",
+          "description": "Readable FEED39 candidate has several similarly named fields but its one-row schema misses eight author-requested KEEP-list names, including RES_CLER_ERR and RES_SEC_INVEST; mapping and exact product contract remain unresolved.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_AUDIT_RESTATE_PROBE",
+            "E_AUDIT_SOURCE"
+          ],
+          "expected_fields": [
+            "COMPANY_FKEY",
+            "RES_ACCOUNTING",
+            "RES_FRAUD",
+            "RES_CLER_ERR",
+            "RES_OTHER",
+            "RES_ADVERSE",
+            "RES_IMPROVES",
+            "FORM_FKEY",
+            "FILE_DATE",
+            "RES_BEGIN_DATE",
+            "RES_END_DATE",
+            "RES_SEC_INVEST",
+            "RES_ACC_RES_FKEY_LIST",
+            "RES_ACC_RES_TITLE_LIST",
+            "RES_CLER_ERR_TITLE_LIST",
+            "RES_CLER_ERR_FKEY_LIST",
+            "RES_FRAUD_RES_FKEY_LIST",
+            "RES_FRAUD_RES_TITLE_LIST"
+          ],
+          "expected_period": "Restatement periods matching the Compustat observations in main and pseudo branches."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_AUDIT_ACCEL",
+      "kind": "data",
+      "description": "Audit Analytics accelerated-filer history and event dates required for the main SOX sample.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "LOCAL_FEED16",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/audit/audit_comp/feed16_accelerated_filer.sas7bdat",
+          "description": "Readable FEED16 candidate has the sampled requested fields; product vintage, event-date coverage and company-key join remain unverified.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_AUDIT_ACCEL_PROBE",
+            "E_ACCEL_SOURCE"
+          ],
+          "expected_fields": [
+            "COMPANY_FKEY",
+            "PE_DATE",
+            "HST_IS_LARGE_ACCEL",
+            "HST_IS_ACCEL_FILER"
+          ],
+          "expected_period": "Main analysis sample and 404(b) event dates around fiscal years 2001-2008."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_AUDIT_SOX",
+      "kind": "data",
+      "description": "Audit Analytics SOX 404(b) internal-control opinion history used for implementation classification.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "LOCAL_FEED11",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/audit/audit_comp/feed11_sox_404_internal_controls.sas7bdat",
+          "description": "Readable FEED11 candidate has the sampled requested fields; period coverage and company-key join remain unverified.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_AUDIT_SOX_PROBE",
+            "E_ACCEL_SOURCE"
+          ],
+          "expected_fields": [
+            "COMPANY_FKEY",
+            "FYE_IC_OP",
+            "IC_OP_TYPE",
+            "IC_IS_EFFECTIVE"
+          ],
+          "expected_period": "Fiscal year ends 2001-2008 in supplied code."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PV_CITATIONS",
+      "kind": "data",
+      "description": "PatentsView citation records used to construct citations.dta and forward citation counts.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "USPTO_ODP_CITATIONS",
+          "type": "public",
+          "status": "unverified",
+          "location": "USPTO Open Data Portal bulk data search",
+          "description": "Current public route exists, but exact product/schema mapping to the paper's PatentsView uspatentcitation.tsv vintage and identifier fields is not verified.",
+          "evidence_ids": [
+            "E_PATENTSVIEW_PUBLIC",
+            "E_PV_SOURCE"
+          ],
+          "expected_fields": [
+            "patent_id",
+            "citation_id",
+            "uuid"
+          ],
+          "expected_period": "PatentsView data updated through August 2020 in the author program."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PV_CPC",
+      "kind": "data",
+      "description": "PatentsView CPC current classification records required for patent technology class joins.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "USPTO_ODP_CPC",
+          "type": "public",
+          "status": "unverified",
+          "location": "USPTO Open Data Portal bulk data search",
+          "description": "Current public route exists, but mapping/fields/coverage of cpc_current.tsv equivalent are unverified.",
+          "evidence_ids": [
+            "E_PATENTSVIEW_PUBLIC",
+            "E_APP_SOURCE"
+          ],
+          "expected_fields": [
+            "patent_id",
+            "sequence",
+            "group_id",
+            "subgroup_id",
+            "uuid",
+            "section_id",
+            "subsection_id",
+            "category"
+          ],
+          "expected_period": "PatentsView CPC vintage used by supplied author code."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PV_PATENT",
+      "kind": "data",
+      "description": "PatentsView patent.tsv input used to create patent.dta and patent_id.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "USPTO_ODP_PATENT",
+          "type": "public",
+          "status": "unverified",
+          "location": "USPTO Open Data Portal bulk data search",
+          "description": "Current public route exists, but patent.tsv product, identifier field mapping and vintage are unverified.",
+          "evidence_ids": [
+            "E_PATENTSVIEW_PUBLIC",
+            "E_APP_SOURCE"
+          ],
+          "expected_fields": [
+            "id"
+          ],
+          "expected_period": "PatentsView patent-vintage matching the supplied data preparation."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PV_APPLICATION",
+      "kind": "data",
+      "description": "PatentsView application.tsv read and converted by the supplied patent preparation program.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "USPTO_ODP_APPLICATION",
+          "type": "public",
+          "status": "unverified",
+          "location": "USPTO Open Data Portal bulk data search",
+          "description": "The program imports application.tsv and writes application.dta; no later consumer was found, but the author stage still reads it. Current product/schema mapping is unverified.",
+          "evidence_ids": [
+            "E_PATENTSVIEW_PUBLIC",
+            "E_APP_SOURCE"
+          ],
+          "expected_period": "Application records required by the supplied import stage."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_KPSS",
+      "kind": "data",
+      "description": "Author-prepared Kogan et al. patent-level panel file used as KPSS_2019_public.csv.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "PUBLIC_KPSS_2025",
+          "type": "public",
+          "status": "verified",
+          "location": "https://github.com/KPSS2017/Technological-Innovation-Resource-Allocation-and-Growth-Extended-Data",
+          "description": "Author-maintained current KPSS_2025 product lists the required patent_num, permno, issue_date and filing_date fields over 1926-2025. It is a later vintage than KPSS_2019_public.csv and has updated estimated values; verify resulting vintage-sensitive differences before interpreting results.",
+          "evidence_ids": [
+            "E_KPSS_PUBLIC"
+          ],
+          "expected_fields": [
+            "patent_num",
+            "permno",
+            "issue_date",
+            "filing_date"
+          ],
+          "expected_period": "Author code requests KPSS_2019_public.csv; current public compatible panel covers 1926-2025."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_PATENT_CLAIMS",
+      "kind": "data",
+      "description": "Google BigQuery claims table used to merge pat_no and patent_claims.dta claim-count fields.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "GOOGLE_CLAIMS_2014",
+          "type": "public",
+          "status": "unverified",
+          "location": "patents-public-data.uspto_oce_claims.patent_document_stats_2014",
+          "description": "Repository index names the exact 2014 table, but current table access, schema and coverage for pat_no, pat_clm_ct and pat_dep_clm_ct were not verified.",
+          "evidence_ids": [
+            "E_GOOGLE_CLAIMS_PUBLIC",
+            "E_CLAIMS_SOURCE"
+          ],
+          "expected_fields": [
+            "pat_no",
+            "pat_clm_ct",
+            "pat_dep_clm_ct"
+          ],
+          "expected_period": "Author program's patent_document_stats_2014 table vintage."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_BENFORDS",
+      "kind": "data",
+      "description": "Prepared perm.benfords dataset supplying fsd for firm-date observations.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_DGTW",
+      "kind": "data",
+      "description": "Prepared monthly DGTW return series supplying dgtw_bhar.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_IO",
+      "kind": "data",
+      "description": "Prepared institutional-ownership time series supplying ior by PERMNO and report date.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "WRDS_IO_RECIPE",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS institutional-ownership concentration and breadth ratios recipe",
+          "description": "Author-linked WRDS recipe page requires login; the prepared series, exact source fields and access route are not verified. Login to the recipe page alone is not treated as a global access barrier.",
+          "evidence_ids": [
+            "E_WRDS_IO_PUBLIC",
+            "E_IO_SOURCE"
+          ],
+          "expected_fields": [
+            "permno",
+            "rdate",
+            "ior"
+          ],
+          "expected_period": "Institutional ownership observations matched to firm datadates in the main sample."
+        },
+        {
+          "id": "LOCAL_TFN_S34_RAW",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/s34/s34.sas7bdat",
+          "description": "The frozen catalog labels TFN.S34 as Thomson-Reuters 13F holdings. This is only a conditional raw reconstruction discovery candidate: the catalog does not establish the author's IOR concentration/breadth construction, PERMNO/rdate/ior fields, history, or equivalence to perm.io_timeseries.",
+          "evidence_ids": [
+            "E_CATALOG",
+            "E_CATALOG_SLICE",
+            "E_IO_SOURCE"
+          ],
+          "expected_period": "Coverage and transformation needed for firm datadates in the main sample remain unknown."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_EVENTUS_RESULTS",
+      "kind": "data",
+      "description": "Manual saved Eventus MAR result tables for all 17 Zhang and 7 EHW event requests.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "WRDS_EVENTUS_GUI_OUTPUT",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "WRDS Eventus Cross-sectional Daily GUI output",
+          "description": "Manual event windows/settings are documented and result tables must expose permno, restype, car_window_1 and car_window_2; account access, save/download format, current version and complete 24-table history are unverified.",
+          "evidence_ids": [
+            "E_EVENT_SETTINGS",
+            "E_EVENT_WINDOWS",
+            "E_EVENT_RESULTS",
+            "E_EHW_RESULTS"
+          ],
+          "expected_fields": [
+            "permno",
+            "restype",
+            "car_window_1",
+            "car_window_2"
+          ],
+          "expected_period": "17 Zhang events and 7 EHW events for dates listed in the author program."
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "S_STATA",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 runtime is available by metadata/version probe; author programs were not run.",
+      "evidence_ids": [
+        "E_ENVIRONMENT"
+      ]
+    },
+    {
+      "id": "S_SAS",
+      "name": "SAS 9.4",
+      "status": "unverified",
+      "description": "Executable path is present, but the previous metadata-only startup probe returned a TKELS service-load error; do not infer license absence or runtime failure from that probe.",
+      "evidence_ids": [
+        "E_ENVIRONMENT"
+      ]
+    },
+    {
+      "id": "S_SAS_STAT",
+      "name": "SAS/STAT PROC REG",
+      "status": "unverified",
+      "description": "The active 1a regression requires PROC REG; installed SAS/STAT component and version were not verified.",
+      "evidence_ids": [
+        "E_FRQ_SOURCE",
+        "E_ENVIRONMENT"
+      ]
+    },
+    {
+      "id": "S_EVENTUS",
+      "name": "WRDS Eventus 8.0",
+      "status": "unverified",
+      "description": "Manual Eventus GUI and version are described by the author; present account, access and release were not checked.",
+      "evidence_ids": [
+        "E_EVENT_SETTINGS"
+      ]
+    },
+    {
+      "id": "S_WINSOR2",
+      "name": "winsor2",
+      "status": "preparation_required",
+      "description": "Required by both final Stata dataset preparation branches; not found by the metadata-only Stata which check in checked adopaths.",
+      "evidence_ids": [
+        "E_ENVIRONMENT",
+        "E_STATA_EXTRA_INPUT"
+      ]
+    },
+    {
+      "id": "S_OUTREG2",
+      "name": "outreg2",
+      "status": "preparation_required",
+      "description": "Required for supplied regression tables and entropy-balanced footnote tables; not found by the metadata-only Stata which check in checked adopaths.",
+      "evidence_ids": [
+        "E_ENVIRONMENT",
+        "E_ENTROPY"
+      ]
+    },
+    {
+      "id": "S_MIPOLATE",
+      "name": "mipolate",
+      "status": "preparation_required",
+      "description": "Required for two interpolation steps in final Stata program; metadata-only which check reports unavailable in checked adopaths.",
+      "evidence_ids": [
+        "E_MIPOLATE",
+        "E_STATA_EXTRA_INPUT"
+      ]
+    },
+    {
+      "id": "S_EBALANCE",
+      "name": "ebalance",
+      "status": "available",
+      "description": "Metadata-only Stata which/version probe confirms ebalance is available for both footnote panels.",
+      "evidence_ids": [
+        "E_EBALANCE",
+        "E_ENTROPY"
+      ]
+    },
+    {
+      "id": "S_REGHDFE",
+      "name": "reghdfe",
+      "status": "available",
+      "description": "Environment metadata identifies installed reghdfe and ftools; no estimation was run.",
+      "evidence_ids": [
+        "E_ENVIRONMENT",
+        "E_ENTROPY"
+      ]
+    },
+    {
+      "id": "S_ESTTAB",
+      "name": "esttab",
+      "status": "available",
+      "description": "Environment metadata identifies the esttab command and version; no table estimation was run.",
+      "evidence_ids": [
+        "E_ENVIRONMENT"
+      ]
+    },
+    {
+      "id": "S_ESTPOST",
+      "name": "estpost",
+      "status": "available",
+      "description": "Environment metadata identifies the estpost command and version; no table estimation was run.",
+      "evidence_ids": [
+        "E_ENVIRONMENT"
+      ]
+    },
+    {
+      "id": "S_ESTADD",
+      "name": "estadd",
+      "status": "available",
+      "description": "Environment metadata identifies the estadd command and version; no table estimation was run.",
+      "evidence_ids": [
+        "E_ENVIRONMENT"
+      ]
+    },
+    {
+      "id": "S_ESTSTO",
+      "name": "eststo",
+      "status": "available",
+      "description": "A Stata 18 metadata-only which probe confirms eststo availability.",
+      "evidence_ids": [
+        "E_ESTSTO_PROBE",
+        "E_ENTROPY"
+      ]
+    },
+    {
+      "id": "S_FTOOLS",
+      "name": "ftools",
+      "status": "available",
+      "description": "Environment metadata identifies ftools as available, the dependency used by the installed reghdfe package.",
+      "evidence_ids": [
+        "E_ENVIRONMENT"
+      ]
+    },
+    {
+      "id": "S_UNIVAR",
+      "name": "univar",
+      "status": "preparation_required",
+      "description": "The supplied Stata program uses univar for four descriptive panels; metadata-only which probe reports it unavailable in checked adopaths.",
+      "evidence_ids": [
+        "E_UNIVAR_PROBE",
+        "E_UNIVAR_SOURCE"
+      ]
+    },
+    {
+      "id": "S_SAS_ACCESS_PCFILES",
+      "name": "SAS/ACCESS Interface to PC Files",
+      "status": "unverified",
+      "description": "Three active SAS PROC EXPORT statements write .dta handoffs. Official SAS 9.4 documentation limits unlicensed IMPORT/EXPORT support to JMP and delimited formats; installed PC Files product/license capability is unverified.",
+      "evidence_ids": [
+        "E_PCFILES_DOC",
+        "E_CITATIONS_DTA_EXPORT",
+        "E_SAS_EXPORT",
+        "E_EVENTUS_DTA_EXPORT"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "I_INITIAL_CLOSURE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_input_and_producer_contracts",
+      "description": "The full workflow depends on prepared Benford/DGTW/IO tables, PatentsView/claims sources and manually saved Eventus outputs whose exact compatible current routes or schemas remain unresolved. The identifier-only sample_id.dta is not those analysis inputs.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_README_ORDER",
+        "E_DATASHEET_INPUTS",
+        "E_PREPARED_INPUTS",
+        "E_EVENT_RESULTS",
+        "E_EVENT_REQUESTS",
+        "E_SAMPLE_ID"
+      ]
+    },
+    {
+      "id": "I_TRIMWINSOR",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_macro_definition",
+      "description": "2a invokes %TrimWinsor but its macro definition is absent from the supplied programs; the intended macro body/parameters and available include path must be obtained before this stage can close.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_TRIMWINSOR"
+      ]
+    },
+    {
+      "id": "I_PSEUDO_EVENT_RULE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "undefined_alternative_branch_rule",
+      "description": "Pseudo branch instructions change sample years and accelerated-filer classification but do not define replacement pseudo event/post/implementation logic; active code otherwise retains main 2004/2005 flags. Do not infer a replacement rule.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_PSEUDO_BRANCH",
+        "E_SOX_RULE"
+      ]
+    },
+    {
+      "id": "I_EXTRA_YEAR_HANDOFF",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "producer_consumer_filename_mismatch",
+      "description": "2a instructions direct an extra-years export named soxdata101920_xtrayrs.dta while the Stata consumer reads soxdata_xtrayrs.dta. Align the author-directed producer output and consumer path for that branch.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_EXTRA_BRANCH",
+        "E_STATA_EXTRA_INPUT"
+      ]
+    },
+    {
+      "id": "I_AUDIT_FIELD_MAP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_source_field_mapping",
+      "description": "The sampled local FEED39 candidate lacks eight names in the author's restatement KEEP list. Determine an authorized compatible Audit Analytics source field mapping before using it; do not assume similarly named fields are interchangeable.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_AUDIT_SOURCE",
+        "E_AUDIT_RESTATE_PROBE",
+        "E_CATALOG_SLICE"
+      ]
+    },
+    {
+      "id": "I_SHARED_PATHS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "undefined_cross_language_path_root",
+      "description": "SAS LIBNAMEs and Stata cd statements are * placeholders, while generated SAS/Stata filenames are passed across languages. Select and document a shared writable root plus aliases before running the programs.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_ROOT_PLACEHOLDER",
+        "E_STATA_ROOT",
+        "E_SAS_EXPORT",
+        "E_EXTRA_BRANCH"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_README_ORDER",
+      "kind": "source",
+      "description": "The README lists six code files in sequence, describes their stated roles, and then identifies the sample identifier file.",
+      "file": "read_me.txt",
+      "line_begin": 1,
+      "line_end": 25,
+      "quote": "Execute code files in the following order:\n\nFile name:1a-FRQ variables.sas\nDescription:Reads in Compustat funda data and produces the \"Poor Accr. Quality\" variable (ddf_resid)\n\nFile name:1b-citations.sas\nDescription:Reads in PatentsView data and calculates various citation-based variables at the patent unit of analysis\n\nFile name:1c-patent variables.do\nDescription:Merges PatentsView, Kogan et al. patent data, and patent claims data from BigQuery and calculates firm-year patent-based measures\n\nFile name:1d-financial_constraints.sas\nDescription:Reads in Compustat funda data and produces the \"HP Index\" variable (hp_index)\n\nFile name:2a-variable creation and sample selection.sas\nDescription:Reads in Compustat, Audit Analytics and CRSP data and creates related variables. Merges in variables created in earlier steps and executes sample selection procedures.\n\nFile name:2b-event study.sas\nDescription:Creates .txt files used to run Eventus on WRDS, provides detailed instructions on running Eventus Queries, reads in resultant Eventus output and produces variables to create Table 7 \"Event Study for Political Events Increasing the Likelihood of SOX Passage\"\n\nFile name:3-dataset compilation and regressions.do\nDescription:Merges patent variables from 1c into final sample from 2a and includes code to reproduce all tabulated results in the paper.\n\nFile name:sample_id.dta\nDescription:GVKEY and datadate for observations that make up the final sample for the main analysis"
+    },
+    {
+      "id": "E_DATASHEET_INPUTS",
+      "kind": "source",
+      "description": "The datasheet identifies the source families and says the executable programs and sample identifier file are supplied.",
+      "file": "ALV data sheet.pdf",
+      "line_begin": 34,
+      "line_end": 42,
+      "quote": "   1. We obtain firm-level financial data from Compustat and stock return data from CRSP.\n   2. We obtain restatement and internal control opinion data from Audit Analytics.\n   3. We obtain data on monthly return data calculated following the procedure in Daniel,\n       Grinblatt, Titman and Wermers (1997) from Professor Mike Drake.\n   4. We employ data on firms’ patenting activity as described in Kogan et al. [2017] and\n       made available on Noah Stoffman’s website:\n       https://github.com/KPSS2017/Technological-Innovation-Resource-Allocation-and-\n       Growth-Extended-Data. Data downloaded January 2021.\n   5. We supplement the Kogan et al. [2017] data with patent claims data hosted on Google"
+    },
+    {
+      "id": "E_CATALOG",
+      "kind": "catalog",
+      "description": "Frozen workspace catalog names these SAS candidates and no exact alias for several prepared/external inputs; catalog discovery does not establish live access, compatibility or absent licensing.",
+      "artifact_path": "urn:sha256:4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    },
+    {
+      "id": "E_CATALOG_SLICE",
+      "kind": "inspection",
+      "description": "Bounded extraction of only named catalog candidate paths and selected expected fields.",
+      "artifact_path": "probes/catalog_candidates.json",
+      "sha256": "443235a6ac32b65d6889d6737136343aefff8b5b361cc1bf19f3bbb3bd6a7a6e"
+    },
+    {
+      "id": "E_FRQ_SOURCE",
+      "kind": "source",
+      "description": "Active accrual-quality regression model.",
+      "file": "1a-FRQ variables.sas",
+      "line_begin": 523,
+      "line_end": 525,
+      "quote": "proc reg data=ddf noprint  adjrsq outest =orig;\n        model wc = past_cfo cfo fut_cfo sales_chg net_ppe;\n        output out=ddf1 r=ddf_resid;"
+    },
+    {
+      "id": "E_PV_SOURCE",
+      "kind": "source",
+      "description": "PatentsView import block is commented; active statements read prepared SAS citation and CPC tables.",
+      "file": "1b-citations.sas",
+      "line_begin": 7,
+      "line_end": 18,
+      "quote": "/*\n*import PatentsView data into SAS;\nproc import datafile=\"*\\uspatentcitation.tsv\" out=perm.uspatentcitation dbms=tab replace;\nguessingrows=32000;\nrun;\nproc import datafile=\"*\\cpc_current.tsv\" out=perm.cpc_current dbms=tab replace;\nguessingrows=32000;\nrun;\n*/\n\ndata cites; set perm.uspatentcitation; run;\ndata cpc_current; set perm.cpc_current; run;"
+    },
+    {
+      "id": "E_PATENT_SOURCE",
+      "kind": "source",
+      "description": "Patent-variable workflow and its input families.",
+      "file": "1c-patent variables.do",
+      "line_begin": 1,
+      "line_end": 10,
+      "quote": "cd \"*\"\n*replace * with your filepath\n\n/* Outline\n*this file creates the patent-related variables: tot_claim_ct_mean_log forcites_s_mean_log forcites_s_sd numpat_log breadth_subclass orig_mean gen_mean citesmade_s_mean_log\n1) read in and prep Kogan and PatentsView data\n2) merge Kogan and tech class data from PatentsView\n3) bring in claims data from BigQuery\n4) Create variables\n5) bring in PatentsView data on citations made (backward citations)"
+    },
+    {
+      "id": "E_APP_SOURCE",
+      "kind": "source",
+      "description": "Application file import and PatentsView patent/CPC join.",
+      "file": "1c-patent variables.do",
+      "line_begin": 50,
+      "line_end": 57,
+      "quote": "import delimited application.tsv, varnames(1) bindquote(strict) encoding(utf8) clear\nsave application.dta, replace\n\n*combine patent and tech class data\nuse \"*\\patent.dta\", clear\ngen patent_id=id\n*merge in CPC class\nmerge 1:m patent_id using \"*\\cpc_current.dta\""
+    },
+    {
+      "id": "E_CLAIMS_SOURCE",
+      "kind": "source",
+      "description": "Claims-table name/fields and citations input used by patent construction.",
+      "file": "1c-patent variables.do",
+      "line_begin": 80,
+      "line_end": 99,
+      "quote": "*********************3) bring in BQ data with claims data****************************\n*direct download from BigQuery\n*https://console.cloud.google.com/marketplace/partners/patents-public-data?project=nberpatents&folder&organizationId\n*see `patents-public-data.uspto_oce_claims.patent_document_stats_2014`\n*save as patent_claims.dta dataset\n\nuse \"*\\kpss_patents2.dta\", clear\ngen pat_no=patent_id\nrename fyear_k fyear\nmerge m:1 pat_no using \"*\\patent_claims.dta\"\ndrop if _m==2\ndrop _m\ngen tot_claim_ct=pat_clm_ct+pat_dep_clm_ct\n\n\n\n*********************4) Create variables ****************************\n*bring in forward citations from PatentsView - updated through August 2020\nmerge m:1 patent_id using \"*\\citations.dta\", keepusing(forcites)\ndrop if _m==2"
+    },
+    {
+      "id": "E_PATENT_OUTPUT_SOURCE",
+      "kind": "source",
+      "description": "Patent firm-year output construction.",
+      "file": "1c-patent variables.do",
+      "line_begin": 197,
+      "line_end": 200,
+      "quote": "use patentvars1_kpss, clear\nmerge 1:1 permno fyear using \"*\\citations_made_firm.dta\"\ndrop _m\nsave patentvars2_kpss, replace"
+    },
+    {
+      "id": "E_FINCONS_SOURCE",
+      "kind": "source",
+      "description": "Financial-constraints stage reads Compustat and prepares firm-year data.",
+      "file": "1d-financial_constraints.sas",
+      "line_begin": 8,
+      "line_end": 11,
+      "quote": "data comp; set wrds.funda\n(keep = gvkey tic conm cik datadate cusip curcd fic fyr fyear sich indfmt datafmt popsrc consol at);\nrun;\nproc sort data=comp out=comp nodupkey; by gvkey fyear;run;"
+    },
+    {
+      "id": "E_2A_COMP_SOURCE",
+      "kind": "source",
+      "description": "Compustat main-sample pull and date window.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 7,
+      "line_end": 12,
+      "quote": "*Compustat data pull;\ndata comp; set wrds.funda\n(keep = gvkey tic conm cik datadate cusip indfmt datafmt popsrc consol curcd fic fyr fyear sich\n\t\tat oancf fincf ivncf xrd csho prcc_f OIBDP IB);\nwhere\t(year(datadate) ge 1998) and (year(datadate) le 2009)\n\t\tand (indfmt='INDL') and (datafmt='STD') and (popsrc='D') and (consol='C') and at>0;"
+    },
+    {
+      "id": "E_LINK_SOURCE",
+      "kind": "source",
+      "description": "CCM link-table join and link-date filters.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 23,
+      "line_end": 30,
+      "quote": "* Get Permno;\nproc sql; create table comp as select distinct\n\ta.*, b.lpermno as permno\n    from comp as a left join wrds.ccmxpf_linktable\n\t(where=(linktype in ('LU', 'LC', 'LD', 'LF', 'LN', 'LO', 'LS', 'LX'))) as b\n    on (a.gvkey = b.gvkey) \n\tand (b.linkdt <= a.datadate or b.linkdt = .B) \n\tand (a.datadate <= b.linkenddt or b.linkenddt = .E);"
+    },
+    {
+      "id": "E_AUDIT_SOURCE",
+      "kind": "source",
+      "description": "Audit restatement input fields requested by the author program.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 34,
+      "line_end": 38,
+      "quote": "*restatements from audit analytics;\ndata restate; set wrds.auditnonreli\n(keep = company_fkey RES_ACCOUNTING RES_FRAUD RES_CLER_ERR RES_OTHER RES_ADVERSE RES_IMPROVES FORM_FKEY FILE_DATE \nRES_BEGIN_DATE RES_END_DATE RES_SEC_INVEST \nRES_ACC_RES_FKEY_LIST RES_ACC_RES_TITLE_LIST RES_CLER_ERR_TITLE_LIST RES_CLER_ERR_FKEY_LIST RES_FRAUD_RES_FKEY_LIST RES_FRAUD_RES_TITLE_LIST);"
+    },
+    {
+      "id": "E_ACCEL_SOURCE",
+      "kind": "source",
+      "description": "Accelerated-filer and internal-control Audit Analytics sources.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 61,
+      "line_end": 75,
+      "quote": "*merge in filing status from audit analytics;\nproc sql;\ncreate table comprestate2 as\nselect a.*, b.pe_date, b.HST_IS_LARGE_ACCEL, b.HST_IS_ACCEL_FILER\nfrom comprestate as a left join wrds.accfiler as b\non a.cik = b.company_fkey and intnx('day',b.pe_date,-15) <= a.datadate <= intnx('day',b.pe_date,15)\norder by gvkey, datadate;\nquit;\nrun;\nproc sort data=comprestate2 nodupkey; by gvkey datadate;run;\n\n*merge in presence of 404b opinion from AA;\ndata auditsox; set wrds.auditsox404;\nwhere year(fye_ic_op) in (2001,2002,2003,2004,2005,2006,2007,2008) and ic_op_type='a';\nrun;"
+    },
+    {
+      "id": "E_PREPARED_INPUTS",
+      "kind": "source",
+      "description": "Prepared Benford, DDF, DGTW, IO and financial-constraint table reads.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 90,
+      "line_end": 94,
+      "quote": "data benfords; set perm.benfords; run;\ndata ddf; set perm.ddf_pooled; run;\ndata dgtwreturns; set perm.dgtwreturns; run;\ndata institown; set perm.io_timeseries; run;\ndata financial_constraints; set perm.financial_constraints; run;"
+    },
+    {
+      "id": "E_BENFORD_SOURCE",
+      "kind": "source",
+      "description": "Benford producer is described as proprietary and not included.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 96,
+      "line_end": 104,
+      "quote": "*merge in benfords;\n*proprietary code to produce the \"benfords\" dataset generously provided by Dan Amiram;\n*please refer to Amiram, D., Z. Bozanic, and E. Rouen. 2015. Financial statement errors: evidence from the distributional \nproperties of financial statement numbers. Review of Accounting Studies 20(4): 1540–1593. for further details;\nproc sql;\ncreate table comprestatefsd as\nselect a.*, b.fsd\nfrom comprestate2 as a left join benfords as b\non a.gvkey = b.gvkey and a.datadate = b.datadate"
+    },
+    {
+      "id": "E_DGTW_SOURCE",
+      "kind": "source",
+      "description": "DGTW is supplied by a named professor; later CRSP fallback begins inside a block comment.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 123,
+      "line_end": 126,
+      "quote": "*merge in dgtw returns data;\n*We obtained data on monthly return data calculated following the procedure in Daniel, Grinblatt, Titman and Wermers (1997) from Professor Mike Drake;\n*if DGTW returns are missing, we replace missing \"dgtw_bhar\" values with buy and hold returns calculated as follows;\n/*"
+    },
+    {
+      "id": "E_IO_SOURCE",
+      "kind": "source",
+      "description": "Institutional-ownership prepared table and WRDS recipe reference.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 173,
+      "line_end": 180,
+      "quote": "**************merge in IO data;\n*code obtained from WRDS website and run to produce the institown dataset merged in below;\n*https://wrds-www.wharton.upenn.edu/pages/support/applications/institutional-ownership-research/institutional-ownership-concentration-and-breadth-ratios/;\nproc sql; create table comprestatefsd as select\n\ta.*, ior as instit_own\n\tfrom comprestatefsd a left join institown b\n\ton a.datadate eq b.rdate and a.permno eq b.permno\n\torder by gvkey, datadate;"
+    },
+    {
+      "id": "E_MAIN_SAMPLE",
+      "kind": "source",
+      "description": "Main-sample year and US-firm restrictions.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 203,
+      "line_end": 207,
+      "quote": "*keep only US firms in our sample period;\ndata sample; set perm.comprestatefsd;\nwhere (year > 2000) and (year <=2007);\nwhere fic in (\"USA\");\nrun;"
+    },
+    {
+      "id": "E_SOX_RULE",
+      "kind": "source",
+      "description": "Active SOX 404(b) implementation and post indicators.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 236,
+      "line_end": 245,
+      "quote": "***********************implementation year - first year a firm had to implement SOX 404(b)***************************************************;\n*for fiscal years ending after Nov 15, 2004;\n*accelerated filers only;\n\n****cutpoint for pre/post based on fye month;\ndata sample; set sample;\nif (year >=2004) and (fyr>=11) then post=1; else post=0;\nif (year >=2005) and (fyr<=10) then post=1;\nif (year =2004) and (fyr>=11) then implem=1; else implem=0;\nif (year =2005) and (fyr<=10) then implem=1;"
+    },
+    {
+      "id": "E_PSEUDO_BRANCH",
+      "kind": "source",
+      "description": "Author pseudo-event instructions specify sample and filer change but not replacement event rules.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 340,
+      "line_end": 355,
+      "quote": "/*\n*How to create the pseudo-event sample\n*1) update the first where statement as follows: where\t(year(datadate) ge 1993) and (year(datadate) le 1999)\n\t\tand (indfmt='INDL') and (datafmt='STD') and (popsrc='D') and (consol='C') and at>0;\n*2) insert the following code here to identify firms as accelerated filers as presence of IC opinion is not available during this sample period;\n***********************accelerated filer status - use market value of equity****************************************************************;\ndata sample; set sample;\nif mve>=75 then af=1;\nif mve<75 then af=0;\nrun;\ndata sample; set sample;\nif af ne 1 then delete;\nrun;\n*3) comment out the following section of code: \"accelerated filer status - use presence of an auditor's 404b opinion in post period\"\n*4) change STATA filename for proc export to pseudosoxdata_temp.dta\n*/"
+    },
+    {
+      "id": "E_TRIMWINSOR",
+      "kind": "source",
+      "description": "Unresolved TrimWinsor macro invocation.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 461,
+      "line_end": 462,
+      "quote": "%TrimWinsor (dset = sample, byvar=fyear, vars= fsd rd size signed_accruals dgtw_bhar instit_own roa hp_index ddf_resid, \ntype = winsor, pctLow=1 ,pctHigh= 99, outset = sample2);"
+    },
+    {
+      "id": "E_EXTRA_BRANCH",
+      "kind": "source",
+      "description": "Extra-years instructions and author-directed SAS export filename.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 505,
+      "line_end": 509,
+      "quote": "/****EXTRA YEARS: to add in extra years for firms that end up in our main sample:\n1) remove the \"and (year(datadate) le 2009)\" section of the code from the initial where statement when pulling from words\n2) remove year criteria in first sample selection step \"keep only US firms in our sample period\"\n3) comment out other sample selection criteria after \"**number of pre/post years ******\" up to an including the winsorization statement (wait to winsorize in STATA within sample)\n4) change STATA filename for proc export to soxdata101920_xtrayrs.dta"
+    },
+    {
+      "id": "E_SAS_EXPORT",
+      "kind": "source",
+      "description": "Main sample SAS-to-Stata export.",
+      "file": "2a-variable creation and sample selection.sas",
+      "line_begin": 499,
+      "line_end": 499,
+      "quote": "proc export data=sample outfile='*\\soxdata_temp.dta' replace; run;"
+    },
+    {
+      "id": "E_EVENT_READ",
+      "kind": "source",
+      "description": "Eventus stage reads Compustat and CCM data for the 2002 event sample.",
+      "file": "2b-event study.sas",
+      "line_begin": 12,
+      "line_end": 30,
+      "quote": "*obtain compustat data;\ndata comp; set wrds.funda\n(keep = gvkey tic conm cik datadate cusip indfmt datafmt popsrc consol curcd fic fyear sich\n\t\tat oancf fincf ivncf);\nwhere\t(year(datadate) = 2002) \n\t\tand (indfmt='INDL') and (datafmt='STD') and (popsrc='D') and (consol='C');\nyear = year(datadate);\ndrop indfmt datafmt popsrc consol;\nrun;\n\n* Get Permno;\nproc sql; create table comp as select distinct\n\ta.*, b.lpermno as permno\n    from comp as a left join wrds.ccmxpf_linktable\n\t(where=(linktype in ('LU', 'LC', 'LD', 'LF', 'LN', 'LO', 'LS', 'LX'))) as b\n    on (a.gvkey = b.gvkey) \n\tand (b.linkdt <= a.datadate or b.linkdt = .B) \n\tand (a.datadate <= b.linkenddt or b.linkenddt = .E);\n \tquit;"
+    },
+    {
+      "id": "E_EVENT_REQUESTS",
+      "kind": "source",
+      "description": "Generation and export of all 17 Zhang event requests.",
+      "file": "2b-event study.sas",
+      "line_begin": 73,
+      "line_end": 104,
+      "quote": "*from here to export, would like to make into a mini-macro;\n*create eventus request file;\n%macro iterate;\n%do j=1 %to 17;\n\ndata event&j; set zhang;\nkeep permno event&j;\nrun;\n%end;\n%mend;\n\n*calls the macro;\n%iterate;\n\n*export data and convert to text file;\nproc export data=event1 outfile=\"*\\event1.txt\" replace; putnames=no; run;\nproc export data=event2 outfile=\"*\\event2.txt\" replace; putnames=no; run;\nproc export data=event3 outfile=\"*\\event3.txt\" replace; putnames=no; run;\nproc export data=event4 outfile=\"*\\event4.txt\" replace; putnames=no; run;\nproc export data=event5 outfile=\"*\\event5.txt\" replace; putnames=no; run;\nproc export data=event6 outfile=\"*\\event6.txt\" replace; putnames=no; run;\nproc export data=event7 outfile=\"*\\event7.txt\" replace; putnames=no; run;\nproc export data=event8 outfile=\"*\\event8.txt\" replace; putnames=no; run;\nproc export data=event9 outfile=\"*\\event9.txt\" replace; putnames=no; run;\nproc export data=event10 outfile=\"*\\event10.txt\" replace; putnames=no; run;\nproc export data=event11 outfile=\"*\\event11.txt\" replace; putnames=no; run;\nproc export data=event12 outfile=\"*\\event12.txt\" replace; putnames=no; run;\nproc export data=event13 outfile=\"*\\event13.txt\" replace; putnames=no; run;\nproc export data=event14 outfile=\"*\\event14.txt\" replace; putnames=no; run;\nproc export data=event15 outfile=\"*\\event15.txt\" replace; putnames=no; run;\nproc export data=event16 outfile=\"*\\event16.txt\" replace; putnames=no; run;\nproc export data=event17 outfile=\"*\\event17.txt\" replace; putnames=no; run;"
+    },
+    {
+      "id": "E_EHW_REQUESTS",
+      "kind": "source",
+      "description": "Generation and export of all 7 EHW event requests.",
+      "file": "2b-event study.sas",
+      "line_begin": 107,
+      "line_end": 138,
+      "quote": "*create WRDS files for Evenuts for the EHW event dates;\ndata EHW; set comp;\nEHWevent1=20020612;\nEHWevent2=20020618;\nEHWevent3=20020626;\nEHWevent4=20020708;\nEHWevent5=20020715;\nEHWevent6=20020724;\nEHWevent7=20020712;\nrun;\n\n*create eventus request file;\n%macro EHWiterate;\n%do j=1 %to 7;\n\ndata EHWevent&j; set EHW;\nkeep permno EHWevent&j;\nrun;\n%end;\n%mend;\n\n*calls the macro;\n%EHWiterate;\n\n*export data and convert to text file;\nproc export data=EHWevent1 outfile=\"*\\EHWevent1.txt\" replace; putnames=no; run;\nproc export data=EHWevent2 outfile=\"*\\EHWevent2.txt\" replace; putnames=no; run;\nproc export data=EHWevent3 outfile=\"*\\EHWevent3.txt\" replace; putnames=no; run;\nproc export data=EHWevent4 outfile=\"*\\EHWevent4.txt\" replace; putnames=no; run;\nproc export data=EHWevent5 outfile=\"*\\EHWevent5.txt\" replace; putnames=no; run;\nproc export data=EHWevent6 outfile=\"*\\EHWevent6.txt\" replace; putnames=no; run;\nproc export data=EHWevent7 outfile=\"*\\EHWevent7.txt\" replace; putnames=no; run;"
+    },
+    {
+      "id": "E_EVENT_SETTINGS",
+      "kind": "source",
+      "description": "Manual Eventus version and GUI parameters.",
+      "file": "2b-event study.sas",
+      "line_begin": 145,
+      "line_end": 160,
+      "quote": "*Eventus Query (Version 8.0) - Output for Cross-Sectional Analysis - Daily;\n/*I then ran on the WRDS website with the following options:\nEventus Setup\n1.       There should be a list of analyses on the left of the Eventus form in WRDS. Please use the “Eventus Cross-sectional daily” analysis.\n2.       For “Group data file options” select “none”\n3.       For “Market Index” select “CRSP Value Weighted”\n4.       For “Benchmark Type” select \"MAR\"\n5.       For “Volume Option” select “none”\n6.       For “Estimation Period” select:\n\ta.       End before event date: -180 days   ***so we don't overlap with our event period\n\tb.      Minimum estimation length: 3 days\n\tc.       Maximum estimation length: 200 days   ***more consistent with EHW\n\td.      Do not check “Pool”\n7.       For “Autodate” select yes\n8.       Event period - Input the event period that matches the event in question.\n9.       delete any pre-populated numbers in the alternative windows"
+    },
+    {
+      "id": "E_EVENT_WINDOWS",
+      "kind": "source",
+      "description": "Preserved Zhang and EHW event-window/date table.",
+      "file": "2b-event study.sas",
+      "line_begin": 164,
+      "line_end": 191,
+      "quote": "/*\n8.       Event period - Input the event period that matches the event in question.\nThe following table lists the event date used above and the number of days before/after to input in Evenuts for each event to correspond to the Zhang/EHW event windows:\nEvent#\tEvent Date\t#Days before\t#Days after\n1\t\t1/17/2002\t-2\t\t\t\t1\n2\t\t2/2/2002\t-1\t\t\t\t2\n3\t\t2/13/2002\t-2\t\t\t\t1\n4\t\t2/28/2002\t-1\t\t\t\t1\n5\t\t3/7/2002\t-1\t\t\t\t1\n6\t\t3/26/2002\t-1\t\t\t\t1\n7\t\t4/11/2002\t0\t\t\t\t1\n8\t\t4/16/2002\t0\t\t\t\t1\n9\t\t4/24/2002\t0\t\t\t\t2\n10\t\t5/8/2002\t-1\t\t\t\t1\n11\t\t6/11/2002\t-1\t\t\t\t2\nEHW1\t6/12/2002\t-1\t\t\t\t1\n12\t\t6/18/2002\t0\t\t\t\t1\nEHW2\t6/18/2002\t-1\t\t\t\t1\n13\t\t6/25/2002\t0\t\t\t\t2\nEHW3\t6/26/2002\t-1\t\t\t\t2\n14\t\t7/8/2002\t0\t\t\t\t4\nEHW4\t7/8/2002\t-1\t\t\t\t5\n15\t\t7/15/2002\t0\t\t\t\t2\nEHW5\t7/15/2002\t-1\t\t\t\t2\n16\t\t7/18/2002\t0\t\t\t\t5\n17\t\t7/24/2002\t0\t\t\t\t2\nEHW6\t7/24/2002\t-1\t\t\t\t2\nEHW7\t7/12/2002\t0\t\t\t\t14"
+    },
+    {
+      "id": "E_EVENT_RESULTS",
+      "kind": "source",
+      "description": "Manual Eventus result tables and required CAR fields for 17 Zhang events.",
+      "file": "2b-event study.sas",
+      "line_begin": 199,
+      "line_end": 210,
+      "quote": "*bring in the SAS dataset output I saved from the WRDS website - Zhang events;\n%macro loop;\n%do j=1 %to 17;\n\ndata eventmar&j; set perm.event&j; \nwhere restype=\"MAR\";\ncarmar&j=car_window_1+car_window_2;\nif carmar&j = . then do\n\tcarmar&j=car_window_1;\n\tend;\nkeep permno carmar&j;\nrun;"
+    },
+    {
+      "id": "E_EHW_RESULTS",
+      "kind": "source",
+      "description": "Manual Eventus result tables and required CAR fields for 7 EHW events.",
+      "file": "2b-event study.sas",
+      "line_begin": 231,
+      "line_end": 249,
+      "quote": "*bring in the SAS dataset output I saved from the WRDS website - EHW events;\n%macro EHWloop;\n%do j=1 %to 7;\n\ndata EHWeventmar&j; set perm.EHWevent&j; \nwhere restype=\"MAR\";\nEHWcarmar&j=car_window_1+car_window_2;\nif EHWcarmar&j = . then do\n\tEHWcarmar&j=car_window_1;\n\tend;\nkeep permno EHWcarmar&j;\nrun;\n\n\n*merge in to dataset;\nproc sort data=comp; by permno; run;\nproc sort data=EHWeventmar&j; by permno; run;\ndata comp; merge comp EHWeventmar&j; by permno; run;\nproc sort data=comp nodupkey; by permno;run;"
+    },
+    {
+      "id": "E_EVENT_FINAL",
+      "kind": "source",
+      "description": "CRSP monthly return and share-turnover history joined to the 2001 controls.",
+      "file": "2b-event study.sas",
+      "line_begin": 294,
+      "line_end": 301,
+      "quote": "*calculate share turnover and std of returns;\nproc sql; create table compret as select\n\ta.gvkey, a.datadate, a.permno, b.ret, (b.vol*100)/(b.shrout*1000) as turnover, b.date \n\tfrom controls_2001 as a left join wrds.msf as b\n\ton a.permno eq b.permno\n\tand intnx('month',a.datadate,-11) <= b.date <=intnx('month',a.datadate,1) \n\torder by gvkey, datadate, date;\n\tquit;run;"
+    },
+    {
+      "id": "E_STATA_ROOT",
+      "kind": "source",
+      "description": "Stata root is a placeholder and the program sets matrix size.",
+      "file": "3-dataset compilation and regressions.do",
+      "line_begin": 1,
+      "line_end": 2,
+      "quote": "cd \"*\"\nset matsize 11000"
+    },
+    {
+      "id": "E_STATA_EXTRA_INPUT",
+      "kind": "source",
+      "description": "Extra-year Stata branch reads a filename different from the 2a instruction.",
+      "file": "3-dataset compilation and regressions.do",
+      "line_begin": 330,
+      "line_end": 341,
+      "quote": "*create list of gvkeys in sample\nuse soxdata_temp, clear\nkeep gvkey\nduplicates drop\ngen sample=1\nsave sample_gvkeys, replace\n*keep only extra years for firms in our sample\nuse soxdata_xtrayrs, clear\nmerge m:1 gvkey using sample_gvkeys\ndrop _m \n*t+5 means we keep through 2010 (2005 is latest implementation, 2006-2010 is t+5)\nkeep if sample==1 & fyear >=2007 & fyear <=2010"
+    },
+    {
+      "id": "E_ENTROPY",
+      "kind": "source",
+      "description": "Entropy-balanced footnote branch is retained and contains a Panel A model.",
+      "file": "3-dataset compilation and regressions.do",
+      "line_begin": 537,
+      "line_end": 566,
+      "quote": "/*\nPer the editor/referee's suggestion, we moved the entropy-balanced results to an untabulated footnote. The code below reproduces just that footnote.\nHere is the related discussion on entropy balancing (formerly Table 6):\n\nEntropy Balanced Results \nA concern with comparing young to mature life-cycle firms or with comparing accelerated to non-accelerated firms is that the treatment and control firms vary in terms of firm characteristics that impact \ninnovation and FRQ (see Table 2), which may limit our ability to attribute any documented difference to SOX. To reduce this concern, we use entropy balancing to create two covariate-balanced control samples \n(one with accelerated filer, mature control firms and the other with non-accelerated filer, young life-cycle firms).*  After entropy balancing, the control samples are indistinguishable from the treatment firms \nwith respect to the mean of the control variables used in our models over the entire sample period.**  We present the results from this analysis in Table 6. The results confirm our full sample findings that \ninnovation declines for young life-cycle firms required to comply with SOX relative to similar mature life-cycle firms (Panel A) and relative to similar young life-cycle firms exempt from compliance with SOX (Panel B). \nWe find no evidence to suggest that these innovation declines were offset by improvements in FRQ. \n\n*Entropy balancing is a statistical method that balances covariates between treatment and control firms when the treatment is binary (life-cycle stage in our setting). See Hainmueller (2012). This is accomplished by \nadding regression weights to a regression analysis. We implement entropy balancing using the STATA command “ebalance” to achieve covariate balance. Hainmueller and Xu (2013) provide a useful discussion and examples \nfor implementing “ebalance”.\n**By construction, our sample of young life-cycle, accelerated filers and young life-cycle, non-accelerated filers compares firms of disparate size. As such, we do not include size in our entropy balancing procedure in \nTable 6 panel B, due to lack of common support. We do include size as a control in Table 6 panel A.\n\n*/\n\n*Entropy Balanced Sample   \n*Panel A\n\nglobal controls \"size hp_index litrisk instit_own roa\"\nglobal rdcontrols \"rd\"\n\nuse soxdata, clear\nkeep if af==1\nebalance intro $controls, target(1)\nreghdfe rd postsox_intro $controls [weight=_webal], absorb(i.fyear gvkey) vce(cluster gvkey) keepsingletons"
+    },
+    {
+      "id": "E_ENTROPY_PANEL_B",
+      "kind": "source",
+      "description": "Entropy-balanced Panel B models are supplied.",
+      "file": "3-dataset compilation and regressions.do",
+      "line_begin": 601,
+      "line_end": 614,
+      "quote": "*Panel B\n\nuse soxdata, clear\nkeep if intro==1\nebalance af hp_index litrisk instit_own roa, target(1)\nreghdfe rd af_postsox $controls [weight=_webal], absorb(i.fyear gvkey) vce(cluster gvkey) keepsingletons\noutreg2 using table6b.xls, replace addstat(R-squared within,e(r2_within)) tstat label addtext(Year FE, YES, Firm FE, YES) dec(3)\n\nuse soxdata, clear\nkeep if intro==1\n\nebalance af $rdcontrols hp_index litrisk instit_own roa, target(1)\nreghdfe numpat_log af_postsox $rdcontrols $controls [weight=_webal], absorb(i.fyear gvkey) vce(cluster gvkey) keepsingletons\noutreg2 using table6b.xls, append addstat(R-squared within,e(r2_within)) tstat label addtext(Year FE, YES, Firm FE, YES) dec(3)"
+    },
+    {
+      "id": "E_SAMPLE_ID",
+      "kind": "probe",
+      "description": "Bounded metadata says packaged sample_id.dta is readable with gvkey and datadate only; it is an identifier list, not the full analysis dataset.",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "cb0a7a859407ed5ff9f19a62b1f3e4af1c44bf6b4d17e37d002a11372328813a"
+    },
+    {
+      "id": "E_FUNDA_PROBE",
+      "kind": "probe",
+      "description": "Local Compustat SAS candidate is readable under row_limit=1 and has the checked fields; no period/history coverage is inferred.",
+      "artifact_path": "probes/comp_funda_one_row.json",
+      "sha256": "cd12496159133e843e8c77be3d2df7f6606951a7959e4f6fa4550685e329afb8"
+    },
+    {
+      "id": "E_LINK_PROBE",
+      "kind": "probe",
+      "description": "Local CCM SAS candidate one-row field probe; date coverage and WRDS alias mapping remain unverified.",
+      "artifact_path": "probes/ccm_linktable_one_row.json",
+      "sha256": "2cf1a777bc861212ca11752d20f9034de62f9191bebfb6f0ac1fc06aec6e2b45"
+    },
+    {
+      "id": "E_MSF_PROBE",
+      "kind": "probe",
+      "description": "Local CRSP MSF SAS candidate one-row field probe; history/product compatibility remain unverified.",
+      "artifact_path": "probes/crsp_msf_one_row.json",
+      "sha256": "163fa5afbe18048a94986d9236f5678de2ac1a3572acca4635b268fb29bb4daa"
+    },
+    {
+      "id": "E_AUDIT_RESTATE_PROBE",
+      "kind": "probe",
+      "description": "Local Audit Analytics restatement candidate one-row field probe shows the source KEEP-list field gaps.",
+      "artifact_path": "probes/audit_feed39_one_row.json",
+      "sha256": "f98cfa71d8827f647c68b75d7180fe5f06a512ba63c9f6f1ea6d4a3ba069369e"
+    },
+    {
+      "id": "E_AUDIT_ACCEL_PROBE",
+      "kind": "probe",
+      "description": "Local Audit Analytics accelerated-filer candidate one-row field probe.",
+      "artifact_path": "probes/audit_feed16_one_row.json",
+      "sha256": "70125d2ff124d7850ffa384aa270e218a79ad33dda03ee184d9b12525346a6ee"
+    },
+    {
+      "id": "E_AUDIT_SOX_PROBE",
+      "kind": "probe",
+      "description": "Local Audit Analytics SOX 404 candidate one-row field probe.",
+      "artifact_path": "probes/audit_feed11_one_row.json",
+      "sha256": "71ab72140a43139633998e31b3e852e3dc6411820d72f3470a220e0f3b3be1e0"
+    },
+    {
+      "id": "E_ENVIRONMENT",
+      "kind": "probe",
+      "description": "Metadata-only runtime and Stata package inventory; includes unresolved SAS launcher state and does not establish a license.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "E_EBALANCE",
+      "kind": "probe",
+      "description": "Stata which/version probe confirms ebalance command availability.",
+      "artifact_path": "probes/software_ebalance.json",
+      "sha256": "6873a832c8336bc88de1faf2635e827ad3097c0efd8c352c3b8f8c9d442b6f3d"
+    },
+    {
+      "id": "E_MIPOLATE",
+      "kind": "probe",
+      "description": "Stata which/version probe reports mipolate unavailable in checked adopaths.",
+      "artifact_path": "probes/software_mipolate.json",
+      "sha256": "4ced7e6bb34c3987a23c33adc0c8677726a5b22868259915a4fcca8b3fa08951"
+    },
+    {
+      "id": "E_KPSS_PUBLIC",
+      "kind": "public",
+      "description": "Author-maintained repository now offers KPSS_2025 with matching patent_num, permno, issue_date and filing_date fields; the current vintage differs from the code's KPSS_2019 input and estimates.",
+      "url": "https://github.com/KPSS2017/Technological-Innovation-Resource-Allocation-and-Growth-Extended-Data",
+      "checked_at": "2026-11-10",
+      "authority": "author",
+      "quote": "KPSS_2025.csv: Patent level panel data from 1926 to 2025"
+    },
+    {
+      "id": "E_PATENTSVIEW_PUBLIC",
+      "kind": "public",
+      "description": "USPTO ODP public bulk-search route is current, but registration/API-key requirements and exact product/schema mapping for this paper's historical TSV files remain to be prepared and checked.",
+      "url": "https://data.uspto.gov/apis/bulk-data/search",
+      "checked_at": "2026-11-10",
+      "authority": "official",
+      "quote": "starting on June 18, 2026, you'll need to sign in with a valid USPTO.gov account."
+    },
+    {
+      "id": "E_GOOGLE_CLAIMS_PUBLIC",
+      "kind": "public",
+      "description": "Google Patents Public Data table index still names the paper's 2014 claims product; current BigQuery schema, availability and coverage were not verified.",
+      "url": "https://github.com/google/patents-public-data/blob/master/tables/index.md",
+      "checked_at": "2026-11-10",
+      "authority": "repository",
+      "quote": "patents-public-data:uspto_oce_claims.patent_document_stats_2014"
+    },
+    {
+      "id": "E_WRDS_IO_PUBLIC",
+      "kind": "public",
+      "description": "The author-linked WRDS recipe redirects to a login page; this establishes a login requirement for the recipe page, not an absent dataset license or a barrier to all routes.",
+      "url": "https://wrds-www.wharton.upenn.edu/pages/support/applications/institutional-ownership-research/institutional-ownership-concentration-and-breadth-ratios/",
+      "checked_at": "2026-11-10",
+      "authority": "official",
+      "quote": "You must be logged-in to access that page."
+    },
+    {
+      "id": "E_UNIVAR_PROBE",
+      "kind": "probe",
+      "description": "Stata 18 metadata-only which probe reports univar unavailable; no descriptive command was run.",
+      "artifact_path": "probes/software_univar.json",
+      "sha256": "139a6e0e252dd3f0b63dd2ee981cbf6d07cbfdc481a48232e05369e77b2c38d6"
+    },
+    {
+      "id": "E_ESTSTO_PROBE",
+      "kind": "probe",
+      "description": "Stata 18 metadata-only which probe confirms eststo is available.",
+      "artifact_path": "probes/software_eststo.json",
+      "sha256": "01c8c53c96d13921921573205a59610525f6afe8b96df895ee2d8684b398b01a"
+    },
+    {
+      "id": "E_UNIVAR_SOURCE",
+      "kind": "source",
+      "description": "Four active descriptive panels call univar.",
+      "file": "3-dataset compilation and regressions.do",
+      "line_begin": 105,
+      "line_end": 111,
+      "quote": "univar $dvs $controls if af==1 & intro==0, dec(3)\n*Panel D\nunivar $dvs $controls if af==0 & intro==0, dec(3)\n*Panel E\nunivar $dvs $controls if af==1 & intro==1, dec(3)\n*Panel F\nunivar $dvs $controls if af==0 & intro==1, dec(3)"
+    },
+    {
+      "id": "E_CITATIONS_DTA_EXPORT",
+      "kind": "source",
+      "description": "SAS PROC EXPORT writes the citations.dta Stata handoff.",
+      "file": "1b-citations.sas",
+      "line_begin": 218,
+      "line_end": 218,
+      "quote": "proc export data=citations2 outfile='*\\citations.dta' replace; run;"
+    },
+    {
+      "id": "E_EVENTUS_DTA_EXPORT",
+      "kind": "source",
+      "description": "SAS PROC EXPORT writes eventus.dta for the Stata event-study branch.",
+      "file": "2b-event study.sas",
+      "line_begin": 335,
+      "line_end": 335,
+      "quote": "proc export data=comp2 outfile='*\\eventus.dta' replace; run;"
+    },
+    {
+      "id": "E_PCFILES_DOC",
+      "kind": "public",
+      "description": "Official SAS 9.4 PC Files documentation says unlicensed IMPORT/EXPORT access is limited to JMP and delimited files; verify SAS/ACCESS PC Files capability for the author DTA exports.",
+      "url": "https://documentation.sas.com/api/collections/pgmsascdc/9.4_3.5/docsets/acpcref/content/acpcref.pdf?locale=en",
+      "checked_at": "2026-11-09T22:34:58Z",
+      "authority": "official",
+      "quote": "Without a SAS/ACCESS Interface to PC Files license, access is available only to JMP 7 or later files"
+    },
+    {
+      "id": "E_PRE_CORRECTION_DRAFT",
+      "kind": "inspection",
+      "description": "Immutable draft snapshot immediately before the requested software-completeness correction.",
+      "artifact_path": "probes/draft_pre_software_correction.json",
+      "sha256": "1385e2ed3b00dd792fb53946ff31f1d06f0be2c26a05cb7748e8e13ea816bb1f"
+    },
+    {
+      "id": "E_ROOT_PLACEHOLDER",
+      "kind": "source",
+      "description": "SAS WRDS and PERM library roots are placeholders, supporting the unresolved shared-path configuration issue.",
+      "file": "1a-FRQ variables.sas",
+      "line_begin": 1,
+      "line_end": 2,
+      "quote": "libname wrds '*';\nlibname perm '*';"
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMPUSTAT"
+      ],
+      "evidence_ids": [
+        "E_FUNDA_PROBE"
+      ],
+      "description": "Compustat source read; candidate route remains unverified for alias and history. Checklist edge: 1a-FRQ variables.sas -> */funda.sas7bdat."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_PV_CITATIONS"
+      ],
+      "evidence_ids": [
+        "E_PV_SOURCE"
+      ],
+      "description": "PatentsView citation table input. Checklist edge: 1b-citations.sas -> */uspatentcitation.sas7bdat."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_PV_CPC"
+      ],
+      "evidence_ids": [
+        "E_PV_SOURCE"
+      ],
+      "description": "PatentsView current CPC input. Checklist edge: 1b-citations.sas -> */cpc_current.sas7bdat."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_PATENT_SOURCE"
+      ],
+      "description": "Intermediate Stata files produced within the supplied 1c stage. Checklist edge: 1c-patent variables.do -> */*/patent.dta."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_PATENT_SOURCE"
+      ],
+      "description": "Intermediate Stata files produced within the supplied 1c stage. Checklist edge: 1c-patent variables.do -> */*/kpss_patents.dta."
+    },
+    {
+      "dependency_id": "D0006",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_PATENT_SOURCE"
+      ],
+      "description": "Intermediate Stata files produced within the supplied 1c stage. Checklist edge: 1c-patent variables.do -> */*/kpss_patents2.dta."
+    },
+    {
+      "dependency_id": "D0007",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_PATENT_SOURCE"
+      ],
+      "description": "Intermediate Stata files produced within the supplied 1c stage. Checklist edge: 1c-patent variables.do -> */*/patentvars1_kpss.dta."
+    },
+    {
+      "dependency_id": "D0008",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_KPSS"
+      ],
+      "evidence_ids": [
+        "E_KPSS_PUBLIC"
+      ],
+      "description": "KPSS source input; current author-maintained route is a later public vintage. Checklist edge: 1c-patent variables.do -> */KPSS_2019_public.csv."
+    },
+    {
+      "dependency_id": "D0009",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_PATENT_SOURCE"
+      ],
+      "description": "Intermediate Stata files produced within the supplied 1c stage. Checklist edge: 1c-patent variables.do -> */patentvars1_kpss.dta."
+    },
+    {
+      "dependency_id": "D0010",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMPUSTAT"
+      ],
+      "evidence_ids": [
+        "E_FUNDA_PROBE"
+      ],
+      "description": "Compustat source read; candidate route remains unverified for alias and history. Checklist edge: 1d-financial_constraints.sas -> */funda.sas7bdat."
+    },
+    {
+      "dependency_id": "D0011",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMPUSTAT"
+      ],
+      "evidence_ids": [
+        "E_FUNDA_PROBE"
+      ],
+      "description": "Compustat source read; candidate route remains unverified for alias and history. Checklist edge: 2a-variable creation and sample selection.sas -> */funda.sas7bdat."
+    },
+    {
+      "dependency_id": "D0012",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_LINKTABLE"
+      ],
+      "evidence_ids": [
+        "E_LINK_SOURCE"
+      ],
+      "description": "CCM link-table read. Checklist edge: 2a-variable creation and sample selection.sas -> */ccmxpf_linktable.sas7bdat."
+    },
+    {
+      "dependency_id": "D0013",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_AUDIT_RESTATE"
+      ],
+      "evidence_ids": [
+        "E_AUDIT_SOURCE"
+      ],
+      "description": "Audit Analytics restatement source read. Checklist edge: 2a-variable creation and sample selection.sas -> */auditnonreli.sas7bdat."
+    },
+    {
+      "dependency_id": "D0014",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_AUDIT_ACCEL"
+      ],
+      "evidence_ids": [
+        "E_ACCEL_SOURCE"
+      ],
+      "description": "Audit Analytics accelerated-filer source read. Checklist edge: 2a-variable creation and sample selection.sas -> */accfiler.sas7bdat."
+    },
+    {
+      "dependency_id": "D0015",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_AUDIT_SOX"
+      ],
+      "evidence_ids": [
+        "E_ACCEL_SOURCE"
+      ],
+      "description": "Audit Analytics internal-control opinion source read. Checklist edge: 2a-variable creation and sample selection.sas -> */auditsox404.sas7bdat."
+    },
+    {
+      "dependency_id": "D0016",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_BENFORDS"
+      ],
+      "evidence_ids": [
+        "E_BENFORD_SOURCE"
+      ],
+      "description": "Prepared Benford source table read. Checklist edge: 2a-variable creation and sample selection.sas -> */benfords.sas7bdat."
+    },
+    {
+      "dependency_id": "D0017",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_PREPARED_INPUTS"
+      ],
+      "description": "Output of supplied 1a accrual-quality stage. Checklist edge: 2a-variable creation and sample selection.sas -> */ddf_pooled.sas7bdat."
+    },
+    {
+      "dependency_id": "D0018",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_DGTW"
+      ],
+      "evidence_ids": [
+        "E_DGTW_SOURCE"
+      ],
+      "description": "Prepared DGTW return source table read. Checklist edge: 2a-variable creation and sample selection.sas -> */dgtwreturns.sas7bdat."
+    },
+    {
+      "dependency_id": "D0019",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_IO"
+      ],
+      "evidence_ids": [
+        "E_IO_SOURCE"
+      ],
+      "description": "Prepared institutional-ownership source table read. Checklist edge: 2a-variable creation and sample selection.sas -> */io_timeseries.sas7bdat."
+    },
+    {
+      "dependency_id": "D0020",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_FINCONS_SOURCE"
+      ],
+      "description": "Output of supplied 1d financial-constraints stage. Checklist edge: 2a-variable creation and sample selection.sas -> */financial_constraints.sas7bdat."
+    },
+    {
+      "dependency_id": "D0021",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_PREPARED_INPUTS"
+      ],
+      "description": "Output of supplied 2a SAS variable-construction stage. Checklist edge: 2a-variable creation and sample selection.sas -> */comprestatefsd.sas7bdat."
+    },
+    {
+      "dependency_id": "D0022",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_COMPUSTAT"
+      ],
+      "evidence_ids": [
+        "E_FUNDA_PROBE"
+      ],
+      "description": "Compustat source read; candidate route remains unverified for alias and history. Checklist edge: 2b-event study.sas -> */funda.sas7bdat."
+    },
+    {
+      "dependency_id": "D0023",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_LINKTABLE"
+      ],
+      "evidence_ids": [
+        "E_LINK_SOURCE"
+      ],
+      "description": "CCM link-table read. Checklist edge: 2b-event study.sas -> */ccmxpf_linktable.sas7bdat."
+    },
+    {
+      "dependency_id": "D0024",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_EVENT_REQUESTS"
+      ],
+      "description": "SAS WORK request datasets generated before manual Eventus export. Checklist edge: 2b-event study.sas -> sas:work.zhang."
+    },
+    {
+      "dependency_id": "D0025",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_EVENT_REQUESTS"
+      ],
+      "description": "SAS WORK request datasets generated before manual Eventus export. Checklist edge: 2b-event study.sas -> sas:work.ehw."
+    },
+    {
+      "dependency_id": "D0026",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_EVENTUS_RESULTS"
+      ],
+      "evidence_ids": [
+        "E_EVENT_RESULTS"
+      ],
+      "description": "Saved manual Eventus results read back by SAS. Checklist edge: 2b-event study.sas -> perm.event&j."
+    },
+    {
+      "dependency_id": "D0027",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_EVENT_RESULTS"
+      ],
+      "description": "SAS work/event CAR intermediates generated after manual Eventus output import. Checklist edge: 2b-event study.sas -> sas:work.comp."
+    },
+    {
+      "dependency_id": "D0028",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_EVENT_RESULTS"
+      ],
+      "description": "SAS work/event CAR intermediates generated after manual Eventus output import. Checklist edge: 2b-event study.sas -> sas:work.eventmar."
+    },
+    {
+      "dependency_id": "D0029",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_EVENT_RESULTS"
+      ],
+      "description": "SAS work/event CAR intermediates generated after manual Eventus output import. Checklist edge: 2b-event study.sas -> eventmar&j."
+    },
+    {
+      "dependency_id": "D0030",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_EVENTUS_RESULTS"
+      ],
+      "evidence_ids": [
+        "E_EVENT_RESULTS"
+      ],
+      "description": "Saved manual Eventus results read back by SAS. Checklist edge: 2b-event study.sas -> perm.ehwevent&j."
+    },
+    {
+      "dependency_id": "D0031",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_EVENT_RESULTS"
+      ],
+      "description": "SAS work/event CAR intermediates generated after manual Eventus output import. Checklist edge: 2b-event study.sas -> sas:work.ehweventmar."
+    },
+    {
+      "dependency_id": "D0032",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_EVENT_RESULTS"
+      ],
+      "description": "SAS work/event CAR intermediates generated after manual Eventus output import. Checklist edge: 2b-event study.sas -> ehweventmar&j."
+    },
+    {
+      "dependency_id": "D0033",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_CRSP_MSF"
+      ],
+      "evidence_ids": [
+        "E_EVENT_FINAL"
+      ],
+      "description": "CRSP monthly stock-file source read. Checklist edge: 2b-event study.sas -> */msf.sas7bdat."
+    },
+    {
+      "dependency_id": "D0034",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_STATA_EXTRA_INPUT"
+      ],
+      "description": "Stata dataset/intermediate generated by supplied producer stages. Checklist edge: 3-dataset compilation and regressions.do -> */*/soxdata_temp.dta."
+    },
+    {
+      "dependency_id": "D0035",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_PSEUDO_BRANCH"
+      ],
+      "description": "Pseudo-sample SAS export generated only when author branch instructions are carried out. Checklist edge: 3-dataset compilation and regressions.do -> */*/pseudosoxdata_temp.dta."
+    },
+    {
+      "dependency_id": "D0036",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_STATA_EXTRA_INPUT"
+      ],
+      "description": "Stata dataset/intermediate generated by supplied producer stages. Checklist edge: 3-dataset compilation and regressions.do -> */soxdata.dta."
+    },
+    {
+      "dependency_id": "D0037",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_EVENT_FINAL"
+      ],
+      "description": "Final eventus.dta output created by supplied SAS event stage. Checklist edge: 3-dataset compilation and regressions.do -> */eventus.dta."
+    },
+    {
+      "dependency_id": "D0038",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_STATA_EXTRA_INPUT"
+      ],
+      "description": "Stata dataset/intermediate generated by supplied producer stages. Checklist edge: 3-dataset compilation and regressions.do -> */soxdata_temp.dta."
+    },
+    {
+      "dependency_id": "D0039",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "issue",
+      "target_ids": [
+        "I_EXTRA_YEAR_HANDOFF"
+      ],
+      "evidence_ids": [
+        "E_EXTRA_BRANCH"
+      ],
+      "description": "Extra-years producer/consumer filename handoff remains unresolved. Checklist edge: 3-dataset compilation and regressions.do -> */soxdata_xtrayrs.dta."
+    },
+    {
+      "dependency_id": "D0040",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_STATA_EXTRA_INPUT"
+      ],
+      "description": "Stata dataset/intermediate generated by supplied producer stages. Checklist edge: 3-dataset compilation and regressions.do -> */xtrayrs_sample_forregs_t5.dta."
+    },
+    {
+      "dependency_id": "D0041",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_STATA_EXTRA_INPUT"
+      ],
+      "description": "Stata dataset/intermediate generated by supplied producer stages. Checklist edge: 3-dataset compilation and regressions.do -> */pseudosoxdata.dta."
+    }
+  ],
+  "actions": [
+    {
+      "id": "A_VERIFY_LOCAL_ROUTES",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_COMPUSTAT",
+        "R_LINKTABLE",
+        "R_CRSP_MSF",
+        "R_AUDIT_ACCEL",
+        "R_AUDIT_SOX"
+      ],
+      "kind": "data_preparation",
+      "description": "Map the sampled local Compustat, CCM, CRSP MSF and Audit Analytics candidates to the author WRDS library names; confirm allowed product vintage, identifier joins and required full date coverage before creating author-compatible working tables.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_CATALOG",
+        "E_CATALOG_SLICE",
+        "E_FUNDA_PROBE",
+        "E_LINK_PROBE",
+        "E_MSF_PROBE",
+        "E_AUDIT_ACCEL_PROBE",
+        "E_AUDIT_SOX_PROBE"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the exact candidate paths in the frozen workspace catalog and preserve original variables and units.",
+        "Confirm dates and link rules against the author code, including CCM linktype/linkdt/linkenddt filters and the required 2001-2008 event/control window.",
+        "Record the mapping from local library/table aliases to WRDS.FUNDA, WRDS.CCMXPF_LINKTABLE, WRDS.MSF and the two Audit Analytics feeds."
+      ],
+      "validation": [
+        "Using metadata-only or authorized bounded checks, verify required field names and storage types and verify the needed history before later execution; do not treat the existing row_limit=1 probes as coverage evidence."
+      ]
+    },
+    {
+      "id": "A_RESOLVE_AUDIT_FIELDS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_AUDIT_RESTATE",
+        "I_AUDIT_FIELD_MAP"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the authorized Audit Analytics restatement table/version or a documented field mapping for every source KEEP-list field before filling the author restatement join.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_AUDIT_SOURCE",
+        "E_AUDIT_RESTATE_PROBE",
+        "E_CATALOG_SLICE"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the data provider or author which current fields correspond to RES_CLER_ERR, RES_SEC_INVEST and the six missing RES_*_LIST fields reported by the one-row probe.",
+        "Only map fields when definitions and keys match; otherwise locate the correct authorized product release."
+      ],
+      "validation": [
+        "Confirm all author KEEP-list names or explicitly documented equivalents, the company-key mapping and date coverage before running 2a."
+      ]
+    },
+    {
+      "id": "A_ACQUIRE_KPSS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_KPSS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Acquire the author-maintained KPSS_2025 public panel through its repository and review the effect of the later vintage before using it in the 1c Stata import.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_KPSS_PUBLIC",
+        "E_PATENT_SOURCE"
+      ],
+      "edits": [],
+      "steps": [
+        "Download the repository's KPSS_2025.csv product using the documented repository route.",
+        "Confirm patent_num, permno, issue_date and filing_date formats against the 1c import and joins.",
+        "Record that this route uses a later vintage with updated values than KPSS_2019_public.csv; retain the author-vintage file if supplied separately."
+      ],
+      "validation": [
+        "Check field types, identifiers and required patent-year range before conversion; compare resulting analysis period with the author sample after authorized execution."
+      ]
+    },
+    {
+      "id": "A_MAP_PATENTSVIEW",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_PV_CITATIONS",
+        "R_PV_CPC",
+        "R_PV_PATENT",
+        "R_PV_APPLICATION"
+      ],
+      "kind": "clarification",
+      "description": "Resolve current USPTO Open Data Portal products and schema mappings for the four PatentsView TSV inputs, then prepare permitted files for the documented SAS/Stata import steps.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_PATENTSVIEW_PUBLIC",
+        "E_PV_SOURCE",
+        "E_APP_SOURCE"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the current USPTO ODP bulk product search and complete required account/API-key registration if using that route.",
+        "Identify the exact replacements for uspatentcitation.tsv, cpc_current.tsv, patent.tsv and application.tsv and obtain file/schema documentation for the author-relevant vintage.",
+        "Map required identifiers and CPC order/class fields; do not infer a current table from a generic ODP landing page."
+      ],
+      "validation": [
+        "Verify file format, required identifiers/fields, CPC sequence and period coverage before importing; compare generated citations.dta and patent variables only in a separately authorized run."
+      ]
+    },
+    {
+      "id": "A_MAP_CLAIMS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_PATENT_CLAIMS"
+      ],
+      "kind": "clarification",
+      "description": "Verify the current availability and schema of the author-named BigQuery table before preparing patent_claims.dta.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_GOOGLE_CLAIMS_PUBLIC",
+        "E_CLAIMS_SOURCE"
+      ],
+      "edits": [],
+      "steps": [
+        "Open the documented patents-public-data.uspto_oce_claims.patent_document_stats_2014 table in the authorized BigQuery environment and inspect its current schema.",
+        "Confirm pat_no, pat_clm_ct and pat_dep_clm_ct and the required patent coverage, then export/convert using the author-prescribed format."
+      ],
+      "validation": [
+        "Check key uniqueness and required field types before merge; do not infer current coverage from the archived 2017 table index."
+      ]
+    },
+    {
+      "id": "A_REQUEST_BENFORD",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_BENFORDS",
+        "I_INITIAL_CLOSURE"
+      ],
+      "kind": "clarification",
+      "description": "Request the prepared Benford fsd dataset or the permitted producer specification, including its exact schema, date coverage and join keys.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_BENFORD_SOURCE",
+        "E_PREPARED_INPUTS"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the authors/data provider whether a compatible perm.benfords table or data-only export is available for the supplied package.",
+        "If only producer code is offered, request allowed access and the exact input/output contract; do not reconstruct the proprietary Benford measure independently."
+      ],
+      "validation": [
+        "Confirm gvkey, datadate, fsd and date coverage before the 2a join."
+      ]
+    },
+    {
+      "id": "A_REQUEST_DGTW",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_DGTW",
+        "I_INITIAL_CLOSURE"
+      ],
+      "kind": "clarification",
+      "description": "Request the exact author-prepared DGTW monthly return dataset from Professor Mike Drake or a compatible authorized export.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DGTW_SOURCE",
+        "E_PREPARED_INPUTS"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm the prepared file, period, firm/date keys and dgtw_bhar construction with the provider.",
+        "Keep the commented CRSP buy-and-hold fallback inactive unless the author confirms it as an intended alternative."
+      ],
+      "validation": [
+        "Verify data key fields, monthly history and firm-date matching before using the prepared table."
+      ]
+    },
+    {
+      "id": "A_REQUEST_IO",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_IO",
+        "I_INITIAL_CLOSURE"
+      ],
+      "kind": "clarification",
+      "description": "Confirm the authorized WRDS institutional-ownership source, recipe output and exact fields needed to create perm.io_timeseries.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_WRDS_IO_PUBLIC",
+        "E_IO_SOURCE",
+        "E_CATALOG",
+        "E_CATALOG_SLICE"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the author-linked institutional-ownership recipe after appropriate account access is available.",
+        "Ask for the prepared io_timeseries output or provider-confirmed recipe inputs, including rdate, permno and ior definitions.",
+        "Treat catalogued TFN.S34 as a conditional raw discovery candidate only; establish whether its fields, keys and history support the author's documented ownership recipe before any reconstruction, and do not treat it as the prepared perm.io_timeseries panel."
+      ],
+      "validation": [
+        "Check join keys, scale and coverage against the author sample before the 2a merge; do not infer access from the login page alone."
+      ]
+    },
+    {
+      "id": "A_RUN_EVENTUS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_EVENTUS_RESULTS",
+        "S_EVENTUS",
+        "I_INITIAL_CLOSURE"
+      ],
+      "kind": "clarification",
+      "description": "Confirm authorized WRDS Eventus access and output handling, then preserve all 17 Zhang and 7 EHW manual queries with their documented settings and windows.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_EVENT_REQUESTS",
+        "E_EHW_REQUESTS",
+        "E_EVENT_SETTINGS",
+        "E_EVENT_WINDOWS",
+        "E_EVENT_RESULTS",
+        "E_EHW_RESULTS"
+      ],
+      "edits": [],
+      "steps": [
+        "Generate and retain the 24 supplied request files without changing event dates or windows.",
+        "Through an authorized WRDS Eventus Cross-sectional Daily workflow, use the documented market index, MAR benchmark, no group/pool, autodate and estimation period settings.",
+        "Save each returned result in the SAS table names expected by 2b, with documented conversion steps and checksums."
+      ],
+      "validation": [
+        "Before 2b import, verify each of 24 result files, result type MAR, permno and both CAR window fields; confirm no event request/result is missing."
+      ]
+    },
+    {
+      "id": "A_DEFINE_SHARED_ROOT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_SHARED_PATHS"
+      ],
+      "kind": "configuration",
+      "description": "Select one authorized shared writable working root and document consistent SAS WRDS/PERM library mappings and Stata relative paths for all generated cross-language files.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_ROOT_PLACEHOLDER",
+        "E_STATA_ROOT",
+        "E_SAS_EXPORT",
+        "E_EXTRA_BRANCH"
+      ],
+      "edits": [],
+      "steps": [
+        "Choose a shared path visible to SAS and Stata and replace every * placeholder in the execution configuration with consistent paths.",
+        "Ensure the 1a/1d/2a/2b SAS outputs and 1b/1c/3 Stata outputs resolve to the same named files and working directory.",
+        "Keep all author-created outputs separate from source data and preserve original files."
+      ],
+      "validation": [
+        "Static path review should show every producer file has a matching consumer path across main, pseudo, extra-years and Eventus branches."
+      ]
+    },
+    {
+      "id": "A_GET_TRIMWINSOR",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_TRIMWINSOR"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the author macro definition for %TrimWinsor and its required include/autocall setup; do not guess its implementation.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_TRIMWINSOR"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the authors for the exact macro source and the version/include path used with 2a.",
+        "If the macro cannot be supplied, request written confirmation of the intended winsorization behavior and parameter semantics before drafting a replacement."
+      ],
+      "validation": [
+        "Statically confirm the resolved macro implementation uses the author-specified byvar, variables, percentile bounds and output dataset before any authorized run."
+      ]
+    },
+    {
+      "id": "A_CONFIRM_PSEUDO_RULE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_PSEUDO_EVENT_RULE"
+      ],
+      "kind": "clarification",
+      "description": "Ask the authors for the pseudo branch's event date, post definition and implementation-year logic; preserve the 1993-1999 sample and market-value filer instructions.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_PSEUDO_BRANCH",
+        "E_SOX_RULE"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the intended pseudo event and period flags, including fiscal-year cutoffs.",
+        "Retain the branch's stated market-value accelerated-filer rule and comment-out of the main 404(b) filter.",
+        "Do not carry forward or replace 2004/2005 flags without author confirmation."
+      ],
+      "validation": [
+        "Compare the confirmed branch logic with pseudo sample dates before execution and document it as a distinct alternative."
+      ]
+    },
+    {
+      "id": "A_FIX_EXTRA_YEAR_HANDOFF",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_EXTRA_YEAR_HANDOFF"
+      ],
+      "kind": "source_edit",
+      "description": "Align the Stata extra-year consumer with the filename explicitly requested by the 2a extra-years instructions; keep all sample filters and variables unchanged.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_EXTRA_BRANCH",
+        "E_STATA_EXTRA_INPUT"
+      ],
+      "edits": [
+        {
+          "file": "3-dataset compilation and regressions.do",
+          "sha256": "beac79747a68a0cbf8c6f862636cd9aaaeb383d645e34ed9d30ead1c1ed6fb45",
+          "line_begin": 337,
+          "line_end": 337,
+          "before": "use soxdata_xtrayrs, clear",
+          "after": "use soxdata101920_xtrayrs, clear",
+          "reason": "Match the Stata consumer to the author-directed extra-year export name so the documented branch can hand off its produced panel."
+        }
+      ],
+      "steps": [
+        "When the extra-years branch is selected, set its SAS export to the documented soxdata101920_xtrayrs.dta name.",
+        "Apply the proposed one-line Stata rename so the consumer uses the same basename."
+      ],
+      "validation": [
+        "Statically verify SAS export and Stata input basenames match, then later confirm the produced file exists before importing; no author code was edited in this assessment."
+      ]
+    },
+    {
+      "id": "A_PREP_STATA_PACKAGES",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "S_WINSOR2",
+        "S_OUTREG2",
+        "S_MIPOLATE",
+        "S_UNIVAR"
+      ],
+      "kind": "software_setup",
+      "description": "Prepare compatible Stata commands winsor2, outreg2, mipolate and univar in the Stata 18 adopath before running the supplied Stata branches.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_ENVIRONMENT",
+        "E_MIPOLATE",
+        "E_STATA_EXTRA_INPUT",
+        "E_ENTROPY",
+        "E_UNIVAR_PROBE",
+        "E_UNIVAR_SOURCE"
+      ],
+      "edits": [],
+      "steps": [
+        "Use an authorized package source or site-managed installation to make winsor2, outreg2, mipolate and univar resolvable to Stata 18.",
+        "Record versions and adopath/configuration for reproducible use; do not install packages during this assessment."
+      ],
+      "validation": [
+        "Use Stata which/help metadata checks for each command after setup; do not run any author analysis command."
+      ]
+    },
+    {
+      "id": "A_VERIFY_SAS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "S_SAS",
+        "S_SAS_STAT"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the metadata-only SAS launcher service error and confirm the authorized SAS/STAT component for PROC REG without treating the error as an absent license.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_ENVIRONMENT",
+        "E_FRQ_SOURCE"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the site SAS administrator to confirm SAS 9.4 service health and whether SAS/STAT is included for the authorized account.",
+        "Use only metadata/version/component checks when the service is available; do not start or run supplied author code as part of this assessment."
+      ],
+      "validation": [
+        "Record SAS version and PROC REG/SAS-STAT availability by metadata or official component inventory before considering execution readiness."
+      ]
+    },
+    {
+      "id": "A_RETAIN_EVENT_SOFTWARE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "S_EVENTUS"
+      ],
+      "kind": "access_request",
+      "description": "Confirm that the researcher has an authorized WRDS Eventus interface and can export the prescribed Eventus result tables.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_EVENT_SETTINGS",
+        "E_EVENT_REQUESTS",
+        "E_EHW_REQUESTS"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm account permissions and current Eventus GUI release through the institution's WRDS administrator.",
+        "Follow the author settings only after access is confirmed."
+      ],
+      "validation": [
+        "Verify that the Eventus interface offers the required Cross-sectional Daily analysis, market index and MAR output fields before preparing result tables."
+      ]
+    },
+    {
+      "id": "A_RESOLVE_OVERALL_CLOSURE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_INITIAL_CLOSURE"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the remaining external prepared-input and result-schema specifications before recording full-pipeline closure.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_README_ORDER",
+        "E_DATASHEET_INPUTS",
+        "E_PREPARED_INPUTS",
+        "E_PATENTSVIEW_PUBLIC",
+        "E_GOOGLE_CLAIMS_PUBLIC",
+        "E_EVENT_RESULTS"
+      ],
+      "edits": [],
+      "steps": [
+        "Retain the full ordered 1a-1d, 2a, 2b and 3 workflow and both author-defined sample alternatives.",
+        "Obtain compatible inputs and the missing code/specifications listed by the linked requirements and issues.",
+        "Keep the analysis-only scope omitted because no standalone author-provided route bypasses the required preparation stages."
+      ],
+      "validation": [
+        "Review the completed producer-consumer map and all 41 frozen dependency IDs before a future authorized execution decision."
+      ]
+    },
+    {
+      "id": "A_VERIFY_PCFILES",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "S_SAS_ACCESS_PCFILES"
+      ],
+      "kind": "software_setup",
+      "description": "Confirm SAS/ACCESS Interface to PC Files availability for the supplied DTA exports; if unavailable, prepare an authorized compatible SAS-to-Stata serialization/configuration that preserves the analysis data.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_PCFILES_DOC",
+        "E_CITATIONS_DTA_EXPORT",
+        "E_SAS_EXPORT",
+        "E_EVENTUS_DTA_EXPORT"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the site SAS administrator to confirm the installed/licensed SAS/ACCESS Interface to PC Files product for the SAS 9.4 account.",
+        "If it is unavailable, configure a SAS Foundation-supported delimited or other Stata-readable handoff with matching Stata import paths, preserving the same observations, variables, values, storage meaning and labels; do not alter scientific definitions or samples."
+      ],
+      "validation": [
+        "Confirm the selected export/import route preserves the required fields, identifiers, values, date meaning and labels before a future authorized run; do not execute a SAS conversion during this assessment."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Static assessment only: read all seven supplied programs, README and datasheet; no author program, import, compile, statistical/descriptive command, syntax trial or data transformation was run.",
+    "All 41 frozen dependency checklist IDs have an explicit review disposition. Generated intermediates and manual Eventus GUI handoffs are retained; the checklist was treated as discovery evidence and each edge was traced against source text.",
+    "Bounded local SAS metadata probes used row_limit=1 only. They establish sampled readability/field presence, not total records, full-period coverage, source vintage or access entitlement. No whole-file row or line counts were run.",
+    "sample_id.dta contains GVKEY/datadate identifiers only and is not credited as analysis data.",
+    "The current public KPSS route is a compatible later public vintage; using it requires acquisition and careful interpretation because its estimates and vintage differ from the 2019 filename in the supplied code.",
+    "Catalog misses, ODP registration, a WRDS recipe login, and a SAS launcher error are not treated as proof of absent licenses or global access barriers.",
+    "SAS/STAT, live WRDS/Eventus access, exact external source contracts, the missing TrimWinsor macro, pseudo event rules, shared path root and extra-year filename remain unresolved. Execution is not verified.",
+    "Software completeness correction: Stata's active univar descriptive-panel calls are recorded and the metadata-only which check reports univar unavailable. eststo is separately confirmed by a metadata-only which probe; esttab, estpost, estadd, reghdfe, ftools and ebalance use exact successful environment/probe keys.",
+    "Three active SAS PROC EXPORT statements write Stata .dta handoffs. Official SAS 9.4 PC Files documentation says unlicensed IMPORT/EXPORT access is limited to JMP and delimited formats; PC Files component/license status remains unverified, with no SAS retry or license inference.",
+    "Coordinator QA correction: exact frozen-catalog evidence now uses the absolute work_item catalog path and registered hash. TFN.S34 is recorded as an unverified conditional raw ownership discovery lead only; it is not a verified IOR panel or an additional mandatory AND input. Shared paths and the supported extra-year filename edit are preparation tasks."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "0eaf62b8361072bef34ece8db434070bf75506aea958f06b80615e85e4a2ac37",
+    "applied": false
+  }
+}

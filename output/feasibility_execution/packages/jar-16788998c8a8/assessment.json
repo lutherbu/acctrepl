@@ -1,0 +1,1267 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-16788998c8a8",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 57/Issue 4/12269 - Made-in-the-U-S-A-A-Study-of-Firm-Responses-to-Domestic-Production-Incentives/lester-datasheet-and-code.zip",
+        "sha256": "cba46e8faffa332c6f8dc5fd0deed4f59022ba73ccd2ee3898d619841e381915"
+      },
+      {
+        "path": "JAR-Volume 57/Issue 4/12269 - Made-in-the-U-S-A-A-Study-of-Firm-Responses-to-Domestic-Production-Incentives/lester-online-appendix.pdf",
+        "sha256": "f0b9246091482c0a18425b3ab055b45534ea397c6747cdb612d719f3312fbfb4"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "3189a6020750463db163d8b63addab7d94475423c1b01f8e9a73994a125ca463",
+    "work_item_sha256": "e49ee71823498ff7ea7c8abe5351514ae2d65c34f0a34dbb0c60f900d811ac97"
+  },
+  "title": "Made in the U.S.A.? A Study of Firm Responses to Domestic Production Incentives",
+  "doi": "10.1111/1475-679X.12269",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Feasibility target: prepare and match using the supplied Stata program, preserving all six source stages and the implemented H1 intertemporal, H2 cross-border, H3a domestic investment, and H3b domestic employment data-construction branches. Table-producing estimators are outside this selected preparation/matching scope.",
+      "entry_points": [
+        "Lester_Code_Description.pdf"
+      ],
+      "requirement_ids": [
+        "req_dpad_firms",
+        "req_compustat_annual_1995_2013",
+        "req_compustat_quarterly_1995_2013",
+        "req_compustat_segments_1995_2013",
+        "req_compustat_annual_2013_2017",
+        "req_compustat_segments_2013_2017",
+        "req_nol_data",
+        "req_rdchand",
+        "req_exhibit21",
+        "req_bea_domestic",
+        "req_bea_foreign",
+        "req_capex_input",
+        "req_employees_input"
+      ],
+      "software_ids": [
+        "sw_stata18",
+        "sw_todate",
+        "sw_nsplit",
+        "sw_mahapick"
+      ],
+      "issue_ids": [
+        "iss_embedded_stata",
+        "iss_h1_cohort_builders",
+        "iss_h3b_imported_logs",
+        "iss_alias_producers",
+        "iss_manual_input_contracts"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "ev_code_complete_steps",
+        "ev_inputs_products",
+        "ev_h1_cohort_gap",
+        "ev_h2_inputs_window",
+        "ev_h2_forward",
+        "ev_bea_h3a",
+        "ev_bea_h3b",
+        "ev_h3b_tail_contract",
+        "ev_identifiers_shape",
+        "ev_bea_access_official"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "req_dpad_firms",
+      "kind": "data",
+      "description": "Prepared DPAD firm/year classification used in matching. Code imports DPAD_firms with firstrow and consumes match_text, datadate, cik, and fiscal_year. The datasheet describes term-based filing search and manual review/coding; the prepared data and complete rules are not in the package.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_dpad_author",
+          "type": "packaged",
+          "status": "unverified",
+          "location": "Author-named DPAD_firms input; absent from supplied inventory",
+          "description": "Compatible author-prepared workbook/table remains unverified; required fields are match_text, datadate, cik, fiscal_year.",
+          "evidence_ids": [
+            "ev_dpad_fields",
+            "ev_dpad_manual_source"
+          ],
+          "expected_fields": [
+            "match_text",
+            "datadate",
+            "cik",
+            "fiscal_year"
+          ],
+          "expected_period": "Annual filings; exact covered years unknown"
+        },
+        {
+          "id": "route_dpad_filings",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_RAW} and ${ACCTREPL_SEC_PARSED}",
+          "description": "Raw/parsed SEC roots are only candidates for independent coding. Root existence does not verify filing coverage or reproduce author-reviewed classifications; LM 10-X files are another candidate text source.",
+          "evidence_ids": [
+            "ev_sec_roots_probe",
+            "ev_sec_parsed_probe",
+            "ev_lm_root_probe",
+            "ev_dpad_manual_source"
+          ],
+          "expected_fields": [
+            "CIK",
+            "filing date",
+            "DPAD mention/review classification"
+          ],
+          "expected_period": "Exact filing window and coding years unknown"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_compustat_annual_1995_2013",
+      "kind": "data",
+      "description": "Annual Compustat fundamentals used for matching and H1 preparation, source period 1995–2013 to support annual lag construction.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_comp_annual_9513",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.FUNDA at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "Frozen catalog identifies a local annual fundamentals candidate. It was not successfully field-probed; expected fields and historical coverage must be checked before staging.",
+          "evidence_ids": [
+            "ev_catalog_products",
+            "ev_inputs_products",
+            "ev_annual_code"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "at",
+            "ppent",
+            "sale",
+            "cogs",
+            "xrd",
+            "xsga",
+            "emp",
+            "fic"
+          ],
+          "expected_period": "1995–2013 input; H1 includes 1997–2013 and constructs lags from earlier years"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_compustat_quarterly_1995_2013",
+      "kind": "data",
+      "description": "Quarterly Compustat fundamentals for H1 intertemporal shifting. Source builds quarterly lags; H1 analysis is filtered to 1997–2013.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_comp_quarter_9513",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.FUNDQ at ${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+          "description": "A strict one-row read found requested quarterly fields locally; it does not establish 1995–2013 or firm-population coverage.",
+          "evidence_ids": [
+            "ev_fundq_probe",
+            "ev_inputs_products",
+            "ev_quarter_code"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyearq",
+            "fqtr",
+            "atq",
+            "cogsq",
+            "saleq",
+            "xrdq",
+            "xsgaq",
+            "fic",
+            "prccq"
+          ],
+          "expected_period": "1995–2013 source window; H1 analysis 1997–2013"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_compustat_segments_1995_2013",
+      "kind": "data",
+      "description": "Compustat segment history used in base matching/cross-border construction, downloaded for 1995–2013.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_comp_segments_9513",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMPSEG.WRDS_SEGMERGED at ${ACCTREPL_SAS_ROOT}/comp/d_seghist/wrds_segmerged.sas7bdat",
+          "description": "A strict one-row read found requested segment fields locally; full date and population coverage remain unverified.",
+          "evidence_ids": [
+            "ev_segments_probe",
+            "ev_inputs_products"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "sid",
+            "srcdate",
+            "stype",
+            "geotp",
+            "snms",
+            "atlls",
+            "capxs",
+            "cogss",
+            "emps",
+            "ias",
+            "intseg",
+            "oelim",
+            "ppents",
+            "rds",
+            "revts",
+            "sales",
+            "salexg",
+            "txts",
+            "xsgas"
+          ],
+          "expected_period": "1995–2013"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_compustat_annual_2013_2017",
+      "kind": "data",
+      "description": "Separate annual Compustat product for H2 cross-border tests. Code drops 2012 and 2017 before forming the appended extension.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_comp_annual_1317",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMP.FUNDA at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+          "description": "Catalog identifies an annual candidate, but this separate 2013–2017 source window and its fields have not been validated. Keep distinct from the 1995–2013 lag-history extract.",
+          "evidence_ids": [
+            "ev_catalog_products",
+            "ev_inputs_products",
+            "ev_h2_inputs_window"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "fyear",
+            "at",
+            "che",
+            "dltt",
+            "dlc",
+            "csho",
+            "prcc_f",
+            "sale",
+            "xrd",
+            "pifo",
+            "txfo"
+          ],
+          "expected_period": "2013–2017 source; supplied H2 composite drops 2012 and 2017, leaving 2013–2016"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_compustat_segments_2013_2017",
+      "kind": "data",
+      "description": "Separate Compustat segment extract for the H2 2013–2017 extension, merged with the annual extension product.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_comp_segments_1317",
+          "type": "local",
+          "status": "unverified",
+          "location": "COMPSEG.WRDS_SEGMERGED at ${ACCTREPL_SAS_ROOT}/comp/d_seghist/wrds_segmerged.sas7bdat",
+          "description": "A local segment candidate and sample fields are present; compatible 2013–2017 coverage has not been verified.",
+          "evidence_ids": [
+            "ev_segments_probe",
+            "ev_inputs_products",
+            "ev_h2_inputs_window"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "sid",
+            "srcdate",
+            "stype",
+            "geotp",
+            "snms",
+            "atlls",
+            "capxs",
+            "cogss",
+            "emps",
+            "ias",
+            "intseg",
+            "oelim",
+            "ppents",
+            "rds",
+            "revts",
+            "sales",
+            "salexg",
+            "txts",
+            "xsgas"
+          ],
+          "expected_period": "2013–2017 source extract; final annual H2 composite 2013–2016"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_nol_data",
+      "kind": "data",
+      "description": "Hand-collected company NOL data merged into H1 by gvkey and fyear. Datasheet describes total and federal NOL amounts, but the prepared table, exact names, coding rules, and years are absent.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_nol_author",
+          "type": "packaged",
+          "status": "unverified",
+          "location": "Author-named nol_data input; absent from supplied inventory",
+          "description": "Obtain compatible author-prepared table and field definitions/coverage; code merge keys are gvkey and fyear.",
+          "evidence_ids": [
+            "ev_nol_fields",
+            "ev_nol_manual_source"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "total NOL amount",
+            "federal NOL amount"
+          ],
+          "expected_period": "Exact years and variable names unknown"
+        },
+        {
+          "id": "route_nol_manual",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_RAW} and ${ACCTREPL_SEC_PARSED}",
+          "description": "SEC roots are candidates for independent hand collection only; they do not establish a prebuilt panel, rules, or coverage.",
+          "evidence_ids": [
+            "ev_sec_roots_probe",
+            "ev_sec_parsed_probe",
+            "ev_nol_manual_source"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "total NOL amount",
+            "federal NOL amount"
+          ],
+          "expected_period": "Exact years and coding contract unknown"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_rdchand",
+      "kind": "data",
+      "description": "Historical author-shared R&D credit data consumed as rdchand with cik, year (renamed fyear), and rcxm. Source describes Hoopes assistance through 2010; code separately derives 2011–2013 from Compustat.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_rdchand_author",
+          "type": "packaged",
+          "status": "unverified",
+          "location": "Author-named rdchand table; absent from supplied inventory",
+          "description": "Verify/obtain historical author-prepared values and schema; the historical file and later Compustat-derived segment have distinct contracts.",
+          "evidence_ids": [
+            "ev_rdchand_branch",
+            "ev_hoopes_period_source"
+          ],
+          "expected_fields": [
+            "cik",
+            "year",
+            "rcxm"
+          ],
+          "expected_period": "Author-shared data 1997–2010; code calculates 2011–2013 separately"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_exhibit21",
+      "kind": "data",
+      "description": "Processed Exhibit 21 firm-year subsidiary/haven data used by H2. Code reads ciknumber, datadate, taxhaven, and totalcount, derives firm-year measures, then merges to Compustat segments.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_ex21_author",
+          "type": "public",
+          "status": "unverified",
+          "location": "Scott Dyreng author-distributed Exhibit 21 data; current location/schema unverified",
+          "description": "Datasheet records author-distributed data, but present route and historical coverage are unverified.",
+          "evidence_ids": [
+            "ev_ex21_author_source",
+            "ev_exhibit21_branch"
+          ],
+          "expected_fields": [
+            "ciknumber",
+            "datadate",
+            "taxhaven",
+            "totalcount"
+          ],
+          "expected_period": "Code derives firm-year measures; covered years must be confirmed"
+        },
+        {
+          "id": "route_ex21_sec_candidate",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_RAW} and ${ACCTREPL_SEC_PARSED}",
+          "description": "Raw and parsed roots exist, but neither is a processed Exhibit 21 table nor proves filing coverage or compatible haven classification.",
+          "evidence_ids": [
+            "ev_sec_roots_probe",
+            "ev_sec_parsed_probe",
+            "ev_ex21_author_source"
+          ],
+          "expected_fields": [
+            "CIK",
+            "filing date",
+            "subsidiary country/haven classification"
+          ],
+          "expected_period": "Exact window and author rules unknown"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_bea_domestic",
+      "kind": "data",
+      "description": "Confidential BEA domestic firm-level data consumed by H3a investment and H3b employment. Code reads distinct domestic inputs for 1997–2010 and 2011–2013. These records are restricted company-level data, not public BEA aggregates; current authorized access and exact contract are unverified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_bea_domestic",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "bea_dom_data_97_10 and bea_dom_data_11_13 (BEA Special Sworn Employee secure-site products)",
+          "description": "Verify current project access, retained products, period, keys, and fields; public macro tables cannot substitute.",
+          "evidence_ids": [
+            "ev_bea_h3a",
+            "ev_bea_h3b",
+            "ev_bea_access_source",
+            "ev_bea_access_official"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "period_year",
+            "us_id",
+            "dom_exp_ppe",
+            "dom_emp",
+            "dom_emp_compen"
+          ],
+          "expected_period": "1997–2010 plus 2011–2013"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_bea_foreign",
+      "kind": "data",
+      "description": "Separate confidential BEA foreign activity data consumed by H3a and keyed separately from domestic BEA records.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_bea_foreign",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "bea_for_data (BEA foreign activity firm-level records)",
+          "description": "Verify current authorized access, retained product, fields, period, and identifier crosswalk. Do not substitute public macro aggregates.",
+          "evidence_ids": [
+            "ev_bea_h3a",
+            "ev_bea_access_source",
+            "ev_bea_access_official"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "period_year",
+            "us_id",
+            "for_capex",
+            "for_rd"
+          ],
+          "expected_period": "Exact covered years unknown"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_capex_input",
+      "kind": "data",
+      "description": "Separate capex input alias consumed in H3a and merged by gvkey/fyear. Equivalence to a similarly named Compustat field is unverified without its producer contract.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_capex_input",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author-named capex input; possible Compustat candidate not verified",
+          "description": "Code loads capex and merges its derived alias. Source does not document a producer/schema; local Compustat candidates do not establish mapping.",
+          "evidence_ids": [
+            "ev_bea_h3a",
+            "ev_catalog_products"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "capx"
+          ],
+          "expected_period": "Exact source window and producer unknown"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "req_employees_input",
+      "kind": "data",
+      "description": "Separate employees input consumed in H3b. Code uses emp and xlr and constructs one-year lags before merging by gvkey/fyear; upstream source and historical window are unknown.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "route_employees_input",
+          "type": "local",
+          "status": "unverified",
+          "location": "Author-named employees input; possible Compustat candidate not verified",
+          "description": "Do not assume the annual Compustat candidate supplies the same alias until fields, producer, and years are checked.",
+          "evidence_ids": [
+            "ev_bea_h3b",
+            "ev_catalog_products"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "emp",
+            "xlr"
+          ],
+          "expected_period": "Exact source window and producer unknown"
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "sw_stata18",
+      "name": "Stata",
+      "status": "available",
+      "description": "Stata 18 runtime is available for a future authorized batch run; the embedded source has not been executed.",
+      "evidence_ids": [
+        "ev_runtime_probe"
+      ]
+    },
+    {
+      "id": "sw_todate",
+      "name": "todate",
+      "status": "preparation_required",
+      "description": "The supplied code calls todate; targeted which check did not find it on the current adopath. Provide it through ordinary package setup before a future run.",
+      "evidence_ids": [
+        "ev_todate_probe"
+      ]
+    },
+    {
+      "id": "sw_nsplit",
+      "name": "nsplit",
+      "status": "preparation_required",
+      "description": "The supplied code calls nsplit; targeted which check did not find it on the current adopath. Provide it through ordinary package setup before a future run.",
+      "evidence_ids": [
+        "ev_nsplit_probe"
+      ]
+    },
+    {
+      "id": "sw_mahapick",
+      "name": "mahapick",
+      "status": "preparation_required",
+      "description": "The matching code calls mahapick; targeted which check did not find it on the current adopath. Provide it through ordinary package setup before a future run.",
+      "evidence_ids": [
+        "ev_mahapick_probe"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "iss_embedded_stata",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "embedded_code_extraction",
+      "description": "The substantial Stata preparation program is printed inside Lester_Code_Description.pdf rather than supplied as an executable .do file. Extract a working copy and compare wrapped/page-split statements against the PDF before an authorized run.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "ev_code_complete_steps"
+      ]
+    },
+    {
+      "id": "iss_h1_cohort_builders",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "incomplete_h1_cohort_source",
+      "description": "H1 labels its quarter map abbreviated/example, saves pooled cohorts for 2004, 2007, and 2010, and appends a 2005–2013 range whose producer blocks are absent from supplied text. Obtain omitted builders or confirm separately supplied intermediates; do not invent cohorts.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "ev_h1_cohort_gap"
+      ]
+    },
+    {
+      "id": "iss_h3b_imported_logs",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_h3b_input_fields",
+      "description": "The source ends by cleaning log_compen and log_for_emp but shows no producers or imported table schema. They may be inherited from an undocumented source; the code excerpt does not prove they are absent from all inputs.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "ev_h3b_tail_contract"
+      ]
+    },
+    {
+      "id": "iss_alias_producers",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_input_aliases",
+      "description": "Code loads capex and employees as separate aliases, but their source producers/schema and date coverage are undocumented. Similar Compustat field names are candidates until merge contracts are confirmed.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "ev_bea_h3a",
+        "ev_bea_h3b"
+      ]
+    },
+    {
+      "id": "iss_manual_input_contracts",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "manual_data_contracts",
+      "description": "DPAD, NOL, Hoopes R&D credit, and Dyreng Exhibit 21 inputs have distinct sources and histories. Compatible author-prepared tables and exact schemas/rules/coverage must be established; historical assistance is not by itself a current NDA barrier.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "ev_dpad_manual_source",
+        "ev_nol_manual_source",
+        "ev_hoopes_period_source",
+        "ev_ex21_author_source"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev_code_steps",
+      "kind": "source",
+      "description": "The code-description PDF explicitly identifies the supplied Stata content and all six dataset-construction stages, including the H1/H2/H3a/H3b branches.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 27,
+      "line_end": 30,
+      "quote": "   20   descriptions, I provide Stata code that details variable construction and the process of\n        linking the various data sets together. See the datasheet\n   21   description for details of when the data was downloaded from the source, keeping in mind\n        that variable definitions and labels change over time."
+    },
+    {
+      "id": "ev_data_products",
+      "kind": "source",
+      "description": "The code-description source names distinct annual, quarterly, and segment Compustat products and their stated periods.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 41,
+      "line_end": 69,
+      "quote": "   29   compustat_dataset_1995_2013: Annual data downloaded from Compustat with key variables.\n        Includes data from 1995 through 2013 so as to construct appropriate\n   30       lagged values needed for some tests.\n   31\n   32   compustat_data_2013_2017: Annual data downloaded fro Compustat with key variables for\n        Cross-border Income Shifting tests (H2).\n   33\n   34   compustat_quarterly_data: Quarterly data downloaded from Compustat with key variables\n        needed for testing inter-temporal shifting (H1). Includes data from 1995\n   35       through 2013 so as to construct appropriate lagged values needed for some tests.\n   36\n   37   DPAD_firms: Dataset identifying firms that either discuss or disclose the DPAD benefit in\n        their financial statements. Dataset was created by first providing\n   38       search terms to Jeff Hoopes in 2014 to include in a Perl program. All hits were\n        reviewed to determine if they did indeed related to the DPAD benefit.\n   39\n   40   exhibit21: Data on material foreign subsidiaries disclosed in firm financial statements;\n        obtained from Scott Dyreng's website.\n   41\n   42   nol_data: Data collected from firm financial statements on the amount of a firm's total\n        NOL, as well as the federal portion of NOL. See Data Description Sheet.\n   43\n   44   rdchand: R&D tax credit data provided by Jeff Hoopes from his paper \"The Effect of\n        Temporary Tax Laws on Understanding and Predicting Corporate Earnings.\"\n   45\n   46   segment_dataset: Includes segment data downloaded from Compustat for 1995 through 2013.\n   47\n   48   segment_data_2013_2017: Includes Compustat segment data downloaded for 2013 through 2017\n        for Cross-border Income Shifting tests (H2)."
+    },
+    {
+      "id": "ev_bea_confidential",
+      "kind": "source",
+      "description": "The datasheet states that the BEA records are confidential and restricted to researchers with Special Sworn Employee status. This supports an unverified current access route, not a finding that this worker lacks eligibility.",
+      "file": "Lester Datasheet.pdf",
+      "line_begin": 99,
+      "line_end": 102,
+      "quote": "   I used confidential data on U.S. multinational firms from the U.S. Bureau of Economic Analysis. These\n   data can only be accessed by researchers who have received Special Sworn Employee status. Contact\n   information for the BEA employees that oversee the Special Sworn Employee program has been\n   provided to the editors at the same time as this final data description."
+    },
+    {
+      "id": "ev_dpad_source",
+      "kind": "source",
+      "description": "The datasheet describes DPAD firm identification as financial-statement search followed by manual review/coding.",
+      "file": "Lester Datasheet.pdf",
+      "line_begin": 30,
+      "line_end": 37,
+      "quote": "   Dataset identifying DPAD Firms: To identify the DPAD firms studied in this paper, I created a list of\n   search terms (listed in Appendix A of the manuscript) and provided this list to Jeff Hoopes, who created\n   a Perl program for me in April 2014 to search annual financial statements. I personally reviewed each\n   excerpt and coded each match so as to correctly identify firms that discuss or disclose the benefit and\n   the first financial statement year in which the terms are identified. Excerpts range from a general\n   discussion of the benefit in any section of a firm’s financial statements to disclosure of the specific\n   amount of DPAD benefit in a firm’s effective tax rate reconciliation. I disclose Jeff’s assistance in the\n   Acknowledgements section of the paper."
+    },
+    {
+      "id": "ev_code_complete_steps",
+      "kind": "source",
+      "description": "The supplied PDF prints Stata code for variable construction and linking and enumerates the workflow; the program is substantial despite the static parser reporting no supported standalone code file.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 27,
+      "line_end": 32,
+      "quote": "   20   descriptions, I provide Stata code that details variable construction and the process of\n        linking the various data sets together. See the datasheet\n   21   description for details of when the data was downloaded from the source, keeping in mind\n        that variable definitions and labels change over time.\n   22   *********************************************************************************************\n        ****************************************************************"
+    },
+    {
+      "id": "ev_inputs_products",
+      "kind": "source",
+      "description": "The source distinguishes annual Compustat 1995–2013, annual H2 Compustat 2013–2017, quarterly Compustat 1995–2013, segment data 1995–2013, and H2 segment data 2013–2017; it also names DPAD, Exhibit 21, NOL, and Hoopes R&D credit inputs.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 41,
+      "line_end": 69,
+      "quote": "   29   compustat_dataset_1995_2013: Annual data downloaded from Compustat with key variables.\n        Includes data from 1995 through 2013 so as to construct appropriate\n   30       lagged values needed for some tests.\n   31\n   32   compustat_data_2013_2017: Annual data downloaded fro Compustat with key variables for\n        Cross-border Income Shifting tests (H2).\n   33\n   34   compustat_quarterly_data: Quarterly data downloaded from Compustat with key variables\n        needed for testing inter-temporal shifting (H1). Includes data from 1995\n   35       through 2013 so as to construct appropriate lagged values needed for some tests.\n   36\n   37   DPAD_firms: Dataset identifying firms that either discuss or disclose the DPAD benefit in\n        their financial statements. Dataset was created by first providing\n   38       search terms to Jeff Hoopes in 2014 to include in a Perl program. All hits were\n        reviewed to determine if they did indeed related to the DPAD benefit.\n   39\n   40   exhibit21: Data on material foreign subsidiaries disclosed in firm financial statements;\n        obtained from Scott Dyreng's website.\n   41\n   42   nol_data: Data collected from firm financial statements on the amount of a firm's total\n        NOL, as well as the federal portion of NOL. See Data Description Sheet.\n   43\n   44   rdchand: R&D tax credit data provided by Jeff Hoopes from his paper \"The Effect of\n        Temporary Tax Laws on Understanding and Predicting Corporate Earnings.\"\n   45\n   46   segment_dataset: Includes segment data downloaded from Compustat for 1995 through 2013.\n   47\n   48   segment_data_2013_2017: Includes Compustat segment data downloaded for 2013 through 2017\n        for Cross-border Income Shifting tests (H2)."
+    },
+    {
+      "id": "ev_dpad_fields",
+      "kind": "source",
+      "description": "The printed program imports the prepared DPAD_firms workbook and uses its match text, date, CIK, and fiscal-year fields in constructing the firm-year treatment link.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 90,
+      "line_end": 99,
+      "quote": "        ****************************************************************/\n   64\n   65   /*IMPORT INFORMATION TO IDENTIFY DPAD FIRMS*/\n   66   clear\n   67   import excel using DPAD_firms, firstrow\n   68   drop if match_text == 0\n   69   drop if missing(match_text)\n   70\n   71   /*FORMAT DATES TO ENSURE CORRECT FISCAL-TAX YEAR MATCH*/\n   72   todate datadate, generate(datadate2) pattern(yyyymmdd)"
+    },
+    {
+      "id": "ev_annual_code",
+      "kind": "source",
+      "description": "The annual Compustat branch starts from the 1995–2013 product and constructs annual financial measures and lagged variables used downstream.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 80,
+      "line_end": 118,
+      "quote": "   55   2. Match DPAD firms to control firms\n   56   3. Create dataset for tests of Intertemporal Shifting (H1)\n   57   4. Create dataset for tests of Cross-border Shifting (H2)\n   58   5. Create dataset for tests of Domestic Investment (H3a)\n   59   6. Create dataset for tests of Domestic Employment (H3b)\n   60\n   61   *********************************************************************************************\n        ****************************************************************\n   62   *** Step 1 - Create dataset of DPAD firms and Compustat data\n   63   *********************************************************************************************\n        ****************************************************************/\n   64\n   65   /*IMPORT INFORMATION TO IDENTIFY DPAD FIRMS*/\n   66   clear\n   67   import excel using DPAD_firms, firstrow\n   68   drop if match_text == 0\n   69   drop if missing(match_text)\n   70\n   71   /*FORMAT DATES TO ENSURE CORRECT FISCAL-TAX YEAR MATCH*/\n   72   todate datadate, generate(datadate2) pattern(yyyymmdd)\n   73   gen year=year(datadate2)\n   74   gen month=month(datadate2)\n   75   gen str10 cik2 = string(cik, \"%010.0f\")\n   76   drop cik\n   77   rename cik2 cik\n   78   sort cik datadate month\n   79   sort cik fiscal_year\n   80   by cik fiscal_year: keep if _n==1\n   81   rename fiscal_year fyear\n   82   drop datadate datadate2 year month\n   83   save 199_fy, replace\n   84\n   85   /*IMPORT COMPUSTAT DATA AND MERGE WITH 199 DATASET*/\n   86   use compustat_dataset_1995_2013, clear\n   87   sort gvkey fyear\n   88   by gvkey fyear: keep if _n==1\n   89   save compustat_all, replace\n   90\n   91   use compustat_all, clear"
+    },
+    {
+      "id": "ev_quarter_code",
+      "kind": "source",
+      "description": "The H1 branch separately loads quarterly Compustat and constructs quarterly lags, including prior-quarter and year-ago variables.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 320,
+      "line_end": 350,
+      "quote": "  220\n  221   foreach v in DOMLLASSET DOMCAPX DOMCOGS DOMEMP DOMASSET DOMINT DOMOELIM DOMPPE DOMRD DOMREV\n        DOMSEGSALE DOMEXPORT DOMTXT DOMSGA DOMLLASSET_LAG DOMCAPX_LAG DOMCOGS_LAG DOMEMP_LAG\n        DOMASSET_LAG DOMINT_LAG DOMOELIM_LAG DOMPPE_LAG DOMRD_LAG DOMREV_LAG DOMSEGSALE_LAG\n        DOMEXPORT_LAG DOMTXT_LAG DOMSGA_LAG {\n  222       replace `v' = . if(`v' < 0)\n  223   }\n  224\n  225   save segment_domestic, replace\n  226\n  227   /*CLEAN FOREIGN SEGMENT DATA*/\n  228   use segment_all, clear\n  229   drop if geotp == \"2\" /*DROP THOSE SEGMENTS CODED DOMESTIC AND SEGMENTS WITH US OR DOMESTIC\n        LABELS*/\n  230\n  231   drop if snms==\"North America\" | snms==\"North America (mainly the United States)\" | snms==\n        \"North America,United States\" | snms==\"North America,United States,Canada\"\n  232   drop if snms==\"North America,United States,Other Foreign\" | snms==\"North America/United\n        States\" | snms==\"North American\" | snms==\"Other Domestic\" | snms==\"Parent\"\n  233   drop if snms==\"Puerto Rico\" | snms==\"Puerto Rico and Barbados\" | snms==\"Puerto Rico,\n        Mexico, Canada and Europe\" | snms==\"The Americas\" | snms==\"U.S.\" | snms==\"U.S. , Canada &\n        Mexico\"\n  234   drop if snms==\"U.S. Gulf of Mexico\" | snms==\"U.S. Gulf-Mexico\" | snms==\"U.S. and Canada\" |\n        snms==\"U.S.A\" | snms==\"U.S.A.\" | snms==\"US\" | snms==\"US & Canada\" | snms==\"USA\"\n  235   drop if snms==\"USA & Canada\" | snms==\"USA & Europe\" | snms==\"USA & North America\" | snms==\n        \"USA Region\" | snms==\"USA and Canada\" | snms==\"USA and Mexico\" | snms==\"USA and North\n        America\"\n  236   drop if snms==\"USA and Other\" | snms==\"USA region\" | snms==\"USA(including the Americas)\" |\n        snms==\"USA/South America\" | snms==\"United States\" | snms==\"United States & Canada\"\n  237   drop if "
+    },
+    {
+      "id": "ev_h1_cohort_gap",
+      "kind": "source",
+      "description": "The visible H1 code labels quarter mapping abbreviated/example, saves pooled cohorts for 2004, 2007, and 2010, then appends a 2005–2013 sequence whose producer blocks are not present in the supplied program text.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 870,
+      "line_end": 910,
+      "quote": "  711   save timeshiftdiff3, replace\n  712\n  713   /*IDENTIFY THE CORRECT TREATMENT YEARS FOR EACH DPAD YEAR - EXAMPLES PROVIDED FOR 2004,\n        2007, AND 2010*/\n  714   use timeshiftdiff3, clear\nPage 12\n\nLester_Code_Description.do - Printed on 4/16/2019 3:01:57 PM\n  715   keep if DPAD_FIRSTYEAR == 2004 | CONTROL_FIRSTYEAR == 2004\n  716   gen treat_yr = 0\n  717   replace treat_yr = 1 if fyear == 2004 | fyear == 2007 | fyear == 2010\n  718   gen DPAD_treatyr_interact = 0\n  719   replace DPAD_treatyr_interact = DPADfirm*treat_yr if DPADfirm == 1\n  720   save h1pooled2_2004, replace\n  721\n  722   use timeshiftdiff3, clear\n  723   keep if DPAD_FIRSTYEAR == 2007 | CONTROL_FIRSTYEAR == 2007\n  724   tab fyear\n  725   gen treat_yr = 0\n  726   replace treat_yr = 1 if fyear == 2007 | fyear == 2010\n  727   gen DPAD_treatyr_interact = 0\n  728   replace DPAD_treatyr_interact = DPADfirm*treat_yr if DPADfirm == 1\n  729   save h1pooled2_2007, replace\n  730\n  731   use timeshiftdiff3, clear\n  732   keep if DPAD_FIRSTYEAR == 2010 | CONTROL_FIRSTYEAR == 2010\n  733   tab fyear\n  734   gen treat_yr = 0\n  735   replace treat_yr = 1 if fyear == 2010\n  736   gen DPAD_treatyr_interact = 0\n  737   replace DPAD_treatyr_interact = DPADfirm*treat_yr if DPADfirm == 1\n  738   save h1pooled2_2010, replace\n  739\n  740   use h1pooled2_2004, clear\n  741   foreach num of numlist 2005/2013 {\n  742   append using h1pooled2_`num'\n  743   }\n  744\n  745   /*CREATE INDICATORS BASED ON PERIOD IN WHICH INITIALLY DISCUSS THE DPAD*/\n  746   gen treat_yr_05_06 = 0\n  747   replace treat_yr_05_06 = 1 if fyear == 2004 & DPAD_FIRSTYEAR == 2004 | fyear == 2004 &"
+    },
+    {
+      "id": "ev_h2_inputs_window",
+      "kind": "source",
+      "description": "The H2 branch loads separate 2013–2017 segment and annual inputs, drops 2012 and 2017 before merging, and builds its composite data file.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 1098,
+      "line_end": 1120,
+      "quote": "  844   sort gvkey fyear\n  845   by gvkey fyear: keep if _n==1\n  846   drop if missing(fyear)\n  847   save segment_domestic_13_17, replace\n  848\n  849   use compustat_data_2013_2017, clear\n  850   drop if fyear == 2012\n  851   drop if fyear == 2017\n  852   sort gvkey fyear\n  853   by gvkey fyear: keep if _n==1\n  854   merge 1:1 gvkey fyear using segment_domestic_13_17\n  855   drop if _merge == 2\n  856   drop _merge\n  857   drop if missing(fyear)\n  858   by gvkey fyear: keep if _n==1\n  859   save data_13_16_with_segment, replace\n  860\n  861   use compustat_all_segments, clear\n  862   append using data_13_16_with_segment\n  863   sort gvkey fyear\n  864   by gvkey fyear: keep if _n==1\n  865   drop if missing(fyear)\n  866   keep gvkey fyear pidom DOMSEGSALE pi sale xrd at che dltt dlc csho prcc_f pifo txfo"
+    },
+    {
+      "id": "ev_h2_forward",
+      "kind": "source",
+      "description": "The H2 output formulas define future outcomes from current and one-year-forward firm-year measures; although the intermediate panel creates longer leads, farther horizons are not used in these future variables.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 1320,
+      "line_end": 1365,
+      "quote": " 1055   keep if control_h2 == 1\n 1056   save control_firms_h2_5yr, replace\n 1057\n 1058   use control_firms_h2_5yr, clear\n 1059   keep treat_gvkey\n 1060   sort treat_gvkey\n 1061   by treat_gvkey: keep if _n==1\n 1062   gen treat_for_h2_5yr = 1\n 1063   rename treat_gvkey gvkey\n 1064   save id_treat_5yr, replace\n 1065\n 1066   use cbshift1_DPAD_5yr, clear\n 1067   merge m:1 gvkey using id_treat_5yr\n 1068   keep if _merge == 3\n 1069   append using control_firms_h2_5yr\n 1070   save cbshift1_final_5yr, replace\n 1071\n 1072   /*FIXED EFFECTS AND WINSORIZE*/\n 1073   xi i.fyear i.sic\n 1074\n 1075\n 1076   capture program drop clean2\n 1077   program define clean2\n 1078   sort fyear\n 1079   by fyear: egen p99 = pctile (`1'), p(99)\n 1080   by fyear: egen p1 = pctile (`1'), p(1)\n 1081   replace `1'=p99 if `1'>p99&`1'~=.\n 1082   replace `1'=p1 if `1'<p1&`1'~=.\n 1083   drop p99 p1\n 1084   end\n 1085\n 1086   clean2 future_dom_ros\n 1087   clean2 future_ww_ros\n 1088   clean2 future_rd\n 1089   clean2 future_cash\n 1090   clean2 future_pct_dom\n 1091   clean2 future_size\n 1092   clean2 future_lev\n 1093   clean2 post_rate_diff\n 1094   clean2 future_rate_diff\n 1095   clean2 post_DPAD\n 1096   clean2 DPAD_rate\n 1097   clean2 triple_interact\n 1098\n 1099   save cbshift2, replace\n 1100"
+    },
+    {
+      "id": "ev_bea_h3a",
+      "kind": "source",
+      "description": "H3a separately loads domestic BEA 1997–2010 and 2011–2013 inputs and a foreign BEA input, then merges the firm-year inputs and consumes the separate capex alias.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 1373,
+      "line_end": 1412,
+      "quote": " 1106   /*MERGE BEA DATA WITH COMPUSTAT DATA*/\n 1107   use bea_dom_data_97_10, clear\n 1108   append using bea_dom_data_11_13\n 1109   drop for_capex\n 1110   rename period_year fyear\n 1111   sort gvkey fyear us_id\n 1112   by gvkey fyear: keep if _n==1\n 1113   by gvkey: gen dom_exp_ppe_lag = dom_exp_ppe[_n-1] if fyear==fyear[_n-1]+1\n 1114   save bea_dom_data, replace\n 1115\n 1116   use bea_for_data, clear\n 1117   rename period_year fyear\n 1118   sort gvkey fyear us_id\nPage 19\n\nLester_Code_Description.do - Printed on 4/16/2019 3:01:57 PM\n 1119   by gvkey fyear: keep if _n==1\n 1120   keep us_id fyear for_capex for_rd gvkey\n 1121   save bea_for_data, replace\n 1122\n 1123   use timeshiftdiff1, clear\n 1124   merge m:1 gvkey fyear using bea_dom_data\n 1125   drop if _merge==2\n 1126   drop _merge\n 1127   drop for_rd\n 1128   merge m:1 gvkey fyear using bea_for_data\n 1129   drop if _merge==2\n 1130   drop _merge\n 1131   save merged_bea_dpad1, replace\n 1132\n 1133   use capex, clear\n 1134   drop if missing(fyear)\n 1135   sort gvkey fyear\n 1136   by gvkey fyear: keep if _n==1\n 1137   by gvkey: gen capx_lag = capx[_n-1] if fyear==fyear[_n-1]+1\n 1138   save capex2, replace\n 1139\n 1140   use merged_bea_dpad1, clear\n 1141   merge m:1 gvkey fyear using capex2\n 1142   drop _merge"
+    },
+    {
+      "id": "ev_bea_h3b",
+      "kind": "source",
+      "description": "H3b reuses domestic BEA data, then loads the separate employees input with emp and xlr fields; the later tail calls clean2 on log_compen and log_for_emp, whose producers/import contract are not shown.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 1641,
+      "line_end": 1688,
+      "quote": " 1360   /*MERGE BEA DATA WITH COMPUSTAT DATA*/\n 1361   use bea_dom_data_97_10, clear\n 1362   append using bea_dom_data_11_13\n 1363   rename period_year fyear\n 1364   sort gvkey fyear us_id\n 1365   by gvkey fyear: keep if _n==1\n 1366   by gvkey: gen dom_emp_lag = dom_emp[_n-1] if fyear==fyear[_n-1]+1\n 1367   by gvkey: gen dom_emp_compen_lag = dom_emp_compen[_n-1] if fyear==fyear[_n-1]+1\n 1368   save bea_dom_data, replace\n 1369\n 1370   use timeshiftdiff1, clear\n 1371   tab fyear\n 1372   merge m:1 gvkey fyear using bea_dom_data\n 1373   drop if _merge==2\n 1374   drop _merge\n 1375   save merged_bea_dpad1_emp, replace\n 1376\n 1377   use employees, clear\n 1378   sort gvkey fyear\n 1379   by gvkey fyear: keep if _n==1\n 1380   by gvkey: gen emp_lag = emp[_n-1] if fyear==fyear[_n-1]+1\n 1381   by gvkey: gen xlr_lag = xlr[_n-1] if fyear==fyear[_n-1]+1\n 1382   drop dcom stkco xstf xstfo xstfws\n 1383   save employees2, replace\n 1384\n 1385   use merged_bea_dpad1_emp, clear\n 1386   merge m:1 gvkey fyear using employees2\n 1387   drop _merge\n 1388   drop if missing(at)\n 1389   save merged_bea_dpad2_emp, replace\n 1390\n 1391   use merged_bea_dpad2_emp, clear\n 1392   gen bea_ind = 1\n 1393   replace bea_ind = 0 if missing(dom_ein_1)\n 1394   drop if bea_ind == 1 & missing(dom_emp)\n 1395   replace dom_emp = 1 if dom_emp == 0\n 1396   drop if bea_ind == 0\nPage 23\n\nLester_Code_Description.do - Printed on 4/16/2019 3:01:57 PM\n 1397   save bea_emp_sample, replace\n 1398\n 1399   use merged_bea_dpad2_emp, clear\n 1400   keep if missing(us_id)\n 1401   gen for_sub_ind2 = 1\n 1402   replace for_sub_ind2 = 0 if for_sub_ind == 0\n 1403   replace for_sub_ind2 = 0 if missing(for_sub_ind)\n 1404   gen for_sale_ind2 = 1"
+    },
+    {
+      "id": "ev_nol_fields",
+      "kind": "source",
+      "description": "The H1 panel merges a separate hand-collected nol_data input by gvkey and fyear; its exact total/federal NOL fields and collection coverage require a compatible data contract.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 602,
+      "line_end": 606,
+      "quote": "  458   /*MERGE HAND-COLLECTED NOL DATA*/\n  459   merge m:1 gvkey fyear using nol_data\n  460   drop if _merge==2\n  461   drop _merge\n  462   save all_data_h1var_qtr, replace"
+    },
+    {
+      "id": "ev_rdchand_branch",
+      "kind": "source",
+      "description": "The code consumes rdchand, keeps CIK/RCXM/year fields, uses its historical values through 2010, and separately estimates credit values for 2011–2013 from Compustat inputs.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 791,
+      "line_end": 825,
+      "quote": "  635   /*CREATE R&D TAX CREDIT CONTROL VARIABLE: FIRST USING DATA FROM JEFF HOOPES (THROUGH 2010)*/\n  636   use rdchand, clear\n  637   rename year fyear\n  638   keep cik rcxm fyear\n  639   gen new_cik = string(cik, \"%010.0f\")\n  640   drop cik\n  641   rename new_cik cik\n  642   sort cik\n  643   by cik: gen py_rdc = rcxm[_n-1]\n  644   by cik: gen py_rdc2 = rcxm[_n-2]\n  645   gen sum_rd = rcxm+py_rdc+py_rdc2\nPage 11\n\nLester_Code_Description.do - Printed on 4/16/2019 3:01:57 PM\n  646   replace sum_rd = rcxm+py_rdc if missing(py_rdc2)\n  647   replace sum_rd = rcxm if missing(py_rdc2) & missing(py_rdc)\n  648   drop if fyear == 2011\n  649   save rd_credit, replace\n  650\n  651   /*ESTIMATE R&D TAX CREDIT FOR 2011 THROUGH 2013*/\n  652   use matched_sample, clear\n  653   merge m:1 cik fyear using rd_credit\n  654   drop if _merge == 2\n  655   drop _merge\n  656   gen fullpostpd_interaction = postdpad*DPADfirm\n  657\n  658   sort repeat_gvkey fyear\n  659   by repeat_gvkey: gen py_txfed = txfed[_n-1]\n  660   by repeat_gvkey: gen py_txfed2 = txfed[_n-2]\n  661   gen sum_tx = txfed+py_txfed+py_txfed2\n  662   replace sum_tx = txfed+py_txfed if missing(py_txfed2)\n  663   replace sum_tx = txfed if missing(py_txfed) & missing(py_txfed2)\n  664   gen avg_rd = ((xrd_lag+xrd_lag2+xrd_lag3)/3)*.50\n  665   replace avg_rd = 0 if missing(avg_rd)\n  666   gen calc_RD_credit = (xrd - avg_rd)*.14"
+    },
+    {
+      "id": "ev_exhibit21_branch",
+      "kind": "source",
+      "description": "The H2 code transforms Exhibit 21 CIK/date/tax-haven/subsidiary-count records and merges the constructed firm-year panel into Compustat segments.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 426,
+      "line_end": 456,
+      "quote": "  292   /*ADD EXHIBIT21 DATA FROM DYRENG AND LINDSAY (2009)*/\n  293   use exhibit21, clear\n  294   gen fyear=year(datadate)\n  295   rename ciknumber cik\n  296   save exhibit21_v2, replace\n  297   collapse (sum) taxhaven, by (cik fyear)\n  298   save exhibit21_havens, replace\n  299\n  300   use exhibit21_v2, clear\n  301   sort cik fyear\n  302   by cik fyear: keep if _n==1\nPage 6\n\nLester_Code_Description.do - Printed on 4/16/2019 3:01:57 PM\n  303   gen total_for_sub = totalcount\n  304   replace total_for_sub = 0 if totalcount == .\n  305   gen for_sub_ind = 0\n  306   replace for_sub_ind = 1 if total_for_sub > 0\n  307   keep cik fyear total_for_sub for_sub_ind\n  308   merge 1:1 cik fyear using exhibit21_havens\n  309   drop _merge\n  310   gen str10 cik2 = string(cik, \"%010.0f\")\n  311   drop cik\n  312   rename cik2 cik\n  313   save exhibit21_summary, replace\n  314\n  315   use compustat_all_segments, clear\n  316   merge 1:1 cik fyear using exhibit21_summary\n  317   drop if _merge == 2\n  318   drop _merge\n  319   save compustat_seg_ex21, replace"
+    },
+    {
+      "id": "ev_dpad_manual_source",
+      "kind": "source",
+      "description": "The datasheet describes firm filing searches for DPAD benefits, Jeff Hoopes keyword assistance, and manual review/coding of search hits.",
+      "file": "Lester Datasheet.pdf",
+      "line_begin": 28,
+      "line_end": 40,
+      "quote": "   The data I use are primarily from the following three sources:\n\n   Dataset identifying DPAD Firms: To identify the DPAD firms studied in this paper, I created a list of\n   search terms (listed in Appendix A of the manuscript) and provided this list to Jeff Hoopes, who created\n   a Perl program for me in April 2014 to search annual financial statements. I personally reviewed each\n   excerpt and coded each match so as to correctly identify firms that discuss or disclose the benefit and\n   the first financial statement year in which the terms are identified. Excerpts range from a general\n   discussion of the benefit in any section of a firm’s financial statements to disclosure of the specific\n   amount of DPAD benefit in a firm’s effective tax rate reconciliation. I disclose Jeff’s assistance in the\n   Acknowledgements section of the paper.\n\n   Historical Financial Information: I obtained firm financial information from the Compustat (Annual,\n   Quarterly, and Segments) databases via WRDS in April 2014, June 2014, October 2014, April 2016,"
+    },
+    {
+      "id": "ev_nol_manual_source",
+      "kind": "source",
+      "description": "The datasheet distinguishes manual tax-incentive/NOL data collection, but does not provide a full NOL field dictionary, construction window, or a compatible prepared table.",
+      "file": "Lester Datasheet.pdf",
+      "line_begin": 13,
+      "line_end": 20,
+      "quote": "\n   I had assistance from two outside parties with obtaining some of the raw data (see more details below\n   under Item #2). First, Jeff Hoopes (Assistant Professor of Accounting, UNC) created a Perl program\n   for me in April 2014 to search financial statements for search terms I provided to him. Second, the\n   Stanford Research Support Team helped me obtain additional data related to firms’ tax net operating\n   losses, positive performance shocks, and other tax incentives claimed. I was involved with these data at\n   all stages, ranging from providing the initial search terms to reviewing the excerpts to cleaning the data\n   that were ultimately used in the project."
+    },
+    {
+      "id": "ev_hoopes_period_source",
+      "kind": "source",
+      "description": "The datasheet identifies R&D credit data shared by Jeff Hoopes and its 1997–2010 historical collection period; the supplied code extends the analysis using Compustat for later years.",
+      "file": "Lester Datasheet.pdf",
+      "line_begin": 63,
+      "line_end": 71,
+      "quote": "   Measurement of tax net operating losses: Details on the amount of firms’ net operating losses were\n   hand-collected from firm financial statements. These data were obtained by providing a list of search\n   terms to the Stanford Research Support Team, who used a Python script to search financial statements.\n   I reviewed these excerpts and then hired research assistants through the Stanford Research Support Team\n   to further review and clean these data. A subset of these data were also used in another project co-\n   authored with Shane Heitzman (Net Operating Loss Carryforwards and Corporate Savings Policies). I\n   disclose this assistance by the Stanford Research Support Team and the RAs in the Acknowledgements\n   section of the paper.\n"
+    },
+    {
+      "id": "ev_ex21_author_source",
+      "kind": "source",
+      "description": "The datasheet identifies Scott Dyreng’s Exhibit 21 data source and download history; a present-day author-prepared table contract remains unverified.",
+      "file": "Lester Datasheet.pdf",
+      "line_begin": 72,
+      "line_end": 81,
+      "quote": "   Repatriators under the American Jobs Creation Act of 2004: I obtained a list of repatriating firms from\n   Michelle Hanlon, who compiled this list for the paper “Real Effects of Accounting Rules: Evidence\n   from Multinational Firms’ Investment Location and Profit Repatriation Decisions” co-authored with\n   John Graham and Terry Shevlin (JAR 2011). I disclose the use of these data in the Acknowledgements\n   section an in Online Appendix B, footnote 31.\n\n   Foreign subsidiary details from Exhibit 21: I downloaded a list of foreign subsidiaries disclosed in\n   Exhibit 21 to firm financial statements from Scott Dyreng’s website in June 2014 and again in April\n   2016. I disclose use of these data in the Acknowledgments section and also cite the paper that introduced\n   this measure to the academic literature throughout the manuscript (Dyreng and Lindsay, 2009)."
+    },
+    {
+      "id": "ev_bea_access_source",
+      "kind": "source",
+      "description": "The datasheet identifies confidential BEA company-level information and Special Sworn Employee secure-site access; it does not establish this researcher’s current authorization or retained product availability.",
+      "file": "Lester Datasheet.pdf",
+      "line_begin": 95,
+      "line_end": 109,
+      "quote": "   The authors should also provide information to the editors about the data sharing agreement with the\n   organization (e.g. non-disclosure agreements, any restrictions imposed by the organization on the\n   authors, such as restrictions to publish certain results.)\n\n   I used confidential data on U.S. multinational firms from the U.S. Bureau of Economic Analysis. These\n   data can only be accessed by researchers who have received Special Sworn Employee status. Contact\n   information for the BEA employees that oversee the Special Sworn Employee program has been\n   provided to the editors at the same time as this final data description.\n\n4. A complete description of the steps necessary to collect and process the data used in the final analyses\n   reported in the paper. For experimental and survey papers, we require information about the\n\n                                                                                                          2\n\n    instructions and instruments used to generate the data, subject eligibility and/or selection, as well as"
+    },
+    {
+      "id": "ev_context_only",
+      "kind": "source",
+      "description": "The datasheet discusses ETI, positive-shock and Hanlon repatriator material as other parts of the research data context; the supplied Stata program does not consume them, so they are not requirements for this coded workflow.",
+      "file": "Lester Datasheet.pdf",
+      "line_begin": 44,
+      "line_end": 83,
+      "quote": "   from the Bureau of Economic Analysis in June 2014, October 2014, April 2016, January 2018,\n   September 2019, and January 2019.\n\n   Additional analyses also use data from these other sources:\n\n   Identification of Extraterritorial Income Exclusion (ETI) firms and firms with positive shocks: To\n   identify ETI firms and firms with positive performance shocks, I provided lists of search terms to the\n   Stanford Research Support Team; see footnote 18 and Online Appendix F (footnote 32), respectively,\n\n                                                                                                           1\n\n   in the manuscript for a list of these search terms. The Stanford Research Support Team used a Python\n   script to search financial statements for these search terms. I reviewed these excerpts and then hired\n   research assistants through the Stanford Research Support Team to further review and clean these data.\n   In collaboration with the Stanford Research Support Team, I reviewed the research assistants’ work\n   daily and completed a final check of the excerpts prior to merging these data with the main dataset. I\n   disclose this assistance by the Stanford Research Support Team and the RAs in the Acknowledgements\n   section of the paper.\n\n   Measurement of tax net operating losses: Details on the amount of firms’ net operating losses were\n   hand-collected from firm financial statements. These data were obtained by providing a list of search\n   terms to the Stanford Research Support Team, who used a Python script to search financial statements.\n   I reviewed these excerpts and then hired research assistants through the Stanford Research Support Team\n   to further review and clean these data. A subset of these data were also used in another project co-\n   autho"
+    },
+    {
+      "id": "ev_appendix_context",
+      "kind": "source",
+      "description": "The online appendix describes ETI-related analysis as paper context; no corresponding consumer appears in the supplied Stata preparation program.",
+      "file": "_audit_supplements/lester-online-appendix.pdf",
+      "line_begin": 52,
+      "line_end": 71,
+      "quote": "grounds that they also constituted an illegal export subsidy. In 2000, Congress repealed the FSC\n\n\n\n                                                                                                   2\n\n                              Online Appendix A (cont’d.)\n                        Summary of Prior Export Tax Subsidy Regimes\n\n\nprovisions and passed the Extraterritorial Income Exclusion (ETI). This provision permitted U.S.\n\nfirms to claim a deduction equal to a portion of foreign gross receipts or income. Unlike the DISC\n\nand FSC regimes, these provisions did not require that the foreign revenue relate to export\n\nproducts; that is, firms could take the ETI benefit for foreign revenues earned on both foreign-\n\nmanufactured and exported products. However, the foreign manufacturer (for example, a foreign\n"
+    },
+    {
+      "id": "ev_identifiers_shape",
+      "kind": "catalog",
+      "description": "A bounded read found the supplied sample-identifier workbook has one column and 7,214 metadata rows; it is an identifier list, not an analysis panel, and coverage was not verified.",
+      "artifact_path": "probes/sample_firm_identifiers_one_row.json",
+      "sha256": "346ea3ce92b9a5a881862131958c34a00e6ce395bca885f1d8616c21a68919e8"
+    },
+    {
+      "id": "ev_fundq_probe",
+      "kind": "probe",
+      "description": "A strict one-row COMP.FUNDQ probe found requested quarterly fields and a local SAS path; the bounded slice does not verify annual coverage, all years, or population coverage.",
+      "artifact_path": "probes/fundq_candidate.json",
+      "sha256": "0e8313de98ff9ac45598cb1f616294e40a0153a985755be0b23b51b749f147ec"
+    },
+    {
+      "id": "ev_segments_probe",
+      "kind": "probe",
+      "description": "A strict one-row COMPSEG.WRDS_SEGMERGED probe found requested segment fields and a local SAS path; the bounded slice does not verify required historical coverage.",
+      "artifact_path": "probes/segments_candidate.json",
+      "sha256": "de5d9eef293784f6aea54529432b237ea538b6455c5b32b9aba5e5582f79c739"
+    },
+    {
+      "id": "ev_sec_roots_probe",
+      "kind": "probe",
+      "description": "Exact root-only probe found the raw SEC exhibit directory. It did not list files, verify coverage, or establish a processed Exhibit 21 panel.",
+      "artifact_path": "probes/sec_raw_candidate.json",
+      "sha256": "d70bf96d7572091e15015321cba83b62a66853c0f8eeff3e86e0ca4873f77632"
+    },
+    {
+      "id": "ev_sec_parsed_probe",
+      "kind": "probe",
+      "description": "Exact root-only probe found the parsed SEC exhibit directory. It did not list files, verify coverage, or establish the author’s processed haven-classification table.",
+      "artifact_path": "probes/sec_parsed_candidate.json",
+      "sha256": "f3347ab207b399988fa968c564096bf9a689a75a57b99015a55ce72520404b6d"
+    },
+    {
+      "id": "ev_lm_root_probe",
+      "kind": "probe",
+      "description": "Exact root-only probe found the cleaned LM 10-X root. This is only a candidate source for manual classification; coverage and use in the author workflow are not established.",
+      "artifact_path": "probes/lm10x_candidate.json",
+      "sha256": "c26cb9f790f43ac9e14bcb5d29df8d3db3913236a328f157b8d6ad3ab132d58f"
+    },
+    {
+      "id": "ev_runtime_probe",
+      "kind": "probe",
+      "description": "The bounded environment probe confirms Stata 18 is available; this is the runtime only and not evidence of author program execution.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "ev_todate_probe",
+      "kind": "probe",
+      "description": "A targeted Stata `which` check found the todate command unavailable; no installation was attempted.",
+      "artifact_path": "probes/software_todate.json",
+      "sha256": "f8e1214e0da05149337c09d2f793cb75cdcb0dc77200b48e1e0b5f25b5cf933d"
+    },
+    {
+      "id": "ev_nsplit_probe",
+      "kind": "probe",
+      "description": "A targeted Stata `which` check found the nsplit command unavailable; no installation was attempted.",
+      "artifact_path": "probes/software_nsplit.json",
+      "sha256": "526cf055acbb8c732ed8bf719d59d4ca0c2bf7445ca2a002399a82ce10db4423"
+    },
+    {
+      "id": "ev_mahapick_probe",
+      "kind": "probe",
+      "description": "A targeted Stata `which` check found the mahapick command unavailable; no installation was attempted.",
+      "artifact_path": "probes/software_mahapick.json",
+      "sha256": "d2af6fec9b08ee26741928d09cab6ed5f6c21b3138fcc5c4673a022b7b02b4b7"
+    },
+    {
+      "id": "ev_bea_access_official",
+      "kind": "public",
+      "description": "Official BEA SSES page explains that company-specific data are accessed at a secure site and describes the current application/approval process; individual eligibility remains unverified.",
+      "url": "https://www.bea.gov/index.php/research/special-sworn-researcher-program",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "access_barrier": true,
+      "quote": "BEA's company-specific data can only be accessed at a secure site."
+    },
+    {
+      "id": "ev_wrds_products_official",
+      "kind": "public",
+      "description": "Official WRDS/S&P product overview documents historical depth for annual and quarterly Compustat, supporting these as distinct product candidates rather than proving a user entitlement.",
+      "url": "https://wrds-www.wharton.upenn.edu/documents/2180/WRDS_SP_Webinar_Feb_002.pdf",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "access_barrier": false,
+      "quote": "Annual Data – Historical fundamental data back to 1950; Quarterly Data – Historical fundamental data back to 1962."
+    },
+    {
+      "id": "ev_wrds_segments_official",
+      "kind": "public",
+      "description": "Official WRDS product page identifies Compustat Historical Segments as a separate product; it does not establish the exact user’s access or supplied window.",
+      "url": "https://wrds-www.wharton.upenn.edu/pages/about/data-vendors/sp-global-market-intelligence/",
+      "checked_at": "2026-11-08",
+      "authority": "official",
+      "access_barrier": false,
+      "quote": "Compustat Historical Segments - daily updates."
+    },
+    {
+      "id": "ev_h3b_tail_contract",
+      "kind": "source",
+      "description": "The printed preparation program reaches its final employment dataset save and then calls clean2 for log_compen and log_for_emp; no later producer or estimator is included in the supplied source.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 1870,
+      "line_end": 1893,
+      "quote": " 1580   replace `1'=p1 if `1'<p1&`1'~=.\n 1581   drop p99 p1\n 1582   end\n 1583\n 1584   clean2 log_emp\n 1585   clean2 log_compen\n 1586   clean2 size\n 1587   clean2 roa\n 1588   clean2 ocf\n 1589   clean2 inventory\n 1590   clean2 tangibility\n 1591   clean2 sales_growth\n 1592   clean2 dom_emp2\n 1593   clean2 log_for_emp\n 1594\n 1595   save emp1_final, replace\n 1596\n 1597\n\n\n\n\nPage 26\n"
+    },
+    {
+      "id": "ev_h2_leads",
+      "kind": "source",
+      "description": "H2 builds one- through four-year leads for segment and annual measures, which should not be confused with the horizons ultimately used in its future outcome formulas.",
+      "file": "Lester_Code_Description.pdf",
+      "line_begin": 1120,
+      "line_end": 1146,
+      "quote": "  866   keep gvkey fyear pidom DOMSEGSALE pi sale xrd at che dltt dlc csho prcc_f pifo txfo\n  867   sort gvkey fyear\n  868   by gvkey: gen pidom_1 = pidom[_n+1] if fyear==fyear[_n+1]-1\n  869   by gvkey: gen pidom_2 = pidom[_n+2] if fyear==fyear[_n+2]-2\n  870   by gvkey: gen pidom_3 = pidom[_n+3] if fyear==fyear[_n+3]-3\n  871   by gvkey: gen pidom_4 = pidom[_n+4] if fyear==fyear[_n+4]-4\n  872\n  873   by gvkey: gen DOMSEGSALE_1 = DOMSEGSALE[_n+1] if fyear==fyear[_n+1]-1\n  874   by gvkey: gen DOMSEGSALE_2 = DOMSEGSALE[_n+2] if fyear==fyear[_n+2]-2\n  875   by gvkey: gen DOMSEGSALE_3 = DOMSEGSALE[_n+3] if fyear==fyear[_n+3]-3\n  876   by gvkey: gen DOMSEGSALE_4 = DOMSEGSALE[_n+4] if fyear==fyear[_n+4]-4\n  877\n  878   by gvkey: gen pi_1 = pi[_n+1] if fyear==fyear[_n+1]-1\n  879   by gvkey: gen pi_2 = pi[_n+2] if fyear==fyear[_n+2]-2\n  880   by gvkey: gen pi_3 = pi[_n+3] if fyear==fyear[_n+3]-3\n  881   by gvkey: gen pi_4 = pi[_n+4] if fyear==fyear[_n+4]-4\n  882\n  883   by gvkey: gen sale_1 = sale[_n+1] if fyear==fyear[_n+1]-1\n  884   by gvkey: gen sale_2 = sale[_n+2] if fyear==fyear[_n+2]-2\n  885   by gvkey: gen sale_3 = sale[_n+3] if fyear==fyear[_n+3]-3\n  886   by gvkey: gen sale_4 = sale[_n+4] if fyear==fyear[_n+4]-4\n  887\n  888   by gvkey: gen xrd_1 = xrd[_n+1] if fyear==fyear[_n+1]-1\n  889   by gvkey: gen xrd_2 = xrd[_n+2] if fyear==fyear[_n+2]-2\n  890   by gvkey: gen xrd_3 = xrd[_n+3] if fyear==fyear[_n+3]-3\n  891   by gvkey: gen xrd_4 = xrd[_n+4] if fyear==fyear[_n+4]-4\n  892"
+    },
+    {
+      "id": "ev_catalog_products",
+      "kind": "catalog",
+      "description": "Frozen shared-resource catalog identifies local COMP.FUNDA, COMP.FUNDQ, and COMPSEG.WRDS_SEGMERGED candidate product locations and fields; it does not establish required dates/population coverage or any private BEA firm-level data.",
+      "artifact_path": "../../../frozen/catalog.json",
+      "sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27"
+    }
+  ],
+  "dependency_review": [],
+  "actions": [
+    {
+      "id": "act_extract_stata",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "iss_embedded_stata"
+      ],
+      "kind": "data_preparation",
+      "description": "Extract the Stata code printed in Lester_Code_Description.pdf into a separate working .do file. Keep the supplied PDF unchanged and compare any ambiguous wrapped statements with the original PDF page rendering.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "ev_code_steps"
+      ],
+      "edits": [],
+      "steps": [
+        "Create a working .do copy from the embedded code in the assigned work directory.",
+        "Check all wrapped or page-split statements against the PDF before any separately authorized run."
+      ],
+      "validation": [
+        "Review the extracted file to confirm that all six listed preparation and matching stages remain present."
+      ]
+    },
+    {
+      "id": "act_h1_missing_cohorts",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "iss_h1_cohort_builders"
+      ],
+      "kind": "clarification",
+      "description": "Obtain omitted H1 cohort producer blocks and complete quarter mapping, or establish which compatible intermediate files are separately supplied.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "ev_h1_cohort_gap"
+      ],
+      "edits": [],
+      "steps": [
+        "Request missing H1 cohort build steps or exact handoff contract and period.",
+        "Preserve all supplied H1 treatment, comparison, and pooled branches."
+      ],
+      "validation": [
+        "Confirm every referenced H1 intermediate has a documented producer and 2005–2013 timing matches the author sample."
+      ]
+    },
+    {
+      "id": "act_data_contracts",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req_dpad_firms",
+        "req_nol_data",
+        "req_rdchand",
+        "req_exhibit21",
+        "iss_manual_input_contracts"
+      ],
+      "kind": "data_acquisition",
+      "description": "Verify or obtain each author-prepared/manual table with its own schema and history: DPAD classifications, total/federal NOL, Hoopes rdchand through 2010, and processed Exhibit 21 subsidiary/haven counts.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_dpad_manual_source",
+        "ev_nol_manual_source",
+        "ev_hoopes_period_source",
+        "ev_ex21_author_source",
+        "ev_identifiers_shape"
+      ],
+      "edits": [],
+      "steps": [
+        "Check for compatible author-prepared tables and field dictionaries before independent collection.",
+        "For DPAD, establish search terms, reviewed-hit rules, treatment years, and keys.",
+        "For NOL, establish total/federal definitions, coding, and collection years.",
+        "Preserve Hoopes 1997–2010 rdchand separately from code-derived 2011–2013 values.",
+        "Verify the author Exhibit 21 route and country/haven rules; treat local SEC roots as candidates, not processed data."
+      ],
+      "validation": [
+        "Confirm firm/year keys, fields, histories, and coverage against each consuming code branch before staging."
+      ]
+    },
+    {
+      "id": "act_compustat_stage",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req_compustat_annual_1995_2013",
+        "req_compustat_quarterly_1995_2013",
+        "req_compustat_segments_1995_2013",
+        "req_compustat_annual_2013_2017",
+        "req_compustat_segments_2013_2017"
+      ],
+      "kind": "data_preparation",
+      "description": "Stage and validate the distinct annual, quarterly, and segment Compustat products and separate 1995–2013 versus 2013–2017 windows required by the code.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_inputs_products",
+        "ev_catalog_products",
+        "ev_fundq_probe",
+        "ev_segments_probe",
+        "ev_h2_inputs_window",
+        "ev_h2_leads",
+        "ev_h2_forward"
+      ],
+      "edits": [],
+      "steps": [
+        "Resolve COMP.FUNDA, COMP.FUNDQ, and COMPSEG.WRDS_SEGMERGED fields and historical coverage before extraction.",
+        "Keep quarterly and segment products separate from annual fundamentals; keep H2 extracts distinct from lag-history inputs.",
+        "Create relative working files only after periods and identifiers are confirmed."
+      ],
+      "validation": [
+        "Check expected fields, firm-year/quarter keys, H1 lag history and 1997–2013 window, plus H2 source/composite periods including the 2017 drop."
+      ]
+    },
+    {
+      "id": "act_bea_access",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req_bea_domestic",
+        "req_bea_foreign"
+      ],
+      "kind": "access_request",
+      "description": "Verify existing authorized BEA Special Sworn Employee project access and exact retained domestic and foreign company-level products, fields, identifiers, and years.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_bea_access_source",
+        "ev_bea_access_official",
+        "ev_bea_h3a",
+        "ev_bea_h3b"
+      ],
+      "edits": [],
+      "steps": [
+        "Verify current access status and whether required historical domestic and foreign products remain available within the project.",
+        "Map bea_dom_data_97_10, bea_dom_data_11_13, and bea_for_data to their precise restricted-data fields and keys."
+      ],
+      "validation": [
+        "Confirm private firm-level files and periods match code inputs; do not substitute public BEA aggregates."
+      ]
+    },
+    {
+      "id": "act_aliases_and_inherited",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req_capex_input",
+        "req_employees_input",
+        "iss_alias_producers",
+        "iss_h3b_imported_logs"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the separate capex and employees input producers and the origin of H3b log_compen/log_for_emp fields before any run.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_bea_h3a",
+        "ev_bea_h3b",
+        "ev_h3b_tail_contract"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain each alias producer/schema and gvkey/fyear coverage.",
+        "Confirm whether log_compen and log_for_emp are inherited from a separately imported prepared table and identify that table.",
+        "Do not infer these variables from similarly named Compustat or BEA fields."
+      ],
+      "validation": [
+        "Trace every alias and inherited field to a documented table with compatible keys and period."
+      ]
+    },
+    {
+      "id": "act_software_setup",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "sw_todate",
+        "sw_nsplit",
+        "sw_mahapick"
+      ],
+      "kind": "software_setup",
+      "description": "Provide the three community Stata commands used by the code through ordinary installation/adopath setup.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "ev_todate_probe",
+        "ev_nsplit_probe",
+        "ev_mahapick_probe"
+      ],
+      "edits": [],
+      "steps": [
+        "Install or add to Stata adopath versions of todate, nsplit, and mahapick compatible with Stata 18."
+      ],
+      "validation": [
+        "Confirm Stata resolves each command with which before a separately authorized run."
+      ]
+    },
+    {
+      "id": "act_run_procedure",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "req_compustat_annual_1995_2013",
+        "req_bea_domestic"
+      ],
+      "kind": "run_procedure",
+      "description": "After required source/data/software contracts are complete and a preparation/matching run is authorized, execute the extracted Stata program in normal batch mode from its coherent working directory.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "ev_runtime_probe",
+        "ev_code_complete_steps"
+      ],
+      "edits": [],
+      "steps": [
+        "Use relative working paths or [redacted-path-a0743dbf69d6] paths; keep machine-specific Dropbox paths out of executable configuration.",
+        "Run the documented Stata executable in normal batch mode from the intended working directory.",
+        "Stage required inputs in the documented relative run root and preserve separate H1/H2/H3a/H3b outputs."
+      ],
+      "validation": [
+        "Before the run, verify staged contracts and working-directory visibility; afterward reconcile each generated preparation dataset and matching/H1/H2/H3a/H3b construction branch against source."
+      ]
+    }
+  ],
+  "review_notes": [
+    "The frozen dependency list is empty, but the printed program contains explicit use, merge, and append reads. Manual source inspection recorded external reads as data requirements and distinguished generated intermediates from supplied inputs.",
+    "Static code-parser zero is not evidence that the package has no code: extracted PDF text contains a substantial printed Stata .do program. The package has no standalone .do file.",
+    "Table-producing estimator code is not included in the supplied PDF; this is a contextual limitation outside the selected preparation/matching scope.",
+    "H1 source shows an abbreviated/example quarter map, explicit 2004/2007/2010 pooled producers, and an append range for 2005–2013 with no visible producer blocks for that sequence; treat these as unresolved source/intermediate contracts.",
+    "H2 annual and segment products for 2013–2017 are separate from Compustat/segment history 1995–2013. The extension code drops 2012 and 2017; longer intermediate leads do not establish longer future outcome horizons.",
+    "H3a and H3b consume restricted BEA company-level domestic records; H3a also reads a separate foreign BEA file. Public BEA aggregates cannot replace these private inputs. Current individual secure-site access remains unknown.",
+    "DPAD, NOL, Hoopes rdchand, and Dyreng Exhibit 21 are distinct input contracts with different sources and histories. Historical researcher assistance is not treated as a current NDA barrier.",
+    "The supplied Sample Firm Identifiers workbook is a one-column identifier list, not an analysis panel or proof of linked data coverage.",
+    "The appendix discusses ETI, positive shocks, and Hanlon repatriator data, but no consumer appears in supplied program; they remain context, not invented requirements.",
+    "One-row Compustat and root-only SEC/LM probes are candidates only and do not establish required coverage. Raw/parsed filing roots do not prove processed DPAD, NOL, or Exhibit 21 panels.",
+    "No author code was executed, no datasets downloaded, and no software installed. Future .do extraction is working preparation; supplied PDF remains unchanged."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "5abfd30cf4e200cccad469e211b5d6b527f912aa4c4e7e42dd1cb9ba36e22bc0",
+    "applied": false
+  }
+}

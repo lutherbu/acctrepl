@@ -1,0 +1,1395 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-d0ea8ffac4b2",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 55/Issue 5/12185 - Divergence-of-Cash-Flow-and-Voting-Rights-Opacity-and-Stock-Crash-Risk-International-Evidence/hong-kim-welker-datasheet-and-code.zip",
+        "sha256": "e6f91d2cf7649f6fa34eb54927b5e30d14ff0a991165bca86bfcbcc72b873dd0"
+      },
+      {
+        "path": "JAR-Volume 55/Issue 5/12185 - Divergence-of-Cash-Flow-and-Voting-Rights-Opacity-and-Stock-Crash-Risk-International-Evidence/hong-kim-welker-online-appendix.pdf",
+        "sha256": "1af5ed772ca95fde44d47fd2b51775daf250a6dbd4c871bd8ab2176399a68bf0"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "fe0b135fe9d92e42bcaf43d86c8570e459342ad3bd0244b8d239c7033732c67a",
+    "work_item_sha256": "6afab4183332e603e45f51446f4db7b1efb8b9ae5139685ab4a63a97045fd67d"
+  },
+  "title": "Divergence of Cash Flow and Voting Rights, Opacity, and Stock Crash Risk: International Evidence",
+  "doi": "10.1111/1475-679X.12185",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Complete author-documented workflow: supplied SAS construction from weekly dual-class security, index, currency, and Worldscope inputs through My.low/My.high, plus the manuscript and Online Appendix analyses described by the package. The supplied script stops at the two prepared opacity samples, so final table production remains unresolved.",
+      "entry_points": [
+        "HKW_SAS Program.sas"
+      ],
+      "requirement_ids": [
+        "R_WEEKLY_DS",
+        "R_BLOOMBERG_TURNOVER",
+        "R_FX",
+        "R_DUAL_LIST",
+        "R_SEDOL_MAP",
+        "R_GLOBAL_INDEX",
+        "R_US_INDEX",
+        "R_WS_ANNUAL",
+        "R_WS_OPACITY",
+        "R_INDUSTRY",
+        "R_APPENDIX_INPUTS"
+      ],
+      "software_ids": [
+        "SW_SAS"
+      ],
+      "issue_ids": [
+        "ISS_LIBRARY_SETUP",
+        "ISS_O0_INT",
+        "ISS_MKTCAP",
+        "ISS_SAMPLE_THRESHOLD",
+        "ISS_INDUSTRY_CODE",
+        "ISS_ANALYSIS_PROGRAMS",
+        "ISS_FX_SCHEMA_HANDOFF",
+        "ISS_SMOOTH_OUTPUT_MATCH"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_DOC_SOURCES",
+        "E_DOC_METHOD",
+        "E_DOC_SAS",
+        "E_COUNTRY_CALLS",
+        "E_GMM_MODEL",
+        "E_FINAL_OUTPUT",
+        "E_APPENDIX_TABLES_1",
+        "E_APPENDIX_TABLES_2",
+        "E_SEDOL_PACKAGED",
+        "E_INVENTORY",
+        "E_ENV",
+        "E_FX_HANDOFF_SOURCE",
+        "E_FX_DOWNSTREAM_SCHEMA",
+        "E_SMOOTH_OUTPUT_NAME_CHECK"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_WEEKLY_DS",
+      "kind": "data",
+      "description": "Author-prepared weekly Friday-to-Friday Datastream securities input for the 20 named country tables (security/date keys, close price, weekly return, equity market value, dividends, shares outstanding, and turnover). The program filters 1994–2007 and the stated final sample is 1995–2007 with at least 26 observations per firm-year; two local-market leads/lags and the within-firm prior-week return require adjacent weekly history around the retained dates. Exact first/last Friday coverage is unverified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_WEEKLY_AUTHOR",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-8123a50e36ea]",
+          "description": "The code names these 20 author-prepared tables, but none is in the release. The common Datastream catalog and one-row price/return probes identify product candidates only; their security identifier mapping, dividends, market value, shares, full requested period, and compatibility with the author-shaped input remain unverified.",
+          "evidence_ids": [
+            "E_COUNTRY_CALLS",
+            "E_DOC_METHOD",
+            "E_CATALOG_PRODUCTS",
+            "E_LOCAL_DS_PRICE",
+            "E_LOCAL_DS_RETURN"
+          ],
+          "expected_period": "Program filter 1994–2007; main appendix sample 1995–2007; two weekly local/US/FX lead-lag observations around retained dates; exact boundaries to confirm."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_BLOOMBERG_TURNOVER",
+      "kind": "data",
+      "description": "Supplemental Bloomberg turnover matrix joined by Bloomberg firm and date for the Datastream turnover gaps; field naming, units, ticker coverage, and the actually needed missing-value population are not provided.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_BLOOMBERG",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Bloomberg weekly turnover export(s) prepared for the named share classes",
+          "description": "The datasheet says missing Datastream turnover was manually collected from Bloomberg, and the SAS program reads a Bloomberg matrix. No compatible export or access evidence is present; no access barrier has been established.",
+          "evidence_ids": [
+            "E_DOC_METHOD",
+            "E_BLOOMBERG_READ"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_FX",
+      "kind": "data",
+      "description": "Prepared exchange-rate matrix keyed to weekly dates and 18 code-mapped currencies, used to convert both share-class market values into USD and to construct exchange-rate leads/lags in the return model. The program later overwrites My.exchange_rate with its transposed e1_out structure, then expects DATE/RATE/COUNTRY downstream; the intervening mapping, product, quote direction, units, and complete date range are undocumented.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_FX_AUTHOR",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-4900013bfdf3]",
+          "description": "The code reads this input before producing a normalized My.exchange_rate table. The local Datastream DS2DSF product is a field-level candidate with currency/MarketDate/midrate columns, but does not verify the author’s 18-currency mapping, quote units, security/country coverage, or 1994–2007 lead-lag history.",
+          "evidence_ids": [
+            "E_FX_READ",
+            "E_CURRENCY_MAP",
+            "E_LOCAL_DS_FX"
+          ],
+          "expected_fields": [
+            "currency",
+            "MarketDate",
+            "midrate"
+          ],
+          "expected_period": "Weekly Fridays in the code’s 1994–2007 panel plus two adjacent observations for leads/lags; full coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_DUAL_LIST",
+      "kind": "data",
+      "description": "Complete author-maintained dual-class share table with Datastream security codes, high/low flags, pair identifiers, vote-per-share counts, currency, Bloomberg ticker, and effective dates for the 20-country sample; eligibility criteria must match the selected release version.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_DUAL_PUBLIC",
+          "type": "public",
+          "status": "unverified",
+          "location": "Author-prepared Dual_List / historical hand-collected source records",
+          "description": "The datasheet describes collection from Datastream manuals, Moody’s manuals, national exchange filings, annual reports, the Doidge list, and direct firm inquiries, but the complete pair-level dataset is absent. This is a documented collection method, not a verified compatible public delivery route.",
+          "evidence_ids": [
+            "E_DOC_SOURCES",
+            "E_DUAL_INPUT"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_SEDOL_MAP",
+      "kind": "data",
+      "description": "Security crosswalk required by the code to join each high/low Datastream code to a SEDOL and then to annual Worldscope data; the code expects My.sedol fields used as type and sedol_code.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_SEDOL_PACKAGED",
+          "type": "packaged",
+          "status": "unverified",
+          "location": "SEDOL_HKW.xlsx",
+          "description": "The packaged workbook is readable but the bounded probe shows only one column named Sedol. It is an identifier list, not the type-to-sedol_code crosswalk used in the SAS joins.",
+          "evidence_ids": [
+            "E_SEDOL_PACKAGED",
+            "E_SEDOL_JOIN"
+          ],
+          "expected_fields": [
+            "Sedol"
+          ]
+        },
+        {
+          "id": "RT_SEDOL_DS_NAMES",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/ds_eq/reference_tables/wrds_ds_names.sas7bdat",
+          "description": "The catalog-listed Datastream Names file supplies DsCode, TypeCode, PrimQtSedol, and effective-date fields. It is a local crosswalk candidate, but the author join key, primary-quote semantics, duplicate handling, and compatibility with historical Dual_List codes have not been established.",
+          "evidence_ids": [
+            "E_CATALOG_PRODUCTS",
+            "E_LOCAL_DS_NAMES"
+          ],
+          "expected_fields": [
+            "DsCode",
+            "TypeCode",
+            "PrimQtSedol",
+            "StartDate",
+            "EndDate"
+          ],
+          "expected_period": "Historical security mappings aligned to 1994–2007; coverage of sample codes not verified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_GLOBAL_INDEX",
+      "kind": "data",
+      "description": "Country-level Datastream index series with country identifier, date, market-index level/return fields used to form weekly local market returns, for all included countries. Code uses FIC, datadate, PRCCD, and mkt_ret aliases; the author-specific extraction and product configuration are absent.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_GLOBAL_DS",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/ds_eq/index/wrds_ds_indexmerged.sas7bdat",
+          "description": "The local catalog product and bounded probe expose Datastream index mnemonic, region, region-code type, ValueDate, and RI. The transformation to the author’s FIC/PRCCD/mkt_ret schema, exact index selections, and all-country sample-period coverage remain unverified.",
+          "evidence_ids": [
+            "E_MARKET_READ",
+            "E_CATALOG_PRODUCTS",
+            "E_LOCAL_DS_INDEX"
+          ],
+          "expected_fields": [
+            "dsindexmnem",
+            "region",
+            "regcodetypeid",
+            "valuedate",
+            "ri"
+          ],
+          "expected_period": "Weekly Fridays covering 1994–2007 and two adjacent weekly observations for lead/lag construction; coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_US_INDEX",
+      "kind": "data",
+      "description": "US market-index observations with DATE and S&P 500 return (SPRTRN), filtered to Fridays and used with two leads and two lags across the 1994–2007 panel.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_US_CRSP",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat",
+          "description": "Appendix A1 names CRSP for US market data and the local CRSP DSI catalog file/probe exposes DATE and sprtrn. The author’s prepared file, nonmissing sample rows, weekly alignment, and historical coverage have not been verified.",
+          "evidence_ids": [
+            "E_US_INDEX",
+            "E_INDUSTRY_APPENDIX",
+            "E_LOCAL_CRSP_DSI"
+          ],
+          "expected_fields": [
+            "DATE",
+            "sprtrn"
+          ],
+          "expected_period": "At least Fridays in 1994–2007 plus two adjacent observations for leads/lags; coverage unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_WS_ANNUAL",
+      "kind": "data",
+      "description": "Annual Worldscope firm-year input joined by SEDOL/year for book equity, assets, income, long-term debt, receivables, inventory, sales, cash flow, and related control variables. The author aliases and exact item mapping are not documented.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_WS_FUNDA",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/worldscope/wrds_ws_funda.sas7bdat",
+          "description": "The common catalog and bounded probe identify a readable Worldscope annual fundamentals product with fiscal-period date, SEDOL, and item-coded fields including sales, operating income, receivables, inventory, assets, debt, and cash-flow items. The mapping to TOASSET, NIBE, TOEQUITY, Longterm_debt, and IT aliases, plus sample-year and lag coverage, is unresolved.",
+          "evidence_ids": [
+            "E_DOC_METHOD",
+            "E_WORLD_SCOPE_READ",
+            "E_ANNUAL_CONTROLS",
+            "E_CATALOG_PRODUCTS",
+            "E_LOCAL_WS_FUNDA"
+          ],
+          "expected_fields": [
+            "ITEM5350",
+            "ITEM1001",
+            "ITEM1250",
+            "ITEM2051",
+            "ITEM2101",
+            "ITEM2201",
+            "ITEM2999",
+            "ITEM3051",
+            "ITEM3063",
+            "ITEM3101",
+            "ITEM4201",
+            "ITEM4851",
+            "ITEM6006"
+          ],
+          "expected_period": "Annual firm-years supporting 1995–2007 analyses and their lags/rolling windows; exact first year unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_WS_OPACITY",
+      "kind": "data",
+      "description": "Author-prepared Worldscope extended international smoothing input WS_EXT_INT_SMTH with SEDOL/year, cash-flow/accrual item fields, and five annual constructed values per rolling calculation. The code differences ocf/accruals and drops the first row per SEDOL twice before forming windows year−5 through year−1, so raw source history may need to precede those five constructed values; exact earliest alignment remains unknown because the producer/join handoff is incomplete.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_WS_SMOOTH_AUTHOR",
+          "type": "local",
+          "status": "unverified",
+          "location": "[redacted-path-3fb7d99ae51b]",
+          "description": "The SAS program directly reads this prepared extract, but it is not supplied and its producing script is not present. No independent raw-data reconstruction is proposed. The local Worldscope annual file is a discovery candidate only; it does not establish the author-prepared extract or its history.",
+          "evidence_ids": [
+            "E_SMOOTH_INPUT",
+            "E_SMOOTH_WINDOW",
+            "E_SMOOTH_CORR",
+            "E_LOCAL_WS_FUNDA"
+          ],
+          "expected_fields": [
+            "ITEM5350",
+            "ITEM6006",
+            "ITEM2999",
+            "ITEM2201",
+            "ITEM3101",
+            "ITEM3063",
+            "ITEM4851"
+          ],
+          "expected_period": "Five annual values for windows year−5 through year−1 over the constructed panel; earliest date/alignment unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_INDUSTRY",
+      "kind": "data",
+      "description": "Industry crosswalk read as My2.industry_SAMPLE with SEDOL and SICH, attached to the dual-class observations. Appendix A1 describes Fama-French 48 categories; the supplied code does not show the mapping to that classification.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_INDUSTRY_WS",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/tfn/worldscope/wrds_ws_company.sas7bdat",
+          "description": "Worldscope company metadata is a local candidate with SEDOL and industry/SIC item fields. It is not the My2.industry_SAMPLE input and no conversion to the supplied SICH alias or Appendix FF48 categories is established.",
+          "evidence_ids": [
+            "E_INDUSTRY_READ",
+            "E_INDUSTRY_APPENDIX",
+            "E_LOCAL_WS_COMPANY"
+          ],
+          "expected_fields": [
+            "ITEM6006",
+            "ITEM6010",
+            "ITEM7021",
+            "ITEM7022"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_APPENDIX_INPUTS",
+      "kind": "data",
+      "description": "Data and workflow for the complete manuscript/Online Appendix result tables beyond the supplied construction of My.low and My.high. The Appendix names further analysis variants (including a matched single-class sample, and A12 institutional holdings/market competition sources) but does not provide runnable analysis programs, full input schema, or historical requirements; these product names remain clarification leads.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_APPENDIX_AUTHOR",
+          "type": "public",
+          "status": "unverified",
+          "location": "Author analysis programs and inputs for Online Appendix Tables A1–A12",
+          "description": "The Appendix lists analyses and identifies selected source products, but no compatible regression/table-generation release or prepared analysis dataset is included. Table A12 source mentions are not independently expanded into separate live-source requirements without the author workflow.",
+          "evidence_ids": [
+            "E_DOC_SAS",
+            "E_APPENDIX_TABLES_1",
+            "E_APPENDIX_TABLES_2",
+            "E_APPENDIX_A12",
+            "E_FINAL_OUTPUT"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW_SAS",
+      "name": "SAS",
+      "status": "unverified",
+      "description": "The author requires SAS; supplied code uses PROC MODEL with GMM and other SAS procedures. The author’s exact SAS version is not stated. The local SAS executable probe failed during TKELS initialization, so the working version, PROC MODEL availability, and license status remain unverified.",
+      "evidence_ids": [
+        "E_DOC_SAS",
+        "E_GMM_MODEL",
+        "E_ENV"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "ISS_LIBRARY_SETUP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "configuration",
+      "description": "The only supplied LIBNAME declaration hard-codes My to [redacted-path-1fa234784ad3], while the program reads My2.industry_SAMPLE without declaring My2. The assigned release contains neither the referenced SAS datasets nor an autoexec/library setup, so the intended My/My2 locations and industry input path are unresolved.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_CODE_LIBNAME",
+        "E_INDUSTRY_READ",
+        "E_INVENTORY"
+      ]
+    },
+    {
+      "id": "ISS_O0_INT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_producer",
+      "description": "The program creates o0_out from the five-year CFO window, then joins from o0_int; no o0_int producer is present in the only supplied SAS program. The intended producer/input cannot be inferred safely.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_CFO_WINDOW",
+        "E_INVENTORY"
+      ]
+    },
+    {
+      "id": "ISS_MKTCAP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_variable_producer",
+      "description": "The code computes MARKET_CAP from the two share-class market values, but downstream annual aggregation and control formulas use MKTCAP. No assignment to MKTCAP appears in the supplied program; whether it is an expected input alias or an omitted mapping is unresolved.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_MARKETCAP_CALC",
+        "E_MKTCAP_USE",
+        "E_MKTCAP_CONTROL"
+      ]
+    },
+    {
+      "id": "ISS_SAMPLE_THRESHOLD",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "specification_conflict",
+      "description": "The datasheet and supplied SAS implement a 26-week minimum, while Appendix A1 describes inclusion with 20 weekly observations. The intended version-specific sample criterion and expected counts need author confirmation.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_DOC_METHOD",
+        "E_26WEEK_CODE",
+        "E_INDUSTRY_APPENDIX"
+      ]
+    },
+    {
+      "id": "ISS_INDUSTRY_CODE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_classification",
+      "description": "Appendix A1 specifies Fama-French 48 industry, while the code only reads SICH as dnum from the undeclared My2.industry_SAMPLE input. No supplied mapping to FF48 or A1 table-generation path is present.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_INDUSTRY_READ",
+        "E_INDUSTRY_APPENDIX"
+      ]
+    },
+    {
+      "id": "ISS_ANALYSIS_PROGRAMS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "incomplete_analysis_workflow",
+      "description": "The only SAS program constructs crash measures/controls and finishes with My.low and My.high. The datasheet says SAS ran the analyses and the supplied Online Appendix lists A1–A12 analyses, but no further main-result regression or table-generation programs are included. The remaining procedures, branch-specific inputs, and output sequence need author clarification.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_DOC_SAS",
+        "E_GMM_MODEL",
+        "E_FINAL_OUTPUT",
+        "E_APPENDIX_TABLES_1",
+        "E_APPENDIX_TABLES_2",
+        "E_INVENTORY"
+      ]
+    },
+    {
+      "id": "ISS_FX_SCHEMA_HANDOFF",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_schema_handoff",
+      "description": "The code reads My.exchange_rate as an input, then overwrites that same dataset with transposed e1_out data carrying the currency/date-oriented schema. Later code expects DATE, RATE, and COUNTRY and constructs FX leads/lags, but no mapping or producer from the rewritten schema to those downstream fields is visible. Request the author-confirmed schemas/omitted transformation; do not invent a rename or currency/quote conversion.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_FX_READ",
+        "E_FX_HANDOFF_SOURCE",
+        "E_FX_DOWNSTREAM_SCHEMA"
+      ]
+    },
+    {
+      "id": "ISS_SMOOTH_OUTPUT_MATCH",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unresolved_output_producer_match",
+      "description": "The supplied code constructs SMTH_numerator and SMTH_denominator, then filters PROC CORR output for _NAME_=\"SMTH2_denominator\" and reads SMTH2_numerator before keeping only nonmissing smoothing. No rename or producer for the SMTH2_* names is shown, so the correlation-to-smoothing output match remains unresolved and may drop the intended observations. Request the author-confirmed PROC CORR output schema/producer; do not rename blindly or infer the scientific measure.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_SMOOTH_INPUT",
+        "E_SMOOTH_OUTPUT_NAME_CHECK"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_DOC_SOURCES",
+      "kind": "source",
+      "description": "Datasheet identifies Datastream security lists and weekly finance data, Bloomberg supplemental turnover, Worldscope annual statements, and hand-collected voting-rights records.",
+      "file": "HKW_DATA DESCRIPTON.pdf",
+      "line_begin": 20,
+      "line_end": 38,
+      "quote": "The data sources and the years in which data were downloaded or obtained are as follows:\n\n    1) We begin the sample collection procedure by identifying firms that have at least two\n       classes of shares according to the Datastream country lists during the period of 1995 to\n       2007. Hyun A Hong downloaded the list of firms’ securities across countries from\n       Datastream in 2008.\n    2) For each share class, she extracted Friday-to-Friday weekly finance data from Datastream\n       for the following variables. If the value of turnover was missing from Datastream, it was\n       manually collected from Bloomberg (Doidge [2004]). All these data downloads occurred\n       in 2009. In addition, she collected lagged annual financial statement variables from\n       Worldscope in 2009.\n    3) Because data on the number of voting rights attached to the superior and inferior voting\n       shares for each firm are required, these data are hand-collected from Datastream\n       Manuals, Moody’s International Manuals, filings with the national stock exchanges,\n       firms’ annual reports, and the firm lists compiled by Doidge [2004]. In conducting this\n       research she received significant support from Craig Doidge with respect to data\n       collection. In addition, if the data ware not clear or not available, they were requested\n       from each firm through faxes, emails, and phone calls. She collected this list of\n       supplementary dual-class firms between 2008 and 2009."
+    },
+    {
+      "id": "E_DOC_METHOD",
+      "kind": "source",
+      "description": "Datasheet specifies Friday-to-Friday Datastream data, variables, the Bloomberg turnover fallback, Worldscope annual inputs, the 26-week criterion, and the stated sample size.",
+      "file": "HKW_DATA DESCRIPTON.pdf",
+      "line_begin": 72,
+      "line_end": 86,
+      "quote": "Step 2: The data collection procedures followed the guidelines established in Nenova [2003] and\nDoidge [2004]. First, for each share class, she extracted Friday-to-Friday weekly data from\nDatastream for the following variables: closing stock price, market value of all equity\noutstanding, weekly return, dividends paid during the week, number of shares outstanding, and\nturnover. If the value of turnover is missing from Datastream, it is obtained from Bloomberg\n(Doidge [2004]). In addition, she collected lagged annual financial statement variables from\nWorldscope.\nStep 3: For each fiscal year, a firm was included in the sample only if it had at least 26 weekly\nstock return observations.\nStep 4: Because data on the number of voting rights attached to the superior and inferior voting\nshares for each firm are required, these data are hand-collected from Datastream Manuals,\nMoody’s International Manuals, filings with the national stock exchanges, firms’ annual reports,\nand the firm lists compiled by Doidge [2004].\nStep 5: The final sample consists of 3,350 firm-year observations from 449 firms across 20\ncountries."
+    },
+    {
+      "id": "E_DOC_SAS",
+      "kind": "source",
+      "description": "Datasheet says SAS converts raw data and runs the analyses, and that code and sample identifiers are stored on the JAR website.",
+      "file": "HKW_DATA DESCRIPTON.pdf",
+      "line_begin": 101,
+      "line_end": 104,
+      "quote": "We use SAS to convert the raw data into the datasets used in the analyses and use SAS to run the\nanalyses. The detailed step-by-step description on how we arrive at the final datasets is included\nin part 4 above. The SAS code and a list of the identifiers of sample firms are stored on the JAR\n"
+    },
+    {
+      "id": "E_CODE_LIBNAME",
+      "kind": "source",
+      "description": "Program hard-codes a Windows library location for My.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 5,
+      "line_end": 5,
+      "quote": "libname My '[redacted-path-1fa234784ad3]';"
+    },
+    {
+      "id": "E_COUNTRY_MACRO",
+      "kind": "source",
+      "description": "The macro transposes an input country dataset and begins a generated work-table chain.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 8,
+      "line_end": 13,
+      "quote": "%macro data_accumulation(conutry);\ndata date;set &conutry; keep code;run;\n\nproc transpose data=&conutry\n               out=australia_transposed;\nrun;"
+    },
+    {
+      "id": "E_COUNTRY_CALLS",
+      "kind": "source",
+      "description": "Program invokes the accumulator for 20 country-level time-series tables and writes the combined weekly table.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 54,
+      "line_end": 76,
+      "quote": "%data_accumulation (my.Australia_timeseries);\n%data_accumulation (my.Austria_timeseries);\n%data_accumulation (my.Brazil_timeseries);\n%data_accumulation (my.Canada_timeseries);\n%data_accumulation (my.Chile_timeseries);\n%data_accumulation (my.Colombia_timeseries);\n%data_accumulation (my.Denmark_timeseries);\n%data_accumulation (my.Finland_timeseries);\n%data_accumulation (my.France_timeseries);\n%data_accumulation (my.Germany_timeseries);\n%data_accumulation (my.Italy_timeseries);\n%data_accumulation (my.Korea_timeseries);\n%data_accumulation (my.Mexico_timeseries);\n%data_accumulation (my.Norway_timeseries);\n%data_accumulation (my.Portugal_timeseries);\n%data_accumulation (my.SouthAfrica_timeseries);\n%data_accumulation (my.Sweden_timeseries);\n%data_accumulation (my.Switzerland_timeseries);\n%data_accumulation (my.UK_timeseries);\n%data_accumulation (my.UnitedStates_timeseries);\n\n\ndata my.database_timeseries;set database_timeseries;run;"
+    },
+    {
+      "id": "E_WEEKLY_REUSE",
+      "kind": "source",
+      "description": "Program reads the earlier generated My.database_timeseries table for the dual-class merge.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 178,
+      "line_end": 182,
+      "quote": "data e0;set my.database_timeseries;\nlength dscode $ 12;\n  dscode=left(firm);\n\nrun;"
+    },
+    {
+      "id": "E_BLOOMBERG_READ",
+      "kind": "source",
+      "description": "Program reads a Bloomberg turnover matrix and extracts Bloomberg firm and variable names from its column labels.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 79,
+      "line_end": 99,
+      "quote": "***************************************************************************;\n\t\t\t*STEP1-2: Read and prepare turnover data from Bloomberg\n***************************************************************************;\n\nproc transpose data= MY.TURNOVER_BLOOMBERG   \n               out=australia_transposed;\nrun;\n\ndata e0;set australia_transposed;\n\nif substr(_NAME_,1,4) ne 'Date' then do;\nfound = indexc(_NAME_, \"Equity\");\nbloomberg_firm=substr(_NAME_,1,found-2);\nvariable=substr(_NAME_,found+7,6);\nend;\n\n\nif substr(_NAME_,1,4) eq 'Date' then do;\n\t\n\tvariable='datadate';\nend;"
+    },
+    {
+      "id": "E_BLOOMBERG_OUT",
+      "kind": "source",
+      "description": "Program creates the prepared database_timeseries_TURNOVER dataset from the Bloomberg matrix.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 120,
+      "line_end": 127,
+      "quote": "data database_timeseries ;set e1_transposed;\nformat datadate1 yymmdd6.; datadate1=datadate;\n\nrun;\ndata database_timeseries;set database_timeseries ;where firm ne '';run;\nproc sort data=database_timeseries ;by firm datadate1;run;\n\ndata my.database_timeseries_TURNOVER;set database_timeseries;run;"
+    },
+    {
+      "id": "E_FX_READ",
+      "kind": "source",
+      "description": "Program reads and transposes a pre-existing exchange_rate matrix.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 129,
+      "line_end": 141,
+      "quote": "***************************************************************************;\n\t\t\t*STEP1-3: Read and prepare exchange rate data \n***************************************************************************;\n\n\nproc transpose data=MY.exchange_rate\n               out=rate_transposed;\nrun;\nproc print data=rate_transposed ;run;\n\ndata e0;set rate_transposed;\nif substr(_LABEL_,1,2) = 'EX' then do;\n"
+    },
+    {
+      "id": "E_FX_OUT",
+      "kind": "source",
+      "description": "Program writes the normalized exchange-rate data from the earlier raw matrix.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 164,
+      "line_end": 171,
+      "quote": "proc sort data=e1;by curr;run;\nproc transpose data=e1\n               out=e1_out;\nby curr;\nid  variable;\nrun;\n\ndata My.exchange_rate;set e1_out;"
+    },
+    {
+      "id": "E_DUAL_INPUT",
+      "kind": "source",
+      "description": "Program describes and reads the author-maintained Dual_List with class, date, code, currency, pair, and votes-per-share fields.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 183,
+      "line_end": 208,
+      "quote": "*Merge with the dual-class data set, which is an extended version of the Doidge (2013)'s list;\n*\nData strucure:\n\nbdate - Datastream begin date\ntime - a date variable indicating the end of the dual-class structure\ndscode - Datastream identifier\nhigh - equals 1 for high voting class\nlow - equals 1 for low voting class\nvote/share - The number of votes per share\ncurr - currency\npair - The pair ID for low and high voting class shares\n\n;\ndata Dual_List;set my.Dual_List;\nlength dscode1 $ 12;\n  dscode1=left(dscode);\n  drop dscode;\nrun;\ndata Dual_List;set Dual_List;dscode=dscode1;\nlength bloomberg_firm1 $ 12;\nbloomberg_firm1=upcase(bloomberg);\n\nformat datadate1 yymmdd6.;\ndatadate1=time;\ndrop dscode1;run;"
+    },
+    {
+      "id": "E_CURRENCY_MAP",
+      "kind": "source",
+      "description": "Program maps 18 input currency labels to codes and merges them to the firm series for USD conversion.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 305,
+      "line_end": 335,
+      "quote": "data r0;set My.exchange_rate;\n\nif curr eq 'A$' then curr0=1;\nif curr eq 'C' then curr0=2;\nif curr eq 'C$' then curr0=3;\nif curr eq 'CE' then curr0=4;\nif curr eq 'CP' then curr0=5;\nif curr eq 'DK' then curr0=6;\nif curr eq 'DM' then curr0=7;\nif curr eq 'E' then curr0=8;\nif curr eq 'KW' then curr0=9;\nif curr eq 'L' then curr0=10;\nif curr eq 'MP' then curr0=11;\nif curr eq 'NK' then curr0=12;\nif curr eq 'R' then curr0=13;\nif curr eq 'SF' then curr0=14;\nif curr eq 'SK' then curr0=15;\nif curr eq 'U$' then curr0=16;\nif curr eq 'VB' then curr0=17;\nif curr eq 'P' then curr0=18;\n\n \n\n\n\n\nrun;\n*transfer from local currency to USD;\nproc sort data=r0;by curr0 datadate1;run;\nproc sort data=e1;by curr0 datadate1;run;\ndata e2;merge r0 (in=a) e1 (in=b);by curr0 datadate1;if a and b;run;"
+    },
+    {
+      "id": "E_SEDOL_JOIN",
+      "kind": "source",
+      "description": "Program joins the dual-class identifiers through My.sedol and then joins Worldscope annual data by SEDOL and year.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 921,
+      "line_end": 936,
+      "quote": "*add SEDOL code from WORLDSCOPE;\nproc sql;create table comb0_low as select * from comb0 as a , My.sedol as b where a.dscode_low=b.type;quit;\nproc sql;create table comb0_high as select * from comb0 as a , My.sedol as b where a.dscode_HIGH=b.type;quit;\n\n\n\n*Merge with accoutning data from WORLDSCOPE;\ndata WORLDSCOPE_data;set My.WORLDSCOPE_data;\nif missing(sedol) then delete;\n\n\n\nrun;\n\nproc sql;create table comb_low as select * from comb0_low as a , WORLDSCOPE_data as b where a.sedol_code=b.sedol and a.year1=b.year;quit;\nproc sql;create table comb_high as select * from comb0_high as a , WORLDSCOPE_data as b where a.sedol_code=b.sedol and a.year1=b.year;quit;"
+    },
+    {
+      "id": "E_INDUSTRY_READ",
+      "kind": "source",
+      "description": "Program reads My2.industry_SAMPLE, extracting SICH as dnum, but does not declare My2 in the supplied source.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 426,
+      "line_end": 433,
+      "quote": "data r3;set r2;where year(datadate1) between 1994 and 2007;if pair ne . then dual_flag=1;else dual_flag=0;run;\n*collect industry infor from WORLDSCOPE;\nproc sql;create table industry as select distinct sedol, sich as dnum from my2.industry_SAMPLE ;quit;\nproc sql;\ncreate table  r4 as\nselect t1.*,t2.*\nfrom r3 as t1 left join industry as t2\non  t1.sedol=t2.sedol;quit;"
+    },
+    {
+      "id": "E_MARKET_READ",
+      "kind": "source",
+      "description": "Program reads a country-level Datastream index file with FIC, datadate, PRCCD, and mkt_ret fields.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 445,
+      "line_end": 455,
+      "quote": "*Market return is the return on the Datastream index for the country of listing over the three months \npreceding the offering.;\ndata market;set My.global_index;\nwhere fic ne '';\ncountry=fic;\nmarket=PRCCD;\ndatadate1=datadate;\nformat datadate datadate1 date9.;\n\nlnret=log(mkt_ret+1);\nrun;"
+    },
+    {
+      "id": "E_LEADLAG_MARKET",
+      "kind": "source",
+      "description": "Program selects Friday market-index observations and constructs two lags and two leads for local returns.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 458,
+      "line_end": 480,
+      "quote": "*We correct for non-synchronous trading by including two lead and\nlag terms for the local and U.S. market indexes.;\ndata market;set market;\n\nday= weekday( datadate1);\nif day eq 6;\ndrop day;\ndata market_0;set market;\n\tmarket0=lag(market);\n\tretMKT=(market-market0)/market0;\n\tretMKT_lag=lag(retMKT);\n\tretMKT_lag2=lag2(retMKT);\nrun;\nproc sort data=market_0;by country datadate1;\ndata market_0;set market_0;by country;if first.country then delete;run;\nproc sort data=market_0;by country datadate1;\ndata market_0;set market_0;by country;if first.country then delete;run;\nproc sort data=market_0 out= market_1;by country descending datadate1;\ndata market_1;set market_1;\n\n\tretMKT_lead=lag(retMKT);\n\tretMKT_lead2=lag2(retMKT);\nrun;"
+    },
+    {
+      "id": "E_US_INDEX",
+      "kind": "source",
+      "description": "Program reads US index DATE and SPRTRN values and constructs two leads and two lags.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 493,
+      "line_end": 510,
+      "quote": "*merge w/ US index return data;\ndata us0;set My.Us_mktindex;\nday=weekday( date);\ndatadate1=date;\nif day eq 6;\n\n us=SPRTRN;\n\n\tus_lag=lag(us);\n\tus_lag2=lag2(us);\nrun;\nproc sort data=us0 out= us1;by  descending datadate1;\ndata us1;set us1;\n\n\tus_lead=lag(us);\n\tus_lead2=lag2(us);\n\tdrop day;\nrun;"
+    },
+    {
+      "id": "E_FX_LEADLAG",
+      "kind": "source",
+      "description": "Program constructs two leads and two lags for Friday exchange-rate observations and merges them to the returns panel.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 518,
+      "line_end": 546,
+      "quote": "*merge w/ exchange rate data;\ndata ex0;set My.exchange_rate;\nday=weekday( date);\ndatadate1=date;\nif day eq 6;\nrun;\ndata ex0;set ex0;\n\trate_lag=lag(rate);\n\trate_lag2=lag2(rate);\nrun;\nproc sort data=ex0;by  country datadate1;\ndata ex0;set ex0;by country ;if first.country then delete;\nproc sort data=ex0;by  country datadate1;\ndata ex0;set ex0;by country ;if first.country then delete;run;\nproc sort data=ex0 out= ex1;by country descending datadate1;\ndata ex1;set ex1;\n\n\trate_lead=lag(rate);\n\trate_lead2=lag2(rate);\nrun;\nproc sort data=ex1;by country descending datadate1;\ndata ex1;set ex1;by country ;if first.country then delete;run;\nproc sort data=ex1;by country descending datadate1;\ndata ex1;set ex1;by country ;if first.country then delete;drop day;run;\n\n*merge b/w country-level and firm-level data;\nproc sort data=ex1;by country  datadate1;\nproc sort data=r7;by country datadate1;\ndata r8;merge r7 (in=a) ex1 (in=b);by country datadate1;if a and b;run;"
+    },
+    {
+      "id": "E_WEEKLY_FILTER",
+      "kind": "source",
+      "description": "Program retains weekly observations from 1994 through 2007.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 426,
+      "line_end": 426,
+      "quote": "data r3;set r2;where year(datadate1) between 1994 and 2007;if pair ne . then dual_flag=1;else dual_flag=0;run;"
+    },
+    {
+      "id": "E_26WEEK_CODE",
+      "kind": "source",
+      "description": "Program documents and implements the 26-week per-year eligibility criterion.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 564,
+      "line_end": 580,
+      "quote": "*Following MYY, we exclude stocks that trade for less than 26 weeks \nduring a particular year.;\n\nproc sort data=r10;by firmlow calyr;\nproc means data=r10 noprint;\nvar count;\nby firmlow calyr;\noutput out=e5_out sum=count_sum;\nquit;\n\ndata delete;set e5_out;if count_sum lt 26 then delete;\nkeep firmLOW  calyr;\nrun;\n\nproc sort data=r10;by firmLOW  calyr;\nproc sort data=delete;by firmLOW  calyr;\ndata e5;merge delete (in=a) r10 (in=b);by firmLOW  calyr;if a and b;run;"
+    },
+    {
+      "id": "E_GMM_MODEL",
+      "kind": "source",
+      "description": "Supplied PROC MODEL code uses GMM with local, US, and exchange-rate leads and lags to create firm-specific weekly residual inputs.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 584,
+      "line_end": 599,
+      "quote": "option nonotes;\nproc sort data=e5;by firmlow calyr;\nods output \"Nonlinear GMM Summary of Residual Errors\"=fitresult;\nproc model data=e5 ; \nby firmlow calyr;\n parms a b1 b2 b3 b4 b5 b6 b7 b8 b9 b10;\n instruments retMKT us rate retMKT_lag us_lag rate_lag retMKT_lag2 us_lag2 rate_lag2 retMKT_lead\nus_lead rate_lead rate_lead2 us_lead2 rate_lead2;\n retLOW =a+b1*retMKT + b2*(us + rate) + b3*retMKT_lag +b4*(us_lag + rate_lag) \n+ b5*retMKT_lag2 + b6*(us_lag2+rate_lag2) + b7*retMKT_lead + b8*(us_lead+rate_lead) + b9*rate_lead2\n+b10*(us_lead2 + rate_lead2); \n fit retLOW / gmm kernel=(bart, 3, 0);\n ods output parameterestimates=param1  fitstatistics=fitresult\n OutputStatistics=residual;\n quit;\n ods output close;"
+    },
+    {
+      "id": "E_CRASH_MEASURES",
+      "kind": "source",
+      "description": "Program constructs residual-based negative skewness, down-to-up volatility, and crash measures.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 716,
+      "line_end": 788,
+      "quote": "data e6;set e5_12;\nresid0= retLOW -(a_est+b1_est*retMKT + b2_est*(us + rate) + b3_est*retMKT_lag +b4_est*(us_lag + rate_lag) \n+ b5_est*retMKT_lag2 + b6_est*(us_lag2+rate_lag2) + b7_est*retMKT_lead + b8_est*(us_lead+rate_lead) + b9_est*rate_lead2\n+b10_est*(us_lead2 + rate_lead2));\nresid=log(1+resid0);\nresid2=resid*resid;\nresid3=resid*resid*resid;\nrun;\n\n*compute NCSKEW variable *****************************************************************************;\nproc sort data=e6;by firmLOW calyr;run;\nproc means data=e6 mean  n noprint;\nvar resid resid2 resid3;\nby firmLOW calyr;\noutput out=NCSKEW_out mean=resid_mean resid2_mean resid3_mean\nsum= resid_sum resid2_sum resid3_sum\nn=n resid2_n resid3_n\nskew=resid_skew;\nrun;\n\nproc sort data=NCSKEW_out;by firmLOW calyr;run;\ndata NCSKEW;set NCSKEW_out;\nNCSKEW=(-1)*((n*((n-1)**(3/2))*resid3_sum)/((n-1)*(n-2)*((resid2_sum)**(3/2)))) ;\nCSKEW= lag(NCSKEW);\n\n*compute DUVOL variable *****************************************************************************;\n*For each firm i over a fiscal year period t, we separate all the weeks with firm-specific\nweekly returns, Wi,??, below the annual mean (“down” weeks) from those with\nfirm-specific returns above the annual mean (“up” weeks) and calculate the standard\ndeviation for each of these subsamples separately. We then measure DUVOL as the\nnatural logarithm of the ratio of the standard deviation in the down weeks to the standard\ndeviation in the up weeks.;\nproc sort data=e6;by firmLOW  calyr;\nproc sort data=NCSKEW;by firmLOW  calyr;\ndata e7;merge NCSKEW (in=a) e6 (in=b);by firmLOW  calyr;if a and b;run;\n\ndata down up;set e7;\nif resid lt resid_mean then output down;\nif resid gt resid_mean then output up;\n\nrun;\nproc sort data=down;by firmLOW calyr ;run;\nproc means data=down mean  n noprint;\nvar resid ;\noutput out=DUVOL_down std=resid_D;\nby firmLOW calyr ;\nrun;\n\nproc sort data=up;by firmLOW calyr ;run;\nproc means data=up mean  n noprint;\nvar resid ;\noutput out=DUVOL_up std=resid_U;\nby firmLOW calyr ;\nrun;\n*merge b/w the up and the down data;\nproc sort data=DUVOL_up;by firmLOW calyr;\nproc sort data=DUVOL_down;by firmLOW calyr;\ndata DUVOL;merge DUVOL_up (in=a) DUVOL_down (in=b);by firmLOW calyr;if a and b;run;\n\ndata DUVOL;set DUVOL;DUVOL=log(resid_D/resid_U) ;run;\n\n\n*compute CRASH variable *****************************************************************************;\n*This paper defines crash weeks in a given fiscal year for a given firm as those\nweeks during which the firm experiences firm-specific\nweekly returns 3.0 standard deviations below the mean\nfirm-specific weekly returns over the entire fiscal year.\nThe first measure of crash likelihood for each firm in each\nyear, denotedby CRASH, is an indicator variable that\nequals one for a firm-year that experiences one or more\ncrash weeks(as defined above) during the fiscal-year\nperiod, and zero otherwise.\n;"
+    },
+    {
+      "id": "E_MARKETCAP_CALC",
+      "kind": "source",
+      "description": "Program computes MARKET_CAP from both share-class market values and the exchange rate.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 386,
+      "line_end": 391,
+      "quote": "*Compute MARKET_CAP ***************************************************************;\nmvLOW_USD=mvLOW/ex;\nmvHIGH_USD=mvHIGH/ex;\n*The natural log of a firm’s total market capitalization (where total market capitalization is \nthe sum of the market capitalization of the superior voting and inferior voting share classes (in millions of US$)).;\nMARKET_CAP=log(mvLOW_USD+mvHIGH_USD);"
+    },
+    {
+      "id": "E_MKTCAP_USE",
+      "kind": "source",
+      "description": "Downstream annual aggregation expects a distinct variable named MKTCAP.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 823,
+      "line_end": 828,
+      "quote": "proc sort data=e6;by country firmLOW calyr;run;\nproc means data=e6 mean  n noprint;\nvar retLOW WEDGE dLOW dHigh FractionVS Excess_div numerator denominator votingpremium  MKTCAP dyHIGH dyLOW votingpower turnover;\nby country firmLOW calyr;\noutput out=c_out mean=retLOW WEDGE dLOW_avg dHigh_avg FractionVS_avg Excess_div_avg numerator_avg denominator_avg votingpremium_avg  MKTCAP dyHIGH_avg dyLOW_avg votingpower_avg turnover_avg\nstd= retLOW_std;"
+    },
+    {
+      "id": "E_MKTCAP_CONTROL",
+      "kind": "source",
+      "description": "The control-variable stage uses MKTCAP for market-to-book and leverage, along with author-prepared Worldscope aliases.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 945,
+      "line_end": 964,
+      "quote": "data comb2;set comb2;\n\nAT=toasset;\nAT_lag=lag(AT);\n\n*MB\t=\tThe ratio of market value of equity (where market value of equity is the sum of the market value of the superior voting and inferior voting share classes) \nto the book value of equity at the end of the year.\nLEVERAGE\t=\tThe book value of long-term debt scaled by the sum of market value of equity and book value of long-term debt at the end of the year.\nROA\t=\tIncome before extraordinary items divided by the beginning-of-year total assets.\n;\nROA= NIBE/AT_lag; \nMB= MKTCAP/toequity;\nLEV=Longterm_debt/(Longterm_debt+MKTCAP) ;\n\n*OPER CYCLE\t=\tThe log of receivables to sales plus inventory to COGS multiplied by 360. ;\nOperCycle=log(((it02051/it01001) + (it02101/it01051))*360);\n*STD CFO\t=\tThe firm-specific standard deviation of the ratio of cash flow from operations and average total assets from years t-5 to t-1;\nCFO = it04201;\n*CFO/SALES\t=\tThe ratio of cash flow from operating activities (CFO) to sales.;\nCFOsale = it04201/it01001;"
+    },
+    {
+      "id": "E_WORLD_SCOPE_READ",
+      "kind": "source",
+      "description": "Program reads the Worldscope annual file and uses SEDOL and year for the firm-year merge.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 921,
+      "line_end": 936,
+      "quote": "*add SEDOL code from WORLDSCOPE;\nproc sql;create table comb0_low as select * from comb0 as a , My.sedol as b where a.dscode_low=b.type;quit;\nproc sql;create table comb0_high as select * from comb0 as a , My.sedol as b where a.dscode_HIGH=b.type;quit;\n\n\n\n*Merge with accoutning data from WORLDSCOPE;\ndata WORLDSCOPE_data;set My.WORLDSCOPE_data;\nif missing(sedol) then delete;\n\n\n\nrun;\n\nproc sql;create table comb_low as select * from comb0_low as a , WORLDSCOPE_data as b where a.sedol_code=b.sedol and a.year1=b.year;quit;\nproc sql;create table comb_high as select * from comb0_high as a , WORLDSCOPE_data as b where a.sedol_code=b.sedol and a.year1=b.year;quit;"
+    },
+    {
+      "id": "E_ANNUAL_CONTROLS",
+      "kind": "source",
+      "description": "Program uses Worldscope annual aliases for assets, income, equity, debt, receivables, inventories, sales, and CFO.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 945,
+      "line_end": 964,
+      "quote": "data comb2;set comb2;\n\nAT=toasset;\nAT_lag=lag(AT);\n\n*MB\t=\tThe ratio of market value of equity (where market value of equity is the sum of the market value of the superior voting and inferior voting share classes) \nto the book value of equity at the end of the year.\nLEVERAGE\t=\tThe book value of long-term debt scaled by the sum of market value of equity and book value of long-term debt at the end of the year.\nROA\t=\tIncome before extraordinary items divided by the beginning-of-year total assets.\n;\nROA= NIBE/AT_lag; \nMB= MKTCAP/toequity;\nLEV=Longterm_debt/(Longterm_debt+MKTCAP) ;\n\n*OPER CYCLE\t=\tThe log of receivables to sales plus inventory to COGS multiplied by 360. ;\nOperCycle=log(((it02051/it01001) + (it02101/it01051))*360);\n*STD CFO\t=\tThe firm-specific standard deviation of the ratio of cash flow from operations and average total assets from years t-5 to t-1;\nCFO = it04201;\n*CFO/SALES\t=\tThe ratio of cash flow from operating activities (CFO) to sales.;\nCFOsale = it04201/it01001;"
+    },
+    {
+      "id": "E_CFO_WINDOW",
+      "kind": "source",
+      "description": "Program builds a five-year annual CFO window keyed by SEDOL and year, then joins its output from o0_int although this file only produces o0_out.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 968,
+      "line_end": 1004,
+      "quote": "proc sort data=comb2; by sedol year ;\ndata d10; set comb2;\nby sedol year ; \n\ndatadate=mdy(1,1,year);\nbeg=intnx('year',datadate, -1);\nend12=intnx('year',datadate, -5);\nformat beg end12 datadate yymmdd.;\n\nbeg_year=year(beg);\nbeg_month=month(beg);\nend12_year=year(end12);\nend12_month=month(end12);\nkeep sedol    beg beg_year beg_month end12 end12_year end12_month;\nrun;\n\nproc sort data=d10; by sedol end12  beg;\nproc sort data=d9; by sedol year;\nproc sql;\n  create table d11_0 as select\n  d9.year,  d10.beg, d10.beg_year, d10.beg_month, d10.end12, d10.end12_year, d10.end12_month,\nd9.sedol, d9.year,d9.CFO \n  from d10, comb2 as d9\n  where d9.sedol=d10.sedol and d9.year between d10.end12_year  and  d10.beg_year ;\nquit;\nproc sort data=d11_0 ;by sedol beg_year;\nproc means data=d11_0 noprint;\nvar CFO;\nby sedol beg_year;\noutput out=o0_out std=StdCFO;\nquit;\nproc sql;\ncreate table comb3 as\nselect b.*,a.StdCFO as StdCFO_lag\nfrom o0_int a, comb2 b\nwhere a.sedol=b.sedol and  a.beg_year=b.year;\nquit;"
+    },
+    {
+      "id": "E_SMOOTH_INPUT",
+      "kind": "source",
+      "description": "Program reads the author-prepared WS_EXT_INT_SMTH input and constructs annual changes in operating cash flow and accruals from Worldscope fields.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 1009,
+      "line_end": 1041,
+      "quote": "data opaque1;set My.WS_EXT_INT_SMTH;\nwhere it06006 ne '' and IT02999 ne .;\nsedol=it06006;\nsedol_lag=lag(sedol);\n\nif IT04851 ne . then c_CH=IT04851;else  c_CH=dif(IT02001);\nc_TP0=dif(IT03063);\nif c_TP0=. then c_TP=0;else c_TP=c_TP0;\nc_STD0=dif(IT03051);\nif c_STD0=. then c_STD=0;else c_STD=c_STD0;\nCurrentAssets_Total =IT02201;\nCurrentLiabilities_Total=IT03101;\nDepreciation=IT01151;\naccruals= dif(CurrentAssets_Total) - dif(CurrentLiabilities_Total) -c_CH +c_STD +c_TP -Depreciation;\n\noperatingIncome=IT01250;\n\nocf= operatingIncome - accruals;\n\n\n\n*OPAQUE\t=\tThe correlation between changes in  cash flow from operations divided by total assets and total accruals \nscaled by total assets during the previous five years’ rolling window (Leuz et al. 2003). Cash ?ow from operations is \nequal to operating income minus accruals, where accruals are calculated as: \n(?total current assets – ?cash)-(?total current liabilities - ?short-term debt - ?taxes payable) - depreciation expense.\nThis correlation is multiplied by negative one such that firms with larger OPAQUE values correspond to those with more smooth earnings.;\n\n\nSMTH_numerator= dif(ocf);*/lag(IT02999);\nSMTH_denominator= dif(accruals);*/lag(IT02999);\n\n\nrun;"
+    },
+    {
+      "id": "E_SMOOTH_WINDOW",
+      "kind": "source",
+      "description": "For each year the code forms an inclusive five-year interval from year minus five through year minus one.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 1052,
+      "line_end": 1076,
+      "quote": "proc sort data=d9; by sedol year ;\ndata d10; set d9;\nby sedol year ; \n\ndatadate=mdy(1,1,year);\nbeg=intnx('year',datadate, -1);\nend12=intnx('year',datadate, -5);\nformat beg end12 datadate yymmdd.;\n\nbeg_year=year(beg);\nbeg_month=month(beg);\nend12_year=year(end12);\nend12_month=month(end12);\nkeep sedol    beg beg_year beg_month end12 end12_year end12_month;\nrun;\n\nproc sort data=d10; by sedol end12  beg;\nproc sort data=d9; by sedol year;\nproc sql;\n  create table d11_0 as select\n  d9.year,  d10.beg, d10.beg_year, d10.beg_month, d10.end12, d10.end12_year, d10.end12_month,\nd9.sedol, d9.year,d9.SMTH_numerator, d9.SMTH_denominator\n  from d10, d9\n  where d9.sedol=d10.sedol and d9.year between d10.end12_year  and  d10.beg_year ;\nquit;"
+    },
+    {
+      "id": "E_SMOOTH_CORR",
+      "kind": "source",
+      "description": "Program estimates a Spearman correlation over the rolling input and joins the smoothing value by SEDOL and year.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 1078,
+      "line_end": 1117,
+      "quote": " option nonotes;\nproc sort data=d11_0; by sedol beg_year ;\nproc corr data=d11_0 noprint spearman outp=CorrOutp;\nvar SMTH_numerator SMTH_denominator  ;\nby sedol beg_year;\nquit;\n\ndata CorrOutp1;set CorrOutp;\n\nif _TYPE_ =\"CORR\" and _NAME_=\"SMTH2_denominator\" then smoothing=SMTH2_numerator*(-1);\n\nkeep sedol beg_year smoothing ;\nrun;\ndata smoothing;set CorrOutp1;\nwhere smoothing ne .;\nkeep sedol beg_year  smoothing;\nrun;\n\ndata number;set CorrOutp;\nwhere _TYPE_ =\"N\" ;\nnumber1=SMTH_numerator;\nnumber2=SMTH_denominator;\n*if number1=5 and number2=5;\nif (3 le number1 le 5) and (3 le number2 le 5) ;\nkeep sedol beg_year number1 ;\nrun;\nproc sql;\n  create table smoothing_DT as select\n  s2.*, d12.beg_year as year\n  from smoothing as s2 , number as d12 \n  where s2.sedol=d12.sedol and s2.beg_year = d12.beg_year;\nquit;\n\n\nproc sql;\n  create table comb4 as select\n  d1.*, d2.smoothing as smoothing_lag\n  from comb3 as d1 , smoothing_DT as d2 \n  where d1.sedol=d2.sedol and d1.year = d2.beg_year;\nquit;"
+    },
+    {
+      "id": "E_LAGGED_CONTROLS",
+      "kind": "source",
+      "description": "Program constructs one-year lagged firm controls and drops the first observation for each firm.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 1121,
+      "line_end": 1138,
+      "quote": "proc sort data=comb4 nodupkey out=comb5;by firmlow calyr;run;\ndata comb5;set comb5;\nif firmlow=lag(firmlow) then do;\nIC_lag =lag(IC);\nCSKEW_lag=lag(NCSKEW);\nDTURN_lag=lag(DTURN);\nSIGMA_lag=lag(SIGMA);\nRET_lag=lag(RET);\nMKTCAP_lag=lag(MKTCAP);\nMB_lag=lag(MB);\nLEV_lag=lag(LEV);\nROA_lag=lag(ROA);\nOperCycle_lag=lag(OperCycle);\nCFOsale_lag=lag(CFOsale); \nend;\nrun;\nproc sort data=comb5 ;by firmlow calyr;run;\ndata comb5;set comb5;by firmlow;if first.firmlow then delete;"
+    },
+    {
+      "id": "E_INDUSTRY_APPENDIX",
+      "kind": "source",
+      "description": "Appendix A1 describes Fama-French 48 industry and a different 20-week sample criterion from the datasheet and supplied SAS program.",
+      "file": "_audit_supplements/hong-kim-welker-online-appendix.pdf",
+      "line_begin": 146,
+      "line_end": 161,
+      "quote": "Table 1A reports the number of firm-year observations, the number and percentage of firm-year observations for annual stock price crashes by industry. The\nindustry is defined according to the Fama-French 48 industry classification (Fama and French [1997]). The full sample comprises 449 dual-class firms from 20\ncountries over the period of 1995 through 2007. The sample consists of countries with dual-class stocks, which have sufficient accounting and market data from\nDATASTREAM and WORLDSCOPE. Specifically, as for the non-US firms, we construct the sample by identifying all firms with dual-class shares during the\nsample period from the country lists in the DATASTREAM database. As for the US firms, we construct the sample by identifying all firms with dual-class shares\nfrom the Securities Data Company (SDC), S&P’s Compustat, the Center for Research in Security Prices (CRSP) and the Investor Responsibility Research Center\n(IRRC) databases. We then confirm these firms’ share structure by checking the SEC filings and contacting each firm’s investment relationship department.\nFollowing the prior voting premium literature, we impose the following sample criteria on the identified firms: (1) firms have at least two classes of shares with\ndifferent voting rights, (2) both share classes are publicly traded and listed on the domestic exchange, (3) the inferior voting share is not convertible into the\nsuperior voting share, and (4) neither share class receives a fixed dividend (Nenova [2003]; Doidge [2004]). We download accounting variables from\nWORLDSCOPE and COMPUSTAT North America. The market data we download from DATASTREAM and CRSP includes Friday-to-Friday weekly market\ndata for prices, returns, market returns, market value, dividend yields, number of shares outstanding, and turnover. In instances in which the values of turnover\nare missing, we collect them from Bloomberg. We include a firm into the sample for a given fiscal year if it has at least 20 weekly observations. Finally, we\nextensively hand collect data on the different voting rights associated with the superior- and inferior-voting shares (data source: documentation supplied by\nDoidge [2004], Moody‘s International Manuals, and firms’ annual reports among others). We exclude firm-year observations with missing values for any\nvariable. Consequently, we obtain 3,350 firm-year observations from 20 countries as the final sample."
+    },
+    {
+      "id": "E_APPENDIX_TABLES_1",
+      "kind": "source",
+      "description": "Appendix contents list A1-A3 analyses.",
+      "file": "_audit_supplements/hong-kim-welker-online-appendix.pdf",
+      "line_begin": 35,
+      "line_end": 45,
+      "quote": "The following summarizes the list of tables presented in this appendix:\n\nTable A1: Distribution of firm-year observations and the percentage of observations with at least\n\n    one stock price crash per year across industries.\n\nTable A2: Cross-sectional tests for the low opacity sample.\n\nTable A3: Cross-sectional tests for the high opacity sample with full results including\n\n    coefficients on control variables."
+    },
+    {
+      "id": "E_APPENDIX_TABLES_2",
+      "kind": "source",
+      "description": "Appendix contents list difference-in-differences, hazard, alternative measures, matched single-class, and other supplemental analyses through A12.",
+      "file": "_audit_supplements/hong-kim-welker-online-appendix.pdf",
+      "line_begin": 47,
+      "line_end": 85,
+      "quote": "Table A4: Difference-in-differences regressions, using mandatory IFRS adoption as an\n\n    exogenous shock to financial reporting opacity.\n\nTable A5: Staggered adoption of the Market Abuse Directive in the EU on our main results.\n\nTable A6: Cox proportional hazard model.\n\nTable A7: Alternative measures of stock price crash risk, Extra SIGMA and COUNT.\n\nTable A8: Using the superior share voting premium as an alternative measure of the agency\n\n    conflict in dual class share firms.\n\nTable A9, Panel A: Main results with the sample partitioned into two subgroups based on the\n\n    size of raw accruals.\n\nTable A9, Panel B: Main results with the sample partitioned into two subgroups based on the\n\n    size of discretionary accruals (Hutton et al. 2007).\n\nTable A9, Panel C: Main results using the smoothing measure of opacity but partitioning the\n\n    sample based on country median of all firms for each sample country, not just dual class\n\n    firms.\n\n                                                 2\n\nTable A10: Main results using a sample that includes matched single-class firms.\n\nTable A11: Main results after controlling for firm- and country-level characteristics related to the\n\n    control-ownership wedge and opacity.\n\nTable A12: Cross-sectional results for the high opacity sample, using alternative proxies for the\n\n    strength of external monitoring, and the opportunity costs of private benefit consumption."
+    },
+    {
+      "id": "E_APPENDIX_A12",
+      "kind": "source",
+      "description": "Appendix A12 identifies Worldscope and FactSet/LionShares holdings plus Compustat Global and America as analysis context.",
+      "file": "_audit_supplements/hong-kim-welker-online-appendix.pdf",
+      "line_begin": 1350,
+      "line_end": 1361,
+      "quote": "This table presents the results of testing the association between the ownership-control wedge and stock price crash risk, conditional on the strength of external\nmonitoring, and the opportunity costs of private benefit consumption. In each year and each country, we partition the total sample into the low opacity and high\nopacity subsamples using the sample median of OPAQUE for each country in the previous year. The sample size in panel A is 1,328 firm-year observations with\ndata on institutional holdings and the sample size in panel B is the high opacity sample of 1,727 firm-year observations for the high opacity subsamples during\nthe period from 1995 to 2007. The smaller number of observations in Table A12, Panel A results from merging with institutional ownership data files from\nWORLDSCOPE and FactSet/LionShares Institutional Ownership. INST_OWN is defined as institutional ownership, scaled by a firm’s market capitalization.\nMARKET_COMP is defined as the Herfindahl-Hirshman Index, which is multiplied by a negative one. The Herfindahl-Hirshman Index is based on the sales of all\nfirms with data available in COMPUSTAT Global for the non-US firms and COMPUSTAT America for the US firms, defined as H = ∑ni=1(Пi )2 , where Пi is the\nmarket share of company i, and n is the number of firms in the industry for a given country. t-statistics (Wald Chi-squared statistics) are reported in parentheses,\nbased on standard errors corrected for heteroskedasticity and clustered at the firm level for the NEG_SKEWNESS and DOWN/UP_RET_SD models (for the\nCRASH models). Wald Chi-squared statistics, reported in parentheses for the CRASH models, are based on standard errors adjusted by the procedure of Norton et\nal. (2004). Variable definitions are provided in Appendix I. ***, **, and * indicate statistical significance at the 1%, 5%, and 10% levels (one-tailed when the"
+    },
+    {
+      "id": "E_FINAL_SPLIT",
+      "kind": "source",
+      "description": "Program ranks the smoothing measure and splits the two opacity groups.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 1140,
+      "line_end": 1150,
+      "quote": "proc sort data=comb5;by country year ;\nproc rank data=comb5 groups=2 out=comb6;\nvar smoothing_lag;\nranks smoothing_ranked;\nby country year  ;\nquit;\n\ndata low0 high0;set comb6;\nif smoothing_ranked in (0) then output low0;\nif smoothing_ranked in (1) then output high0;\nrun;"
+    },
+    {
+      "id": "E_WINSOR_MACRO",
+      "kind": "source",
+      "description": "Winsorization macro creates work tables from a macro input dataset.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 1176,
+      "line_end": 1222,
+      "quote": "%macro Winsorize_Truncate(dsetin = , \n                          dsetout = , \n                          byvar = none, \n                          vars = , \n                          type = W, \n                          pctl = 1 99);\n\n    %if &dsetout = %then %let dsetout = &dsetin;\n    \n    %let varL=;\n    %let varH=;\n    %let xn=1;\n\n    %do %until (%scan(&vars,&xn)= );\n        %let token = %scan(&vars,&xn);\n        %let varL = &varL &token.L;\n        %let varH = &varH &token.H;\n        %let xn = %EVAL(&xn + 1);\n    %end;\n\n    %let xn = %eval(&xn-1);\n\n    data xtemp;\n        set &dsetin;\n\n    %let dropvar = ;\n    %if &byvar = none %then %do;\n        data xtemp;\n            set xtemp;\n            xbyvar = 1;\n\n        %let byvar = xbyvar;\n        %let dropvar = xbyvar;\n    %end;\n\n    proc sort data = xtemp;\n        by &byvar;\n\n    /*compute percentage cutoff values*/\n    proc univariate data = xtemp noprint;\n        by &byvar;\n        var &vars;\n        output out = xtemp_pctl PCTLPTS = &pctl PCTLPRE = &vars PCTLNAME = L H;\n\n    data &dsetout;\n        merge xtemp xtemp_pctl; /*merge percentage cutoff values into main dataset*/\n        by &byvar;"
+    },
+    {
+      "id": "E_FINAL_OUTPUT",
+      "kind": "source",
+      "description": "The supplied SAS program ends by winsorizing and writing My.low and My.high, not by reporting the listed regression tables.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 1251,
+      "line_end": 1286,
+      "quote": "*Creates the final subset with lower opacity;\n%Winsorize_Truncate(dsetin =low0 ,\n                            dsetout = my.low,\n                            byvar =  none,\n                            vars = NCSKEW DUVOL\n\n    smoothing_lag\n  CSKEW_lag\n  DTURN_lag\n  SIGMA_lag\n  RET_lag\n  MKTCAP_lag\n  MB_lag\n  LEV_lag\n  ROA_lag OperCycle_lag CFOsale_lag StdCFO_lag,\n                            type = w,\n                            pctl =   1 99);\n\n\n*Creates the final subset with higher opacity;\n%Winsorize_Truncate(dsetin =high0 ,\n                            dsetout = my.high,\n                            byvar =  none,\n                            vars = NCSKEW DUVOL\n\n  smoothing_lag\n  CSKEW_lag\n  DTURN_lag\n  SIGMA_lag\n  RET_lag\n  MKTCAP_lag\n  MB_lag\n  LEV_lag\n  ROA_lag OperCycle_lag CFOsale_lag StdCFO_lag,\n                            type = w,\n                            pctl =   1 99);"
+    },
+    {
+      "id": "E_CATALOG_PRODUCTS",
+      "kind": "catalog",
+      "description": "Frozen common resource catalog (sha256 4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27) lists Datastream products by source and field labels: TR_DS.DS2PRIMQTPRC (Close_, Volume), TR_DS.DS2PRIMQTRI (RI), TR_DS.WRDS_DS2DSF (currency, midrate, MarketDate), TR_DS.WRDS_DS_INDEXMERGED (ValueDate, RI, region), and TR_DS.WRDS_DS_NAMES (DsCode, TypeCode, PrimQtSedol). It also lists Worldscope annual/company products and CRSP.DSI with DATE/SPRTRN. These are candidate products, not evidence of author-specific mapping, current sample coverage, or a usable license."
+    },
+    {
+      "id": "E_SEDOL_PACKAGED",
+      "kind": "probe",
+      "description": "Packaged SEDOL_HKW.xlsx is readable; bounded workbook metadata shows one column, Sedol, one row read, and no population/coverage verification.",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "0d45b7d92b248defde33b02ecb390f8b99ab5a07441999ce6df2cd3d4e244e7a"
+    },
+    {
+      "id": "E_LOCAL_DS_INDEX",
+      "kind": "probe",
+      "description": "Bounded one-row probe confirms the catalog-listed Datastream index file is readable with dsindexmnem, region, regcodetypeid, valuedate, and ri; coverage remains unverified.",
+      "artifact_path": "probes/local_ds_index.json",
+      "sha256": "235b8c1ea5a2442a0450b0fab50a2c59c04273e3908320091e54fdd645ffe283"
+    },
+    {
+      "id": "E_LOCAL_DS_NAMES",
+      "kind": "probe",
+      "description": "Bounded one-row probe confirms the catalog-listed Datastream names file is readable with DsCode, TypeCode, ISOCurrCode, PrimQtSedol, StartDate, and EndDate; mapping and historical coverage remain unverified.",
+      "artifact_path": "probes/local_ds_names.json",
+      "sha256": "f423c9d478f29a5a5c9925c2fb15c5e77bde9b366b3c62fbebc503601fbd79f8"
+    },
+    {
+      "id": "E_LOCAL_DS_PRICE",
+      "kind": "probe",
+      "description": "Bounded one-row probe confirms the Datastream primary quote pricing file is readable with InfoCode, MarketDate, Close_, and Volume; coverage remains unverified.",
+      "artifact_path": "probes/local_ds_price.json",
+      "sha256": "ab25bcb0ef974f2355d04ff79f4c0d3acf674c1d3226838719a701a1f2d94646"
+    },
+    {
+      "id": "E_LOCAL_DS_RETURN",
+      "kind": "probe",
+      "description": "Bounded one-row probe confirms the Datastream primary quote return-index file is readable with InfoCode, MarketDate, and RI; coverage remains unverified.",
+      "artifact_path": "probes/local_ds_return.json",
+      "sha256": "f2c03537cf5da8fdf63978351891dec88f7f08bfba2061dc7b99578067b87c80"
+    },
+    {
+      "id": "E_LOCAL_DS_FX",
+      "kind": "probe",
+      "description": "Bounded one-row probe confirms the Datastream FX candidate is readable with currency, MarketDate, and midrate; coverage remains unverified.",
+      "artifact_path": "probes/local_ds_fx.json",
+      "sha256": "36c42b1a63361bb618a04882888f84f6fc22f0ec31eaf352d6d93cb2be43a310"
+    },
+    {
+      "id": "E_LOCAL_WS_FUNDA",
+      "kind": "probe",
+      "description": "Bounded one-row probe confirms the catalog-listed Worldscope annual file is readable with the probed item-coded columns; coverage and mapping to author aliases remain unverified.",
+      "artifact_path": "probes/local_ws_annual.json",
+      "sha256": "dd56e798a0284e72ff03806b9caa5ce8f553d825d80c167aa91601f3f6227a10"
+    },
+    {
+      "id": "E_LOCAL_WS_COMPANY",
+      "kind": "probe",
+      "description": "Bounded one-row probe confirms the Worldscope company file is readable with SEDOL, industry, and SIC item columns; coverage/mapping remain unverified.",
+      "artifact_path": "probes/local_ws_company.json",
+      "sha256": "e382b175ba830477ed7bc1a0704753231201591590d07d84a8a4e00ab27e1081"
+    },
+    {
+      "id": "E_LOCAL_CRSP_DSI",
+      "kind": "probe",
+      "description": "Bounded one-row probe confirms the CRSP daily market-index file is readable with DATE and sprtrn; historical coverage remains unverified.",
+      "artifact_path": "probes/local_crsp_market.json",
+      "sha256": "b88b8755afb15be63ea585bd5bb8984fd09cf763ba21a85aef2fb57c2cbe6072"
+    },
+    {
+      "id": "E_ENV",
+      "kind": "probe",
+      "description": "Frozen environment probe identifies the SAS executable path but failed to initialize TKELS; no version or license conclusion is established.",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00"
+    },
+    {
+      "id": "E_INVENTORY",
+      "kind": "inspection",
+      "description": "Frozen work-item inventory lists one supplied SAS program, two documents, and one one-column SEDOL workbook; no analysis-ready data file or separate regression program is included.",
+      "artifact_path": "work_item.json",
+      "sha256": "6afab4183332e603e45f51446f4db7b1efb8b9ae5139685ab4a63a97045fd67d"
+    },
+    {
+      "id": "E_FX_HANDOFF_SOURCE",
+      "kind": "source",
+      "description": "The code transposes the raw exchange-rate table by curr and overwrites My.exchange_rate with e1_out and a datadate1 field.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 164,
+      "line_end": 171,
+      "quote": "proc sort data=e1;by curr;run;\nproc transpose data=e1\n               out=e1_out;\nby curr;\nid  variable;\nrun;\n\ndata My.exchange_rate;set e1_out;"
+    },
+    {
+      "id": "E_FX_DOWNSTREAM_SCHEMA",
+      "kind": "source",
+      "description": "Later code reads My.exchange_rate expecting DATE and RATE values grouped by COUNTRY and constructs two lags and two leads; no intervening My.exchange_rate schema mapping appears in the supplied file.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 518,
+      "line_end": 546,
+      "quote": "*merge w/ exchange rate data;\ndata ex0;set My.exchange_rate;\nday=weekday( date);\ndatadate1=date;\nif day eq 6;\nrun;\ndata ex0;set ex0;\n\trate_lag=lag(rate);\n\trate_lag2=lag2(rate);\nrun;\nproc sort data=ex0;by  country datadate1;\ndata ex0;set ex0;by country ;if first.country then delete;\nproc sort data=ex0;by  country datadate1;\ndata ex0;set ex0;by country ;if first.country then delete;run;\nproc sort data=ex0 out= ex1;by country descending datadate1;\ndata ex1;set ex1;\n\n\trate_lead=lag(rate);\n\trate_lead2=lag2(rate);\nrun;\nproc sort data=ex1;by country descending datadate1;\ndata ex1;set ex1;by country ;if first.country then delete;run;\nproc sort data=ex1;by country descending datadate1;\ndata ex1;set ex1;by country ;if first.country then delete;drop day;run;\n\n*merge b/w country-level and firm-level data;\nproc sort data=ex1;by country  datadate1;\nproc sort data=r7;by country datadate1;\ndata r8;merge r7 (in=a) ex1 (in=b);by country datadate1;if a and b;run;"
+    },
+    {
+      "id": "E_SMOOTH_OUTPUT_NAME_CHECK",
+      "kind": "source",
+      "description": "PROC CORR input names come from the SMTH_numerator/SMTH_denominator construction, while the downstream extraction filters for SMTH2_denominator and reads SMTH2_numerator before dropping missing smoothing values.",
+      "file": "HKW_SAS Program.sas",
+      "line_begin": 1085,
+      "line_end": 1093,
+      "quote": "data CorrOutp1;set CorrOutp;\n\nif _TYPE_ =\"CORR\" and _NAME_=\"SMTH2_denominator\" then smoothing=SMTH2_numerator*(-1);\n\nkeep sedol beg_year smoothing ;\nrun;\ndata smoothing;set CorrOutp1;\nwhere smoothing ne .;\nkeep sedol beg_year  smoothing;"
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_WEEKLY_DS"
+      ],
+      "evidence_ids": [
+        "E_COUNTRY_MACRO",
+        "E_COUNTRY_CALLS"
+      ],
+      "description": "The macro parameter expands to the 20 named country time-series inputs; these are mandatory prepared Datastream series."
+    },
+    {
+      "dependency_ids": [
+        "D0002",
+        "D0003",
+        "D0004",
+        "D0005",
+        "D0006"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_COUNTRY_MACRO"
+      ],
+      "description": "Transpose, intermediate, look-ahead identifier, and wide country tables are produced by the supplied country accumulator macro."
+    },
+    {
+      "dependency_id": "D0007",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_BLOOMBERG_TURNOVER"
+      ],
+      "evidence_ids": [
+        "E_BLOOMBERG_READ",
+        "E_DOC_METHOD"
+      ],
+      "description": "The Bloomberg turnover matrix is read as an external input and supplies the documented Datastream turnover fallback."
+    },
+    {
+      "dependency_id": "D0008",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_FX"
+      ],
+      "evidence_ids": [
+        "E_FX_READ",
+        "E_FX_OUT"
+      ],
+      "description": "The exchange_rate matrix is read before the supplied program writes its normalized exchange-rate output; the raw matrix is an external requirement."
+    },
+    {
+      "dependency_id": "D0009",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_COUNTRY_CALLS",
+        "E_WEEKLY_REUSE"
+      ],
+      "description": "My.database_timeseries is created from the 20 accumulator calls and then read downstream."
+    },
+    {
+      "dependency_id": "D0010",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_DUAL_LIST"
+      ],
+      "evidence_ids": [
+        "E_DUAL_INPUT"
+      ],
+      "description": "Dual_List is a mandatory author-prepared input containing class flags, pair identifiers, voting rights, currencies, and effective dates."
+    },
+    {
+      "dependency_id": "D0011",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_BLOOMBERG_READ",
+        "E_BLOOMBERG_OUT"
+      ],
+      "description": "The later turnover table is generated from the separately read Bloomberg matrix."
+    },
+    {
+      "dependency_id": "D0012",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_INDUSTRY"
+      ],
+      "evidence_ids": [
+        "E_INDUSTRY_READ"
+      ],
+      "description": "The source reads the industry_sample table from My2; its library path and classification mapping remain unresolved."
+    },
+    {
+      "dependency_id": "D0013",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_GLOBAL_INDEX"
+      ],
+      "evidence_ids": [
+        "E_MARKET_READ"
+      ],
+      "description": "The country-level Datastream market-index series is an external input."
+    },
+    {
+      "dependency_id": "D0014",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_US_INDEX"
+      ],
+      "evidence_ids": [
+        "E_US_INDEX"
+      ],
+      "description": "The US market-index DATE/SPRTRN series is an external input."
+    },
+    {
+      "dependency_id": "D0015",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_WS_ANNUAL"
+      ],
+      "evidence_ids": [
+        "E_WORLD_SCOPE_READ"
+      ],
+      "description": "The annual Worldscope table is an external input merged by SEDOL and year."
+    },
+    {
+      "dependency_id": "D0016",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_WS_OPACITY"
+      ],
+      "evidence_ids": [
+        "E_SMOOTH_INPUT"
+      ],
+      "description": "The prepared WS_EXT_INT_SMTH file is an external input used in the opacity construction."
+    },
+    {
+      "dependency_ids": [
+        "D0017",
+        "D0018",
+        "D0019"
+      ],
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_WINSOR_MACRO",
+        "E_FINAL_SPLIT",
+        "E_FINAL_OUTPUT"
+      ],
+      "description": "The macro input groups low0/high0 and produces work.xtemp, percentile tables, and the final My.low/My.high outputs."
+    }
+  ],
+  "actions": [
+    {
+      "id": "ACT_INPUT_DATA",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_WEEKLY_DS",
+        "R_BLOOMBERG_TURNOVER",
+        "R_FX",
+        "R_DUAL_LIST",
+        "R_SEDOL_MAP",
+        "R_GLOBAL_INDEX",
+        "R_US_INDEX",
+        "R_WS_ANNUAL",
+        "R_WS_OPACITY",
+        "R_INDUSTRY",
+        "R_APPENDIX_INPUTS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Obtain the author-prepared inputs and verify source-product compatibility, identifier mappings, and the histories required by the supplied workflow.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_SOURCES",
+        "E_DOC_METHOD",
+        "E_COUNTRY_CALLS",
+        "E_BLOOMBERG_READ",
+        "E_FX_READ",
+        "E_DUAL_INPUT",
+        "E_SEDOL_JOIN",
+        "E_MARKET_READ",
+        "E_US_INDEX",
+        "E_ANNUAL_CONTROLS",
+        "E_CFO_WINDOW",
+        "E_SMOOTH_WINDOW",
+        "E_APPENDIX_A12",
+        "E_CATALOG_PRODUCTS",
+        "E_SEDOL_PACKAGED",
+        "E_LOCAL_DS_INDEX",
+        "E_LOCAL_DS_NAMES",
+        "E_LOCAL_DS_FX",
+        "E_LOCAL_WS_FUNDA",
+        "E_LOCAL_CRSP_DSI"
+      ],
+      "edits": [],
+      "steps": [
+        "Request/stage the 20 author-prepared country series, Bloomberg turnover matrix, raw exchange-rate matrix, Dual_List, country/global index series, US index series, Worldscope_data, WS_EXT_INT_SMTH, the My2 industry_sample input, and the type-to-SEDOL mapping. The packaged workbook is only a one-column identifier list.",
+        "Confirm Datastream identifiers and pair/class coding, weekly Friday frequency, currency mapping and USD quote units, Bloomberg firm/date/turnover mapping, and Worldscope SEDOL/year item-code-to-alias mapping. Retain author-prepared inputs where available; do not reconstruct the hand-collected voting-rights list independently.",
+        "Verify the weekly inputs cover the code’s 1994–2007 filter and required prior-week return plus two market, US, and FX leads/lags around retained Fridays. The datasheet reports 26 observations per firm-year; reconcile the appendix’s 20-week description before fixing expected sample counts.",
+        "Verify annual SEDOL/year history for the one-year lags and five-year CFO/opacity windows. The code differences ocf/accruals and drops the first row per SEDOL twice before those five constructed values, so raw prerequisites may precede the visible rolling window; exact earliest alignment remains unknown because producers/joins are incomplete. Obtain the author’s coverage requirement rather than guessing a start year or independently rebuilding the input.",
+        "Use the frozen local Datastream, Worldscope, and CRSP product probes only as field-level candidates. The probes read one row and explicitly leave population/sample history unverified; confirm the author-schema transformations and actual product access before treating any candidate as compatible.",
+        "Request author input specifications and data for unprovided appendix branches. Treat FactSet/LionShares, Compustat Global/America, and other appendix references as source leads until the missing analysis workflow confirms exact products, fields, sample, and dates."
+      ],
+      "validation": [
+        "After a separate authorized run, confirm all prepared inputs are readable with matching identifiers/fields and the required date history, and reconcile sample counts to the author-confirmed 26- versus 20-week rule and version-specific expected outputs."
+      ]
+    },
+    {
+      "id": "ACT_LIBRARY_SETUP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISS_LIBRARY_SETUP"
+      ],
+      "kind": "configuration",
+      "description": "Recover the author’s SAS library setup for My and My2 and map it to the staged input folder.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CODE_LIBNAME",
+        "E_INDUSTRY_READ",
+        "E_INVENTORY"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the omitted autoexec or documented library assignments and the exact path containing each named dataset.",
+        "After the files and configuration are available, set up My and My2 in the future authorized SAS environment without changing the underlying variable definitions."
+      ],
+      "validation": [
+        "In a future authorized SAS session, confirm both libraries resolve and the named datasets are readable with PROC CONTENTS; check that My2.industry_SAMPLE has the author-confirmed industry key and classification."
+      ]
+    },
+    {
+      "id": "ACT_SOURCE_CLARIFICATIONS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISS_O0_INT",
+        "ISS_MKTCAP",
+        "ISS_SAMPLE_THRESHOLD",
+        "ISS_INDUSTRY_CODE",
+        "ISS_FX_SCHEMA_HANDOFF",
+        "ISS_SMOOTH_OUTPUT_MATCH"
+      ],
+      "kind": "clarification",
+      "description": "Resolve missing intermediate producers, exchange-rate and PROC CORR schema handoffs, and conflicting sample/classification details before modifying the author program.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_CFO_WINDOW",
+        "E_MARKETCAP_CALC",
+        "E_MKTCAP_USE",
+        "E_MKTCAP_CONTROL",
+        "E_DOC_METHOD",
+        "E_26WEEK_CODE",
+        "E_INDUSTRY_READ",
+        "E_INDUSTRY_APPENDIX",
+        "E_FX_HANDOFF_SOURCE",
+        "E_FX_DOWNSTREAM_SCHEMA",
+        "E_SMOOTH_OUTPUT_NAME_CHECK"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the authors to supply the producer/schema for o0_int or confirm whether it should link to a differently named saved dataset; do not silently substitute o0_out.",
+        "Ask whether MKTCAP is an input alias or an omitted derived variable and how it relates to the program’s MARKET_CAP calculation; do not rename or recalculate without confirmation.",
+        "Ask which sample cutoff is authoritative for this release: the datasheet/code’s 26 weekly returns or Appendix A1’s 20 weekly observations, and request the corresponding expected counts.",
+        "Ask for the source and mapping that turns the My2 SICH/dnum industry value into Appendix A1’s Fama-French 48 classification.",
+        "Ask the authors to confirm the exchange-rate schema written at My.exchange_rate after the transpose and provide the omitted mapping to downstream DATE, RATE, and COUNTRY fields; preserve units and the 18-currency crosswalk.",
+        "Ask for the PROC CORR output schema or missing producer that explains the SMTH_numerator/SMTH_denominator inputs versus the SMTH2_denominator/SMTH2_numerator names selected downstream; do not rename or recompute the smoothing measure without confirmation."
+      ],
+      "validation": [
+        "After the author-provided details are applied in a future authorized run, confirm the named intermediate and market-cap variable are produced, sample eligibility matches the confirmed threshold, and the industry categories match the stated table definition.",
+        "After confirmed source/schema details are available, verify that the PROC CORR output yields the intended smoothing records and that the rewritten exchange-rate dataset provides the downstream date/rate/country fields and required lead-lag series."
+      ]
+    },
+    {
+      "id": "ACT_ANALYSIS_PROGRAMS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISS_ANALYSIS_PROGRAMS",
+        "R_APPENDIX_INPUTS"
+      ],
+      "kind": "clarification",
+      "description": "Request the remaining executable analysis workflow for the manuscript results and Online Appendix tables.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_DOC_SAS",
+        "E_FINAL_OUTPUT",
+        "E_APPENDIX_TABLES_1",
+        "E_APPENDIX_TABLES_2",
+        "E_APPENDIX_A12",
+        "E_INVENTORY"
+      ],
+      "edits": [],
+      "steps": [
+        "Request all remaining main-result regression and table-generation scripts, including independent appendix branches, their prerequisites, run order, and version notes.",
+        "Request schemas or prepared analysis inputs for the matched single-class branch and the specific A12 institutional-ownership/market-competition analysis; confirm whether the listed sources are supplied, restricted, or need author-prepared merges.",
+        "Obtain expected output names and table-level sample counts so the supplied My.low/My.high construction can be connected to the reported results without independently reconstructing missing analyses."
+      ],
+      "validation": [
+        "In a future authorized execution, trace each reported main and appendix table to its supplied entry point and verify that the expected output datasets and sample counts are produced."
+      ]
+    },
+    {
+      "id": "ACT_SAS_RUNTIME",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW_SAS"
+      ],
+      "kind": "software_setup",
+      "description": "Establish a working, version-compatible SAS runtime for the supplied program.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_SAS",
+        "E_GMM_MODEL",
+        "E_ENV"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the local SAS administrator to confirm an authorized SAS runtime and availability of PROC MODEL/GMM for this program; the TKELS startup failure is an initialization finding, not evidence of absent entitlement.",
+        "After libraries and inputs are ready, run the supplied program only in a separately authorized execution step, then evaluate its intended downstream analysis scripts after they are provided."
+      ],
+      "validation": [
+        "Record the working SAS version and confirm PROC MODEL/GMM availability in the authorized environment before running the author workflow; do not infer runtime availability from the current failed startup probe."
+      ]
+    }
+  ],
+  "review_notes": [
+    "No analysis_only scope is supported: the release has no complete author-prepared analysis dataset or completed regression inputs. SEDOL_HKW.xlsx is only an identifier list, and the SAS program itself creates My.low/My.high from absent raw/author-prepared inputs.",
+    "The full supplied SAS program and all appendix output descriptions were inspected. Checklist edges D0001–D0019 are reviewed; raw reads in the program not represented by the static checklist, including My.sedol and o0_int, were assessed separately.",
+    "Local Datastream, Worldscope, and CRSP probes were bounded to one row on exact frozen-catalog paths. They establish readability/columns only, not compatible author mappings, full product access, or sample/history coverage.",
+    "The program’s 26-week filter and Appendix A1’s 20-week description conflict. The final sample counts and analysis versions cannot be reconciled without author clarification."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "eab30f378e119068cf328cdae31e2c368f5802eb5861d47aff6d92d93f902842",
+    "applied": false
+  }
+}

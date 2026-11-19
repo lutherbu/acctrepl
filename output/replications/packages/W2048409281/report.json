@@ -1,0 +1,433 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "What do dividends tell us about earnings quality?",
+  "doi": "10.1007/s11142-009-9113-8",
+  "route": "reconstruction",
+  "paper_id": "W2048409281",
+  "years": 5,
+  "sources_checked": [
+    "Resource catalog: output/feasibility_reproduction/resources/catalog.json (project relocation from the work-item's archived path); generated 2026-10-27T14:45:09.629688+00:00, SHA-256 4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27. The catalog is metadata; the named local SAS files were independently read for bounded coverage.",
+    "COMP.FUNDA: ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; local file mtime 2026-07-22T07:44:45.269455+00:00, 941,340 metadata rows. INDL/C/D/STD rows FY1973–2012: 389,983; actual DATADATE 1973-06-30–2013-05-31. Required fields include GVKEY, DATADATE, FYEAR, CURCD, FIC, SICH, AT, IB, XINT, IDIT, and DVC.",
+    "COMP.G_EXRT_MTH: ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat; local file mtime 2026-08-14T10:15:13.863095+00:00, 75,838 rows. Exact source-date/currency joins were checked against the annual rows; all FY2006–2012 rows have a unique positive monthly conversion; relevant duplicate pair keys: 0; GBP-to-USD series reaches 2013-12-31.",
+    "COMP.G_EXRT_DLY: ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat; local file mtime 2026-08-14T10:15:13.599091+00:00, 2,221,564 rows. Exact source-date/currency joins were checked against the annual rows; all FY2006–2012 rows have a unique positive daily conversion; relevant duplicate pair keys: 0; GBP-to-USD series reaches 2013-12-31.",
+    "CRSP.CCMXPF_LINKTABLE: ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat; local file mtime 2026-08-14T10:53:02.418825+00:00, 92,711 metadata rows; LINKDT start range 1946-01-01–2025-12-31, LINKENDDT through 2026-01-30.",
+    "CRSP.MSENAMES: ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat; local file mtime 2025-12-05T16:12:04.879997+00:00, 117,830 metadata rows; NAMEDT range 1925-12-31–2024-12-31, NAMEENDT through 2024-12-31. Its 2006–2012 name history has 12,658 dated rows, including 6,903 rows passing the code's common-share/exchange-code condition before the date-valid CCM join.",
+    "Current source-vintage record was captured by the task controller at launch; receipt.json reports inputs_unchanged=true. No substitute sources or downloaded inputs were used."
+  ],
+  "changes": [
+    "Retained the accepted fiscal-year clock and separate Table 4 fits. Extended each original fit by five calendar-year labels, pooled with its original observations: FY1974–1988, FY1984–1998, and FY1994–2010. The added periods are FY1984–1988, FY1994–1998, and FY2006–2010, respectively.",
+    "Rebuilt historical and added observations together with the accepted SAS construction. Compustat source bounds now reach FY2012 for the maximum t+2 outcome; the current-year sample screen reaches FY2010. The exact monthly/daily GBP-bridge source filter reaches 2013-12-31, while the latest usable Compustat DATADATE is 2013-05-31.",
+    "Kept the accepted item mappings, currency conversions, sample screens, ratio caps, OLS terms, no-fixed-effects specification, firm/year clustering, intercept, and Stata/SAS handoff. Added e(sample)-based original/added counts and last-added fiscal year to each selected fit cell; FYEAR remains in the handoff as a fiscal-year label.",
+    "Changed the duplicate-assets diagnostic output to fiscal-year aggregates only. The fresh SAS and Stata run succeeded with return code 0 for SAS build and all six assigned fit cells; the controller receipt confirms source inputs were unchanged."
+  ],
+  "limitations": [
+    "Scope is the six executed Table 4 persistence regressions only: Panel A h=1 and Panel B h=2 for the three assigned fiscal-year subperiods. The accepted reconstruction did not run the paper's Table 3 logit, Table 5 payout-rank, repurchase, or later regular-payer analyses; those are outside this job's assigned scopes.",
+    "The accepted reconstruction is best-effort and already differs from the paper's reported Table 4 Ns and coefficients. The extended estimates continue that same accepted construction and were not tuned to published values. The current table export uses p-values in parentheses, while the paper reports two-way robust standard errors in parentheses.",
+    "FUNDA.FIC is labeled Current ISO Country Code – Incorporation; no dated incorporation-history source is available in the authorized catalog. The historic U.S.-incorporation screen therefore uses annual-row FIC and has a timing limitation.",
+    "Industry uses valid historical FUNDA.SICH first, then one unique date-valid CCM-linked CRSP MSENAMES.SICCD only when SICH is missing/zero; SICH controls disagreements. The paper does not specify numeric SIC boundaries, so the accepted code uses 6000–6999 for financial and 4900–4999 for utilities. Unresolved and ambiguous classifications remain excluded under that best-effort rule.",
+    "Modern Compustat Xpressfeed IDIT is the accepted mapping for legacy item #62 based on the 2007 provider guide. Missing IDIT is not set to zero, and NOPI−NOPIO is not used as a substitute; the paper does not specify a missing-interest policy. The observed-IDIT complete-case restriction can lower N. FUNDA lacks IDIT_DC, so combined-item status cannot be checked row by row.",
+    "The accepted sample had two duplicated GVKEY/FYEAR source keys across FY1982–1983 (four rows), all lacking IDIT. The current FY1973–2012 standardized source has five duplicate keys in total, with one new key each in FY2010, FY2011, and FY2012. Current and future earnings retain only unique firm-year periods; duplicate-period lagged assets are retained only if exactly one source row has observed positive AT and a positive own-date USD conversion. The model uses this established tie rule without selecting an ambiguous earnings row.",
+    "The historical listing screen uses valid CCM links and date-valid MSENAMES rows, then requires at least one link with share code 10/11 and exchange code 1/2/3. This is the accepted best-effort firm-level interpretation of the paper's NYSE/AMEX/NASDAQ criterion.",
+    "The accepted GBP-bridge conversion leaves missing/nonpositive FX legs unavailable. Exact current-source checks found complete unique positive monthly and daily matches for standardized annual rows in FY2006–2012; some earlier non-USD source rows lack matched rates and are not imputed. USD remains the accepted identity conversion."
+  ],
+  "analyses": [
+    {
+      "scope_id": "earnings_persistence_h1 / earnings_persistence_h1_1974",
+      "key": "s1",
+      "label": "Table 4 Panel A h=1: FY1974–1983 pooled through FY1988",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 4 Panel A, h=1, fiscal-year fit 1974–1983 was replayed as one pooled OLS fit through FY1988. The fresh e(sample) contains 16,378 original-window and 11,202 added-window firm-years, with the last added observation in FY1988; required h=1 leads are covered by the rebuilt Compustat source through FY2012.",
+      "source_evidence": [
+        "Paper W2048409281.pdf physical p. 15, Table 4 Panel A, 1974–1983; Eq. (1) on physical p. 14 and sample clock on physical p. 6.",
+        "Accepted output/reproductions/packages/W2048409281/attempt_02/stata.ipynb cell pa_h1_1974; output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48 reports the saved original-native interaction estimate and fit.",
+        "Current work/build.sas lines 19–27, 50–56, 183–205, 295–352, 383–388; work/source_coverage.json annual_standardized, fx, and crsp_screen_inputs (bounded current-source coverage).",
+        "Current work/stata.ipynb cell pa_h1_1974; work/runtime/20261118T072558098109Z/cell_pa_h1_1974.log (e(sample) marker and coefficient); work/tables/table4_panelA_h1_1974.md (fresh aggregate result table)."
+      ],
+      "original_begin": 1974,
+      "original_end": 1983,
+      "requested_end": 1988,
+      "supported_end": 1988,
+      "last_added": 1988,
+      "count_unit": "GVKEY × fiscal-year firm-year observations in the active Stata reghdfe e(sample); counts are split by fiscal-year label at the original endpoint.",
+      "original_n": 16378,
+      "added_n": 11202,
+      "artifacts": [
+        "results/tables/table4_panelA_h1_1974.md"
+      ],
+      "comparison": {
+        "parameter": "α3: DP × current adjusted earnings rate (E_t / TA_{t−1})",
+        "unit": "Dimensionless ratio-on-ratio slope difference for dividend payers versus nonpayers.",
+        "original_native": {
+          "estimate": 0.0772,
+          "standard_error": 0.0496,
+          "p_value": 0.154,
+          "location": "output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48, accepted reconstruction output; original fiscal years 1974–1983."
+        },
+        "extended_native": {
+          "estimate": 0.1088781,
+          "standard_error": 0.0403491,
+          "p_value": 0.017,
+          "location": "work/runtime/20261118T072558098109Z/cell_pa_h1_1974.log row dp#c.e_rate; work/tables/table4_panelA_h1_1974.md displays estimates rounded to three decimals."
+        },
+        "estimate_change": 0.0316781,
+        "precision_note": "The accepted-native baseline is recorded to four decimals; the fresh Stata coefficient and standard error are read at native precision. Current table parentheses display p-values; the paper reports standard errors in parentheses."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:b0081b071ac83e081841cdbc54719e4325bfcc081e10c6c3e562dcba8a6df979",
+        "sha256": "b0081b071ac83e081841cdbc54719e4325bfcc081e10c6c3e562dcba8a6df979",
+        "marker": "EXT_SAMPLE s1 16378 11202 1988"
+      }
+    },
+    {
+      "scope_id": "earnings_persistence_h1 / earnings_persistence_h1_1984",
+      "key": "s2",
+      "label": "Table 4 Panel A h=1: FY1984–1993 pooled through FY1998",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 4 Panel A, h=1, fiscal-year fit 1984–1993 was replayed as one pooled OLS fit through FY1998. The fresh e(sample) contains 23,208 original-window and 13,294 added-window firm-years, with the last added observation in FY1998; required h=1 leads are covered by the rebuilt Compustat source through FY2012.",
+      "source_evidence": [
+        "Paper W2048409281.pdf physical p. 15, Table 4 Panel A, 1984–1993; Eq. (1) on physical p. 14 and sample clock on physical p. 6.",
+        "Accepted output/reproductions/packages/W2048409281/attempt_02/stata.ipynb cell pa_h1_1984; output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48 reports the saved original-native interaction estimate and fit.",
+        "Current work/build.sas lines 19–27, 50–56, 183–205, 295–352, 383–388; work/source_coverage.json annual_standardized, fx, and crsp_screen_inputs (bounded current-source coverage).",
+        "Current work/stata.ipynb cell pa_h1_1984; work/runtime/20261118T072558098109Z/cell_pa_h1_1984.log (e(sample) marker and coefficient); work/tables/table4_panelA_h1_1984.md (fresh aggregate result table)."
+      ],
+      "original_begin": 1984,
+      "original_end": 1993,
+      "requested_end": 1998,
+      "supported_end": 1998,
+      "last_added": 1998,
+      "count_unit": "GVKEY × fiscal-year firm-year observations in the active Stata reghdfe e(sample); counts are split by fiscal-year label at the original endpoint.",
+      "original_n": 23208,
+      "added_n": 13294,
+      "artifacts": [
+        "results/tables/table4_panelA_h1_1984.md"
+      ],
+      "comparison": {
+        "parameter": "α3: DP × current adjusted earnings rate (E_t / TA_{t−1})",
+        "unit": "Dimensionless ratio-on-ratio slope difference for dividend payers versus nonpayers.",
+        "original_native": {
+          "estimate": -0.049,
+          "standard_error": 0.0709,
+          "p_value": 0.507,
+          "location": "output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48, accepted reconstruction output; original fiscal years 1984–1993."
+        },
+        "extended_native": {
+          "estimate": -0.1050522,
+          "standard_error": 0.0459022,
+          "p_value": 0.038,
+          "location": "work/runtime/20261118T072558098109Z/cell_pa_h1_1984.log row dp#c.e_rate; work/tables/table4_panelA_h1_1984.md displays estimates rounded to three decimals."
+        },
+        "estimate_change": -0.0560522,
+        "precision_note": "The accepted-native baseline is recorded to four decimals; the fresh Stata coefficient and standard error are read at native precision. Current table parentheses display p-values; the paper reports standard errors in parentheses."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:2696eb41b8e797a7ffb6d686ebadf329de931be47df5b5ace9e89f1907b89793",
+        "sha256": "2696eb41b8e797a7ffb6d686ebadf329de931be47df5b5ace9e89f1907b89793",
+        "marker": "EXT_SAMPLE s2 23208 13294 1998"
+      }
+    },
+    {
+      "scope_id": "earnings_persistence_h1 / earnings_persistence_h1_1994",
+      "key": "s3",
+      "label": "Table 4 Panel A h=1: FY1994–2005 pooled through FY2010",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 4 Panel A, h=1, fiscal-year fit 1994–2005 was replayed as one pooled OLS fit through FY2010. The fresh e(sample) contains 27,813 original-window and 9,117 added-window firm-years, with the last added observation in FY2010; required h=1 leads are covered by the rebuilt Compustat source through FY2012.",
+      "source_evidence": [
+        "Paper W2048409281.pdf physical p. 15, Table 4 Panel A, 1994–2005; Eq. (1) on physical p. 14 and sample clock on physical p. 6.",
+        "Accepted output/reproductions/packages/W2048409281/attempt_02/stata.ipynb cell pa_h1_1994; output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48 reports the saved original-native interaction estimate and fit.",
+        "Current work/build.sas lines 19–27, 50–56, 183–205, 295–352, 383–388; work/source_coverage.json annual_standardized, fx, and crsp_screen_inputs (bounded current-source coverage).",
+        "Current work/stata.ipynb cell pa_h1_1994; work/runtime/20261118T072558098109Z/cell_pa_h1_1994.log (e(sample) marker and coefficient); work/tables/table4_panelA_h1_1994.md (fresh aggregate result table)."
+      ],
+      "original_begin": 1994,
+      "original_end": 2005,
+      "requested_end": 2010,
+      "supported_end": 2010,
+      "last_added": 2010,
+      "count_unit": "GVKEY × fiscal-year firm-year observations in the active Stata reghdfe e(sample); counts are split by fiscal-year label at the original endpoint.",
+      "original_n": 27813,
+      "added_n": 9117,
+      "artifacts": [
+        "results/tables/table4_panelA_h1_1994.md"
+      ],
+      "comparison": {
+        "parameter": "α3: DP × current adjusted earnings rate (E_t / TA_{t−1})",
+        "unit": "Dimensionless ratio-on-ratio slope difference for dividend payers versus nonpayers.",
+        "original_native": {
+          "estimate": -0.091,
+          "standard_error": 0.0459,
+          "p_value": 0.073,
+          "location": "output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48, accepted reconstruction output; original fiscal years 1994–2005."
+        },
+        "extended_native": {
+          "estimate": -0.1232201,
+          "standard_error": 0.041502,
+          "p_value": 0.009,
+          "location": "work/runtime/20261118T072558098109Z/cell_pa_h1_1994.log row dp#c.e_rate; work/tables/table4_panelA_h1_1994.md displays estimates rounded to three decimals."
+        },
+        "estimate_change": -0.0322201,
+        "precision_note": "The accepted-native baseline is recorded to four decimals; the fresh Stata coefficient and standard error are read at native precision. Current table parentheses display p-values; the paper reports standard errors in parentheses."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:b8f2a7d169005f9c8d9514303285c94f7cb452ff6cb3fb999a876246327cfe9c",
+        "sha256": "b8f2a7d169005f9c8d9514303285c94f7cb452ff6cb3fb999a876246327cfe9c",
+        "marker": "EXT_SAMPLE s3 27813 9117 2010"
+      }
+    },
+    {
+      "scope_id": "earnings_persistence_h2 / earnings_persistence_h2_1974",
+      "key": "s4",
+      "label": "Table 4 Panel B h=2: FY1974–1983 pooled through FY1988",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 4 Panel B, h=2, fiscal-year fit 1974–1983 was replayed as one pooled OLS fit through FY1988. The fresh e(sample) contains 14,647 original-window and 9,885 added-window firm-years, with the last added observation in FY1988; required h=2 leads are covered by the rebuilt Compustat source through FY2012.",
+      "source_evidence": [
+        "Paper W2048409281.pdf physical p. 15, Table 4 Panel B, 1974–1983; Eq. (1) on physical p. 14 and sample clock on physical p. 6.",
+        "Accepted output/reproductions/packages/W2048409281/attempt_02/stata.ipynb cell pb_h2_1974; output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48 reports the saved original-native interaction estimate and fit.",
+        "Current work/build.sas lines 19–27, 50–56, 183–205, 295–352, 383–388; work/source_coverage.json annual_standardized, fx, and crsp_screen_inputs (bounded current-source coverage).",
+        "Current work/stata.ipynb cell pb_h2_1974; work/runtime/20261118T072558098109Z/cell_pb_h2_1974.log (e(sample) marker and coefficient); work/tables/table4_panelB_h2_1974.md (fresh aggregate result table)."
+      ],
+      "original_begin": 1974,
+      "original_end": 1983,
+      "requested_end": 1988,
+      "supported_end": 1988,
+      "last_added": 1988,
+      "count_unit": "GVKEY × fiscal-year firm-year observations in the active Stata reghdfe e(sample); counts are split by fiscal-year label at the original endpoint.",
+      "original_n": 14647,
+      "added_n": 9885,
+      "artifacts": [
+        "results/tables/table4_panelB_h2_1974.md"
+      ],
+      "comparison": {
+        "parameter": "α3: DP × current adjusted earnings rate (E_t / TA_{t−1})",
+        "unit": "Dimensionless ratio-on-ratio slope difference for dividend payers versus nonpayers.",
+        "original_native": {
+          "estimate": 0.1436,
+          "standard_error": 0.0851,
+          "p_value": 0.126,
+          "location": "output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48, accepted reconstruction output; original fiscal years 1974–1983."
+        },
+        "extended_native": {
+          "estimate": 0.1586647,
+          "standard_error": 0.0584322,
+          "p_value": 0.017,
+          "location": "work/runtime/20261118T072558098109Z/cell_pb_h2_1974.log row dp#c.e_rate; work/tables/table4_panelB_h2_1974.md displays estimates rounded to three decimals."
+        },
+        "estimate_change": 0.0150647,
+        "precision_note": "The accepted-native baseline is recorded to four decimals; the fresh Stata coefficient and standard error are read at native precision. Current table parentheses display p-values; the paper reports standard errors in parentheses."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:da37b8a6dba269b98997c588af34b9a38decf3ae33c99ebfd39f2b4cdc960410",
+        "sha256": "da37b8a6dba269b98997c588af34b9a38decf3ae33c99ebfd39f2b4cdc960410",
+        "marker": "EXT_SAMPLE s4 14647 9885 1988"
+      }
+    },
+    {
+      "scope_id": "earnings_persistence_h2 / earnings_persistence_h2_1984",
+      "key": "s5",
+      "label": "Table 4 Panel B h=2: FY1984–1993 pooled through FY1998",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 4 Panel B, h=2, fiscal-year fit 1984–1993 was replayed as one pooled OLS fit through FY1998. The fresh e(sample) contains 20,661 original-window and 11,448 added-window firm-years, with the last added observation in FY1998; required h=2 leads are covered by the rebuilt Compustat source through FY2012.",
+      "source_evidence": [
+        "Paper W2048409281.pdf physical p. 15, Table 4 Panel B, 1984–1993; Eq. (1) on physical p. 14 and sample clock on physical p. 6.",
+        "Accepted output/reproductions/packages/W2048409281/attempt_02/stata.ipynb cell pb_h2_1984; output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48 reports the saved original-native interaction estimate and fit.",
+        "Current work/build.sas lines 19–27, 50–56, 183–205, 295–352, 383–388; work/source_coverage.json annual_standardized, fx, and crsp_screen_inputs (bounded current-source coverage).",
+        "Current work/stata.ipynb cell pb_h2_1984; work/runtime/20261118T072558098109Z/cell_pb_h2_1984.log (e(sample) marker and coefficient); work/tables/table4_panelB_h2_1984.md (fresh aggregate result table)."
+      ],
+      "original_begin": 1984,
+      "original_end": 1993,
+      "requested_end": 1998,
+      "supported_end": 1998,
+      "last_added": 1998,
+      "count_unit": "GVKEY × fiscal-year firm-year observations in the active Stata reghdfe e(sample); counts are split by fiscal-year label at the original endpoint.",
+      "original_n": 20661,
+      "added_n": 11448,
+      "artifacts": [
+        "results/tables/table4_panelB_h2_1984.md"
+      ],
+      "comparison": {
+        "parameter": "α3: DP × current adjusted earnings rate (E_t / TA_{t−1})",
+        "unit": "Dimensionless ratio-on-ratio slope difference for dividend payers versus nonpayers.",
+        "original_native": {
+          "estimate": 0.0038,
+          "standard_error": 0.0787,
+          "p_value": 0.963,
+          "location": "output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48, accepted reconstruction output; original fiscal years 1984–1993."
+        },
+        "extended_native": {
+          "estimate": -0.0923942,
+          "standard_error": 0.0759901,
+          "p_value": 0.244,
+          "location": "work/runtime/20261118T072558098109Z/cell_pb_h2_1984.log row dp#c.e_rate; work/tables/table4_panelB_h2_1984.md displays estimates rounded to three decimals."
+        },
+        "estimate_change": -0.0961942,
+        "precision_note": "The accepted-native baseline is recorded to four decimals; the fresh Stata coefficient and standard error are read at native precision. Current table parentheses display p-values; the paper reports standard errors in parentheses."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:0fa6e7b4584f326f5eba0e784f8b49615029de85004d592c0f67ac89de59f98d",
+        "sha256": "0fa6e7b4584f326f5eba0e784f8b49615029de85004d592c0f67ac89de59f98d",
+        "marker": "EXT_SAMPLE s5 20661 11448 1998"
+      }
+    },
+    {
+      "scope_id": "earnings_persistence_h2 / earnings_persistence_h2_1994",
+      "key": "s6",
+      "label": "Table 4 Panel B h=2: FY1994–2005 pooled through FY2010",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "Table 4 Panel B, h=2, fiscal-year fit 1994–2005 was replayed as one pooled OLS fit through FY2010. The fresh e(sample) contains 24,343 original-window and 8,114 added-window firm-years, with the last added observation in FY2010; required h=2 leads are covered by the rebuilt Compustat source through FY2012.",
+      "source_evidence": [
+        "Paper W2048409281.pdf physical p. 15, Table 4 Panel B, 1994–2005; Eq. (1) on physical p. 14 and sample clock on physical p. 6.",
+        "Accepted output/reproductions/packages/W2048409281/attempt_02/stata.ipynb cell pb_h2_1994; output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48 reports the saved original-native interaction estimate and fit.",
+        "Current work/build.sas lines 19–27, 50–56, 183–205, 295–352, 383–388; work/source_coverage.json annual_standardized, fx, and crsp_screen_inputs (bounded current-source coverage).",
+        "Current work/stata.ipynb cell pb_h2_1994; work/runtime/20261118T072558098109Z/cell_pb_h2_1994.log (e(sample) marker and coefficient); work/tables/table4_panelB_h2_1994.md (fresh aggregate result table)."
+      ],
+      "original_begin": 1994,
+      "original_end": 2005,
+      "requested_end": 2010,
+      "supported_end": 2010,
+      "last_added": 2010,
+      "count_unit": "GVKEY × fiscal-year firm-year observations in the active Stata reghdfe e(sample); counts are split by fiscal-year label at the original endpoint.",
+      "original_n": 24343,
+      "added_n": 8114,
+      "artifacts": [
+        "results/tables/table4_panelB_h2_1994.md"
+      ],
+      "comparison": {
+        "parameter": "α3: DP × current adjusted earnings rate (E_t / TA_{t−1})",
+        "unit": "Dimensionless ratio-on-ratio slope difference for dividend payers versus nonpayers.",
+        "original_native": {
+          "estimate": -0.1116,
+          "standard_error": 0.089,
+          "p_value": 0.236,
+          "location": "output/reproductions/packages/W2048409281/attempt_02/design.md lines 41–48, accepted reconstruction output; original fiscal years 1994–2005."
+        },
+        "extended_native": {
+          "estimate": -0.1504134,
+          "standard_error": 0.06895,
+          "p_value": 0.044,
+          "location": "work/runtime/20261118T072558098109Z/cell_pb_h2_1994.log row dp#c.e_rate; work/tables/table4_panelB_h2_1994.md displays estimates rounded to three decimals."
+        },
+        "estimate_change": -0.0388134,
+        "precision_note": "The accepted-native baseline is recorded to four decimals; the fresh Stata coefficient and standard error are read at native precision. Current table parentheses display p-values; the paper reports standard errors in parentheses."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:42dfacda78d4a476243eee8446c113b58f4793e2accd83b82427c8519708fb3f",
+        "sha256": "42dfacda78d4a476243eee8446c113b58f4793e2accd83b82427c8519708fb3f",
+        "marker": "EXT_SAMPLE s6 24343 8114 2010"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 6
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed7a-fb10-7b73-8d3f-8aaa234db658",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W2048409281.json",
+    "models": "output/models/records/W2048409281.json",
+    "predecessor": "output/reproductions/packages/W2048409281/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W2048409281.json"
+  },
+  "input_hashes": {
+    "sample": "19e1618b01aec8bded005345253a9a327e11a0f3b5aa82d00db190a6dc928996",
+    "models": "817b6ff733197277037489c81ddcbef2469f4dd6805b39e5acbb560803dd16b7",
+    "predecessor": "aab4cf4567ab38e8eb113d180efecb3a68facf25adea62663b3acb46eeb73e0d",
+    "feasibility": "515e31f9815c2fd8ee7219febad33e957db96e6a1d39ca05353426b01cac2f6c"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:9d4ea04c0cc04a92a19927546b87972bec1ab2fc354e061560d6fb4235f9b1c9",
+    "sha256": "9d4ea04c0cc04a92a19927546b87972bec1ab2fc354e061560d6fb4235f9b1c9",
+    "ok": true,
+    "state_sha256": "919b45a7f6146c9e5c3599000f750b702e263247b348fb6d7d39136ca6720a9e",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.MSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764951124879997292
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "adddf6685f908e2143b33fd25d48ddf2a391443483b5f096b218b92da7b7e681",
+      "work/stata.ipynb": "6ab4a10c7b1ddd1c66355d48ed3618448f491c0d7522503713230b34a0d20e27",
+      "work/submission.json": "cb5a28006aa111c1f3c188b6d45ccc0c6025f39e7ba2514d27bafac19ddf9e35"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "0a963d317e00c41769ff77bdd8244d2cbf5221fe4d01c36adf3a23d60a118098",
+      "predecessor": "output/reproductions/packages/W2048409281/attempt_02/build.sas",
+      "predecessor_sha256": "6bea55fdaa3c4ac1eae0f0045566f9bdeb88bdb8ea47a77b0e80d46ab830a865",
+      "executed_sha256": "adddf6685f908e2143b33fd25d48ddf2a391443483b5f096b218b92da7b7e681",
+      "historical_predecessor_sha256": "98afaf7f6c02e88d5a66ceafd487d3b48be1bf602a4712f9037cb3bd33e05c49"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "6ab4a10c7b1ddd1c66355d48ed3618448f491c0d7522503713230b34a0d20e27",
+      "predecessor": "output/reproductions/packages/W2048409281/attempt_02/stata.ipynb",
+      "predecessor_sha256": "dd0c7810b897559b787fefd4cccafe63ea39dba7253b5c1c2d65465d3235021c",
+      "historical_predecessor_sha256": "1bd1c477a3262575e9c5ec191dc001053d5f49165b681b46b7d314738d1a3fb6"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "7353d9f57d2af80445154cddcaaf1ca45e95075619a425f01d3824df0883bde2",
+    "predecessor": "48ca648d53ce77dfe4346f4757ae583f036c87dd97ddba8b9f633be41d956375",
+    "feasibility": "4f30fc231821607e5ad726c25b1bdd1a453bb0ca43eecf2abd8937c1d6e007ef"
+  }
+}

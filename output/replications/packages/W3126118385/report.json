@@ -1,0 +1,250 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "Cash Flow Patterns as a Proxy for Firm Life Cycle",
+  "doi": "10.2308/accr-10130",
+  "route": "reconstruction",
+  "paper_id": "W3126118385",
+  "years": 5,
+  "sources_checked": [
+    "Local resource catalog resolved from assigned work_item.json catalog_path to output/feasibility_reproduction/resources/catalog.json; table paths and fields checked against PROC CONTENTS source catalog.",
+    "COMP.FUNDA: ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat, 941,340 rows × 949 variables; last modified 2026-07-22. Current table has standard-filtered FY1984–FY2026 rows; all 38 fields in the staged KEEP list exist. FY1984–FY2009 has no duplicate GVKEY–FYEAR keys; FY2010 and FY2011 each have one duplicate key with two records and distinct reporting dates.",
+    "COMP.G_EXRT_DLY: ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat, 2,221,564 rows; last modified 2026-08-14; positive GBP-to-USD/CAD daily quotes run through 2026-07-19. Screened FY2009 non-USD leads use exact shared-date pairs.",
+    "COMP.G_EXRT_MTH: ${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat, 75,838 rows; last modified 2026-08-14; positive GBP-to-USD/CAD EXRAT12M quotes run through 2026-07-31. Screened FY2009 non-USD leads use exact-date pairs.",
+    "CRSP.CCMXPF_LINKTABLE: ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat, 92,711 rows; last modified 2026-08-14; linkdt coverage 1946-01-01–2025-12-31 and observed linkenddt coverage through 2026-01-30.",
+    "CRSP.MSENAMES: ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat, 117,830 rows; last modified 2025-12-06; name history 1925–2024. No overlapping ordinary-common name intervals were found in 1983–2009.",
+    "CRSP.MSF: ${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat, 5,153,763 rows; last modified 2025-12-06; monthly dates 1925-12-31–2024-12-31. No raw PERMNO–DATE duplicates were found in 1983–2009.",
+    "Accepted predecessor Stata handoff metadata: attempt_05/data/reg.dta has 63,193 rows and 99 columns; case-sensitive fyear is int16 and datadate is retained. Fresh work/data/reg.dta has 71,738 rows and 99 columns; lower-case fyear is int16, and controller isid gvkey fyear passed.",
+    "Paper Table 5 and assigned predecessor results: local papers/pdf/W3126118385.pdf physical pp. 17–19; output/reproductions/packages/W3126118385/attempt_05/outcome.json and its three aggregate Model 1 tables/native notebook outputs."
+  ],
+  "changes": [
+    "Pooled the original FY1989–FY2005 window with attainable FY2006–FY2008 observations. Raw support is FY1984–FY2009 so the original t−5 history and one-year FY2009 lead remain available; requested endpoint remains FY2010.",
+    "Derived the FX source bound from actual non-USD FY2009 reporting dates of FY2008 firms; latest required DATADATE is 2010-05-31. Current daily and monthly sources support the screened FY2009 leads with exact pairs.",
+    "Extended the accepted 37% MTR construction branch through FY2009 for the needed FY2008 lead; this is an explicit assumption because the paper schedule ends in FY2005 and accepted code previously used it through FY2006.",
+    "Kept the original Table 5 Model 1 formulas, proxy classifications, OLS commands, firm/year clustering, and pooled winsorization approach. Added an aggregate annual SAS eligibility audit and Stata e(sample)-based original/added counts without changing observation-level rows.",
+    "Limited supported analysis years to FY1989–FY2008 because the current standard-filtered Compustat source has one unresolved FY2010 firm-year key with two reporting dates, and accepted code specifies no tie rule."
+  ],
+  "limitations": [
+    "The requested FY2010 endpoint is not reached. FY2010 has one duplicate GVKEY–FYEAR key with two distinct reporting dates; FY2011 has another duplicate key with two reporting dates. The accepted construction aborts on the first conflict and documents no vintage rule. These keys block FY2009 and FY2010 analysis outcomes, so the last complete continuous analysis year is FY2008 with FY2009 as its lead.",
+    "No source row was selected or dropped to resolve the FY2010 or FY2011 conflicts.",
+    "The paper states a 37% marginal tax rate only through FY2005; accepted build code extended that rate through FY2006 for the original lead. Reusing 37% through FY2009 is a documented continuation assumption, not verified year-specific statutory-rate data.",
+    "The accepted reconstruction baseline had smaller samples than the paper (26,242 CF; 17,713 A&R; 26,438 age versus 48,369 reported). The extension preserves complete-case definitions and inherited IDIT/IINT mapping and construction assumptions; it does not tune screens to published N.",
+    "The fresh CF-pattern and A&R clustered runs report a non-positive-semidefinite VCV adjustment and no model F statistic with 20 fiscal-year clusters. Their coefficient tables and native logs are retained; no alternative covariance estimator was substituted.",
+    "The source Table 5 prints total stage effects and tests increments from reference groups. The accepted output convention prints indicator contrasts in the aggregate table and prints total effects via lincom in the native log. Comparisons identify which measure is used.",
+    "Inherited best-effort limitations remain: IDIT as a semantic proxy for unavailable IINT; CRSP PERMCO market-equity substitution; unspecified fiscal averaging, A&R timing/ties, zero-sign handling and winsorization pool; and the four-input A&R 4–12 arithmetic range despite the paper’s 3–9 wording."
+  ],
+  "analyses": [
+    {
+      "scope_id": "table5_model1_cf_pattern / table5_table5_model1_cf_pattern_model1",
+      "key": "s1",
+      "label": "cash-flow-pattern Table 5 Model 1, future change in RNOA",
+      "sample_ids": [
+        "cash_flow_life_cycle_firm_years"
+      ],
+      "status": "extended_partial",
+      "reason": "Fresh pooled Table 5 Model 1 fit verified for FY1989–FY2008 using the assigned current-vintage sources. The native estimation-sample marker confirms original and added firm-years. The requested FY2010 endpoint is not safely attainable: the standard-filtered FY2010 Compustat source contains one ambiguous GVKEY–FYEAR key with two reporting dates, and accepted code has no report-vintage selection rule; FY2010 is already needed as the lead for FY2009. The earlier continuous pooled window through FY2008 uses unique FY2009 leads.",
+      "source_evidence": [
+        "Paper sample period and Table 5 population: physical p. 7; Model 1 Equation 1: physical p. 17; Table 5 and notes: physical pp. 18–19. Assigned mapping is work/work_item.json for this model/result-set pair.",
+        "Assigned predecessor output/reproductions/packages/W3126118385/attempt_05/outcome.json records this fit as executed. Its build.sas lines 53–70 aborts on duplicate standard-filtered GVKEY–FYEAR keys instead of selecting a report vintage.",
+        "Current COMP.FUNDA aggregate source audit at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat: FY1984–FY2009 keys are unique; FY2010 and FY2011 each have one duplicated key (two records with two distinct DATADATE values). Current FY2009 lead boundary from the native build log is 2010-05-31.",
+        "Current COMP.G_EXRT_DLY and COMP.G_EXRT_MTH plus native build log AUDIT FY2008_REQUIRED_LEADS show no missing rates for the screened FY2009 leads; the required non-USD pairs are exact-date.",
+        "Fresh native cell log work/runtime/20261118T113250771437Z/cell_table5_cf_pattern.log contains EXT_SAMPLE s1 26242 4347 2008; fresh aggregate table is work/tables/table5_model1_cf_pattern.md."
+      ],
+      "original_begin": "1989",
+      "original_end": "2005",
+      "requested_end": "2010",
+      "supported_end": "2008",
+      "last_added": "2008",
+      "count_unit": "firm-year observations in the active Stata regression e(sample)",
+      "original_n": 26242,
+      "added_n": 4347,
+      "artifacts": [
+        "results/tables/table5_model1_cf_pattern.md"
+      ],
+      "comparison": "Introduction versus mature total stage effect, in ΔRNOA units: saved accepted attempt_05 lincom = -0.1500238; fresh extended lincom = -0.1557697 (old/new Stata cell logs; the fresh aggregate table at work/tables/table5_model1_cf_pattern.md reports the indicator contrast). The paper displays -0.121 for the total introduction effect in Table 5 physical p. 18; its parenthetical test is the contrast against the reference. The replay re-estimates pooled 1st/99th cutoffs over the longer window, as in the accepted pooled-winsorization route.",
+      "native_evidence": {
+        "path": "urn:sha256:3d5d887b0155ebc17ed3ea1ae7cb6a4b14a566ff58df5989785205225f8c6ccd",
+        "sha256": "3d5d887b0155ebc17ed3ea1ae7cb6a4b14a566ff58df5989785205225f8c6ccd",
+        "marker": "EXT_SAMPLE s1 26242 4347 2008"
+      }
+    },
+    {
+      "scope_id": "table5_model1_ar / table5_table5_model1_ar_model1",
+      "key": "s2",
+      "label": "Anthony–Ramesh Table 5 Model 1, future change in RNOA",
+      "sample_ids": [
+        "cash_flow_life_cycle_firm_years"
+      ],
+      "status": "extended_partial",
+      "reason": "Fresh pooled Table 5 Model 1 fit verified for FY1989–FY2008 using the assigned current-vintage sources. The native estimation-sample marker confirms original and added firm-years. The requested FY2010 endpoint is not safely attainable: the standard-filtered FY2010 Compustat source contains one ambiguous GVKEY–FYEAR key with two reporting dates, and accepted code has no report-vintage selection rule; FY2010 is already needed as the lead for FY2009. The earlier continuous pooled window through FY2008 uses unique FY2009 leads.",
+      "source_evidence": [
+        "Paper sample period and Table 5 population: physical p. 7; Model 1 Equation 1: physical p. 17; Table 5 and notes: physical pp. 18–19. Assigned mapping is work/work_item.json for this model/result-set pair.",
+        "Assigned predecessor output/reproductions/packages/W3126118385/attempt_05/outcome.json records this fit as executed. Its build.sas lines 53–70 aborts on duplicate standard-filtered GVKEY–FYEAR keys instead of selecting a report vintage.",
+        "Current COMP.FUNDA aggregate source audit at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat: FY1984–FY2009 keys are unique; FY2010 and FY2011 each have one duplicated key (two records with two distinct DATADATE values). Current FY2009 lead boundary from the native build log is 2010-05-31.",
+        "Current COMP.G_EXRT_DLY and COMP.G_EXRT_MTH plus native build log AUDIT FY2008_REQUIRED_LEADS show no missing rates for the screened FY2009 leads; the required non-USD pairs are exact-date.",
+        "Fresh native cell log work/runtime/20261118T113250771437Z/cell_table5_ar.log contains EXT_SAMPLE s2 17713 3410 2008; fresh aggregate table is work/tables/table5_model1_ar.md."
+      ],
+      "original_begin": "1989",
+      "original_end": "2005",
+      "requested_end": "2010",
+      "supported_end": "2008",
+      "last_added": "2008",
+      "count_unit": "firm-year observations in the active Stata regression e(sample)",
+      "original_n": 17713,
+      "added_n": 3410,
+      "artifacts": [
+        "results/tables/table5_model1_ar.md"
+      ],
+      "comparison": "Introduction versus mature total stage effect, in ΔRNOA units: saved accepted attempt_05 lincom = -0.0149150; fresh extended lincom = -0.0201971 (old/new Stata cell logs; the fresh aggregate table at work/tables/table5_model1_ar.md reports the indicator contrast). The paper displays -0.040 for the total introduction effect in Table 5 physical p. 18; its parenthetical test is the contrast against the reference. The replay re-estimates pooled 1st/99th cutoffs over the longer window, as in the accepted pooled-winsorization route.",
+      "native_evidence": {
+        "path": "urn:sha256:424343a5a6ea6589bdd152d2ec7281ba1611b8219e99a74ef4d15605e7f437a8",
+        "sha256": "424343a5a6ea6589bdd152d2ec7281ba1611b8219e99a74ef4d15605e7f437a8",
+        "marker": "EXT_SAMPLE s2 17713 3410 2008"
+      }
+    },
+    {
+      "scope_id": "table5_model1_age_quintiles / table5_table5_model1_age_quintiles_model1",
+      "key": "s3",
+      "label": "CRSP-age quintile Table 5 Model 1, future change in RNOA",
+      "sample_ids": [
+        "cash_flow_life_cycle_firm_years"
+      ],
+      "status": "extended_partial",
+      "reason": "Fresh pooled Table 5 Model 1 fit verified for FY1989–FY2008 using the assigned current-vintage sources. The native estimation-sample marker confirms original and added firm-years. The requested FY2010 endpoint is not safely attainable: the standard-filtered FY2010 Compustat source contains one ambiguous GVKEY–FYEAR key with two reporting dates, and accepted code has no report-vintage selection rule; FY2010 is already needed as the lead for FY2009. The earlier continuous pooled window through FY2008 uses unique FY2009 leads.",
+      "source_evidence": [
+        "Paper sample period and Table 5 population: physical p. 7; Model 1 Equation 1: physical p. 17; Table 5 and notes: physical pp. 18–19. Assigned mapping is work/work_item.json for this model/result-set pair.",
+        "Assigned predecessor output/reproductions/packages/W3126118385/attempt_05/outcome.json records this fit as executed. Its build.sas lines 53–70 aborts on duplicate standard-filtered GVKEY–FYEAR keys instead of selecting a report vintage.",
+        "Current COMP.FUNDA aggregate source audit at ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat: FY1984–FY2009 keys are unique; FY2010 and FY2011 each have one duplicated key (two records with two distinct DATADATE values). Current FY2009 lead boundary from the native build log is 2010-05-31.",
+        "Current COMP.G_EXRT_DLY and COMP.G_EXRT_MTH plus native build log AUDIT FY2008_REQUIRED_LEADS show no missing rates for the screened FY2009 leads; the required non-USD pairs are exact-date.",
+        "Fresh native cell log work/runtime/20261118T113250771437Z/cell_table5_age_quintiles.log contains EXT_SAMPLE s3 26438 4348 2008; fresh aggregate table is work/tables/table5_model1_age_quintiles.md."
+      ],
+      "original_begin": "1989",
+      "original_end": "2005",
+      "requested_end": "2010",
+      "supported_end": "2008",
+      "last_added": "2008",
+      "count_unit": "firm-year observations in the active Stata regression e(sample)",
+      "original_n": 26438,
+      "added_n": 4348,
+      "artifacts": [
+        "results/tables/table5_model1_age_quintiles.md"
+      ],
+      "comparison": "Introduction versus middle-age total stage effect, in ΔRNOA units: saved accepted attempt_05 lincom = -0.0955135; fresh extended lincom = -0.1000546 (old/new Stata cell logs; the fresh aggregate table at work/tables/table5_model1_age_quintiles.md reports the indicator contrast). The paper displays -0.030 for the total introduction effect in Table 5 physical p. 18; its parenthetical test is the contrast against the reference. The replay re-estimates pooled 1st/99th cutoffs over the longer window, as in the accepted pooled-winsorization route.",
+      "native_evidence": {
+        "path": "urn:sha256:7d01806bb7307cff6f6caa8cf880d9860547ee6a3e130a08f9c514009288820b",
+        "sha256": "7d01806bb7307cff6f6caa8cf880d9860547ee6a3e130a08f9c514009288820b",
+        "marker": "EXT_SAMPLE s3 26438 4348 2008"
+      }
+    }
+  ],
+  "outcome": "extended_partial",
+  "counts": {
+    "extended_partial": 3
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ee56-5218-79a3-ad2b-bdf60324bc08",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3126118385.json",
+    "models": "output/models/records/W3126118385.json",
+    "predecessor": "output/reproductions/packages/W3126118385/attempt_05/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3126118385.json"
+  },
+  "input_hashes": {
+    "sample": "95ad444f9c762b7474dac79bf2fd6df85da7bc80491bf1f72c0e4c79249efc77",
+    "models": "55b194989d9f00e85afe7d2b0c8e4df1346573e16df742f3bf4bad39279abf22",
+    "predecessor": "bb4a02c06abd080f20f0951fdaaef3bff0bd260c81c1f7841e970b2f697fc424",
+    "feasibility": "f38a2c0ab52d3419d3cb9fa40636fe84c239f79a0d934742bbc5894334a50b1f"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:db08fcac238e32c7561e5021cd9fd70f6741f54b70c6a3944ff07c3f892f24b0",
+    "sha256": "db08fcac238e32c7561e5021cd9fd70f6741f54b70c6a3944ff07c3f892f24b0",
+    "ok": true,
+    "state_sha256": "c1b0e4c8b8861857ab7c2dc57f988b0be066a6f3d5a0a38dabf7ff24b234b825",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "COMP.G_EXRT_DLY",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_dly.sas7bdat",
+        "bytes": 71630848,
+        "mtime_ns": 1786702513599091034
+      },
+      {
+        "dataset": "COMP.G_EXRT_MTH",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_global/currency/g_exrt_mth.sas7bdat",
+        "bytes": 12976128,
+        "mtime_ns": 1786702513863095070
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.MSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764951124879997292
+      },
+      {
+        "dataset": "CRSP.MSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/msf.sas7bdat",
+        "bytes": 868417536,
+        "mtime_ns": 1764951132644186578
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "21a9e355ff0b65fdb301fe0438a9192e4ee48fa0333c25905f62749cb33963a2",
+      "work/stata.ipynb": "332316c0e5083b5ae359b9b73249216c4277439e0a134c3a2bcf8f3398545dd7",
+      "work/submission.json": "8e56ff86e07123fca1c77fa731fe7571876e6cf9d93eaf61aa8f7a27ed6f54e4"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "977b79140e7bdaea3025bcc56f51b5dda4ddb81868bcd473851aef67d4169ec4",
+      "predecessor": "output/reproductions/packages/W3126118385/attempt_05/build.sas",
+      "predecessor_sha256": "ed87a67c30500d1d1b8281acc7e0e1cadcec39ae0b52708fe887e3bcd7443552",
+      "executed_sha256": "21a9e355ff0b65fdb301fe0438a9192e4ee48fa0333c25905f62749cb33963a2",
+      "historical_predecessor_sha256": "10293c7f8f7cc3cff8cde36ae7cd91505dd393be63a9e43d23f16c9e65b58f44"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "332316c0e5083b5ae359b9b73249216c4277439e0a134c3a2bcf8f3398545dd7",
+      "predecessor": "output/reproductions/packages/W3126118385/attempt_05/stata.ipynb",
+      "predecessor_sha256": "c5ab79d0460e1958383c386eabf00bb0168185f9564b2448f85fd5625035ebf6",
+      "historical_predecessor_sha256": "f6f260ea632955bcdf41cbae815e12e1f6d31bb92c1a52d5c586c5430e805a4b"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "8e56ff86e07123fca1c77fa731fe7571876e6cf9d93eaf61aa8f7a27ed6f54e4",
+      "predecessor": "output/reproductions/packages/W3126118385/attempt_05/submission.json",
+      "predecessor_sha256": "44191e82cc04820c39720ab51e20ace976b0a24fc0c22d6ebfb668eafec00959"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "1210c96efd8f7238eae215d4f7c4e79e4cd6d10e1251c8dbb3f66800d77fd194",
+    "predecessor": "3f8a28256b1ec1ca9230e097228fe9f00622a7807a476a65a566257d88a3b95d",
+    "feasibility": "72e1369afdcfa57c3c3051340e8c6eaddc3f33ca3fae532a429a8ef7a3ee785c"
+  }
+}

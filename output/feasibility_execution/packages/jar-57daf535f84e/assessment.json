@@ -1,0 +1,2086 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-57daf535f84e",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 63/Issue 4/12607 - Limits-to-Political-Capture-Evidence-from-Patent-Grants-Disclosures-and-Litigation/cmz-datasheet-code-identifiers-and-log-files.zip",
+        "sha256": "fe11f8ff341f582de54b8a10e3b78ddac9a07e95acc7169ee96b0ec6d596a8e7"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "b44d1ab3b3d5f005fd9723448386ffc9b76b241e68a80d5269fd5d92afff49a5",
+    "work_item_sha256": "106988fa116a2a31a4635c2fd083676989b6c931d7223d3c89197b967d2d2d3f"
+  },
+  "title": "Limits to Political Capture: Evidence from Patent Grants, Disclosures, and Litigation",
+  "doi": "10.1111/1475-679X.12607",
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Full CMZ_Code.do pipeline: raw-data construction, joins, master-panel creation, descriptive tables and regression results. No analysis-only route is supported by the supplied inventory.",
+      "entry_points": [
+        "CMZ_Code.do"
+      ],
+      "requirement_ids": [
+        "R_PG_PUBLISHED_APP",
+        "R_PG_CROSSWALK",
+        "R_PG_APPLICANTS",
+        "R_PG_INVENTORS",
+        "R_PG_LOCATIONS",
+        "R_CITATIONS",
+        "R_PATEX_APPLICATION",
+        "R_PATEX_TRANSACTIONS",
+        "R_OFFICE_ACTIONS",
+        "R_LITIGATION",
+        "R_PATENT_APPROVAL",
+        "R_KPSS",
+        "R_ZIP_DISTRICT",
+        "R_MIT_HOUSE",
+        "R_MIT_SENATE",
+        "R_MIT_HOUSE_TURNOVER",
+        "R_HUD_ZIP_CITY",
+        "R_STATE10K",
+        "R_CIK_GVKEY",
+        "R_STATE_OP",
+        "R_COMP_FIRM_FACTORS",
+        "R_CRSP_GVKEY_LINK",
+        "R_PG_CLAIMS_FOG",
+        "R_G_CLAIMS_FOG",
+        "R_PG_DESC_FOG",
+        "R_PG_CLAIMS_SCOPE",
+        "R_G_CLAIMS_SCOPE"
+      ],
+      "software_ids": [
+        "S_STATA18",
+        "S_MATCHIT",
+        "S_UNIQUE",
+        "S_WINSOR2",
+        "S_OUTREG2",
+        "S_REGHDFE",
+        "S_FTOOLS"
+      ],
+      "issue_ids": [
+        "I_INPUT_CLOSURE",
+        "I_WORKING_DIRECTORY"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_DOC_WORKFLOW",
+        "E_INVENTORY",
+        "E_PACKAGED_ID",
+        "E_CODE_PATH",
+        "E_CODE_MASTER",
+        "E_ENV"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "R_PG_PUBLISHED_APP",
+      "kind": "data",
+      "description": "PatentsView pg_published_application.tsv is the upstream application history; the do-file filters publication kinds, keeps unique applications and produces Raw_Application.dta, which then feeds applicant and patent linkage.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PG_PUBLISHED_APP",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/patentsview",
+          "description": "Official PatentsView pre-grant product; source map names pg_published_application and the code specifies application identifiers, filing date and publication kind.",
+          "evidence_ids": [
+            "E_PATVIEW",
+            "E_PATVIEW_TABLES",
+            "E_CODE_PG_APP",
+            "E_CODE_PG_APP_OUT"
+          ],
+          "expected_fields": [
+            "application_id",
+            "pgpub_id",
+            "filing_date",
+            "wipo_kind"
+          ],
+          "expected_period": "All publication years used by the code; author documents a November 2023 download."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_PG_CROSSWALK",
+      "kind": "data",
+      "description": "PatentsView pg_granted_pgpubs_crosswalk.tsv links application publication identifiers to current granted patent IDs before applicant and patent information is combined.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PG_CROSSWALK",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/patentsview",
+          "description": "Official PatentsView pre-grant crosswalk product; the code filters patent_id/current_patent_id_flag and merges by application_id.",
+          "evidence_ids": [
+            "E_PATVIEW",
+            "E_PATVIEW_TABLES",
+            "E_CODE_PG_CROSSWALK"
+          ],
+          "expected_fields": [
+            "application_id",
+            "pgpub_id",
+            "patent_id",
+            "current_patent_id_flag"
+          ],
+          "expected_period": "Full crosswalk history required by the application-to-grant linkage."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_PG_APPLICANTS",
+      "kind": "data",
+      "description": "The raw PatentsView applicant table supplies disambiguation-free application names and applicant sequence used to create applicants.dta and names_not_disambig.dta.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PG_APPLICANTS",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/patentsview",
+          "description": "Official PatentsView pre-grant applicant product; the supplied do-file names the source table and fields used in the generated applicant tables.",
+          "evidence_ids": [
+            "E_PATVIEW",
+            "E_PATVIEW_TABLES",
+            "E_CODE_APPLICANTS"
+          ],
+          "expected_fields": [
+            "pgpub_id",
+            "applicant_sequence",
+            "raw_applicant_name_first",
+            "raw_applicant_name_last",
+            "raw_applicant_organization"
+          ],
+          "expected_period": "Full publication history used by the code."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_PG_INVENTORS",
+      "kind": "data",
+      "description": "The raw PatentsView inventor table supplies inventor names and sequence that are appended with applicants into names_not_disambig.dta.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PG_INVENTORS",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/patentsview",
+          "description": "Official PatentsView pre-grant inventor product; source map and code identify the table and generated-name role.",
+          "evidence_ids": [
+            "E_PATVIEW",
+            "E_PATVIEW_TABLES",
+            "E_CODE_APPLICANTS"
+          ],
+          "expected_fields": [
+            "pgpub_id",
+            "inventor_sequence",
+            "raw_inventor_name_first",
+            "raw_inventor_name_last"
+          ],
+          "expected_period": "Full publication history used by the code."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_PG_LOCATIONS",
+      "kind": "data",
+      "description": "PatentsView applicant-location records supply raw city/state fields used to create locations_not_disambig.dta and applicant_locations.dta, which feed application_applicant_info_temp.dta.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PG_LOCATIONS",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/patentsview",
+          "description": "Official PatentsView pre-grant location product; source map names pg_location_not_disambiguated and the do-file specifies the location cleaning/join.",
+          "evidence_ids": [
+            "E_PATVIEW",
+            "E_PATVIEW_TABLES",
+            "E_CODE_LOCATIONS",
+            "E_CODE_APPLICANT_TEMP"
+          ],
+          "expected_fields": [
+            "pgpub_id",
+            "raw_city",
+            "raw_state"
+          ],
+          "expected_period": "Full publication history used by the code."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_CITATIONS",
+      "kind": "data",
+      "description": "Granted-patent citation table g_us_patent_citation.tsv is transformed by patent and citation date into patent citation.dta, capped at 2023.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CITATIONS",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/patentsview",
+          "description": "Official PatentsView granted-patent product and repository source map identify citation tables; the code provides citation_patent_id and citation_date roles.",
+          "evidence_ids": [
+            "E_PATVIEW",
+            "E_PATVIEW_TABLES",
+            "E_CODE_CITATIONS"
+          ],
+          "expected_fields": [
+            "citation_patent_id",
+            "citation_date"
+          ],
+          "expected_period": "Citation dates through 2023, as imposed by the do-file."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_PATEX_APPLICATION",
+      "kind": "data",
+      "description": "application_data.dta supplies application number, examiner name/art unit and USPC class/subclass for examiners_class.dta and later examiner-year regressors.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PATEX_APP",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/research-datasets/patent-examination-research-dataset-public-pair",
+          "description": "USPTO PatEx lists application_data in Stata DTA releases, but the author’s 2023 release/schema and exact examiner fields need confirmation.",
+          "evidence_ids": [
+            "E_PATEX",
+            "E_CODE_PATEX_APP"
+          ],
+          "expected_fields": [
+            "application_number",
+            "examiner_full_name",
+            "examiner_art_unit",
+            "uspc_class",
+            "uspc_subclass"
+          ],
+          "expected_period": "Author-documented September 2023 snapshot; no exact release number is pinned."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PATEX_TRANSACTIONS",
+      "kind": "data",
+      "description": "transactions.dta is used to create first-action dates, meeting.dta and compressed_transactions.dta, later merged by application number.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PATEX_TXN",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/research-datasets/patent-examination-research-dataset-public-pair",
+          "description": "USPTO PatEx lists transactions DTA releases, but the exact author snapshot and application/mail variable aliases must be checked against the do-file consumer.",
+          "evidence_ids": [
+            "E_PATEX",
+            "E_CODE_TRANSACTIONS"
+          ],
+          "expected_period": "Historical Public PAIR transaction history used in the paper."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_OFFICE_ACTIONS",
+      "kind": "data",
+      "description": "office_actions.dta supplies app_id, mail_dt, header_missing and fp_missing inputs used to create missing-form flags.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_OFFICE_ACTIONS",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/research-datasets/office-action-research-dataset-patents",
+          "description": "Official 2017 Office Action Research Dataset includes the office_actions DTA product; the code specifies the expected source fields.",
+          "evidence_ids": [
+            "E_OFFICE_ACTION",
+            "E_CODE_OFFICE_ACTIONS"
+          ],
+          "expected_fields": [
+            "app_id",
+            "mail_dt",
+            "header_missing",
+            "fp_missing"
+          ],
+          "expected_period": "2008 through mid-2017, matching the published release period."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_LITIGATION",
+      "kind": "data",
+      "description": "The 2020 USPTO patents.dta litigation file supplies case_row_id and patent identifiers for patents_litigation.dta and the litigation outcome.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_LITIGATION",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/research-datasets/patent-litigation-docket-reports-data",
+          "description": "USPTO lists 2020 Stata DTA litigation files including patents; code consumes patents.dta and identifies its case/patent fields.",
+          "evidence_ids": [
+            "E_LITIGATION",
+            "E_CODE_LITIGATION"
+          ],
+          "expected_fields": [
+            "case_row_id",
+            "patent"
+          ],
+          "expected_period": "Patent litigation cases filed 1963–2020."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_PATENT_APPROVAL",
+      "kind": "data",
+      "description": "PatentsView granted patent table g_patent supplies patent_id and patent_date used to derive approvaldate.dta.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_PATENT_APPROVAL",
+          "type": "public",
+          "status": "verified",
+          "location": "https://www.uspto.gov/ip-policy/economic-research/patentsview",
+          "description": "Official PatentsView granted-patent product and repository source map identify g_patent; the code uses patent_id and patent_date.",
+          "evidence_ids": [
+            "E_PATVIEW",
+            "E_PATVIEW_TABLES",
+            "E_CODE_PATENT_DATE"
+          ],
+          "expected_fields": [
+            "patent_id",
+            "patent_date"
+          ],
+          "expected_period": "Granted patents used by the master panel; current public data are through 2025."
+        }
+      ],
+      "outcome": "public_acquisition_required"
+    },
+    {
+      "id": "R_KPSS",
+      "kind": "data",
+      "description": "KPSS_2022.dta supplies patent-level innovation value xi_nominal after matching patent_number; the code derives market value from this product.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_KPSS_CURRENT",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://github.com/KPSS2017/Technological-Innovation-Resource-Allocation-and-Growth-Extended-Data",
+          "description": "The linked repository currently exposes 2025 files with patent_num/xi_nominal. That is a versioned candidate, not a verified substitute for the code-named 2022 file.",
+          "evidence_ids": [
+            "E_KPSS",
+            "E_CODE_KPSS",
+            "E_CODE_KPSS_MERGE"
+          ],
+          "expected_fields": [
+            "patent_num",
+            "xi_nominal"
+          ],
+          "expected_period": "Code-named 2022 vintage; current repository page describes data through 2025."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_ZIP_DISTRICT",
+      "kind": "data",
+      "description": "zip district github.dta provides ZIP/state/congressional-district mapping for House committee seniority and turnover constructions; single-member district codes are normalized to 1.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_ZIP_DISTRICT_CURRENT",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://github.com/OpenSourceActivismTech/us-zipcodes-congress/releases",
+          "description": "Current repository release is for the 118th Congress; the study requires a historically compatible ZIP/district mapping for its Congress-year joins.",
+          "evidence_ids": [
+            "E_ZIP_DISTRICT",
+            "E_CODE_ZIP_DISTRICT",
+            "E_CODE_HOUSE"
+          ],
+          "expected_fields": [
+            "zip",
+            "statename",
+            "cd"
+          ],
+          "expected_period": "Historical Congress years required by the turnover and seniority stages; exact range/version unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_MIT_HOUSE",
+      "kind": "data",
+      "description": "House data.xls supplies committee 156 membership, seniority, Congress, district and state data for city-level House judiciary seniority.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_MIT_HOUSE",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://web.mit.edu/17.251/www/data_page.html",
+          "description": "The author page lists House committee Excel data, but exact file/version, worksheet schema and coverage for the study years need confirmation.",
+          "evidence_ids": [
+            "E_MIT",
+            "E_CODE_HOUSE"
+          ],
+          "expected_fields": [
+            "congress",
+            "id",
+            "committeecode",
+            "committeeseniority",
+            "cd",
+            "statename"
+          ],
+          "expected_period": "Congress-year coverage required by the do-file; exact maximum Congress unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_MIT_SENATE",
+      "kind": "data",
+      "description": "Senate data.xls supplies committee 358 membership and tenure information for the Senate seniority and turnover constructions.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_MIT_SENATE",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://web.mit.edu/17.251/www/data_page.html",
+          "description": "The author page lists Senate committee Excel data, but exact file/version, worksheet schema and coverage for the study years need confirmation.",
+          "evidence_ids": [
+            "E_MIT",
+            "E_CODE_SENATE",
+            "E_CODE_SENATE_TURNOVER"
+          ],
+          "expected_period": "Congress-year coverage required by the do-file; exact maximum Congress unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_MIT_HOUSE_TURNOVER",
+      "kind": "data",
+      "description": "House data.xlsx is a separate input to the state/city turnover construction; it is not the same workbook role as House data.xls.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_MIT_HOUSE_TURNOVER",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://web.mit.edu/17.251/www/data_page.html",
+          "description": "The author page is a candidate source for House committee Excel data, but does not establish compatibility with the separate turnover workbook.",
+          "evidence_ids": [
+            "E_MIT",
+            "E_CODE_HOUSE_TURNOVER"
+          ],
+          "expected_period": "Congress/year coverage used by the turnover stage; exact source file vintage unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_HUD_ZIP_CITY",
+      "kind": "data",
+      "description": "zip city.dta provides the ZIP-to-city/state crosswalk used in the House committee and turnover joins.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_HUD_ZIP_CITY",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://www.huduser.gov/portal/datasets/usps_crosswalk.html",
+          "description": "HUD identifies a ZIP crosswalk API, but that does not establish a city/state mapping or the author’s 2023 file/schema.",
+          "evidence_ids": [
+            "E_HUD",
+            "E_CODE_HOUSE"
+          ],
+          "expected_fields": [
+            "zip",
+            "city",
+            "state"
+          ],
+          "expected_period": "Author-documented August 2023 crosswalk; current compatible version unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_STATE10K",
+      "kind": "data",
+      "description": "state_10Kall.csv is an active input to the state-by-CIK filing stage; the importer expects CIK/accession/form/file/report-date fields and reshapeable state-count columns.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_SEC_LOCAL_ROOT",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_PARSED}",
+          "description": "Only exact SEC corpus root metadata is available. This directory is upstream source material, not a compatible state_10Kall.csv route; no filenames or coverage were inspected.",
+          "evidence_ids": [
+            "E_SEC_ROOT",
+            "E_CODE_STATE10K"
+          ],
+          "expected_period": "All 10-K filing years used in the study; exact bounds unresolved."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CIK_GVKEY",
+      "kind": "data",
+      "description": "gvkey-cik.dta links the active CIK/state-filing records to GVKEY and includes source/coname fields used to resolve duplicate firm links.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_STATE_OP",
+      "kind": "data",
+      "description": "gvkey state op.dta supplies Garcia-Norli firm/state/year operations as a supplement when the 10-K-derived state share is missing.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_GARCIA_STATE_OP",
+          "type": "public",
+          "status": "unverified",
+          "location": "https://leeds-faculty.colorado.edu/garcia/page3.html",
+          "description": "The author page identifies geographic-dispersion data for 1994–2008, but exact gvkey/state_op file schema and mapping are unverified.",
+          "evidence_ids": [
+            "E_GARCIA",
+            "E_CODE_STATE_OP"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "statename",
+            "year",
+            "state_op"
+          ],
+          "expected_period": "1994–2008 per the source page; additional study years need another route."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_COMP_FIRM_FACTORS",
+      "kind": "data",
+      "description": "Raw COMP.FUNDA is a compatible source component: its one-row SAS metadata capture confirms gvkey, fyear, datadate, at, prcc_f, prcc_c, csho and ceq. The active Stata consumer instead merges the separately prepared firm factor.dta by gvkey/year, computes size from at, falls back from prcc_f to prcc_c, and computes market-to-book from csho, prcc_f and ceq. The raw fields are supported; fyear-to-year mapping, selection/preparation of firm factor.dta, observation coverage and the full study-year range remain unresolved.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_COMP_FUNDA",
+          "type": "local",
+          "status": "unverified",
+          "location": "funda.sas7bdat",
+          "description": "The complete required product is author-prepared firm factor.dta. Its active consumer merges by gvkey/year, computes size from at, uses prcc_c as a fallback for prcc_f, and computes market-to-book from csho, prcc_f and ceq. The successful one-row SAS metadata probe confirms that raw COMP.FUNDA supplies gvkey, fyear, datadate, at, prcc_f, prcc_c, csho and ceq, so those raw fields are a compatible component. It does not establish fyear-to-year mapping, author selection/preparation, the prepared file or full firm-panel coverage; the complete required route remains unverified.",
+          "expected_fields": [
+            "gvkey",
+            "year",
+            "at",
+            "prcc_f",
+            "prcc_c",
+            "csho",
+            "ceq"
+          ],
+          "expected_period": "All firm-panel GVKEY-years; prepared-file selection and full coverage are unverified.",
+          "evidence_ids": [
+            "E_COMP_FUNDA",
+            "E_CODE_FIRM_FACTORS"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_CRSP_GVKEY_LINK",
+      "kind": "data",
+      "description": "Raw CRSP CCMXPF_LNKHIST metadata confirms the GVKEY/PERMNO link keys, link dates and link attributes listed in its route. The consumer joins applicant-company observations by LPERMNO and checks filing dates against link validity dates. A separate prepared gvkey permno link.dta product also needs the company/ticker fields used for disambiguation; that preparation, field coverage and full history are not established by the one-row raw capture.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "RT_CRSP_LINK",
+          "type": "local",
+          "status": "unverified",
+          "location": "ccmxpf_lnkhist.sas7bdat",
+          "description": "The complete required product is the prepared gvkey permno link.dta mapping. The active consumer joins on LPERMNO, checks filing dates against LINKDT/LINKENDDT, and uses TIC/CONM during company/ticker disambiguation. The successful one-row SAS metadata probe of raw CRSP.CCMXPF_LNKHIST confirms GVKEY, LPERMNO, LINKDT, LINKENDDT, LINKTYPE, LINKPRIM, LIID and LPERMCO, so the raw key/date/link-attribute component is supported; its first sampled row has missing LPERMNO. The capture does not establish the prepared mapping, company/ticker enrichment or complete link history, so the full required route remains unverified.",
+          "expected_fields": [
+            "GVKEY",
+            "LPERMNO",
+            "LINKDT",
+            "LINKENDDT",
+            "LINKTYPE",
+            "LINKPRIM",
+            "LIID",
+            "LPERMCO",
+            "TIC",
+            "CONM"
+          ],
+          "expected_period": "All filing-year links; company/ticker preparation and full historical coverage are unverified.",
+          "evidence_ids": [
+            "E_CRSP_LINK",
+            "E_CODE_FIRM_LINK",
+            "E_CODE_LINK_CONSUMER"
+          ]
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PG_CLAIMS_FOG",
+      "kind": "data",
+      "description": "Annual 2004–2020 pg_claims_*_with_fog_scores.dta files are consumed to construct application-claim word and readability measures; exact producer, score field and model/software version are unresolved.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_G_CLAIMS_FOG",
+      "kind": "data",
+      "description": "Annual 2004–2020 g_claims_*_with_fog_scores.dta files are consumed to construct granted-patent claim measures; exact producer, score field and model/software version are unresolved.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PG_DESC_FOG",
+      "kind": "data",
+      "description": "Annual 2004–2020 pg_detail_desc_text_*_with_fog_scores.dta files are consumed to construct application description readability measures; exact producer, score field and model/software version are unresolved.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_PG_CLAIMS_SCOPE",
+      "kind": "data",
+      "description": "Annual pg_claims_*_scope.dta inputs for 2004–2020 are consumed to calculate independent application-claim scope and counts.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "R_G_CLAIMS_SCOPE",
+      "kind": "data",
+      "description": "Annual g_claims_*_scope.dta inputs for 2004–2020 are consumed to calculate independent granted-patent claim scope.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "S_STATA18",
+      "name": "Stata",
+      "status": "available",
+      "description": "The assessed do-file requires Stata; the original environment probe reports Stata 18 available.",
+      "evidence_ids": [
+        "E_ENV"
+      ]
+    },
+    {
+      "id": "S_MATCHIT",
+      "name": "matchit",
+      "status": "preparation_required",
+      "description": "The do-file invokes matchit for applicant/company-name matching; Stata 18 software helper returned which code 111.",
+      "evidence_ids": [
+        "E_MATCHIT"
+      ]
+    },
+    {
+      "id": "S_UNIQUE",
+      "name": "unique",
+      "status": "available",
+      "description": "The do-file invokes unique for deduplication/counting; the Stata 18 software helper found it.",
+      "evidence_ids": [
+        "E_UNIQUE"
+      ]
+    },
+    {
+      "id": "S_WINSOR2",
+      "name": "winsor2",
+      "status": "preparation_required",
+      "description": "The do-file invokes winsor2 for the market-to-book winsorization; the original environment probe reports it unavailable.",
+      "evidence_ids": [
+        "E_ENV",
+        "E_CODE_FIRM_FACTORS"
+      ]
+    },
+    {
+      "id": "S_OUTREG2",
+      "name": "outreg2",
+      "status": "preparation_required",
+      "description": "The do-file invokes outreg2 to write regression result files; the original environment probe reports it unavailable.",
+      "evidence_ids": [
+        "E_ENV",
+        "E_CODE_MASTER"
+      ]
+    },
+    {
+      "id": "S_REGHDFE",
+      "name": "reghdfe",
+      "status": "available",
+      "description": "reghdfe 6.12.3 is available with ftools 2.49.1. The datasheet warns that release changes may affect syntax and clustered standard errors; author version is unspecified.",
+      "evidence_ids": [
+        "E_ENV",
+        "E_DOC_REGHDFE"
+      ]
+    },
+    {
+      "id": "S_FTOOLS",
+      "name": "ftools",
+      "status": "available",
+      "description": "ftools 2.49.1 is available as a dependency used by reghdfe.",
+      "evidence_ids": [
+        "E_ENV"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "I_INPUT_CLOSURE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "data_dependency_closure",
+      "description": "The full-pipeline closure remains unresolved. Local SAS metadata confirms raw COMP.FUNDA fields and CCM link keys/dates, but not the prepared firm factor.dta, fyear-to-year mapping/selection, company/ticker-enriched gvkey permno link.dta, or complete historical coverage. The active program imports Python-produced state_10Kall.csv; its producer and coverage remain unresolved. The five annual score/scope product families and all other already listed data dependencies retain their separate unresolved status.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_CODE_FOG_READERS",
+        "E_CODE_SCOPE_READERS",
+        "E_CODE_STATE10K",
+        "E_CODE_CIK_LINK",
+        "E_CODE_STATE_OP",
+        "E_CODE_FIRM_FACTORS",
+        "E_DOC_SOURCES_2",
+        "E_COMP_FUNDA",
+        "E_CRSP_LINK",
+        "E_CODE_FIRM_LINK",
+        "E_CODE_LINK_CONSUMER"
+      ]
+    },
+    {
+      "id": "I_WORKING_DIRECTORY",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "configuration",
+      "description": "The active first command changes the working directory, while the program later imports state_10Kall.csv by relative filename. A target-specific working-directory configuration and staged relative inputs are required before any future run.",
+      "severity": "preparation",
+      "evidence_ids": [
+        "E_CODE_PATH",
+        "E_CODE_STATE10K"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_CODE_PATH",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 2,
+      "line_end": 2,
+      "quote": "cd",
+      "description": "The active first command changes the current directory; the target environment must supply its own valid project working directory."
+    },
+    {
+      "id": "E_CODE_PG_APP",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 16,
+      "line_end": 17,
+      "quote": "*pg_published_application.tsv, downloaded from USPTO 11/13/2023, provides the dates and application numbers\nimport delimited \"pg_published_application.tsv\", clear encoding(ISO-8859-1) stringcols(1)",
+      "description": "PatentsView published applications are imported as the raw application table."
+    },
+    {
+      "id": "E_CODE_PG_APP_OUT",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 31,
+      "line_end": 39,
+      "quote": "//If duplicated, keep earliest (there are only 19 of these)\nduplicates tag application_id, gen(dup)\nsort dup application_id filing_date\nby dup application_id: gen n=_n\nkeep if n==1\ndrop n dup\nrename pgpub_id pgpub_id_first\ndrop series_code wipo_kind patent_type published_date filename\nsave \"Raw_Application.dta\",replace",
+      "description": "The application import filters and saves Raw_Application.dta."
+    },
+    {
+      "id": "E_CODE_PG_CROSSWALK",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 42,
+      "line_end": 51,
+      "quote": "*************************Crosswalk between applications and granted patents********************************\n\n*pg_granted_pgpubs_crosswalk.tsv downloaded from USPTO 7/31/2023\nimport delimited \"pg_granted_pgpubs_crosswalk.tsv\", encoding(ISO-8859-1) clear stringcols(1)\n\n//drop if missing patent number\ndrop if patent_id==\"\"\n\n//drop if noncurrent patent number\ndrop if current_patent_id_flag==\"FALSE\"",
+      "description": "The application-to-patent crosswalk is imported and filtered."
+    },
+    {
+      "id": "E_CODE_APPLICANTS",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 72,
+      "line_end": 100,
+      "quote": "import delimited \"pg_inventor_not_disambiguated.tsv\", encoding(ISO-8859-1) clear stringcols(1) //downloaded from USPTO 11/14/2023\ndrop inventor_id\nsort pgpub_id inventor_sequence\n\n//drop errors\ndrop if inventor_sequence==.\ndrop deceased_flag\ncompress pgpub_id\nsave \"inventors_not_disambig.dta\",replace\nclear\n\n*****************************************************Applicants*********************************************************\nimport delimited \"pg_applicant_not_disambiguated.tsv\", clear encoding(ISO-8859-1) stringcols(1) //downloaded from USPTO 11/14/2023\ndrop if applicant_sequence==.\ncompress pgpub_id\n//all designations are US\ndrop applicant_designation\nsave \"applicants.dta\",replace\nclear\n\n********************************************Combine Inventors and Applicants*******************************************\nuse \"applicants.dta\"\nappend using \"inventors_not_disambig.dta\"\n\nreplace raw_applicant_name_first= raw_inventor_name_first if missing(raw_applicant_name_first)\nreplace raw_applicant_name_last= raw_inventor_name_last if missing(raw_applicant_name_last)\n\ndrop raw_inventor_name_last raw_inventor_name_first \nsave \"names_not_disambig.dta\",replace",
+      "description": "Applicant and inventor records are imported and combined into a generated names table."
+    },
+    {
+      "id": "E_CODE_LOCATIONS",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 104,
+      "line_end": 123,
+      "quote": "import delimited \"pg_location_not_disambiguated.tsv\", clear encoding(ISO-8859-1) varnames(1) //downloaded from USPTO 11/14/2023\ndrop if raw_country!=\"US\"\nsave \"locations_not_disambig.dta\",replace\nclear\n\n*********************************************Merge names and locations*************************************************\nuse \"names_not_disambig.dta\",clear\ndrop if missing(rawlocation_id)\nmerge m:1 rawlocation_id using \"locations_not_disambig.dta\"\n//The applicants/inventors that do not match the location file are generally foreign applicants -- drop those that do not match\nkeep if _merge==3\ndrop _merge rawlocation_id location_id\ncompress raw_applicant_organization\nduplicates drop\ngen firm=0\nreplace firm=1 if raw_applicant_name_first==\"\" & raw_applicant_name_last!=\"\"\nreplace firm=1 if raw_applicant_organization!=\"\"\ndrop raw_country\nsort pgpub_id applicant_sequence inventor_sequence\nsave \"applicant_locations.dta\",replace",
+      "description": "Location records are filtered and used to create applicant_locations.dta."
+    },
+    {
+      "id": "E_CODE_FIRM_LINK",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 126,
+      "line_end": 145,
+      "quote": "********************************************Prepare permno file to get firm names**************************************\nuse \"gvkey permno link.dta\",clear //downloaded 8/8/2023 from WRDS\ndrop gvkey linkenddt linkdt lpermco  liid linktype\nduplicates drop\nduplicates tag lpermno, gen(dup)\ndrop if (dup>0 & linkprim!=\"P\")\ndrop dup\nduplicates drop\nduplicates tag lpermno, gen(dup)\ndrop if (strpos(tic,\".\")>0 & dup>0)\ndrop dup\nduplicates tag lpermno, gen(dup)\nsort dup lpermno conm\nby dup lpermno: gen n=_n\ndrop if n>=2\ndrop n dup\nduplicates tag lpermno, gen(dup)\ntabulate dup\ndrop dup\nsave \"permno link.dta\",replace",
+      "description": "The WRDS GVKEY-PERMNO link input is cleaned and saved for later joins."
+    },
+    {
+      "id": "E_CODE_PATEX_APP",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 148,
+      "line_end": 155,
+      "quote": "********************************************Create file with class, subclass, examiner name********************************************\n//Data source: https://www.uspto.gov/ip-policy/economic-research/research-datasets/patent-examination-research-dataset-public-pair\n\nuse \"application_data.dta\",clear //downloaded 9/13/2023 from USPTO\nkeep application_number examiner_full_name examiner_art_unit uspc_class uspc_subclass\ndestring application_number, replace force\ndrop if application_number==.\nsave \"examiners_class.dta\",replace",
+      "description": "Public PAIR application data supplies examiner/class fields."
+    },
+    {
+      "id": "E_CODE_CITATIONS",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 158,
+      "line_end": 180,
+      "quote": "********************************************Create citations file********************************************\nimport delimited \"g_us_patent_citation.tsv\", bindquote(strict) clear //downloaded 3/2/2024 from USPTO\ndrop record_name wipo_kind citation_category citation_sequence\ngen year=substr(citation_date,1,4)\ndrop if year==\"\"\negen count=count(_n),by(citation_patent_id)\nkeep citation_patent_id count year\nduplicates drop\ndestring year,replace\ndrop if year<1889|year>2023\nren citation_patent_id patent_number\nren count citation\n*Use 2023 as benchmark so a patent granted in 2022 will have one year of data, etc.\ngen citationperyear=citation/(2023-year)\ndrop citation\nrename citationperyear citation\nsort patent\n*Some patents have more than one patent year. Most of them are from the early 1900s. Treat these as errors and drop. \ngen check=(pa==pa[_n-1]|pa==pa[_n+1])\ndrop if check==1\ndrop check year\nduplicates drop\nsave \"patent citation.dta\",replace",
+      "description": "Granted-patent citation input is reduced to a citation measure through 2023."
+    },
+    {
+      "id": "E_CODE_APPLICANT_TEMP",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 310,
+      "line_end": 343,
+      "quote": "****************Merge application and patent information with inventor/applicant information using files created above****************\nuse \"Raw_Application.dta\",clear\n\nsort app filing_date pgpub\ndrop if app==app[_n-1]\n\nmerge 1:1 application_id using \"patent_crosswalk.dta\"\n\n//62% of observations from master data have a merge with the crosswalk -- the rest are not granted patents\ndrop if _merge==2\ndrop _merge\ngen granted=patent_id!=\"\"\n//This creates a granted indicator, equal to one if the application is associated with a granted patent\n\nreplace pgpub_id_last= pgpub_id_first if missing(pgpub_id_last)\nrename pgpub_id_first pgpub_id\nrecast str11 pgpub_id\n\nmerge 1:m pgpub_id using \"applicant_locations.dta\"\nkeep if _merge==3\ndrop _merge\nduplicates drop\n\nforeach var of varlist raw_applicant_name_first raw_applicant_name_last raw_applicant_organization raw_city{\n\treplace `var'=upper(`var')\n}\ndrop if raw_city==\"\"|raw_state==\"\"\n\ngsort application_id raw_applicant_name_first raw_applicant_name_last -applicant_sequence\ndrop if application_id==application_id[_n-1]& raw_applicant_name_first== raw_applicant_name_first[_n-1]& raw_applicant_name_last== raw_applicant_name_last[_n-1]& applicant_sequence==.\n\n//note that inventor_sequence has some duplicates (typically because both a corporation and an individual are listed as the first inventor)\negen name_id=group(raw_applicant_name_first raw_applicant_name_last raw_city raw_state)\nsave \"application_applicant_info_temp.dta\", replace",
+      "description": "Raw applications, patent crosswalk and applicant locations produce application_applicant_info_temp.dta."
+    },
+    {
+      "id": "E_CODE_KPSS",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 346,
+      "line_end": 355,
+      "quote": "******************************Use Kogan data to link firms to patents and firms to applicants/inventors***********************\n\n*Updated Kogan data from this site: https://github.com/KPSS2017/Technological-Innovation-Resource-Allocation-and-Growth-Extended-Data/blob/master/Match_patent_cpc_2022.csv.zip\n\nuse \"KPSS_2022.dta\",clear //downloaded 8/11/2023 from github link above\nrename permno lpermno\n\n*Get GVKEY from Computstat so that we can later use firm fundamentals\n*Merge in all lpermno-gvkey combinations -- drop the incorrect matches in the next steps\nmerge m:1 lpermno using \"permno link.dta\"",
+      "description": "The KPSS patent-firm file is an input to the patent and firm linking stage."
+    },
+    {
+      "id": "E_CODE_ZIP_DISTRICT",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 482,
+      "line_end": 487,
+      "quote": "******************************Generate house judiciary committee seniority at city level to be merged with applicant-city********************************\n//source: https://github.com/OpenSourceActivismTech/us-zipcodes-congress\n//Districts in single district states have the district coded as \"0\". Renumber these districts to \"1\" to merge with the Stewart data. States: AK, DE, ND, SD, VT, MT, and WY.//\nuse \"zip district github.dta\",clear //downloaded 1/3/2021\nreplace cd=1 if cd==0\nsave \"zip district github correct.dta\",replace",
+      "description": "The ZIP-to-congressional-district crosswalk is an input corrected for single-district states."
+    },
+    {
+      "id": "E_CODE_HOUSE",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 489,
+      "line_end": 507,
+      "quote": "*Congressional members, their districts, their committee assignments, and their tenure were obtained from Charles Stewart III's website (http://web.mit.edu/17.251/www/data_page.html) \nimport excel \"House data.xls\", sheet(\"Sheet1\") firstrow clear //downloaded 1/3/2021 from Charles Stewart website\nren *,low   \ndrop if statename==\"\"\nkeep if committeecode==156\nduplicates tag congress cd statename, gen(dup)\ndrop if dup>0\ndrop dup\nkeep congress id committeecode committeeseniority cd statename\nduplicates drop\n\n\n***********merge with zip cd files*************\njoinby statename cd using \"zip district github correct.dta\" \nduplicates drop\ndrop if congress==.\n\n//Merge years for each congress (2 years per congress)\njoinby congress using \"congress-year.dta\",unm(m)",
+      "description": "House committee assignment data are filtered and joined to ZIP districts and Congress-year mapping."
+    },
+    {
+      "id": "E_CODE_SENATE",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 553,
+      "line_end": 575,
+      "quote": "************************this file generates the senate judiciary committee seniority at state level to be merged with applicant-state********************************\nimport excel \"Senate data.xls\", sheet(\"Sheet1\") firstrow clear //downloaded 1/3/2021 from Charles Sewart website\nren *,low\ndrop w-y\ndrop notes\nkeep if committeecode==358\n\njoinby congress using \"congress-year.dta\",unm(m)\ndrop _merge\nduplicates drop\ndrop if year==.\n\negen senateseniorityjc=sum(committeesen),by(statename year)\negen senatepeoplejc=count(id),by(statename year)\n\nkeep senate* statename year\nduplicates drop\n\n//Adjusting seniority to measure it at the year level from the congress level provided by Stewart \nreplace senateseniorityjc=senateseniorityjc-1 if mod(year,2)==1\n\nsave \"senate jc.dta\",replace\nclear",
+      "description": "Senate committee assignment data are processed into a generated committee output."
+    },
+    {
+      "id": "E_CODE_HOUSE_TURNOVER",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 577,
+      "line_end": 596,
+      "quote": "*********************************************this file generates House and Senate exogenous turnover cases*******************************\n**********************************************house turnover******************************************\nimport excel \"House data.xlsx\", sheet(\"Sheet1\") firstrow clear\nren *,lower\nsort id congress\n*Create variable for leaving congress\ngen leave=id!=id[_n+1]\negen max=max(leave),by(id congress)\n//keep judiciary committee\nkeep if committeecode==156\nsort id congress\n*Create variable for leaving committee\ngen turnover=id!=id[_n+1]\nkeep if turnover==1\nsort congress\n//keep sample period\ndrop if congress<108|congress>112\n\nkeep statename cd congress committeeseniority max notes name\njoinby congress using \"congress-year.dta\",unm(m)",
+      "description": "A separate House workbook feeds the turnover construction."
+    },
+    {
+      "id": "E_CODE_SENATE_TURNOVER",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 656,
+      "line_end": 680,
+      "quote": "***********senate turnover**********\nimport excel \"Senate data.xls\", sheet(\"Sheet1\") firstrow clear\nren *,lower\nsort id congress\ngen leave=id!=id[_n+1]\negen max=max(leave),by(id congress)\n\nkeep if committeecode==358\nsort id congress\ngen turnover=id!=id[_n+1]\nkeep if turnover==1\nsort congress\ndrop if congress<108|congress>113\n\nkeep congress statename committeeseniority max notes name\njoinby congress using \"congress-year.dta\",unm(m)\ndrop _merge\nduplicates drop\ndrop congress\nsort state year\ndrop if state==state[_n+1]\n//In the Stewart data, the departure year is the year of the election (in November). The following year is the year of the loss of the politician, so we add one year to reflect the year of the actual loss of representation. \nreplace year=year+1\ngen turnover=1\nren committee loss",
+      "description": "Senate data feed the turnover construction."
+    },
+    {
+      "id": "E_CODE_STATE10K",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 825,
+      "line_end": 826,
+      "quote": "****************************************Process the Python output**************************************************\nimport delimited \"state_10Kall.csv\", varnames(1) clear",
+      "description": "An active CSV consumer processes the Python-generated state_10Kall.csv."
+    },
+    {
+      "id": "E_CODE_CIK_LINK",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 885,
+      "line_end": 907,
+      "quote": "*********************************Merge with link table to get gvkeys linked to cik (from WRDS)*************************************\njoinby cik using \"gvkey-cik.dta\",unm(m) //downloaded 5/5/2021\ndrop coname-flag\ndrop if missing(gvkey)\nduplicates drop\nduplicates tag gvkey state year, gen(dup)\n\ngen keep=1 if (source==\"COMPN\")\nsort gvkey state year\nkeep if (dup==0 | dup>0 & keep==1)\n\ndrop dup\nduplicates tag gvkey state year, gen(dup)\nsort dup gvkey state year\n\nsort gvkey state year\nby gvkey state year: egen mean_count=mean(count)\nkeep state year gvkey mean_count\nduplicates drop\n\negen total=sum(mean_count),by(gvkey year)\ngen proportion=mean_count/total\nkeep gvkey year state proportion",
+      "description": "The active state-filing stage joins CIK records to GVKEY using gvkey-cik.dta."
+    },
+    {
+      "id": "E_CODE_STATE_OP",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 918,
+      "line_end": 934,
+      "quote": "//Replace our proportion variable with Garcia Norli if ours is missing\n//Supplemental firm-state operation distribution data from Garcia and Norli (2012) was downloaded on 5/3/2021 (https://leeds-faculty.colorado.edu/garcia/page3.html).\nmerge 1:1 gvkey statename year using \"gvkey state op.dta\"\ndrop _merge\nduplicates drop\nreplace proportion=state_op if proportion==.\n//Set proportion to zero if we have data for the firm-year\nsort gvkey year statename\nby gvkey year: egen count=count(proportion)\ndrop if count!=50\ndrop count\n\nreplace proportion=0 if proportion==.\ndrop state_op\nduplicates drop\n\nsave \"gvkey state op combined.dta\",replace",
+      "description": "The active panel merges the Garcia-Norli gvkey/state/year/state_op product."
+    },
+    {
+      "id": "E_CODE_FOG_READERS",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1160,
+      "line_end": 1196,
+      "quote": "//for both application and patent claims, we generate annual files from 2004 to 2020. Next, we calculate the average Gunning index for each INDEPENDENT claim and combine all the years.\nuse \"pg_claims_2004_with_fog_scores.dta\",clear \nforvalues x=2005/2020{\nappend using \"pg_claims_`x'_with_fog_scores.dta\"\n}\ndrop index claim_sequence claim_number\nkeep if dep==\"missing\"\negen gunning_claim_application=mean(gun),by(pg)\ndrop dep gunning_fog_index\nduplicates drop\nsave \"application ind claim fog.dta\",replace\nclear\n\nuse \"g_claims_2004_with_fog_scores.dta\",clear\nforvalues x=2005/2020{\nappend using \"g_claims_`x'_with_fog_scores.dta\"\n}\ndrop index claim_sequence claim_number exemplary\nkeep if dep==\"missing\"\negen gunning_claim_patent=mean(gun),by(patent)\ndrop dependent gunning_fog_index\nduplicates drop\nsave \"patent ind claim fog.dta\",replace\nclear\n\n//for application and patent description text, we only need to combine all the annual files.\n\nuse \"pg_detail_desc_text_2004_with_fog_scores.dta\",clear\nforvalues x=2005/2020{\nappend using \"pg_detail_desc_text_`x'_with_fog_scores.dta\"\n}\ndrop index\nduplicates drop\nren desc desc_length_application\nren gun desc_fog_application\ndestring pgpub_id,replace\nsave \"application desc fog.dta\",replace",
+      "description": "Annual scored claim and description files are consumed to build summary products."
+    },
+    {
+      "id": "E_CODE_SCOPE_READERS",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1302,
+      "line_end": 1337,
+      "quote": "//combine all the scope annual files\nuse \"pg_claims_2004_scope.dta\",clear \nforvalues x=2005/2020{\nappend using \"pg_claims_`x'_scope.dta\"\ndrop index claim_sequence claim_number\nkeep if dep==\"\"\n}\negen word_claim_application=mean(text),by(pg)\ndrop dep text\nduplicates drop\ndestring pgpub_id,replace\nsave \"application ind claim scope.dta\",replace\nclear\n\nuse \"g_claims_2004_scope.dta\",clear\nforvalues x=2005/2020{\nappend using \"g_claims_`x'_scope.dta\"\ndrop index claim_sequence claim_number exemplary\nkeep if dep==\"\"\n}\negen word_claim_patent=mean(text),by(patent)\ndrop dependent text\nduplicates drop\nsave \"patent ind claim scope.dta\",replace\nclear\n\n\n****************************************generate number of independent claims for each application based on the output files above******************************\nforvalues x=2004/2020{\nuse \"pg_claims_`x'_scope.dta\",clear\nkeep if dependent==\"\"\negen claim=count(index),by(pg)\nkeep pg claim\nduplicates drop\nsave \"claim_`x'.dta\",replace\n}",
+      "description": "Annual application and patent claim-scope files are read; claim counts are generated by year."
+    },
+    {
+      "id": "E_CODE_LITIGATION",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1358,
+      "line_end": 1366,
+      "quote": "***************Litigation Data downloaded on April 2, 2024 from USPTO (https://bulkdata.uspto.gov/data/patent/litigation/2020/patents.dta.zip)*********\nuse \"patents.dta\",clear\nkeep case_row_id patent\nduplicates drop\nren patent patent_id\ndrop if patent==\"\"\nreplace case=1\nduplicates drop\nsave \"patents_litigation.dta\",replace",
+      "description": "The 2020 patent litigation file produces patents_litigation.dta."
+    },
+    {
+      "id": "E_CODE_TRANSACTIONS",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1369,
+      "line_end": 1379,
+      "quote": "*****************transactions between examiners and applicants downloaded from USPTO on 9/13/3023 (https://bulkdata.uspto.gov/data/patent/office/actions/bigdata/2017/office_actions.dta.zip)***********\n\nuse \"transactions.dta\",clear\nkeep if event_code==\"CTNF\"| event_code==\"CTFR\"|event_code==\"A.QU\"\negen mail=min(record),by(application)\nkeep application mail\ndestring application_number, force replace\ndrop if missing(application_number)\nkeep application mail\nduplicates drop\nsave \"first action date.dta\", replace",
+      "description": "The transactions input produces a first-action-date file."
+    },
+    {
+      "id": "E_CODE_OFFICE_ACTIONS",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1381,
+      "line_end": 1398,
+      "quote": "****Office Action detail downloaded from USPTO (https://www.uspto.gov/ip-policy/economic-research/research-datasets/office-action-research-dataset-patents) on 9/13/2023****\n\nuse \"office_actions.dta\",clear\nsort app_id mail_dt\nkeep app_id mail_dt header_missing fp_missing\nduplicates drop\nren app_id application_number\ndestring application_number,replace\negen max_header_missing=max(header_missing),by(application_number)\negen max_fp_missing=max(fp_missing),by(application_number)\ndrop header_missing fp_missing\nren max_header_missing Header_Missing\nren max_fp_missing FP_Missing\nreplace Header=1-Header_Missing\nreplace FP=1-FP_Missing\ndrop mail\nduplicates drop\nsave \"missing form.dta\",replace",
+      "description": "Office-action inputs produce the missing-form summary."
+    },
+    {
+      "id": "E_CODE_PATENT_DATE",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1401,
+      "line_end": 1407,
+      "quote": "*********************patent approval date data downloaded from USPTO (https://s3.amazonaws.com/data.patentsview.org/download/g_patent.tsv.zip) on 4/25/2024*********************\nimport delimited \"g_patent_temp.tsv\",clear\nkeep patent_id patent_date\nduplicates drop\ngen approvaldate=date(patent_date,\"YMD\")\ndrop patent_date\nsave \"approval date.dta\",replace",
+      "description": "PatentsView granted-patent data supply patent approval dates."
+    },
+    {
+      "id": "E_CODE_LINK_CONSUMER",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1460,
+      "line_end": 1475,
+      "quote": "//merge in gvkeys so we can link to Garcia Norli \njoinby lpermno using \"gvkey permno link.dta\"\nquietly unique gvkey, by(pgpub_id name_id lpermno) gen(count)\ngsort pgpub_id name_id lpermno -count\nreplace count=count[_n-1] if count==.&name_id==name_id[_n-1]&year==year[_n-1]\ntabulate count\nsort count pgpub_id name_id lpermno\ngen within=0\nreplace within=1 if (filing_date>linkdt&filing_date<linkenddt)\ndrop if count>0 & within!=1\ndrop count \nquietly unique gvkey, by(pgpub_id name_id lpermno) gen(count)\ngsort pgpub_id name_id lpermno -count\nreplace count=count[_n-1] if count==.&name_id==name_id[_n-1]&year==year[_n-1]\ntabulate count\ndrop count lpermco linktype linkprim linkenddt linkdt liid tic conm",
+      "description": "The GVKEY-PERMNO link is reused with link-date bounds in applicant-company matching."
+    },
+    {
+      "id": "E_CODE_FIRM_FACTORS",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1590,
+      "line_end": 1617,
+      "quote": "*************merge with firm variables from Compustat downloaded from WRDS on 2/11/2021************\nmerge m:1 gvkey year using \"firm factor.dta\"\ndrop if _merge==2\ndrop _merge\n\n*****************************merge with patent application information (class, subclass, examiner)******************************\n\nrename application_id application_number\nmerge m:1 application_number using \"examiners_class.dta\"\ndrop if _merge==2\ndrop _merge\n\negen subyear=group(uspc_subclass year)\negen artyear=group(examiner_art year)\negen examyear=group(examiner_full_name year)\n\n\n***********************merge with application claim data*************************************************\nmerge m:1 application_number using \"application_claim.dta\"\ndrop if _merge==2\ndrop _merge\nreplace claim_count=0 if missing(claim_count)\ngen claimlog=log(1+claim_count)\n\ngen size=log(at)\nreplace prcc_f=prcc_c if prcc_f==.\ngen mb=csho*prcc_f/ceq\nwinsor2 mb,c(1 99) replace",
+      "description": "Firm factor data merge on GVKEY-year and supply fundamental variables."
+    },
+    {
+      "id": "E_CODE_KPSS_MERGE",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1619,
+      "line_end": 1623,
+      "quote": "*************************merge with KPSS data from Kogan et al. 2022 to get the market value of patent****************\nrename patent_id patent_number\nmerge m:1 patent_number using \"KPSS_2022.dta\"\ndrop if _merge==2\ndrop _merge",
+      "description": "KPSS is merged by patent number for patent market value."
+    },
+    {
+      "id": "E_CODE_FOG_MERGES",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1686,
+      "line_end": 1695,
+      "quote": "merge m:1 pgpub_id using \"application desc fog.dta\"\ndrop if _merge==2\ndrop _merge\n\nmerge m:1 patent_id using \"patent ind claim fog.dta\"\ndrop if _merge==2\ndrop _merge\nmerge m:1 pgpub_id using \"application ind claim fog.dta\"\ndrop if _merge==2\ndrop _merge",
+      "description": "Generated FOG products are merged into the master panel."
+    },
+    {
+      "id": "E_CODE_MASTER",
+      "kind": "source",
+      "file": "CMZ_Code.do",
+      "line_begin": 1835,
+      "line_end": 1842,
+      "quote": "save \"CMZ master.dta\", replace\n\n\n***********************************************************summary statistics**********************************************************\n\n***************************************************Table 1 descriptives*******************************************************\nuse \"CMZ master.dta\",clear\ntabstat Patent_Grant Aggregate_Tenure Member_Count Location_Importance Judiciary_Seniority Judiciary_Members Citations Market_Value Size MB Number_of_Applications Claims First_Action_Duration Total_Duration Litigation ln_Actions Meeting NonMissingFP NonMissingHeader Turnover Loss_of_Representation,c(s) s(n mean p25 median p75 sd) varwidth(32)",
+      "description": "CMZ master.dta is generated and then used for descriptive and regression output."
+    },
+    {
+      "id": "E_DOC_SOURCES_1",
+      "kind": "source",
+      "file": "CMZ datasheet.pdf",
+      "line_begin": 13,
+      "line_end": 25,
+      "quote": "•   Patent application data, including the date of the application and application number,\n    downloaded       from     the   USPTO’s       PatentsView     database     on    11/13/2023\n    (pg_published_application.tsv).\n•   Crosswalk between patent applications and granted patents downloaded on 7/31/2023\n    (pg_granted_pgpubs_crosswalk.tsv).\n•   A list of applicants and inventors listed on each application downloaded on 11/14/2023\n    (pg_inventor_not_disambiguated.tsv and pg_applicant_not_disambiguated.tsv).\n•   Applicant’s locations downloaded on 11/14/2023 (pg_location_not_disambiguated.tsv)\n•   A link between firm names, GVKEYs, and PERMNOs (gvkey permno link.dta) was\n    downloaded from the Compustat/CRSP databases in WRDS on 8/8/2023.\n•   Application_data.dta containing information on the applications’ class, subclass, and\n    examiner      name      downloaded      from      https://www.uspto.gov/ip-policy/economic-\n    research/research-datasets/patent-examination-research-dataset-public-pair on 9/13/2023.",
+      "description": "The datasheet describes PatentsView, WRDS link and Public PAIR inputs."
+    },
+    {
+      "id": "E_DOC_SOURCES_2",
+      "kind": "source",
+      "file": "CMZ datasheet.pdf",
+      "line_begin": 26,
+      "line_end": 58,
+      "quote": "•   Citations for granted patents were downloaded from the USPTO’s PatentsView database on\n    3/2/2024 (g_us_patent_citation.tsv).\n•   A link between granted patents and firms was downloaded on 8/11/2023 from Kogan, L.,\n    Papanikolaou, D., Seru, A. and Stoffman, N.’s data repository, which can be found at\n    (https://github.com/KPSS2017/Technological-Innovation-Resource-Allocation-and-\n    Growth-Extended-Data). We also use the file to measure the market value of patents.\n•   A crosswalk between zip code and congressional district downloaded on 1/3/2021\n    (https://github.com/OpenSourceActivismTech/us-zipcodes-congress).\n•   Congressional members, their districts, their committee assignments, and their tenure were\n    obtained            from           Charles           Stewart          III's          website\n    (http://web.mit.edu/17.251/www/data_page.html) on 1/3/2021.\n•   Crosswalk         between      zip     code       and       city     downloaded        from\n    https://www.huduser.gov/apps/public/uspscrosswalk/login? on 8/3/2023.\n•   The text of firm’s 10-Ks were downloaded using WRDS SEC filing search (https://wrds-\n    www.wharton.upenn.edu/text-search/wrds-sec-filing-search/) on 2/22/2024.\n•   Supplemental firm-state operation distribution data from Garcia and Norli (2012) was\n    downloaded on 5/3/2021 (https://leeds-faculty.colorado.edu/garcia/page3.html).\n•   Link between gvkey and cik (gvkey-cik) downloaded on 5/5/2021 from WRDS.\n•   The claim and description text for granted patents and applications was downloaded from\n    the USPTO’s PatentsView database on 8/7/2023.\n\n•   Patent litigation data downloaded from USPTO’s Patent Litigation Docket Reports Data on\n    4/2/2024 (https://bulkdata.uspto.gov/data/patent/litigation/2020/patents.dta.zip).\n•   Transactions.dta containing communications between the applicants and the examiners\n    was      obtained     from    https://www.uspto.gov/ip-policy/economic-research/research-\n    datasets/patent-examination-research-dataset-public-pair on 9/13/2023.\n•   Office      Action     data    (office_actions.dta)      downloaded      9/13/2023   from\n    https://www.uspto.gov/ip-policy/economic-research/research-datasets/office-action-\n    research-dataset-patents\n•   Firm characteristics were downloaded from the Compustat/CRSP databases in WRDS on\n    2/11/2021.\n•   Patent           approval         date          downloaded            from         USPTO\n    (https://s3.amazonaws.com/data.patentsview.org/download/g_patent.tsv.zip) on 4/25/2024.",
+      "description": "The datasheet lists citations, KPSS, congressional, HUD, SEC, Garcia-Norli, FOG/text and approval-date sources."
+    },
+    {
+      "id": "E_DOC_ACCESS",
+      "kind": "source",
+      "file": "CMZ datasheet.pdf",
+      "line_begin": 72,
+      "line_end": 74,
+      "quote": "We do not obtain any proprietary data. The databases described above are accessed and licensed\nthrough the institutions where we worked. These include New York University, University of\nMichigan, and Bocconi University.",
+      "description": "The authors describe institutional access to the licensed databases, not a verified barrier for this environment."
+    },
+    {
+      "id": "E_DOC_WORKFLOW",
+      "kind": "source",
+      "file": "CMZ datasheet.pdf",
+      "line_begin": 98,
+      "line_end": 120,
+      "quote": "All manipulations of the data are done via computer programs and are contained in the\n“CMZ_code.do” file, which also provides the code to download the data.\n\n6. The computer programs (i.e., code) used to (1) convert the raw data into the final dataset used\nin the analysis, (2) to execute the statistical or econometric analysis, and (3) to generate the tables\nor to produce the output used in constructing tables of the manuscript. A brief description that\nenables other researchers to understand and run the code should be provided. The purpose of this\nrequirement is to facilitate replication and to help other researchers understand in detail how the\nraw data were processed, the final sample was formed, variables were defined, outliers were\ntreated, and which commands were used in the analysis, etc. This code or programming is in most\ncircumstances not proprietary. However, we recognize that some parts of the code or data\ngeneration process may be proprietary, including from the authors’ perspective. Therefore, instead\nof disclosing the proprietary portion of the code or program, researchers can provide a detailed\nstep-by-step description of the code or the relevant parts of the code such that it enables other\nresearchers to arrive at the same results that the authors obtained and presented in their manuscript.\nIn such cases, the authors should inform the editors upon initial submission, so that the editors can\nconsider an exemption allowing the step-by-step description. Whenever feasible, authors are\nrequired to provide the identifiers (e.g., CIK, CUSIP) for their final sample. Authors should consult\nour FAQ Sheet on the JAR website for further details.\n\nThe code file, “CMZ_code.do,” includes all the steps for obtaining the raw data, sampling\nprocedures, statistical analysis, and output generation. All the data in our study come from\neither data subscriptions from our schools or publicly-available sources.",
+      "description": "The datasheet identifies CMZ_code.do as the data manipulation, collection, sample and analysis program."
+    },
+    {
+      "id": "E_DOC_REGHDFE",
+      "kind": "source",
+      "file": "CMZ datasheet.pdf",
+      "line_begin": 122,
+      "line_end": 126,
+      "quote": "Note that Stata packages change over time which can cause slight differences in results. For\nexample, the REGHDFE package is regularly updated, and occasionally these updates can have\nmaterial impacts such as: (1) changes to the syntax of a REGHDFE call; (2) changes to the\ncalculations of clustered standard errors. Slight differences are to be expected, depending on\nvintage.",
+      "description": "The datasheet warns that reghdfe version changes can affect syntax and clustered standard errors."
+    },
+    {
+      "id": "E_DOC_IDENTIFIER",
+      "kind": "source",
+      "file": "CMZ datasheet.pdf",
+      "line_begin": 128,
+      "line_end": 129,
+      "quote": "We also provide the final sample identifier file, “CMZ_identifiers.dta,” which contains unique\ncompany identifiers (CUSIP) used in the main analysis.",
+      "description": "The companion identifiers file is described as a unique-company CUSIP list."
+    },
+    {
+      "id": "E_ENV",
+      "kind": "probe",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00",
+      "description": "Original registered environment metadata probe; use this JSON, not its typed viewer projection, for software availability."
+    },
+    {
+      "id": "E_PACKAGED_ID",
+      "kind": "probe",
+      "artifact_path": "probes/packaged_1.json",
+      "sha256": "dfd71bda9a1c9579ea4d205803d0384d25ed7a8136be4894bfc5d0e95bb3939a",
+      "description": "Bounded read-only probe of the supplied CMZ identifiers.dta companion."
+    },
+    {
+      "id": "E_COMP_FUNDA",
+      "kind": "probe",
+      "artifact_path": "probes/sas_funda_probe_001.json",
+      "sha256": "fc9df7013615cb42c40395ec30bc5140fbf23607a3335647a8dd5517b3b1ec70",
+      "description": "One-row read-only SAS probe of catalog-listed COMP.FUNDA; eight requested source columns were present, population/history not verified."
+    },
+    {
+      "id": "E_CRSP_LINK",
+      "kind": "probe",
+      "artifact_path": "probes/sas_crsp_link_probe_001.json",
+      "sha256": "985bc0e0e905b950b5f90884c7f3c553d8775ea017f7c45a153337b85d4297e8",
+      "description": "One-row read-only SAS probe of catalog-listed CRSP.CCMXPF_LNKHIST; link fields were present, first sampled LPERMNO was missing, coverage not verified."
+    },
+    {
+      "id": "E_MATCHIT",
+      "kind": "probe",
+      "artifact_path": "probes/software_matchit_001.json",
+      "sha256": "ffcf109665f21f97b34f61d12a49d10087a8e29a52b94caaf3b62faee29b5a3a",
+      "description": "Frozen software helper result: Stata 18 command matchit was not found (which return code 111)."
+    },
+    {
+      "id": "E_UNIQUE",
+      "kind": "probe",
+      "artifact_path": "probes/software_unique_001.json",
+      "sha256": "a48b527b66754c51015630a041ac1936229c3c52e3d12181421cd07874059e6b",
+      "description": "Frozen software helper result: Stata 18 command unique was found."
+    },
+    {
+      "id": "E_INVENTORY",
+      "kind": "inspection",
+      "artifact_path": "work_item.json",
+      "sha256": "106988fa116a2a31a4635c2fd083676989b6c931d7223d3c89197b967d2d2d3f",
+      "description": "Registered package inventory: datasheet, code, log and one DTA companion; no raw source collection or full analysis panel is registered."
+    },
+    {
+      "id": "E_SEC_ROOT",
+      "kind": "inspection",
+      "artifact_path": "probes/sec_corpus_root_metadata_001.json",
+      "sha256": "635bb7b976765a78a73e97170deed116b2cfc1b49449559c61b867b1000be5e5",
+      "description": "Exact metadata-only check: the approved local SEC exhibits root directories exist; no directory entries, filing contents or coverage were read."
+    },
+    {
+      "id": "E_PATVIEW",
+      "kind": "public",
+      "url": "https://www.uspto.gov/ip-policy/economic-research/patentsview",
+      "checked_at": "2026-11-13",
+      "quote": "Pre-Grant Publication Disambiguated Data; Pre-Grant Publication Long Text Data.",
+      "authority": "official",
+      "description": "USPTO PatentsView page identifies pre-grant and long-text public products and current downloads through 2025."
+    },
+    {
+      "id": "E_PATVIEW_TABLES",
+      "kind": "public",
+      "url": "https://github.com/PatentsView/PatentsView-Code-Examples/blob/main/data-downloads/sources.yml",
+      "checked_at": "2026-11-13",
+      "quote": "pg_published_application; pg_applicant_not_disambiguated; pg_inventor_not_disambiguated; pg_location_not_disambiguated; pg_granted_pgpubs_crosswalk; g_us_patent_citation; pg_claims_{table}; g_claims_{table}; pg_detail_desc_text_{table}; g_patent.",
+      "authority": "repository",
+      "description": "PatentsView repository source map identifies exact table-name families and annual text-table naming."
+    },
+    {
+      "id": "E_PATEX",
+      "kind": "public",
+      "url": "https://www.uspto.gov/ip-policy/economic-research/research-datasets/patent-examination-research-dataset-public-pair",
+      "checked_at": "2026-11-13",
+      "quote": "Each of the files below can be downloaded in either Stata-14 (DTA) or CSV format.",
+      "authority": "official",
+      "description": "USPTO PatEx page lists Public PAIR application_data and transactions products, including DTA releases."
+    },
+    {
+      "id": "E_OFFICE_ACTION",
+      "kind": "public",
+      "url": "https://www.uspto.gov/ip-policy/economic-research/research-datasets/office-action-research-dataset-patents",
+      "checked_at": "2026-11-13",
+      "quote": "This initial release consists of three files derived from 4.4 million office actions mailed during the 2008 to mid-2017 period.",
+      "authority": "official",
+      "description": "USPTO Office Action Research Dataset page lists the 2017 office_actions DTA product and its 2008–mid-2017 coverage."
+    },
+    {
+      "id": "E_LITIGATION",
+      "kind": "public",
+      "url": "https://www.uspto.gov/ip-policy/economic-research/research-datasets/patent-litigation-docket-reports-data",
+      "checked_at": "2026-11-13",
+      "quote": "96,966 unique district court cases filed during the period 1963-2020.",
+      "authority": "official",
+      "description": "USPTO litigation data page lists 2020 DTA files including patents, with cases covering 1963–2020."
+    },
+    {
+      "id": "E_KPSS",
+      "kind": "public",
+      "url": "https://github.com/KPSS2017/Technological-Innovation-Resource-Allocation-and-Growth-Extended-Data",
+      "checked_at": "2026-11-13",
+      "quote": "Patent level panel data from 1926 to 2025.",
+      "authority": "repository",
+      "description": "KPSS repository now lists 2025 files; its data dictionary identifies patent_num and xi_nominal, but that vintage is not the code-named 2022 file."
+    },
+    {
+      "id": "E_MIT",
+      "kind": "public",
+      "url": "https://web.mit.edu/17.251/www/data_page.html",
+      "checked_at": "2026-11-13",
+      "quote": "Records membership on all congressional committees for the 80th to 102nd Congresses.",
+      "authority": "author",
+      "description": "Charles Stewart page lists historical committee data and Excel files for modern House/Senate assignments; page says modern assignments are updated through 2017."
+    },
+    {
+      "id": "E_ZIP_DISTRICT",
+      "kind": "public",
+      "url": "https://github.com/OpenSourceActivismTech/us-zipcodes-congress/releases",
+      "checked_at": "2026-11-13",
+      "quote": "New boundaries for 118th Congress. Updated data source from US Census.",
+      "authority": "repository",
+      "description": "ZIP-to-congressional-district repository release identifies a current 118th-Congress product; it does not establish the study-period historical crosswalk."
+    },
+    {
+      "id": "E_HUD",
+      "kind": "public",
+      "url": "https://www.huduser.gov/portal/datasets/usps_crosswalk.html",
+      "checked_at": "2026-11-13",
+      "quote": "HUD-USPS ZIP Code Crosswalk data are now available via an application programming interface (API).",
+      "authority": "official",
+      "description": "HUD page documents a current ZIP crosswalk API; exact ZIP-to-city role/schema and version are not established for the author input."
+    },
+    {
+      "id": "E_GARCIA",
+      "kind": "public",
+      "url": "https://leeds-faculty.colorado.edu/garcia/page3.html",
+      "checked_at": "2026-11-13",
+      "quote": "Data on geographic dispersion of US firms (1994-2008), datafile (tar.gz with README file).",
+      "authority": "author",
+      "description": "Garcia page identifies a public firm geographic-dispersion dataset with 1994–2008 coverage; schema compatibility remains unverified."
+    }
+  ],
+  "dependency_review": [
+    {
+      "dependency_id": "D0001",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_CODE_APPLICANTS"
+      ],
+      "description": "applicants.dta is produced from the raw PatentsView applicant table and then appended with inventor records."
+    },
+    {
+      "dependency_id": "D0002",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_CODE_APPLICANTS"
+      ],
+      "description": "names_not_disambig.dta is produced by combining the applicant/inventor name records and feeds the later name-location/firm matching stages."
+    },
+    {
+      "dependency_id": "D0003",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_CRSP_GVKEY_LINK"
+      ],
+      "evidence_ids": [
+        "E_CRSP_LINK",
+        "E_CODE_FIRM_LINK",
+        "E_CODE_LINK_CONSUMER"
+      ],
+      "description": "The consumer joins through the prepared gvkey permno link.dta by LPERMNO, checks filing dates against LINKDT/LINKENDDT, and uses company/ticker fields for disambiguation. The successful one-row CCMXPF_LNKHIST capture confirms raw link keys/dates and attributes only; preparation, company/ticker enrichment and full historical coverage remain unresolved."
+    },
+    {
+      "dependency_id": "D0004",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_PATEX_APPLICATION"
+      ],
+      "evidence_ids": [
+        "E_CODE_PATEX_APP"
+      ],
+      "description": "application_data.dta is a required Public PAIR/PatEx source for examiner and application-class fields; it produces examiners_class.dta."
+    },
+    {
+      "dependency_id": "D0005",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_CODE_PG_APP_OUT"
+      ],
+      "description": "Raw_Application.dta is generated from pg_published_application.tsv after application/date filtering and is consumed by applicant/patent-link stages."
+    },
+    {
+      "dependency_id": "D0006",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_KPSS"
+      ],
+      "evidence_ids": [
+        "E_CODE_KPSS_MERGE"
+      ],
+      "description": "KPSS_2022.dta is a required patent-valuation input; the master merge uses the patent key and xi_nominal to derive market value."
+    },
+    {
+      "dependency_id": "D0007",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_CODE_APPLICANT_TEMP"
+      ],
+      "description": "application_applicant_info_temp.dta is generated by joining Raw_Application, the patent crosswalk and applicant_locations.dta."
+    },
+    {
+      "dependency_id": "D0008",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_ZIP_DISTRICT"
+      ],
+      "evidence_ids": [
+        "E_CODE_ZIP_DISTRICT"
+      ],
+      "description": "zip district github.dta is an external ZIP/state/district input used by the committee-city and turnover stages."
+    },
+    {
+      "dependency_id": "D0009",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_PG_CLAIMS_FOG"
+      ],
+      "evidence_ids": [
+        "E_CODE_FOG_READERS"
+      ],
+      "description": "The application-claim FOG family is a direct annual input to the readability summary/merge stage; its producer and scoring contract remain unresolved."
+    },
+    {
+      "dependency_id": "D0010",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_G_CLAIMS_FOG"
+      ],
+      "evidence_ids": [
+        "E_CODE_FOG_READERS"
+      ],
+      "description": "The granted-patent claim FOG family is a direct annual input to the readability summary/merge stage; its producer and scoring contract remain unresolved."
+    },
+    {
+      "dependency_id": "D0011",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_PG_DESC_FOG"
+      ],
+      "evidence_ids": [
+        "E_CODE_FOG_READERS"
+      ],
+      "description": "The application-description FOG family is a direct annual input to the readability summary/merge stage; its producer and scoring contract remain unresolved."
+    },
+    {
+      "dependency_id": "D0012",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_PG_CLAIMS_SCOPE"
+      ],
+      "evidence_ids": [
+        "E_CODE_SCOPE_READERS"
+      ],
+      "description": "pg_claims_2004_scope.dta is the first annual application-scope input; the code appends later years and computes independent-claim summaries."
+    },
+    {
+      "dependency_id": "D0013",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_G_CLAIMS_SCOPE"
+      ],
+      "evidence_ids": [
+        "E_CODE_SCOPE_READERS"
+      ],
+      "description": "g_claims_2004_scope.dta is the first annual granted-patent scope input; the code appends later years and computes patent-scope summaries."
+    },
+    {
+      "dependency_id": "D0014",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_PG_CLAIMS_SCOPE"
+      ],
+      "evidence_ids": [
+        "E_CODE_SCOPE_READERS"
+      ],
+      "description": "The dynamic pg_claims_`x'_scope.dta edge covers the 2005–2020 annual application-scope files read inside the loop."
+    },
+    {
+      "dependency_id": "D0015",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_CODE_SCOPE_READERS"
+      ],
+      "description": "claim_2004.dta is generated within the 2004–2020 loop from pg_claims_*_scope.dta and is appended to produce application_claim.dta."
+    },
+    {
+      "dependency_id": "D0016",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_LITIGATION"
+      ],
+      "evidence_ids": [
+        "E_CODE_LITIGATION"
+      ],
+      "description": "patents.dta is the external 2020 USPTO litigation patent file; it is filtered into patents_litigation.dta and merged to derive litigation."
+    },
+    {
+      "dependency_id": "D0017",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_PATEX_TRANSACTIONS"
+      ],
+      "evidence_ids": [
+        "E_CODE_TRANSACTIONS"
+      ],
+      "description": "transactions.dta is an external PatEx input used for first action dates, meetings and compressed transaction counts, then merged into the master."
+    },
+    {
+      "dependency_id": "D0018",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_OFFICE_ACTIONS"
+      ],
+      "evidence_ids": [
+        "E_CODE_OFFICE_ACTIONS"
+      ],
+      "description": "office_actions.dta is an external 2017 USPTO file used to construct missing-form indicators."
+    },
+    {
+      "dependency_id": "D0019",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "generated",
+      "target_ids": [],
+      "evidence_ids": [
+        "E_CODE_MASTER"
+      ],
+      "description": "CMZ master.dta is produced by the do-file after joins/derived variables and is consumed by descriptive and regression output sections."
+    },
+    {
+      "dependency_id": "D0020",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_MIT_HOUSE"
+      ],
+      "evidence_ids": [
+        "E_CODE_HOUSE"
+      ],
+      "description": "House data.xls is the House committee/seniority input used to create city-level committee seniority."
+    },
+    {
+      "dependency_id": "D0021",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_MIT_SENATE"
+      ],
+      "evidence_ids": [
+        "E_CODE_SENATE"
+      ],
+      "description": "Senate data.xls is the Senate committee/seniority input used to create the Senate seniority and turnover outputs."
+    },
+    {
+      "dependency_id": "D0022",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_MIT_HOUSE_TURNOVER"
+      ],
+      "evidence_ids": [
+        "E_CODE_HOUSE_TURNOVER"
+      ],
+      "description": "House data.xlsx is a separate workbook input to the turnover construction."
+    },
+    {
+      "dependency_id": "D0023",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "disposition": "requirement",
+      "target_ids": [
+        "R_STATE10K"
+      ],
+      "evidence_ids": [
+        "E_CODE_STATE10K"
+      ],
+      "description": "state_10Kall.csv is actively imported as a Python output and reshaped into state/Cik/year counts before the GVKEY link merge."
+    }
+  ],
+  "actions": [
+    {
+      "id": "A_PATVIEW_RAW",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_PG_PUBLISHED_APP",
+        "R_PG_CROSSWALK",
+        "R_PG_APPLICANTS",
+        "R_PG_INVENTORS",
+        "R_PG_LOCATIONS",
+        "R_CITATIONS",
+        "R_PATENT_APPROVAL"
+      ],
+      "kind": "data_acquisition",
+      "description": "Acquire the required PatentsView table products and prepare the files named by the do-file.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_PATVIEW",
+        "E_PATVIEW_TABLES",
+        "E_CODE_PG_APP",
+        "E_CODE_PG_CROSSWALK",
+        "E_CODE_APPLICANTS",
+        "E_CODE_LOCATIONS",
+        "E_CODE_CITATIONS",
+        "E_CODE_PATENT_DATE"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the official PatentsView download catalog and its table mapping to obtain the listed pre-grant, granted-patent, citation and g_patent products.",
+        "Keep the release date and source filenames; convert/rename only where the do-file expects TSV or DTA names.",
+        "Retain required application/grant identifiers and date columns, and preserve the code’s 2023 citation-date cap."
+      ],
+      "validation": [
+        "Run bounded metadata checks on each downloaded source for its required columns and actual year coverage.",
+        "After complete inputs are present, run the author pipeline and check the generated Raw_Application, patent citation, approval-date and applicant-location intermediates."
+      ]
+    },
+    {
+      "id": "A_PATEX",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_PATEX_APPLICATION",
+        "R_PATEX_TRANSACTIONS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Obtain the PatEx/Public PAIR application_data and transactions DTA releases that match the author’s 2023 snapshot.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_PATEX",
+        "E_CODE_PATEX_APP",
+        "E_CODE_TRANSACTIONS",
+        "E_DOC_SOURCES_1"
+      ],
+      "edits": [],
+      "steps": [
+        "Select a USPTO PatEx release whose schema matches the author’s expected application, examiner and transaction fields; do not assume the 2022 release is byte/schema-identical to the author’s 2023 files.",
+        "Prepare DTA files under application_data.dta and transactions.dta in the project data directory.",
+        "Resolve the transaction application/mail key names against the selected release before running the construction stage."
+      ],
+      "validation": [
+        "Inspect each DTA header with a bounded metadata reader and confirm application number, examiner/class, event-code, record and mailing-date fields.",
+        "Confirm required filing-period coverage before constructing examiner and duration measures."
+      ]
+    },
+    {
+      "id": "A_OFFICE_ACTIONS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_OFFICE_ACTIONS"
+      ],
+      "kind": "data_acquisition",
+      "description": "Acquire the official 2017 office_actions DTA file and confirm the code’s expected schema.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_OFFICE_ACTION",
+        "E_CODE_OFFICE_ACTIONS"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the USPTO Office Action Research Dataset 2017 DTA product.",
+        "Place the file as office_actions.dta beside the do-file inputs."
+      ],
+      "validation": [
+        "Check app_id, mail_dt, header_missing and fp_missing with bounded metadata.",
+        "Confirm data for the analysis application years are covered by the 2008–mid-2017 release."
+      ]
+    },
+    {
+      "id": "A_LITIGATION",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_LITIGATION"
+      ],
+      "kind": "data_acquisition",
+      "description": "Acquire the 2020 USPTO litigation patents DTA product used by the code.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_LITIGATION",
+        "E_CODE_LITIGATION"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the 2020 patents DTA file, not an unrelated cases table.",
+        "Place it as patents.dta in the project data directory."
+      ],
+      "validation": [
+        "Check case_row_id and patent identifiers with bounded metadata.",
+        "Confirm the 1963–2020 coverage is adequate for the analysis period before building patents_litigation.dta."
+      ]
+    },
+    {
+      "id": "A_KPSS_VERSION",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_KPSS"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the exact KPSS_2022 vintage used by the code before choosing a current repository release.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_KPSS",
+        "E_CODE_KPSS",
+        "E_CODE_KPSS_MERGE"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain the author-compatible 2022 patent valuation file or have the authors confirm a supported alternative.",
+        "Do not substitute the repository’s 2025 re-estimated values without an explicit version decision.",
+        "Prepare the patent-number key and xi_nominal field expected by the merge."
+      ],
+      "validation": [
+        "Check the selected file’s version, patent-number field, xi_nominal units and year coverage with bounded metadata.",
+        "Confirm merge uniqueness on patent number before running the master build."
+      ]
+    },
+    {
+      "id": "A_ZIP_DISTRICT_HISTORY",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_ZIP_DISTRICT"
+      ],
+      "kind": "clarification",
+      "description": "Obtain a ZIP-to-congressional-district crosswalk compatible with the study’s historical Congress-year joins.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_ZIP_DISTRICT",
+        "E_CODE_ZIP_DISTRICT",
+        "E_CODE_HOUSE"
+      ],
+      "edits": [],
+      "steps": [
+        "Confirm whether the authors’ 2021 crosswalk version remains available and which Congress years it covers.",
+        "If using a current repository release, establish historical district assignments rather than applying 118th-Congress boundaries retrospectively.",
+        "Prepare zip district github.dta with the code’s ZIP, state and cd keys."
+      ],
+      "validation": [
+        "Check ZIP/state/cd fields and year/congress coverage before joining committee members to cities.",
+        "Confirm the single-district-state cd=0 normalization remains applicable to the chosen version."
+      ]
+    },
+    {
+      "id": "A_MIT_COMMITTEE_DATA",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_MIT_HOUSE",
+        "R_MIT_SENATE",
+        "R_MIT_HOUSE_TURNOVER"
+      ],
+      "kind": "clarification",
+      "description": "Obtain and verify the three distinct House/Senate committee workbooks used by seniority and turnover stages.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_MIT",
+        "E_CODE_HOUSE",
+        "E_CODE_SENATE",
+        "E_CODE_HOUSE_TURNOVER",
+        "E_CODE_SENATE_TURNOVER"
+      ],
+      "edits": [],
+      "steps": [
+        "Retrieve the House data.xls, Senate data.xls and separate House data.xlsx products from the author-linked data source or obtain the compatible author copies.",
+        "Confirm committee codes, member identifiers, seniority, district/state fields and sheet names separately for each workbook.",
+        "Confirm congressional coverage against congress-year.dta and the study period; observe the page’s academic-use condition."
+      ],
+      "validation": [
+        "Inspect workbook sheets and headers without refreshing or modifying files.",
+        "Verify each workbook’s required Congress-year range and join keys before building seniority and turnover intermediates."
+      ]
+    },
+    {
+      "id": "A_HUD_CROSSWALK",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_HUD_ZIP_CITY"
+      ],
+      "kind": "clarification",
+      "description": "Confirm a compatible ZIP-to-city/state crosswalk and its current access method.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_HUD",
+        "E_CODE_HOUSE"
+      ],
+      "edits": [],
+      "steps": [
+        "Compare the author’s August 2023 zip city.dta with the HUD product documented on its current page.",
+        "Confirm the selected crosswalk provides the city/state fields required by the House and turnover joins; obtain permitted account/API access only if needed.",
+        "Do not treat an API landing page as proof of the old DTA schema."
+      ],
+      "validation": [
+        "Check ZIP/city/state fields, crosswalk version and coverage before merging committee data."
+      ]
+    },
+    {
+      "id": "A_STATE_OP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_STATE_OP"
+      ],
+      "kind": "data_acquisition",
+      "description": "Acquire or obtain the author-compatible Garcia–Norli state operations file.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_GARCIA",
+        "E_CODE_STATE_OP"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the author page’s geographic-dispersion data product or obtain the processed gvkey state op.dta used by the paper.",
+        "Prepare the gvkey, statename, year and state_op fields; retain the 1994–2008 limitation and identify any later-year coverage separately."
+      ],
+      "validation": [
+        "Check join-key uniqueness and year/state coverage before merging into the firm-state panel."
+      ]
+    },
+    {
+      "id": "A_WRDS_PRODUCTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_CRSP_GVKEY_LINK",
+        "R_COMP_FIRM_FACTORS",
+        "R_CIK_GVKEY"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the WRDS-derived linking and firm-factor files using the catalog candidates and exact code contracts.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_DOC_SOURCES_1",
+        "E_DOC_SOURCES_2",
+        "E_CODE_FIRM_LINK",
+        "E_CODE_CIK_LINK",
+        "E_CODE_FIRM_FACTORS",
+        "E_COMP_FUNDA",
+        "E_CRSP_LINK"
+      ],
+      "edits": [],
+      "steps": [
+        "Use the existing one-row COMP.FUNDA and CRSP.CCMXPF_LNKHIST probes only as candidates; they do not establish period coverage or all expected columns.",
+        "Confirm the author’s gvkey permno link.dta fields, including usable company/ticker identifiers and link dates, and produce the firm factor.dta GVKEY-year panel.",
+        "Obtain gvkey-cik.dta with the source/coname mapping used to resolve duplicate CIK-GVKEY matches.",
+        "Confirm current institutional access or request the exact exports; the catalog results do not establish license/access status."
+      ],
+      "validation": [
+        "Inspect exact fields, keys, dates and required study-year coverage in each exported file with bounded metadata.",
+        "Check link-date joins and GVKEY-year/CIK-key uniqueness before the master build."
+      ]
+    },
+    {
+      "id": "A_STATE10K_HANDOFF",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_STATE10K",
+        "I_INPUT_CLOSURE"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the active state_10Kall.csv input and its compatible producer/output contract.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CODE_STATE10K",
+        "E_CODE_CIK_LINK",
+        "E_SEC_ROOT",
+        "E_DOC_SOURCES_2"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the exact CSV consumed by CMZ_Code.do or the active producer and its run instructions, including the state-column layout and source/period.",
+        "Treat the local SEC corpus roots only as uninspected source-document candidates; do not infer that they contain the author’s processed CSV.",
+        "Keep the block-commented WRDS example separate unless the authors confirm it produces a required current input."
+      ],
+      "validation": [
+        "Check CIK, accession, form, filing-date/report-date and reshapeable state-count columns.",
+        "Confirm state counts, filing years and CIK-GVKEY linkage before generating gvkey-state-year shares."
+      ]
+    },
+    {
+      "id": "A_FOG_AND_SCOPE",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "R_PG_CLAIMS_FOG",
+        "R_G_CLAIMS_FOG",
+        "R_PG_DESC_FOG",
+        "R_PG_CLAIMS_SCOPE",
+        "R_G_CLAIMS_SCOPE",
+        "I_INPUT_CLOSURE"
+      ],
+      "kind": "clarification",
+      "description": "Resolve the active annual scored/scope products and their upstream scoring/model pipeline.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CODE_FOG_READERS",
+        "E_CODE_SCOPE_READERS",
+        "E_CODE_FOG_MERGES",
+        "E_DOC_SOURCES_2"
+      ],
+      "edits": [],
+      "steps": [
+        "Obtain all author-prepared scored and scope DTA files required for 2004–2020, or the exact active producer code for each file family.",
+        "Request each product’s keys, score/count fields, file version and missing-year behavior.",
+        "If scoring requires a model, dictionary, package or other model resource, identify its exact name/version and permitted source; do not infer a resource from the output filenames.",
+        "Keep raw PatentsView claim/description downloads as upstream leads until the producer contract confirms how they create these DTA products."
+      ],
+      "validation": [
+        "Check each annual file’s identifiers, score/scope fields and year coverage with bounded metadata.",
+        "Confirm the scope aggregation keys, duplicate handling and output schema before merging the summaries into CMZ master.dta."
+      ]
+    },
+    {
+      "id": "A_SOFTWARE_SETUP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "S_MATCHIT",
+        "S_WINSOR2",
+        "S_OUTREG2"
+      ],
+      "kind": "software_setup",
+      "description": "Prepare the missing Stata add-ons invoked by the do-file.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_MATCHIT",
+        "E_ENV",
+        "E_CODE_FIRM_LINK",
+        "E_CODE_MASTER"
+      ],
+      "edits": [],
+      "steps": [
+        "Install/configure matchit, winsor2 and outreg2 in the Stata 18 user environment from trusted package sources.",
+        "Record exact installed command versions and verify that Stata resolves each command.",
+        "Confirm the author-intended reghdfe release; the installed reghdfe 6.12.3 and ftools 2.49.1 are available, but the author version is unspecified."
+      ],
+      "validation": [
+        "Re-run the frozen software availability helper for matchit, winsor2 and outreg2 after setup.",
+        "Before interpreting regression output, compare reghdfe version and cluster-SE behavior with the intended author release."
+      ]
+    },
+    {
+      "id": "A_WORKING_DIRECTORY",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_WORKING_DIRECTORY"
+      ],
+      "kind": "configuration",
+      "description": "Configure the target Stata working directory so the active relative inputs resolve, including the Python output imported by the full program.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_CODE_PATH",
+        "E_CODE_STATE10K"
+      ],
+      "edits": [],
+      "steps": [
+        "Set the active current-directory command at CMZ_Code.do line 2 to the target project directory.",
+        "Stage the generated state_10Kall.csv and other required relative inputs in the configured directory before the import at line 826.",
+        "Keep the source's commented directory alternatives inactive unless they are deliberately selected for the target environment."
+      ],
+      "validation": [
+        "Before a future run, confirm the intended Stata working directory resolves the required relative input names, beginning with state_10Kall.csv at line 826.",
+        "Do not start the author program until all unresolved data, preparation, software and access prerequisites are resolved."
+      ]
+    },
+    {
+      "id": "A_CONDITIONAL_NATIVE_RUN",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "I_INPUT_CLOSURE",
+        "I_WORKING_DIRECTORY"
+      ],
+      "kind": "run_procedure",
+      "description": "After every remaining data, preparation, coverage, access and software gap is resolved, execute the complete author program in its native top-to-bottom order. This is conditional future guidance; no author execution is claimed.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CODE_PATH",
+        "E_CODE_STATE10K",
+        "E_CODE_FIRM_FACTORS",
+        "E_CODE_LINK_CONSUMER",
+        "E_CODE_MASTER"
+      ],
+      "edits": [],
+      "steps": [
+        "Resolve every outstanding full-pipeline data and software requirement, including actual producers, preparation/selection, exact annual coverage and required model versions; keep the five annual score/scope families separate.",
+        "Generate and stage the Python-produced state_10Kall.csv before starting the Stata program; the active import is at CMZ_Code.do line 826.",
+        "Configure the target working directory using the active source command at line 2 and ensure all relative inputs resolve there.",
+        "Only after those prerequisites are closed, run the original CMZ_Code.do from its beginning through its final master output in its authored top-to-bottom order; do not skip, cherry-pick or reorder stages."
+      ],
+      "validation": [
+        "Before invocation, verify each required raw and prepared product and software input separately, including the state10K producer/coverage and the company/ticker-enriched link product.",
+        "Run only the full native program after the unresolved prerequisites and issues are closed, then confirm the expected master output is produced."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Only the full_pipeline scope is supported: the supplied Stata do-file includes preparation and result generation, while the package inventory contains no full analysis panel or independent analysis entry point.",
+    "CMZ identifiers.dta is described in the datasheet as a unique-company CUSIP list; its bounded one-row probe exposes only application_number and does not establish a compatible panel or history.",
+    "Code source excerpts were taken only from the coordinator-approved safe view, using exact one-based source lines outside 701–822, 936–1158 and 1200–1300. Producer status inside those excluded ranges remains unresolved; no excerpt or process artifact from those ranges is credited.",
+    "The documented institutional WRDS subscriptions are not evidence of a current access barrier. Local one-row catalog probes are candidates only and do not establish population, year coverage or a compatible author export.",
+    "No author program, model, import, compile, parser, statistical or descriptive trial was run; no package/source files were changed, no dataset was downloaded and execution_verified remains false.",
+    "Earlier source-screen and path-listing incident records remain process-only and are not used as scientific evidence."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "91db34369383813dc6e85f6e73a3e91f972f1527423e35f470b0aa7ade9e01b3",
+    "applied": false
+  }
+}

@@ -1,0 +1,240 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "A Temporal Analysis of Quarterly Earnings Thresholds: Propensities and Valuation Consequences",
+  "doi": "10.2308/accr.2005.80.2.423",
+  "route": "reconstruction",
+  "paper_id": "W2028237122",
+  "years": 5,
+  "sources_checked": [
+    "Resource catalog PROC CONTENTS source catalog and exact SAS7BDAT metadata were checked read-only; all source fields used by the accepted construction were present with the expected date formats.",
+    "IBES.ACTU_EPSUS — ${ACCTREPL_SAS_ROOT}/ibes/actu_epsus.sas7bdat; 1,323,271 rows; created 2026-06-12 23:22:01; modified 2026-07-25 18:47:51; checked fields/formats: PENDS=DATE9, ANNDATS=DATE9, ACTDATS=DATE9, VALUE=double, CURR_ACT=string, USFIRM=1. Current SAS audit covers PENDS years 1984–2007; 2007 source rows=29027, and final retained sample PENDS through 2007-12-31.",
+    "IBES.DETU_EPSUS — ${ACCTREPL_SAS_ROOT}/ibes/detu_epsus.sas7bdat; 34,523,713 rows; created 2026-06-12 22:56:41; modified 2026-07-25 18:54:39; checked fields/formats: FPEDATS=DATE9, ANNDATS=DATE9, ANNTIMS=TIME8, ACTDATS=DATE9, ACTTIMS=TIME8, REVDATS=DATE9, REVTIMS=TIME8, VALUE=double, CURR=string, CURRFL=string, REPORT_CURR=string, ANALYS=Z6, FPI=string, USFIRM=1. Current SAS audit covers FPEDATS years 1985–2007; 2007 rows=879092 ending 2007-12-31; raw ANNDATS in that cohort reaches 10JAN2017.",
+    "CRSP.DSF — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat; 107,663,470 rows; created 2025-01-19 06:25:07; modified 2025-12-06 00:08:51; checked fields/formats: PERMNO=8, DATE=YYMMDDN8, PRC=12.5, CFACSHR=double. Native build used quarter-opening price dates through 2007-10-10 and retained complete three-day CARs for the final retained announcement date 30SEP2008.",
+    "CRSP.DSI — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat; 26,051 rows; created 2025-01-19 06:15:10; modified 2025-12-06 00:11:50; checked fields/formats: DATE=YYMMDDN8, VWRETD=10.6. Native market calendar has 6560 valid-return dates from 03JAN1983 through 31DEC2008.",
+    "CRSP.DSENAMES — ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat; 117,859 rows; created 2025-01-19 06:15:11; modified 2025-12-06 00:06:42; checked fields/formats: PERMNO=8, NCUSIP=8, NAMEDT=YYMMDDN8, NAMEENDT=YYMMDDN8, SICCD=8, SHRCD=2. Native join returned 427,874 unique effective-dated links among 457,034 candidate actuals, with zero ambiguous links."
+  ],
+  "changes": [
+    "Extended the observation clock from calendar years 1985–2002 to 1985–2007, preserving the original start and the 1984 t−4 actual history. Extended ACTU/DETU period-end input bounds through 2007 and the CRSP DSI event calendar through 2008 to retain announcements and the three-day return window.",
+    "Rebuilt historical and added observations together from the five exact accepted local sources. Kept the accepted common firm-quarter screens, .0025 bins, common standardized N=1,000, and direct conventional OLS trend regressions.",
+    "Added aggregate source-date and by-year duplicate diagnostics. Kept the annual year field in the Stata handoff and recorded counts from each active OLS e(sample); the three native lines report 18 original years, 5 added years and last_added=2007.",
+    "The controller produced a 23-row pooled handoff for every calendar year 1985–2007; no gap occurred within the requested extension."
+  ],
+  "limitations": [
+    "The predecessor’s best-effort share-basis approximation remains: split-unadjusted ACTU/DETU values are placed on a CRSP share basis using relative CRSP CFACSHR. The paper’s split-adjusted primary and I/B/E/S-factor sensitivity are not exactly reconstructible from the named inputs; the frozen catalog does not contain historical I/B/E/S per-share price history or a documented Detail Adjustments file. The feasibility record names IBES.ACT_EPSUS while the accepted executable construction names IBES.ACTU_EPSUS; this replay follows the accepted construction and preserves that discrepancy (paper physical p. 15/printed p. 437; Detail History guide physical pp. 16, 18–19).",
+    "The paper names I/B/E/S stock prices but does not specify the field or quarter-opening date convention. The accepted build uses the first available nonzero CRSP close from quarter start through 10 calendar days later as the USD-per-share proxy and does not apply a separate price-age screen.",
+    "For added-period DETU records at the selected analyst/date step, the 2003–2007 source diagnostics show 262 repeated analyst groups, 210 groups with value conflicts and 213 groups with time conflicts. The accepted sort keeps the latest announcement time, then activation/revision timestamps; no provider tie rule is documented, so forecast selection remains approximate.",
+    "ANNDATS is the accepted event-date field. For 2007-period ACTU source rows, 12392 of 29027 rows have ANNDATS different from ACTDATS; the provider notes announcement-date coverage can reflect activation dates. The pooled final sample’s last retained announcement was 2008-09-30, and the DSI market calendar extends to 2008-12-31.",
+    "The source does not fully specify the CAR market index, within-day event timing, exact 1st/99th percentile convention, or trend-regression covariance estimator. The accepted direct OLS route uses conventional standard errors and exports two-sided p-values; the paper’s threshold criterion is one-sided.",
+    "The current pooled build retains 216,367 firm-quarter observations (160,568 in 1985–2002 and 55,799 in 2003–2007), versus 111,485 reported by the paper and 160,659 in the predecessor’s original-period build. The 91-row difference within the original years and the broader sample-size gap remain unresolved; they are not attributed solely to data vintage.",
+    "The local current-vintage source files and date coverage were verified, but the accepted historical identifier and currency mapping remains best-effort: 427,874 of 457,034 current actual rows had one effective-dated PERMNO/SIC link, 29,160 had no PERMNO match and none had an ambiguous link. The build continues to report staged attrition rather than attributing the remaining sample difference to a single cause."
+  ],
+  "analyses": [
+    {
+      "scope_id": "propensity_loss_trend / figure1_loss_trend",
+      "key": "s1",
+      "label": "Avoid quarterly losses: annual standardized-difference OLS trend",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh pooled reconstruction from the current local accepted inputs produced annual loss standardized differences for every year 1985–2007. The active direct OLS estimation sample contains 18 original-period and 5 added-period annual observations, with the last contributing year 2007.",
+      "source_evidence": [
+        "output/samples/records/W2028237122.json, main sample and p. 5: I/B/E/S source period 1984–2002; requiring quarter t−4 gives the original 1985–2002 analysis period.",
+        "output/models/records/W2028237122.json, result_set_id figure1_loss_trend, Figure 1, pp. 7–8: one annual standardized-difference observation per year and OLS slope on calendar year.",
+        "output/reproductions/packages/W2028237122/attempt_02/build.sas, lines 522–571: accepted .0025 binning, N=1,000 standardization and annual statistic construction; current pooled adaptation is work/build.sas.",
+        "output/reproductions/packages/W2028237122/attempt_02/stata.ipynb, cell trend_fits: accepted direct `regress z_loss year`; current per-fit e(sample) counts and EXT_SAMPLE evidence are in work/stata.ipynb and work/runtime/20261118T062739848709Z/cell_trend_fits.log.",
+        "work/runtime/20261118T062739848709Z/build.lst, pp. 3, 9, 17, 22, 25–27: current-vintage source coverage, CRSP market calendar, pooled sample dates and annual periods."
+      ],
+      "original_begin": "1985",
+      "original_end": "2002",
+      "requested_end": "2007",
+      "supported_end": "2007",
+      "last_added": "2007",
+      "count_unit": "annual standardized-difference observation (calendar year)",
+      "original_n": 18,
+      "added_n": 5,
+      "artifacts": [
+        "results/tables/figure1_trend_ols.csv"
+      ],
+      "comparison": "Slope on calendar year, in standardized-difference points per year: saved original run -0.034 (two-sided p=0.274, N=18; output/reproductions/packages/W2028237122/attempt_02/tables/figure1_trend_ols.csv); pooled extension -.0086923 (two-sided p=0.675, N=23; work/tables/figure1_trend_ols.csv).",
+      "native_evidence": {
+        "path": "urn:sha256:5922be610847459743f61ae4d90984855750458070350de60a1e240d267653f8",
+        "sha256": "5922be610847459743f61ae4d90984855750458070350de60a1e240d267653f8",
+        "marker": "EXT_SAMPLE s1 18 5 2007"
+      }
+    },
+    {
+      "scope_id": "propensity_decrease_trend / figure1_decrease_trend",
+      "key": "s2",
+      "label": "Avoid quarterly earnings decreases: annual standardized-difference OLS trend",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh pooled reconstruction from the current local accepted inputs produced annual decrease standardized differences for every year 1985–2007. The active direct OLS estimation sample contains 18 original-period and 5 added-period annual observations, with the last contributing year 2007.",
+      "source_evidence": [
+        "output/samples/records/W2028237122.json, main sample and p. 5: I/B/E/S source period 1984–2002; requiring quarter t−4 gives the original 1985–2002 analysis period.",
+        "output/models/records/W2028237122.json, result_set_id figure1_decrease_trend, Figure 1, pp. 7–8: one annual standardized-difference observation per year and OLS slope on calendar year.",
+        "output/reproductions/packages/W2028237122/attempt_02/build.sas, lines 522–571: accepted .0025 binning, N=1,000 standardization and annual statistic construction; current pooled adaptation is work/build.sas.",
+        "output/reproductions/packages/W2028237122/attempt_02/stata.ipynb, cell trend_fits: accepted direct `regress z_decrease year`; current per-fit e(sample) counts and EXT_SAMPLE evidence are in work/stata.ipynb and work/runtime/20261118T062739848709Z/cell_trend_fits.log.",
+        "work/runtime/20261118T062739848709Z/build.lst, pp. 3, 9, 17, 22, 25–27: current-vintage source coverage, CRSP market calendar, pooled sample dates and annual periods."
+      ],
+      "original_begin": "1985",
+      "original_end": "2002",
+      "requested_end": "2007",
+      "supported_end": "2007",
+      "last_added": "2007",
+      "count_unit": "annual standardized-difference observation (calendar year)",
+      "original_n": 18,
+      "added_n": 5,
+      "artifacts": [
+        "results/tables/figure1_trend_ols.csv"
+      ],
+      "comparison": "Slope on calendar year, in standardized-difference points per year: saved original run -0.096 (two-sided p=0.081, N=18; output/reproductions/packages/W2028237122/attempt_02/tables/figure1_trend_ols.csv); pooled extension -.0029965 (two-sided p=0.937, N=23; work/tables/figure1_trend_ols.csv).",
+      "native_evidence": {
+        "path": "urn:sha256:5922be610847459743f61ae4d90984855750458070350de60a1e240d267653f8",
+        "sha256": "5922be610847459743f61ae4d90984855750458070350de60a1e240d267653f8",
+        "marker": "EXT_SAMPLE s2 18 5 2007"
+      }
+    },
+    {
+      "scope_id": "propensity_surprise_trend / figure1_surprise_trend",
+      "key": "s3",
+      "label": "Avoid negative quarterly earnings surprises: annual standardized-difference OLS trend",
+      "sample_ids": [
+        "main"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh pooled reconstruction from the current local accepted inputs produced annual surprise standardized differences for every year 1985–2007. The active direct OLS estimation sample contains 18 original-period and 5 added-period annual observations, with the last contributing year 2007.",
+      "source_evidence": [
+        "output/samples/records/W2028237122.json, main sample and p. 5: I/B/E/S source period 1984–2002; requiring quarter t−4 gives the original 1985–2002 analysis period.",
+        "output/models/records/W2028237122.json, result_set_id figure1_surprise_trend, Figure 1, pp. 7–8: one annual standardized-difference observation per year and OLS slope on calendar year.",
+        "output/reproductions/packages/W2028237122/attempt_02/build.sas, lines 522–571: accepted .0025 binning, N=1,000 standardization and annual statistic construction; current pooled adaptation is work/build.sas.",
+        "output/reproductions/packages/W2028237122/attempt_02/stata.ipynb, cell trend_fits: accepted direct `regress z_surprise year`; current per-fit e(sample) counts and EXT_SAMPLE evidence are in work/stata.ipynb and work/runtime/20261118T062739848709Z/cell_trend_fits.log.",
+        "work/runtime/20261118T062739848709Z/build.lst, pp. 3, 9, 17, 22, 25–27: current-vintage source coverage, CRSP market calendar, pooled sample dates and annual periods."
+      ],
+      "original_begin": "1985",
+      "original_end": "2002",
+      "requested_end": "2007",
+      "supported_end": "2007",
+      "last_added": "2007",
+      "count_unit": "annual standardized-difference observation (calendar year)",
+      "original_n": 18,
+      "added_n": 5,
+      "artifacts": [
+        "results/tables/figure1_trend_ols.csv"
+      ],
+      "comparison": "Slope on calendar year, in standardized-difference points per year: saved original run -0.976 (two-sided p=0.000, N=18; output/reproductions/packages/W2028237122/attempt_02/tables/figure1_trend_ols.csv); pooled extension -.5692109 (two-sided p=0.000, N=23; work/tables/figure1_trend_ols.csv).",
+      "native_evidence": {
+        "path": "urn:sha256:5922be610847459743f61ae4d90984855750458070350de60a1e240d267653f8",
+        "sha256": "5922be610847459743f61ae4d90984855750458070350de60a1e240d267653f8",
+        "marker": "EXT_SAMPLE s3 18 5 2007"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 3
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed47-e1c8-78b0-ac84-1b0cbd229d46",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W2028237122.json",
+    "models": "output/models/records/W2028237122.json",
+    "predecessor": "output/reproductions/packages/W2028237122/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W2028237122.json"
+  },
+  "input_hashes": {
+    "sample": "8a5c4c227b7732c67096e69c5b86415d56e47c1a63f73de430e4534cfee95732",
+    "models": "cac55bcc6ec89f52d29f3a549f5ee2a06d015d74ddd50fc94a57735edeca6864",
+    "predecessor": "8a29775dedf12c848d6cae59bc6471cad174e9d8401466af1fd2635fa635e6f8",
+    "feasibility": "50f306e68324feb7f24e01a1502b1ccc1860d7e07c791c9ad9ad229f113c97c0"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:5b6a8e13222132fc79d62f5394a1d8d7fb98ccee5154bee38c7d3d351d5bf319",
+    "sha256": "5b6a8e13222132fc79d62f5394a1d8d7fb98ccee5154bee38c7d3d351d5bf319",
+    "ok": true,
+    "state_sha256": "95102093a452f41b0b8acc5721501196e74a9e4580dffa5da3a7b5c127f5802e",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "IBES.ACTU_EPSUS",
+        "path": "${ACCTREPL_SAS_ROOT}/ibes/actu_epsus.sas7bdat",
+        "bytes": 138018816,
+        "mtime_ns": 1784976471729604650
+      },
+      {
+        "dataset": "IBES.DETU_EPSUS",
+        "path": "${ACCTREPL_SAS_ROOT}/ibes/detu_epsus.sas7bdat",
+        "bytes": 4703977472,
+        "mtime_ns": 1784976879087107809
+      },
+      {
+        "dataset": "CRSP.DSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat",
+        "bytes": 17251565568,
+        "mtime_ns": 1764950931963294339
+      },
+      {
+        "dataset": "CRSP.DSI",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsi.sas7bdat",
+        "bytes": 2490368,
+        "mtime_ns": 1764951110019635009
+      },
+      {
+        "dataset": "CRSP.DSENAMES",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsenames.sas7bdat",
+        "bytes": 20971520,
+        "mtime_ns": 1764950802100128761
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "0c6c220216fbb941be6ff7281f0b8d26029ebbfaccab8146ca73d71e27df1e06",
+      "work/stata.ipynb": "6a6c23eb50d37da4e41418b7b9f48192f50aca129bc4cf6a9dd251841cb1f712",
+      "work/submission.json": "233c60f94c90bde5ef4f4b4618757d85458228c4c06875ecd667ddc3e35a31c4"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "1ae66f40b2e54998df7a7cac92ac1de74547b785ed4b12c0d45c54b8cab261de",
+      "predecessor": "output/reproductions/packages/W2028237122/attempt_02/build.sas",
+      "predecessor_sha256": "f96ed073bcfd2a3ef1134312620c5f82e9bc9d4a1cb1b697469ddad4fd2a475a",
+      "executed_sha256": "0c6c220216fbb941be6ff7281f0b8d26029ebbfaccab8146ca73d71e27df1e06",
+      "historical_predecessor_sha256": "89aec2cb89d7766b37a6b8fdfe66843d9fe1abeb1b9c64949c3530ed6e48a190"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "6a6c23eb50d37da4e41418b7b9f48192f50aca129bc4cf6a9dd251841cb1f712",
+      "predecessor": "output/reproductions/packages/W2028237122/attempt_02/stata.ipynb",
+      "predecessor_sha256": "e4399cd6e62afa95629150b18bb75b989cf1427e1dac18b7fb0f87526300cd6f",
+      "historical_predecessor_sha256": "0c44d9b3829584167fcba2c54ea36e65f681a5162a1de5be470d001000c12bd5"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "233c60f94c90bde5ef4f4b4618757d85458228c4c06875ecd667ddc3e35a31c4",
+      "predecessor": "output/reproductions/packages/W2028237122/attempt_02/submission.json",
+      "predecessor_sha256": "8d3ccdd5375196f8ecada0f7af984f91b1b90cfe9669adfa08675c2fe89a19c5"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "1d2c77fa9309915cc5238b1081b055361751ed15d5e4ea21240006daeebe4cc2",
+    "predecessor": "2c3ee661e60dad5ce4a6c2797481aa05606252a3134b710475c86c8e556d0800",
+    "feasibility": "324bc94559651fe4ba9cbd061badc38d23349a866f24227b1603f2be0200b9db"
+  }
+}

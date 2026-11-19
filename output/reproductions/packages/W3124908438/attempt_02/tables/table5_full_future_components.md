@@ -1,0 +1,32 @@
+
+|                      |          (1)    |
+|                      | Annual market-adjusted buy-and-hold return    |
+|                      |          b/p    |
+| -------------------- | :-------------: |
+| Earnings scaled by prior price |        2.183*** |
+|                      |      (0.000)    |
+| Change in earnings scaled by prior price |        0.843*** |
+|                      |      (0.000)    |
+| Return on net operating assets |        0.145*   |
+|                      |      (0.092)    |
+| Change in RNOA       |        0.494*** |
+|                      |      (0.000)    |
+| Profit margin        |       -0.294    |
+|                      |      (0.222)    |
+| Asset turnover       |       -0.003    |
+|                      |      (0.585)    |
+| Change in profit margin |        1.677*** |
+|                      |      (0.000)    |
+| Change in asset turnover |       -0.020    |
+|                      |      (0.103)    |
+| Future RNOA          |        0.268*** |
+|                      |      (0.003)    |
+| Future profit margin |        0.074    |
+|                      |      (0.700)    |
+| Future asset turnover |       -0.003    |
+|                      |      (0.589)    |
+| Constant             |       -0.117**  |
+|                      |      (0.039)    |
+| Observations         |        25469    |
+| *R*<sup>2</sup>      |        0.296    |
+

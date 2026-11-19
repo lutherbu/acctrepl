@@ -1,0 +1,15 @@
+
+|                      |          (1) |              |              |              |              |          (2) |              |              |              |              |          (3) |              |              |              |              |
+|                      |          h=1 |              |              |              |              |          h=2 |              |              |              |              |          h=3 |              |              |              |              |
+|                      |        count |         mean |           sd |           p1 |          p99 |        count |         mean |           sd |           p1 |          p99 |        count |         mean |           sd |           p1 |          p99 |
+| -------------------- | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: |
+| y                    |       305554 |        5.271 |       65.005 |       -6.063 |       69.864 |       278058 |        5.166 |       54.755 |       -6.801 |       78.944 |       253301 |        5.235 |       56.351 |       -7.172 |       82.688 |
+| NegE: negative earnings indicator |       305554 |        0.300 |        0.458 |        0.000 |        1.000 |       278058 |        0.286 |        0.452 |        0.000 |        1.000 |       253301 |        0.272 |        0.445 |        0.000 |        1.000 |
+| E: current earnings per share (USD) |       305554 |        5.533 |       74.145 |       -4.987 |       61.848 |       278058 |        5.555 |       74.307 |       -4.787 |       61.848 |       253301 |        5.572 |       73.941 |       -4.478 |       61.848 |
+| NegE x E: interaction |       305554 |       -0.262 |        1.107 |       -4.987 |        0.000 |       278058 |       -0.247 |        1.076 |       -4.787 |        0.000 |       253301 |       -0.229 |        1.017 |       -4.478 |        0.000 |
+| Unique rows in window union |       305554 |              |              |              |              |       278058 |              |              |              |              |       253301 |              |              |              |              |
+
+Sample is unique GVKEY-by-availability-year input rows appearing in at least one qualifying annual training window for the model and horizon.<br>
+Rows are complete for the model outcome and regressors; N counts unique inputs, not expanded/repeated fit rows or the annual-fit coefficient summary.<br>
+Input statistics reflect the annual 1/99 winsorized construction; union endpoints and counts are logged.
+

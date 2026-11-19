@@ -1,0 +1,1220 @@
+{
+  "schema_version": "1.0",
+  "package_id": "jar-764884cbbbaa",
+  "provenance": {
+    "import_manifest_sha256": "376918f3b67cc4fe85ebeefa4950c9569ae5d1842307862fec43eaf0ff8b6b0d",
+    "package_files": [
+      {
+        "path": "JAR-Volume 55/Issue 4/12169 - CEO-Inside-Debt-Incentives-and-Corporate-Tax-Sheltering/chs-datasheet-and-code.zip",
+        "sha256": "baa2a0b50eea0ee08ca566fe49572881c42df1bf3701fa70e13fc9922fca5800"
+      }
+    ],
+    "resource_catalog_sha256": "4fbed8b9668ba690dbce68bcbae08bbe4f3780cf4051a1d3f9fc11c43d336a27",
+    "skill_sha256": "6c5af1b6f2bb7e97911c10d87c9b1e6de7b02afb5c6fe5ea87197e5415ede33d",
+    "work_item_sha256": "7307de08208f6521ff99d621137a1983ae86c749ee94e7c4802b757f89576352"
+  },
+  "title": "CEO Inside Debt Incentives and Corporate Tax Sheltering",
+  "doi": "10.1111/1475-679X.12169",
+  "requirements": [
+    {
+      "id": "REQ_TAX_AGGRESSIVE",
+      "kind": "data",
+      "description": "The prepared annual tax.aggressive SAS panel read at the start of CHS_Codes.pdf, with Compustat/CRSP fields, gvkey/fyear/datadate identifiers and lag inputs needed for the tax-sheltering and control measures. The code forms rolling 48-month ETR/ROA statistics from this panel and requires at least four observations per gvkey/fyear group; the exact earliest input date is not specified.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_TAX_AGGRESSIVE",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Author-prepared SAS table tax.aggressive",
+          "description": "The code consumes tax.aggressive but does not create it in the supplied PDF. No matching SAS data or upstream producer/library setup is in the package; the datasheet says this table was constructed from Compustat and CRSP. The supplied ETR step uses a trailing 48-month datadate window and requires at least four joined observations; ROA1 uses lagged assets. Authors must confirm exact earliest date coverage and prior-asset/other lag inputs.",
+          "evidence_ids": [
+            "E_CODE_TAX_AGGRESSIVE",
+            "E_PRIMARY_SOURCES",
+            "E_SAS_PROGRAM_CLAIM",
+            "E_PACKAGE_INVENTORY",
+            "E_CODE_ETR_WINDOW",
+            "E_CODE_ETR_COUNT",
+            "E_CODE_ROA1",
+            "E_CODE_LAG_ASSETS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "sich",
+            "at",
+            "OANCF",
+            "tlcf",
+            "pi",
+            "spi",
+            "txpd",
+            "sale",
+            "rect",
+            "txfed",
+            "txfo",
+            "txdi",
+            "txs",
+            "txo",
+            "csho",
+            "prcc_f",
+            "ceq",
+            "dltt",
+            "dlc",
+            "lpermno",
+            "ret",
+            "datadate"
+          ],
+          "expected_period": "Fiscal-year rows for the 2006–2013 analysis sample plus the preceding observations needed for each trailing 48-month ETR/ROA window (at least four observations per gvkey/fyear group) and adjacent prior-year assets/other lag variables; exact earliest required date/year must be confirmed by the authors."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_COMPUSTAT",
+      "kind": "data",
+      "description": "Compustat Fundamentals Annual data used to construct tax.aggressive and the study’s financial-statement controls for the 2006–2013 sample, including the trailing 48-month ETR/ROA window and prior-asset/other lag inputs. The exact earliest required date is not established by the package.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_COMPUSTAT_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat (COMP.FUNDA)",
+          "description": "The local COMP.FUNDA source file is readable and includes many code-relevant columns, but the reused bounded probe only sampled the first ten rows (1961–1970). It does not establish coverage of the sample-specific trailing 48-month ETR window, the at-least-four-observation groups, lagged assets, or the missing upstream construction of tax.aggressive; exact earliest coverage remains for author confirmation.",
+          "evidence_ids": [
+            "E_COMP_FUNDAMENTALS_PROBE",
+            "E_CATALOG_PRIMARY",
+            "E_CODE_ETR_WINDOW",
+            "E_CODE_ETR_COUNT",
+            "E_CODE_ROA1",
+            "E_CODE_LAG_ASSETS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "datadate",
+            "sich",
+            "at",
+            "sale",
+            "pi",
+            "spi",
+            "txpd",
+            "txt",
+            "txfed",
+            "txfo",
+            "tlcf",
+            "intan",
+            "csho",
+            "prcc_f",
+            "ceq",
+            "dltt",
+            "xrd",
+            "capx",
+            "pifo",
+            "ppent"
+          ],
+          "expected_period": "Coverage for the 2006–2013 analysis sample plus all observations needed by each trailing 48-month ETR/ROA window (at least four observations per gvkey/fyear group) and adjacent prior-year assets/other lag inputs; confirm the exact earliest date/year with the authors."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_CRSP",
+      "kind": "data",
+      "description": "CRSP stock-return records used to construct stock-return measures, including the data sheet’s σ(RET) measure, merged into the Compustat annual panel for fiscal years 2006–2013. The upstream STD_RET return-window definition and required earliest history are not supplied.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_CRSP_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat (CRSP.DSF)",
+          "description": "The exact local daily stock file is readable and includes PERMNO, DATE and RET, but the reused one-row probe does not establish coverage, identifier linkage, annual return construction, or compatibility with lpermno/std_ret. The data sheet attributes σ(RET) to Compustat and CRSP, while the embedded program only names std_ret in its winsorization list; the upstream return-window definition and exact earliest history remain unverified.",
+          "evidence_ids": [
+            "E_CRSP_DSF_PROBE",
+            "E_CATALOG_LOOKUPS",
+            "E_CRSP_STD_RET_SOURCE",
+            "E_CODE_STD_RET"
+          ],
+          "expected_fields": [
+            "permno",
+            "date",
+            "ret"
+          ],
+          "expected_period": "Daily observations needed to produce the 2006–2013 sample’s stock-return measures, including STD_RET; the return-window definition and exact earliest history are unspecified and must be confirmed by the authors."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_EXECUCOMP",
+      "kind": "data",
+      "description": "ExecuComp compensation and age data needed for author-prepared comp.CEOCFOcomp and comp.exeage tables, including CEO/CFO inside debt, equity measures and executive identifiers for fiscal years 2006–2013.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_EXECUCOMP_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "Local ExecuComp candidate EXECCOMP.ANNCOMP under ${ACCTREPL_SAS_ROOT}",
+          "description": "The frozen catalog lists an ExecuComp aggregate-level candidate, but no bounded probe establishes the custom inside-debt or executive-age fields and period needed by the code.",
+          "evidence_ids": [
+            "E_CODE_CEO_INPUT",
+            "E_CODE_EXEC_AGE",
+            "E_EXECUCOMP_SCOPE",
+            "E_CATALOG_PRIMARY"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "year",
+            "execid",
+            "insidedebt",
+            "debt_equity3",
+            "equity_den3",
+            "total_curr",
+            "vega_equity",
+            "delta_equity",
+            "age"
+          ],
+          "expected_period": "2006–2013"
+        },
+        {
+          "id": "ROUTE_EXECUCOMP_AUTHOR",
+          "type": "public",
+          "status": "unverified",
+          "location": "Author data page at https://sites.temple.edu/lnaveen/data/",
+          "description": "The cited author site publishes a compensation dataset and SAS program for delta, vega and firm-related wealth; it does not establish the custom inside-debt and age fields required here or substitute for the author’s ExecuComp construction.",
+          "evidence_ids": [
+            "E_TEMPLE_COMP_PUBLIC",
+            "E_EXECUCOMP_SCOPE"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "year",
+            "co_per_rol",
+            "delta",
+            "vega",
+            "firm-related wealth"
+          ],
+          "expected_period": "Author page states 1992–2022 for the posted compensation dataset"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_LISOWSKY",
+      "kind": "data",
+      "description": "The Lisowsky tax-shelter score data joined by gvkey and fyear, including tsscore, used to form the primary sample.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_LISOWSKY_SCORE",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Tax-shelter score dataset confidentially shared with the authors by an anonymous referee",
+          "description": "The source is explicitly described as confidentially shared with the authors; no data file or generally available compatible route is supplied. Do not infer a public license or independently rebuild the score.",
+          "evidence_ids": [
+            "E_CODE_LISOWSKY",
+            "E_LISOWSKY_CONFIDENTIAL",
+            "E_PRIMARY_SOURCES"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "fyear",
+            "tsscore"
+          ],
+          "expected_period": "Fiscal years 2006–2013"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_FORTUNE_BESTEMP",
+      "kind": "data",
+      "description": "Fortune Best Companies lists transformed into the google.bestemp table with company ticker, year and rank/standing fields used in the best-employer indicator.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_FORTUNE_LISTS",
+          "type": "public",
+          "status": "unverified",
+          "location": "Author-listed Fortune archive pages for 2006–2013",
+          "description": "The datasheet gives archived Fortune URLs and states the lists were downloaded; current page availability, ticker mapping and compatibility with google.bestemp fields are unverified.",
+          "evidence_ids": [
+            "E_FORTUNE_SOURCE",
+            "E_FORTUNE_ARCHIVE_URLS",
+            "E_CODE_FORTUNE"
+          ],
+          "expected_fields": [
+            "ticker_symbol",
+            "year",
+            "ranking_state"
+          ],
+          "expected_period": "2006–2013"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_PENSION_FREEZE",
+      "kind": "data",
+      "description": "The author-coded comp.pensionfreeze table with gvkey, year and frozen indicator, derived from Form 5500 filings.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_FORM5500_PUBLIC",
+          "type": "public",
+          "status": "unverified",
+          "location": "U.S. Department of Labor annual Form 5500 datasets and filings",
+          "description": "DOL provides annual Form 5500 data and filings, but the authors’ pension-freeze definition, plan/filer identifiers, source schedule and coding procedure are not supplied, so the public raw forms are not yet a compatible route to comp.pensionfreeze.",
+          "evidence_ids": [
+            "E_FORM5500_SOURCE",
+            "E_DOL_5500_PUBLIC",
+            "E_CODE_FREEZE"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "year",
+            "frozen"
+          ],
+          "expected_period": "Plan/filer observations supporting the 2006–2013 study sample"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_SAY_ON_PAY",
+      "kind": "data",
+      "description": "The author-coded comp.voting records used for the say-on-pay variable, filtered to Advisory Vote to Ratify and linked by ticker and meeting date.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_SEC_PUBLIC",
+          "type": "public",
+          "status": "unverified",
+          "location": "SEC EDGAR Form 8-K, Item 5.07 filings",
+          "description": "SEC EDGAR publicly provides company filings and identifies Form 8-K Item 5.07 for vote matters. The exact company list, relevant filing periods, matching keys and author-coded vote table are not supplied.",
+          "evidence_ids": [
+            "E_SEC_VOTING_SOURCE",
+            "E_SEC_EDGAR_PUBLIC",
+            "E_SEC_FORM8K_PUBLIC",
+            "E_CODE_VOTING"
+          ],
+          "expected_fields": [
+            "ticker",
+            "meetingdate",
+            "agendageneraldesc",
+            "votedfor",
+            "voteresult"
+          ],
+          "expected_period": "2006–2013"
+        },
+        {
+          "id": "ROUTE_SEC_LOCAL",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SEC_PARSED} and ${ACCTREPL_SEC_RAW}",
+          "description": "Same-run exact-path probes confirm the documented local SEC roots exist; they did not enumerate files or verify 8-K, proxy or issuer coverage. The local roots are a discovery candidate pending author identifiers and bounded compatibility checks.",
+          "evidence_ids": [
+            "E_SEC_PARSED_ROOT",
+            "E_SEC_RAW_ROOT",
+            "E_SEC_VOTING_SOURCE"
+          ],
+          "expected_fields": [
+            "filing identifier",
+            "filer CIK",
+            "form type",
+            "filing date",
+            "Item 5.07 text"
+          ],
+          "expected_period": "2006–2013; specific filer and filing coverage unverified"
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_TAX_PENSION",
+      "kind": "data",
+      "description": "The tax.pension table joined by gvkey and datadate, supplying pbpro and pplao for plan_size and plan_asset in the embedded code. A frozen-catalog local Compustat annual-pension candidate lists these fields and keys, but its coverage and compatibility with the author table remain unknown.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_TAX_PENSION",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Author-provided SAS table tax.pension",
+          "description": "The code requires author-prepared tax.pension fields PBPRO and PPLAO joined by GVKEY and DATADATE. The frozen catalog does not identify the custom tax.pension alias, but the exact field lookup found COMP.ACO_PNFNDA (Pension Annual Item) with GVKEY, DATADATE, PBPRO and PPLAO. That catalog candidate does not establish row/date coverage, readability, item mapping or equivalence to the author table; this is not assumed to be the separately described SERP cash-out variable.",
+          "evidence_ids": [
+            "E_CODE_TAX_PENSION",
+            "E_SERP_SOURCE",
+            "E_CATALOG_LOOKUPS",
+            "E_CATALOG_PENSION_FIELDS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "pbpro",
+            "pplao"
+          ],
+          "expected_period": "Fiscal dates matching 2006–2013"
+        },
+        {
+          "id": "ROUTE_COMP_PENSION_FIELDS",
+          "type": "local",
+          "status": "unverified",
+          "location": "${ACCTREPL_SAS_ROOT}/comp/d_na/pension/aco_pnfnda.sas7bdat (COMP.ACO_PNFNDA)",
+          "description": "Frozen catalog metadata identifies the Compustat Pension Annual Item candidate with GVKEY, DATADATE, PBPRO (Pension - Projected Benefit Obligation) and PPLAO (Pension Plan Assets). The catalog lists 155,238 observations, but no row probe establishes actual coverage, readability, units/item definitions as used by the authors, or compatibility with the custom tax.pension table.",
+          "evidence_ids": [
+            "E_CATALOG_PENSION_FIELDS"
+          ],
+          "expected_fields": [
+            "gvkey",
+            "datadate",
+            "pbpro",
+            "pplao"
+          ],
+          "expected_period": "Fiscal dates matching 2006–2013; actual date coverage and author-table compatibility remain unverified."
+        }
+      ],
+      "outcome": "undetermined"
+    },
+    {
+      "id": "REQ_AUXILIARY_ANALYSIS_INPUTS",
+      "kind": "data",
+      "description": "Author-documented additional study inputs for S&P bond ratings, private-debt covenant violation probabilities, Audit Analytics tax-footnote IRS fines, GMI/proxy clawback provisions, SERP cash-out provisions, and RiskMetrics board measures; the package does not map these inputs to tables or code branches.",
+      "scopes": [
+        "full_pipeline"
+      ],
+      "routes": [
+        {
+          "id": "ROUTE_AUXILIARY_INPUTS",
+          "type": "restricted",
+          "status": "unverified",
+          "location": "Author-prepared commercial and hand-collected supplemental datasets listed in the data sheet",
+          "description": "The data sheet confirms use of these sources, but the supplied PDF does not identify their model/table mapping or provide the required data. Catalog hits for Audit Analytics, S&P ratings and RiskMetrics are discovery candidates only; the GMI, covenant and hand-coded sources remain unverified.",
+          "evidence_ids": [
+            "E_SNP_SOURCE",
+            "E_COVENANT_SOURCE",
+            "E_AUDIT_SOURCE",
+            "E_GMI_SOURCE",
+            "E_SERP_SOURCE",
+            "E_RISKMETRICS_SOURCE",
+            "E_CATALOG_AUX",
+            "E_PACKAGE_INVENTORY"
+          ],
+          "expected_period": "Study observations generally cover 2006–2013; exact source-specific windows and fields require author mapping"
+        }
+      ],
+      "outcome": "undetermined"
+    }
+  ],
+  "software": [
+    {
+      "id": "SW_SAS",
+      "name": "SAS",
+      "status": "unverified",
+      "description": "The authors specify SAS. A local SAS 9.4 executable is present, but the assigned environment probe failed at TKELS initialization and states entitlement cannot be inferred; author SAS version is not stated.",
+      "evidence_ids": [
+        "E_SAS_ENV",
+        "E_SAS_PROGRAM_CLAIM"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "ISSUE_LIBRARY_SETUP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_library_setup_and_inputs",
+      "description": "The PDF code assumes pre-existing SAS libraries tax, comp, and google, and reads custom source tables including tax.aggressive, tax.lisowsky, google.bestemp, comp.pensionfreeze, comp.voting, tax.pension, comp.CEOCFOcomp and comp.exeage. No LIBNAME assignments, input files or table-generation setup are supplied.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_CODE_TAX_AGGRESSIVE",
+        "E_CODE_FORTUNE",
+        "E_CODE_VOTING",
+        "E_CODE_LISOWSKY",
+        "E_CODE_FREEZE",
+        "E_CODE_TAX_PENSION",
+        "E_CODE_CEO_INPUT",
+        "E_CODE_EXEC_AGE",
+        "E_PACKAGE_INVENTORY"
+      ]
+    },
+    {
+      "id": "ISSUE_UPSTREAM_INPUT",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "missing_upstream_producer",
+      "description": "CHS_Codes.pdf begins by reading tax.aggressive and joins tax.lisowsky, but its code does not construct the Compustat/CRSP annual input or the confidential score table. The data sheet says the SAS file merges Compustat, CRSP and ExecuComp with Lisowsky scores to generate the primary sample; the exact earlier producer and complete input mapping are absent.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_CODE_TAX_AGGRESSIVE",
+        "E_CODE_LISOWSKY",
+        "E_SAS_PROGRAM_CLAIM",
+        "E_PRIMARY_SOURCES",
+        "E_CODE_ETR_WINDOW",
+        "E_CODE_ETR_COUNT",
+        "E_CODE_ROA1",
+        "E_CODE_LAG_ASSETS"
+      ]
+    },
+    {
+      "id": "ISSUE_MAIN_ANALYSIS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "incomplete_analysis_workflow",
+      "description": "The PDF contains genuine SAS DATA/PROC SQL/PROC REG/macro code for deriving inputs and auxiliary discretionary measures, but its program ends after winsorizing dataset all. No complete paper-level outcome regression/output workflow is supplied.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_CODE_AUX_REG",
+        "E_CODE_FINAL_SAMPLE",
+        "E_CODE_WINSOR_END",
+        "E_PACKAGE_INVENTORY"
+      ]
+    },
+    {
+      "id": "ISSUE_AUXILIARY_MAP",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "unmapped_documented_inputs",
+      "description": "The data sheet lists further source datasets used for the study, while the supplied code does not map their inputs to analysis tables or identify alternative/optional branches. Their role cannot be reconstructed from source names alone.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_SNP_SOURCE",
+        "E_COVENANT_SOURCE",
+        "E_AUDIT_SOURCE",
+        "E_GMI_SOURCE",
+        "E_SERP_SOURCE",
+        "E_RISKMETRICS_SOURCE",
+        "E_PACKAGE_INVENTORY"
+      ]
+    },
+    {
+      "id": "ISSUE_SAS_RUNTIME",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "kind": "runtime_unverified",
+      "description": "The assigned environment probe could not initialize SAS 9.4 because the TKELS extension failed to load. The probe explicitly says this does not establish a missing license or unavailable entitlement.",
+      "severity": "unresolved",
+      "evidence_ids": [
+        "E_SAS_ENV"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E_CODE_TAX_AGGRESSIVE",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 2,
+      "line_end": 3,
+      "quote": "proc sort data=tax.aggressive; by gvkey fyear;run;",
+      "description": "The embedded SAS source reads the existing tax.aggressive table and sorts it; it contains no earlier producer or library assignment for that table."
+    },
+    {
+      "id": "E_CODE_FORTUNE",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 76,
+      "line_end": 77,
+      "quote": "proc sort data=google.bestemp;by ticker_symbol year ranking_state;run;",
+      "description": "The program reads google.bestemp and uses its ticker/year/standing fields to derive a best-employer count."
+    },
+    {
+      "id": "E_CODE_VOTING",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 82,
+      "line_end": 83,
+      "quote": "data voting;set comp.voting;where agendageneraldesc=\"Advisory Vote to Ratify\"",
+      "description": "The program reads a prepared comp.voting table and filters the described advisory vote records."
+    },
+    {
+      "id": "E_CODE_LISOWSKY",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 126,
+      "line_end": 127,
+      "quote": "b.tsscore as ts_lisowsky",
+      "description": "The code merges a separate tax.lisowsky score table into its tax panel by gvkey and fyear."
+    },
+    {
+      "id": "E_CODE_FREEZE",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 130,
+      "line_end": 131,
+      "quote": "comp.pensionfreeze as b on a.gvkey=put(b.gvkey, Z6.) and a.fyear=b.year;",
+      "description": "The code requires a prepared comp.pensionfreeze table with a frozen indicator."
+    },
+    {
+      "id": "E_CODE_TAX_PENSION",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 142,
+      "line_end": 144,
+      "quote": "b.pbpro as plan_size,b.pplao as plan_asset",
+      "description": "The code reads tax.pension fields pbpro and pplao; the source sheet does not identify this table’s source."
+    },
+    {
+      "id": "E_CODE_CEO_INPUT",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 161,
+      "line_end": 164,
+      "quote": "data CEO;set comp.CEOCFOcomp;where 2006<=year<=2013 and debt_equity3>=0 and",
+      "description": "The embedded code expects a custom CEO/CFO compensation dataset with inside-debt and equity-incentive fields."
+    },
+    {
+      "id": "E_CODE_EXEC_AGE",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 173,
+      "line_end": 175,
+      "quote": "comp.exeage as b on a.gvkey=b.gvkey and put(a.execid,z5.)=b.execid and",
+      "description": "The code joins a separate comp.exeage table on firm, executive and year keys."
+    },
+    {
+      "id": "E_CODE_AUX_REG",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 117,
+      "line_end": 122,
+      "quote": "model Accruals = AT_Inv chg_SALE chg_RECT PPE ROA;",
+      "description": "The PROC REG models in the PDF produce the auxiliary discretionary-accrual measure, not the paper’s final outcome regressions."
+    },
+    {
+      "id": "E_CODE_SAMPLE_PERIOD",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 148,
+      "line_end": 150,
+      "quote": "where 2006<=fyear<=2013;where firm_leverage>=0 and",
+      "description": "The final SAS sample step shows fiscal years 2006–2013 and additional selection conditions."
+    },
+    {
+      "id": "E_CODE_FINAL_SAMPLE",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 191,
+      "line_end": 192,
+      "quote": "data all;set cleanf;if ts_lisowsky=. or BS=. or debt=. or CEO_DE=.   or",
+      "description": "The program filters a final all dataset on the Lisowsky score and required CEO-debt and control variables."
+    },
+    {
+      "id": "E_CODE_WINSOR_END",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 267,
+      "line_end": 270,
+      "quote": "%winsor(dsetin=all, dsetout=all, byvar=none, vars=std_ret lnBS debt lnCEO_DE",
+      "description": "The only final stage shown in the code PDF is a winsorization macro invocation; the file ends after run/quit."
+    },
+    {
+      "id": "E_PRIMARY_SOURCES",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 30,
+      "line_end": 33,
+      "quote": "The data for our primary analyses are from four sources: Compustat Fundamentals Annual database",
+      "description": "The data sheet identifies Compustat annual fundamentals, CRSP, ExecuComp, and confidential Lisowsky tax-shelter scores as the primary data sources."
+    },
+    {
+      "id": "E_EXECUCOMP_SCOPE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 34,
+      "line_end": 38,
+      "quote": "We used the ExecuComp data in March 2015 to construct CEO and CFO inside debt holdings",
+      "description": "The authors describe custom CEO/CFO inside-debt, age, equity and cash-compensation calculations from ExecuComp."
+    },
+    {
+      "id": "E_LISOWSKY_CONFIDENTIAL",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 122,
+      "line_end": 123,
+      "quote": "shared by the anonymous referee.",
+      "description": "The exact tax shelter score data were confidentially shared with the authors by an anonymous referee."
+    },
+    {
+      "id": "E_FORTUNE_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 51,
+      "line_end": 52,
+      "quote": "downloaded the lists of “Best Companies to Work for”",
+      "description": "The authors downloaded Fortune Best Companies lists."
+    },
+    {
+      "id": "E_FORTUNE_ARCHIVE_URLS",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 87,
+      "line_end": 94,
+      "quote": "http://archive.fortune.com/magazines/fortune/bestcompanies/2013/full_list/",
+      "description": "The datasheet lists archived Fortune pages for 2006–2013; current compatibility of their data/format is not verified."
+    },
+    {
+      "id": "E_FORM5500_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 54,
+      "line_end": 57,
+      "quote": "We hand collected pension freezing data from the Department of Labor Form 5500",
+      "description": "The pension-freeze variable was hand-collected from Department of Labor Form 5500 materials."
+    },
+    {
+      "id": "E_SEC_VOTING_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 59,
+      "line_end": 62,
+      "quote": "We used SEC’s EDGAR database and ISYS DirectEDGAR to hand collect the results of",
+      "description": "The data sheet describes hand-collected say-on-pay votes from SEC Form 8-K Item 5.07."
+    },
+    {
+      "id": "E_SNP_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 69,
+      "line_end": 69,
+      "quote": "Sabrina Chi downloaded bond ratings from Standard & Poor’s on May 5, 2015.",
+      "description": "Standard & Poor’s bond ratings are among the documented additional study sources."
+    },
+    {
+      "id": "E_COVENANT_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 71,
+      "line_end": 72,
+      "quote": "probability of covenant violation in private debt contracts from Ed Owens",
+      "description": "The authors received private-debt covenant-violation probabilities from Ed Owens."
+    },
+    {
+      "id": "E_AUDIT_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 74,
+      "line_end": 75,
+      "quote": "Tax Footnote dataset in the Audit Analytics database",
+      "description": "The authors used Audit Analytics Tax Footnote data for IRS fines."
+    },
+    {
+      "id": "E_GMI_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 77,
+      "line_end": 82,
+      "quote": "The GMI Rating Database provided the data on clawback provisions 2008 onwards.",
+      "description": "The documented additional data include GMI clawback records and hand-collected earlier proxy-statement observations."
+    },
+    {
+      "id": "E_SERP_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 84,
+      "line_end": 85,
+      "quote": "cash-out provisions in pension plans, particularly supplemental executive retirement plans (SERP), from proxy statements.",
+      "description": "The authors identify proxy-statement SERP cash-out provisions as another study input."
+    },
+    {
+      "id": "E_SERP_PROCEDURE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 96,
+      "line_end": 105,
+      "quote": "We used the SEC analytics suite to identify whether a SERP had a cash-out provision.",
+      "description": "The authors describe a manual SEC-analytics/EDGAR comparison procedure for SERP provisions."
+    },
+    {
+      "id": "E_RISKMETRICS_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 108,
+      "line_end": 110,
+      "quote": "downloaded the raw data from RiskMetrics to compute the percentage of independent board members",
+      "description": "The study also used RiskMetrics data for board independence and CEO chair status."
+    },
+    {
+      "id": "E_SAS_REFERENCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 130,
+      "line_end": 132,
+      "quote": "and our SAS file “CHS_Code” provide additional details of the steps involved in collecting and processing the",
+      "description": "The data sheet refers to a SAS file named CHS_Code, while the package inventory contains only a PDF with embedded SAS code and the data sheet."
+    },
+    {
+      "id": "E_SAS_PROGRAM_CLAIM",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 157,
+      "line_end": 159,
+      "quote": "We used SAS to work on the raw data. In the SAS file “CHS_Code” we merged the data from",
+      "description": "The authors say their SAS file merges ExecuComp, Compustat and CRSP with the Lisowsky score dataset and generates the primary analysis sample."
+    },
+    {
+      "id": "E_DOL_5500_PUBLIC",
+      "kind": "public",
+      "url": "https://www.dol.gov/agencies/ebsa/about-ebsa/our-activities/public-disclosure/foia/form-5500-datasets",
+      "checked_at": "2026-11-07",
+      "authority": "official",
+      "quote": "The datasets below contain structured data from Form 5500 and Form 5500-SF forms and schedules filed annually.",
+      "description": "Official DOL page provides annual Form 5500 and 5500-SF source datasets; how the authors coded pension freezing from those forms remains unspecified."
+    },
+    {
+      "id": "E_SEC_EDGAR_PUBLIC",
+      "kind": "public",
+      "url": "https://www.sec.gov/search-filings",
+      "checked_at": "2026-11-07",
+      "authority": "official",
+      "quote": "free public access to millions of informational documents filed by publicly traded companies",
+      "description": "SEC EDGAR is a public filing route; the authors’ filer list and say-on-pay extraction/coding instructions remain unprovided."
+    },
+    {
+      "id": "E_SEC_FORM8K_PUBLIC",
+      "kind": "public",
+      "url": "https://www.sec.gov/divisions/corpfin/forms/8-k.htm",
+      "checked_at": "2026-11-07",
+      "authority": "official",
+      "quote": "Item 5.07. Submission of Matters to a Vote of Security Holders.",
+      "description": "The SEC identifies Form 8-K Item 5.07 as the relevant vote-reporting item."
+    },
+    {
+      "id": "E_TEMPLE_COMP_PUBLIC",
+      "kind": "public",
+      "url": "https://sites.temple.edu/lnaveen/data/",
+      "checked_at": "2026-11-07",
+      "authority": "official",
+      "quote": "Compensation Data (gvkey, year, co_per_rol, delta, vega, firm-related wealth)",
+      "description": "The cited author page publishes compensation data and a SAS program, but does not establish the custom inside-debt, debt_equity3, executive-age and CEO/CFO input fields required by CHS_Codes.pdf."
+    },
+    {
+      "id": "E_PACKAGE_INVENTORY",
+      "kind": "inspection",
+      "artifact_path": "work_item.json",
+      "sha256": "7307de08208f6521ff99d621137a1983ae86c749ee94e7c4802b757f89576352",
+      "description": "Frozen inventory lists only CHS_Codes.pdf and CHS_Data Description Sheet.pdf; no SAS data files or standalone .sas program are packaged."
+    },
+    {
+      "id": "E_CATALOG_LOOKUPS",
+      "kind": "inspection",
+      "artifact_path": "probes/source_catalog_lookups.json",
+      "sha256": "a8795a0cb3ff5e0a776d9d9676fe8da029f86501afb389bc83244b0869bf9ae7",
+      "description": "Saved frozen-catalog lookups by product and author-specific table aliases for primary and supplemental sources."
+    },
+    {
+      "id": "E_COMP_FUNDAMENTALS_PROBE",
+      "kind": "probe",
+      "artifact_path": "probes/shared_comp_funda.json",
+      "sha256": "173ba1596191aee92499fb7a1c77a77aa1d8508b4c1befbe8379dedcd82ed152",
+      "description": "Reused same-run exact-file COMP.FUNDA probe; dataset is readable and contains requested Compustat columns, but the bounded first rows only cover 1961–1970 and do not establish the required full panel coverage."
+    },
+    {
+      "id": "E_CRSP_DSF_PROBE",
+      "kind": "probe",
+      "artifact_path": "probes/shared_crsp_dsf.json",
+      "sha256": "dc1d76a147684796f13cddf915c3a6af6d0b237c1a8bce53abfb6d4cc1a3deb2",
+      "description": "Reused same-run exact-file CRSP.DSF probe; the daily return file is readable and contains permno/date/ret, but a one-row slice does not establish history or population coverage."
+    },
+    {
+      "id": "E_SEC_PARSED_ROOT",
+      "kind": "inspection",
+      "artifact_path": "probes/shared_sec_parsed_root.json",
+      "sha256": "e7ce3c1e35de3f41eb5e02405d0d27102a785aec958a73643f03f74f8c10959b",
+      "description": "Reused same-run exact-path metadata probe confirms the parsed local SEC exhibits root exists; no directory listing or filing coverage was checked."
+    },
+    {
+      "id": "E_SEC_RAW_ROOT",
+      "kind": "inspection",
+      "artifact_path": "probes/shared_sec_raw_root.json",
+      "sha256": "46f9b10c2b94b487652b0a26c39eb3d0dabad985d56b95403dfb3346de2ca404",
+      "description": "Reused same-run exact-path metadata probe confirms the raw local SEC downloads root exists; no directory listing or filing coverage was checked."
+    },
+    {
+      "id": "E_SAS_ENV",
+      "kind": "probe",
+      "artifact_path": "probes/environment.json",
+      "sha256": "52959efae1466c6707313ccb7b9cce434882f91442b0e9c3ae6684b8a7182f00",
+      "description": "Assigned environment probe records SAS 9.4 startup failure at TKELS initialization; it explicitly says entitlement cannot be inferred."
+    },
+    {
+      "id": "E_CATALOG_PRIMARY",
+      "kind": "catalog",
+      "description": "Frozen resource-catalog queries found local candidates including COMP.FUNDA and EXECCOMP.ANNCOMP; same-run probes confirm COMP.FUNDA and CRSP.DSF file metadata. These are discovery candidates, not verified matches for the custom tax.aggressive, comp.CEOCFOcomp or comp.exeage tables or proof of licensing/coverage."
+    },
+    {
+      "id": "E_CATALOG_AUX",
+      "kind": "catalog",
+      "description": "Frozen catalog returned AUDIT.FEED32_TAX_FOOTNOTES, RiskMetrics RISK.DIRECTORS (1996–2006) and RISK.GSET (1990–2006), plus COMP.ADSPRATE S&P ratings. It did not return exact custom aliases for tax.lisowsky, google.bestemp, comp.pensionfreeze, comp.voting, tax.pension, comp.CEOCFOcomp or comp.exeage; these are metadata candidates only."
+    },
+    {
+      "id": "E_CODE_ETR_WINDOW",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 88,
+      "line_end": 89,
+      "quote": "intnx('month',a.datadate, -48,\n\"end\")<b.datadate<=a.datadate;",
+      "description": "The ETR self-join includes prior tax-panel observations in the date-specific trailing 48-month window ending at each anchor datadate."
+    },
+    {
+      "id": "E_CODE_ETR_COUNT",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 96,
+      "line_end": 96,
+      "quote": "count(*)>=4;",
+      "description": "The ETR aggregation drops gvkey/fyear groups with fewer than four joined observations."
+    },
+    {
+      "id": "E_CODE_ROA1",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 49,
+      "line_end": 49,
+      "quote": "ROA=PI/AT;ROA1=PI/lag_AT;",
+      "description": "The code computes ROA1 with lagged assets, and ETR aggregates its rolling-window standard deviation."
+    },
+    {
+      "id": "E_CODE_LAG_ASSETS",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 11,
+      "line_end": 13,
+      "quote": "lag_at=lag(at);lagtlcf=lag(tlcf);lagsale=lag(sale);lagAR=lag(rect);\nif gvkey ne lag(gvkey) or fyear ne lag(fyear)+1 then\ndo;lag_at=.;lagtlcf=.;lagAR=.;lagsale=.;end;",
+      "description": "The program creates lagged annual assets and other lagged inputs and clears them when the prior row is not the adjacent fiscal year for the same firm."
+    },
+    {
+      "id": "E_CRSP_STD_RET_SOURCE",
+      "kind": "source",
+      "file": "CHS_Data Description Sheet.pdf",
+      "line_begin": 64,
+      "line_end": 67,
+      "quote": "remaining control variables (BM, CAPEX, σ(RET), σ(ROA), and LimitedCFO) and Altman Z-Scores required data from the Compustat and CRSP Databases.",
+      "description": "The data sheet identifies σ(RET) as a control constructed from Compustat and CRSP raw data, but does not supply its return window."
+    },
+    {
+      "id": "E_CODE_STD_RET",
+      "kind": "source",
+      "file": "CHS_Codes.pdf",
+      "line_begin": 267,
+      "line_end": 267,
+      "quote": "vars=std_ret",
+      "description": "The embedded code names std_ret in the final winsorization call but does not define its upstream return-window construction."
+    },
+    {
+      "id": "E_CATALOG_PENSION_FIELDS",
+      "kind": "inspection",
+      "artifact_path": "probes/pension_catalog_fields.json",
+      "sha256": "bc9913add527174d90f27bc5ee33d348064714ba2b12ed54f775442b9f862aca",
+      "description": "Exact frozen-catalog lookups for PBPRO, PPLAO, GVKEY and DATADATE identify COMP.ACO_PNFNDA as a local Compustat annual-pension discovery candidate with those fields; catalog metadata does not establish row coverage, readability or equivalence to tax.pension."
+    }
+  ],
+  "scopes": [
+    {
+      "id": "full_pipeline",
+      "description": "Supplied SAS workflow embedded in CHS_Codes.pdf: data construction, tax-aggressiveness measures, CEO inside-debt variables, supporting discretionary-measure regressions and winsorization. The authors describe a broader primary sample and supplemental paper analyses, but the PDF begins from pre-existing SAS library inputs, provides no complete library/upstream setup, and ends before paper-level outcome models. Embedded-code qualifier: the program is in the PDF, not a standalone .sas file.",
+      "entry_points": [
+        "CHS_Codes.pdf"
+      ],
+      "requirement_ids": [
+        "REQ_TAX_AGGRESSIVE",
+        "REQ_COMPUSTAT",
+        "REQ_CRSP",
+        "REQ_EXECUCOMP",
+        "REQ_LISOWSKY",
+        "REQ_FORTUNE_BESTEMP",
+        "REQ_PENSION_FREEZE",
+        "REQ_SAY_ON_PAY",
+        "REQ_TAX_PENSION",
+        "REQ_AUXILIARY_ANALYSIS_INPUTS"
+      ],
+      "software_ids": [
+        "SW_SAS"
+      ],
+      "issue_ids": [
+        "ISSUE_LIBRARY_SETUP",
+        "ISSUE_UPSTREAM_INPUT",
+        "ISSUE_MAIN_ANALYSIS",
+        "ISSUE_AUXILIARY_MAP",
+        "ISSUE_SAS_RUNTIME"
+      ],
+      "has_code": true,
+      "closure_complete": false,
+      "data_required": true,
+      "evidence_ids": [
+        "E_CODE_TAX_AGGRESSIVE",
+        "E_CODE_AUX_REG",
+        "E_CODE_CEO_INPUT",
+        "E_CODE_WINSOR_END",
+        "E_SAS_PROGRAM_CLAIM",
+        "E_PACKAGE_INVENTORY"
+      ],
+      "data_status": "undetermined",
+      "execution_readiness": "undetermined",
+      "execution_verified": false
+    }
+  ],
+  "dependency_review": [],
+  "actions": [
+    {
+      "id": "ACT_CORE_INPUTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "REQ_TAX_AGGRESSIVE",
+        "REQ_COMPUSTAT",
+        "REQ_CRSP",
+        "ISSUE_LIBRARY_SETUP",
+        "ISSUE_UPSTREAM_INPUT"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the missing tax.aggressive producer, SAS library configuration and matching Compustat/CRSP input specification.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CODE_TAX_AGGRESSIVE",
+        "E_PRIMARY_SOURCES",
+        "E_SAS_PROGRAM_CLAIM",
+        "E_COMP_FUNDAMENTALS_PROBE",
+        "E_CRSP_DSF_PROBE",
+        "E_PACKAGE_INVENTORY",
+        "E_CODE_ETR_WINDOW",
+        "E_CODE_ETR_COUNT",
+        "E_CODE_ROA1",
+        "E_CODE_LAG_ASSETS",
+        "E_CRSP_STD_RET_SOURCE",
+        "E_CODE_STD_RET"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask for the author’s exact SAS library assignments and complete upstream program or author-prepared tax.aggressive input manifest; the current PDF code starts from this table and does not produce it.",
+        "For Compustat, confirm the source table, required fields, identifiers and date coverage for the 2006–2013 sample plus the code’s date-specific trailing 48-month ETR/ROA window (at least four observations per gvkey/fyear group) and adjacent prior-year assets/other lag inputs; ask the authors for the exact earliest required date/year rather than inferring one.",
+        "For CRSP, confirm the exact source, lpermno/link construction, return measure and return-window definition needed for STD_RET and the data-sheet σ(RET) control, including required daily history; the supplied material does not define this window, so do not infer the tax branch’s 48-month window applies.",
+        "Obtain non-sensitive input manifests/schema and setup information for tax.aggressive and the Compustat/CRSP table producers; do not reconstruct the research independently."
+      ],
+      "validation": [
+        "Match the complete input schemas, identifiers, author-confirmed date coverage, rolling ETR window/count rule and lagged-asset construction to the supplied code before any separate execution decision.",
+        "Verify the independently specified CRSP return window, source history and link rules needed to form STD_RET; leave them unresolved until the author provides the definition."
+      ]
+    },
+    {
+      "id": "ACT_EXECUCOMP_LISOWSKY",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "REQ_EXECUCOMP",
+        "REQ_LISOWSKY"
+      ],
+      "kind": "clarification",
+      "description": "Clarify the author-specific ExecuComp transformations and permitted route for confidential Lisowsky scores.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_EXECUCOMP_SCOPE",
+        "E_CODE_CEO_INPUT",
+        "E_CODE_EXEC_AGE",
+        "E_CODE_LISOWSKY",
+        "E_LISOWSKY_CONFIDENTIAL",
+        "E_TEMPLE_COMP_PUBLIC",
+        "E_CATALOG_PRIMARY"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the complete ExecuComp data-preparation program and input manifest for comp.CEOCFOcomp and comp.exeage, including executive keys, inside-debt construction, and age fields.",
+        "Clarify whether an authorized route exists for the referee-supplied Lisowsky score file or the exact author-prepared gvkey/fyear/tsscore input; do not infer that the confidential data are publicly distributable or recreate the score model.",
+        "Treat the public Coles et al. compensation dataset only as a candidate for the measures it explicitly contains; confirm whether it matches any author-required inside-debt or age fields before use."
+      ],
+      "validation": [
+        "Verify that the authorized files contain the exact code fields, gvkey/year/execid matching keys and 2006–2013 coverage before merging."
+      ]
+    },
+    {
+      "id": "ACT_HANDCOLLECTED_INPUTS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "REQ_FORTUNE_BESTEMP",
+        "REQ_PENSION_FREEZE",
+        "REQ_SAY_ON_PAY",
+        "REQ_TAX_PENSION",
+        "ISSUE_LIBRARY_SETUP"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the hand-coded source tables and their coding/identifier procedures.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_FORTUNE_SOURCE",
+        "E_FORTUNE_ARCHIVE_URLS",
+        "E_FORM5500_SOURCE",
+        "E_DOL_5500_PUBLIC",
+        "E_SEC_VOTING_SOURCE",
+        "E_SEC_EDGAR_PUBLIC",
+        "E_SEC_FORM8K_PUBLIC",
+        "E_CODE_FORTUNE",
+        "E_CODE_FREEZE",
+        "E_CODE_VOTING",
+        "E_CODE_TAX_PENSION",
+        "E_SEC_PARSED_ROOT",
+        "E_SEC_RAW_ROOT",
+        "E_CATALOG_PENSION_FIELDS"
+      ],
+      "edits": [],
+      "steps": [
+        "Request author manifests and field/code definitions for google.bestemp, comp.pensionfreeze, comp.voting and tax.pension, including the sample firms/plans, years, keys and decision rules used to create each table.",
+        "For Form 5500 and EDGAR inputs, compare the disclosed author source and identifiers with the public DOL/SEC routes; the existing SEC corpus roots may be considered only after the author filer/filing list and form/section requirements are known.",
+        "Confirm that the Fortune archive lists supply the ticker_symbol/year/ranking_state structure needed by the code or obtain the author’s permitted mapping table.",
+        "Ask whether COMP.ACO_PNFNDA is an authorized compatible source for tax.pension and confirm its PBPRO/PPLAO definitions, GVKEY/DATADATE mapping and 2006–2013 date coverage against the author-prepared table; treat the catalog hit as a discovery candidate only, with no assumed equivalence or licensing conclusion."
+      ],
+      "validation": [
+        "Check that each prepared table has the expected keys, sample coverage and code definitions before any separate execution decision; do not run broad filing searches or download data during this assessment.",
+        "If the author identifies COMP.ACO_PNFNDA as a candidate, verify readable rows, fields, item meanings, dates and mapping before treating it as compatible with tax.pension."
+      ]
+    },
+    {
+      "id": "ACT_AUXILIARY_MAPPING",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "REQ_AUXILIARY_ANALYSIS_INPUTS",
+        "ISSUE_AUXILIARY_MAP"
+      ],
+      "kind": "clarification",
+      "description": "Map documented supplementary data sources to paper analyses and identify their compatible author-prepared input tables.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_SNP_SOURCE",
+        "E_COVENANT_SOURCE",
+        "E_AUDIT_SOURCE",
+        "E_GMI_SOURCE",
+        "E_SERP_SOURCE",
+        "E_SERP_PROCEDURE",
+        "E_RISKMETRICS_SOURCE",
+        "E_CATALOG_AUX"
+      ],
+      "edits": [],
+      "steps": [
+        "Ask the authors which reported analyses require S&P ratings, Ed Owens covenant-violation data, Audit Analytics Tax Footnote fines, GMI/proxy clawback data, SERP cash-out coding and RiskMetrics board measures.",
+        "For every included branch, obtain the exact prepared table names, field definitions, identifiers, period, source-specific coding and its producing script; do not infer optionality or reconstruct these inputs from product names.",
+        "Review the local Audit Analytics, S&P ratings and RiskMetrics catalog candidates only against those author-specified fields and periods; the current catalog hits do not establish a compatible route."
+      ],
+      "validation": [
+        "Trace each documented paper analysis to its author code and source tables, retaining separate inputs for distinct branches and confirming all required fields and sample periods."
+      ]
+    },
+    {
+      "id": "ACT_MAIN_MODELS",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_MAIN_ANALYSIS"
+      ],
+      "kind": "clarification",
+      "description": "Obtain the missing paper-level model specifications and output-generation procedure.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_CODE_AUX_REG",
+        "E_CODE_WINSOR_END",
+        "E_SAS_PROGRAM_CLAIM",
+        "E_PACKAGE_INVENTORY"
+      ],
+      "edits": [],
+      "steps": [
+        "Request the complete final regression code and table/output instructions for the paper’s primary outcome analyses; the supplied PDF code’s PROC REG statements estimate only auxiliary measures and the program ends after winsorization.",
+        "Confirm which datasets, model specifications, fixed effects, sample restrictions and table branches should consume the generated all panel."
+      ],
+      "validation": [
+        "Map every intended paper table to an actual SAS producer and model statement, with the same specified sample and variable definitions, before a future authorized run."
+      ]
+    },
+    {
+      "id": "ACT_SAS_RUNTIME",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "SW_SAS",
+        "ISSUE_SAS_RUNTIME"
+      ],
+      "kind": "software_setup",
+      "description": "Resolve the local SAS startup/entitlement environment before any future author-program execution.",
+      "certainty": "conditional",
+      "evidence_ids": [
+        "E_SAS_ENV"
+      ],
+      "edits": [],
+      "steps": [
+        "Have the SAS administrator confirm whether the 9.4 installation and required TKELS entitlement/startup configuration are available for this session.",
+        "After a successful environment-only version/startup check, record the actual SAS runtime; the author’s SAS version remains unspecified."
+      ],
+      "validation": [
+        "Verify SAS starts successfully without loading study data or author code, then separately confirm the documented Base SAS procedures and macro support."
+      ]
+    },
+    {
+      "id": "ACT_PDF_CODE_HANDLING",
+      "scope_ids": [
+        "full_pipeline"
+      ],
+      "addresses": [
+        "ISSUE_MAIN_ANALYSIS"
+      ],
+      "kind": "data_preparation",
+      "description": "Prepare a lossless executable text copy of the SAS program embedded in the PDF when the complete source is available.",
+      "certainty": "supported",
+      "evidence_ids": [
+        "E_CODE_TAX_AGGRESSIVE",
+        "E_CODE_AUX_REG",
+        "E_CODE_WINSOR_END",
+        "E_PACKAGE_INVENTORY"
+      ],
+      "edits": [],
+      "steps": [
+        "If a standalone runnable copy is needed, extract the embedded SAS text while preserving statements, line continuations, macro boundaries and quote marks, then compare the extracted text against CHS_Codes.pdf.",
+        "Do not invent or fill missing code from the PDF; obtain the complete author file first if the existing excerpt is incomplete."
+      ],
+      "validation": [
+        "Verify line-by-line that the extracted file matches the PDF text and author-supplied complete program before any separate authorized execution."
+      ]
+    }
+  ],
+  "review_notes": [
+    "Expanded checkpoint saved after reading the complete data description sheet and the full code-bearing PDF, the SAS environment probe, and same-run exact-file/resource probes. The PDF contains actual SAS source despite the static report saying no supported code.",
+    "No author SAS program, regression or study dataset was run or downloaded; source catalog and exact-path metadata checks were read-only.",
+    "The full author scope remains unresolved: code inputs and producers are incomplete, final outcome model code is not supplied, and additional documented source datasets are not mapped to code branches. No analysis_only scope is supported because no compatible author-prepared analysis data are packaged.",
+    "Reused exact-file probes came from other sweep_01 item work directories; their JSON hashes, request details, catalog provenance and unchanged file metadata were preserved in this assigned work directory.",
+    "The embedded ETR code requires date-specific trailing 48-month tax/Compustat observations (at least four per gvkey/fyear group) and lagged-asset inputs; exact earliest coverage requires author confirmation. The frozen catalog identifies COMP.ACO_PNFNDA fields PBPRO/PPLAO and GVKEY/DATADATE, but compatibility with tax.pension is unverified. CRSP STD_RET history remains separately undefined."
+  ],
+  "patch_proposal": {
+    "path": "patch_proposal.md",
+    "sha256": "b5655f88a3fee4971bab4219122ae16506ccdccf5202e5f12b77b6fc48116136",
+    "applied": false
+  }
+}

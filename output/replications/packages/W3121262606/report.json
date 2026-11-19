@@ -1,0 +1,824 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "The Predictive Value of Expenses Excluded from Pro Forma Earnings",
+  "doi": "10.1023/a:1024472210359",
+  "route": "reconstruction",
+  "paper_id": "W3121262606",
+  "years": 5,
+  "sources_checked": [
+    "COMP.FUNDQ current local SAS source, checked 2026-11-18; catalog generated 2026-10-27T14:45:09.629688+00:00; ${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat; 11168514048 bytes; SHA-256 f453589282ab35913f3d1736dacd975e335a692e74951a184f317e5544c8e8b7; Accepted filters in the native build produced 911,529 quarterly rows, 25,850 firms, 1987-01-31–2007-12-31; each 2000–2007 year has screened COMP rows and each 2004 t horizon has 2007 look-ahead data. Current full-file screened candidate dates 1961-03-31–2026-06-30.",
+    "IBES.ACTU_EPSUS current local SAS source, checked 2026-11-18; catalog generated 2026-10-27T14:45:09.629688+00:00; ${ACCTREPL_SAS_ROOT}/ibes/actu_epsus.sas7bdat; 138018816 bytes; SHA-256 598382437ab0bb0cf6abf37d3ed7bc996ebaeb244028b55d97b206563a027ee1; Unadjusted U.S. QTR EPS screen through 2004 produced 397,413 actual rows and 14,245 tickers; current file’s screened PENDS range is 1980-06-30–2026-04-30.",
+    "WRDSAPPS.IBCRSPHIST current local SAS source, checked 2026-11-18; catalog generated 2026-10-27T14:45:09.629688+00:00; ${ACCTREPL_SAS_ROOT}/wrdsapps/linking/iclink/ibcrsphist.sas7bdat; 1966080 bytes; SHA-256 0f4d83f81e54c8cdb14f8e57143a1a9ee9b3fcb11fcfdfdb2f83e994dd2f17b7; ICLINK score 0/1 date histories cover 1976-01-15–2025-12-31; active link rows are 6714 in 2004 and 6499 in 2007.",
+    "CRSP.CCMXPF_LINKTABLE current local SAS source, checked 2026-11-18; catalog generated 2026-10-27T14:45:09.629688+00:00; ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat; 5373952 bytes; SHA-256 15c2afe22c015c4a7570a13774237d66178ab5b22cfada9a9c070402f959503b; Accepted USED=1, LC/LU, P/C date-link screen covers 1949-07-01–2026-01-30 with 6383 open-ended links; active link rows are 7002 in 2004 and 6909 in 2007.",
+    "Catalog evidence: output/feasibility_reproduction/resources/catalog.json (generated 2026-10-27; exact dataset paths, row counts, columns and SAS date formats); output/reproduction/resource_documentation.json (accessed 2026-11-03; source documentation and known IBES/link conventions)."
+  ],
+  "changes": [
+    "Extended the original DATADATE calendar-year sample from 1988–1999 to 1988–2004, preserving the original start and adding five calendar years. Quarter t remains the fiscal-quarter observation; `cal_year` is its calendar year and `fmb_q` is the calendar-quarter estimator clock.",
+    "Rebuilt historical and added observations together from the exact current local datasets named by the accepted construction. The Compustat input now ends in 2007 so each 2004 quarter can receive its full t+1 through t+12 cash-flow outcome; the actuals PENDS screen and t-sample filter now extend through 2004.",
+    "Retained the accepted SAS construction, variable transformations, pooled 1st/99th winsorization, within-quarter OLS, and Stata xtfmb/Newey–West lags 3/7/11. Added only actual `e(sample)` original/added counts, last contributing calendar year, and corresponding aggregate scalars in each existing CSV table.",
+    "Checked the accepted handoff's time columns: `cal_year` is numeric calendar year; `fmb_q` is numeric calendar-quarter index; `datadate` is a numeric SAS date stored without a Stata display format. All fit diagnostics count on `cal_year`, with the original calendar-quarter unit retained for the estimator.",
+    "Added a by-year audit for conflicting Compustat GVKEY/DATADATE keys in 2000–2007. The original builder's conflict exclusion rule is retained."
+  ],
+  "limitations": [
+    "I/B/E/S ACTU_EPSUS has no actual-level primary/diluted company-basis flag. Baseline therefore uses a disclosed basic/primary approximation (EPSPXQ and primary OPEPSQ), applies no unsupported annual dilution factor, and never infers basis from estimate-level PDF or value proximity. ACTU PENDS is period-end YYYYMM precision, so matching is at ticker/year/month; candidate mappings to multiple Compustat DATADATEs in the same month are excluded as ambiguous.",
+    "Future quarterly CFO/FCF per-share flows are rebased to the initial-quarter share basis with the relative Compustat AJEXQ_t/AJEXQ_k factor. This relies on Compustat’s current cumulative factor history; the ratio removes any common terminal base. The paper does not explicitly describe split rebasing for its future-flow sum, so this is a provider-supported best-effort interpretation of its per-share construction.",
+    "The physical p. 11 statement that there is “still only one firm observation per calendar quarter” appears in the return-test discussion. It is applied to the full-sample cash-flow panel by retaining the latest DATADATE among matched reports within each firm/calendar quarter before horizon eligibility; its scope for the cash-flow tests is not completely explicit.",
+    "Quarterly item #108/#90 mnemonic mapping is semantic best effort because the local catalog does not preserve the paper-vintage numeric crosswalk; current OANCFY/CAPXY YTD semantics are provider-verified.",
+    "Pooled 1st/99th percentiles and within-quarter OLS are best-effort choices where the paper is silent. The printed footnote 9 omits the usual factor of 2 in the Newey–West variance multiplier; xtfmb uses standard Newey–West inference. Only individual coefficient t-statistics are used.",
+    "The predecessor review reports that the paper's parent sample is 143,462 firm-quarters in 1988–1999 and requires sufficient Compustat, CRSP and IBES data (paper physical p. 11). The accepted cash-flow construction returns 233,822 matched parent rows for that original period and 339,422 pooled rows through 2004; it applies dated CRSP links but no stock-return availability gate, because the paper does not specify one for these cash-flow fits. The size and common-sample discrepancy remains unresolved.",
+    "The native Compustat key audit found 819 conflicting distinct GVKEY/DATADATE keys over the 1987–2007 builder window, including 326 in 2000–2007 (162 in observation years 2000–2004 and 164 in outcome years 2005–2007). The accepted construction excludes those conflicting keys after exact-row deduplication; it found no duplicate final GVKEY/DATADATE keys and no calendar year lost from 1988–2004.",
+    "For each 12-quarter fit, the pooled reconstruction adds eight originally dated 1988–1999 observations whose t+12 fiscal-quarter outcome had fallen beyond the predecessor builder's 2002 Compustat cutoff. This affects the replay's original-period N and is documented in the per-fit comparison; all requested fit periods still reach 2004."
+  ],
+  "analyses": [
+    {
+      "scope_id": "cfo_total / cfo_total_cfo_sum1",
+      "key": "s1",
+      "label": "Table 3 Panel A — CFO total exclusions — cfo_total_cfo_sum1 (1-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native CFO 1-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell cfo_total_cfo_sum1 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 3 Panel A, physical p. 16: CFO_SUM1 outcome and total exclusions fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (cfo_total/cfo_total_cfo_sum1); accepted reconstruction fit: work/stata.ipynb cell cfo_total_cfo_sum1; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_cfo_total_cfo_sum1.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 172513,
+      "added_n": 85427,
+      "artifacts": [
+        "results/tables/cfo_total_cfo_sum1.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "total_w": -1.254
+          },
+          "fit_observations": 172513,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/cfo_total_cfo_sum1.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "total_w": -1.205
+          },
+          "p_values": {
+            "total_w": "<0.001"
+          },
+          "original_period_observations": 172513,
+          "added_period_observations": 85427,
+          "location": "work/tables/cfo_total_cfo_sum1.csv"
+        },
+        "note": "The predecessor and current replay have the same original-period fit N for this horizon."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:f6e125788a1d05497a79ea482958eb8956af22c80b14758da5b1b2653545c2a4",
+        "sha256": "f6e125788a1d05497a79ea482958eb8956af22c80b14758da5b1b2653545c2a4",
+        "marker": "EXT_SAMPLE s1 172513 85427 2004"
+      }
+    },
+    {
+      "scope_id": "cfo_total / cfo_total_cfo_sum2",
+      "key": "s2",
+      "label": "Table 3 Panel A — CFO total exclusions — cfo_total_cfo_sum2 (2-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native CFO 2-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell cfo_total_cfo_sum2 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 3 Panel A, physical p. 16: CFO_SUM2 outcome and total exclusions fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (cfo_total/cfo_total_cfo_sum2); accepted reconstruction fit: work/stata.ipynb cell cfo_total_cfo_sum2; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_cfo_total_cfo_sum2.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 158108,
+      "added_n": 79064,
+      "artifacts": [
+        "results/tables/cfo_total_cfo_sum2.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "total_w": -2.452
+          },
+          "fit_observations": 158108,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/cfo_total_cfo_sum2.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "total_w": -2.293
+          },
+          "p_values": {
+            "total_w": "<0.001"
+          },
+          "original_period_observations": 158108,
+          "added_period_observations": 79064,
+          "location": "work/tables/cfo_total_cfo_sum2.csv"
+        },
+        "note": "The predecessor and current replay have the same original-period fit N for this horizon."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:f4f41959b66a2c70d9eb91725815013a7376fdbb4cdce15710adee239c4ac81b",
+        "sha256": "f4f41959b66a2c70d9eb91725815013a7376fdbb4cdce15710adee239c4ac81b",
+        "marker": "EXT_SAMPLE s2 158108 79064 2004"
+      }
+    },
+    {
+      "scope_id": "cfo_total / cfo_total_cfo_sum3",
+      "key": "s3",
+      "label": "Table 3 Panel A — CFO total exclusions — cfo_total_cfo_sum3 (3-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native CFO 3-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell cfo_total_cfo_sum3 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 3 Panel A, physical p. 16: CFO_SUM3 outcome and total exclusions fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (cfo_total/cfo_total_cfo_sum3); accepted reconstruction fit: work/stata.ipynb cell cfo_total_cfo_sum3; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_cfo_total_cfo_sum3.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 144888,
+      "added_n": 72959,
+      "artifacts": [
+        "results/tables/cfo_total_cfo_sum3.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "total_w": -3.577
+          },
+          "fit_observations": 144880,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/cfo_total_cfo_sum3.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "total_w": -3.302
+          },
+          "p_values": {
+            "total_w": "<0.001"
+          },
+          "original_period_observations": 144888,
+          "added_period_observations": 72959,
+          "location": "work/tables/cfo_total_cfo_sum3.csv"
+        },
+        "note": "The three-year prior fit used Compustat through 2002. The pooled rebuild reads through 2007 and thereby adds eight newly complete 1988–1999 t observations to this 12-quarter fit; the counts above come from the current joint replay."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:538fb2ca293d392a7c27aacf3c666473571f634dab225c9649a4a8ac27db2da3",
+        "sha256": "538fb2ca293d392a7c27aacf3c666473571f634dab225c9649a4a8ac27db2da3",
+        "marker": "EXT_SAMPLE s3 144888 72959 2004"
+      }
+    },
+    {
+      "scope_id": "cfo_components / cfo_components_cfo_sum1",
+      "key": "s4",
+      "label": "Table 3 Panel B — CFO special/other exclusions — cfo_components_cfo_sum1 (1-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native CFO 1-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell cfo_components_cfo_sum1 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 3 Panel B, physical p. 16: CFO_SUM1 outcome and special/other components fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (cfo_components/cfo_components_cfo_sum1); accepted reconstruction fit: work/stata.ipynb cell cfo_components_cfo_sum1; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_cfo_components_cfo_sum1.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 164076,
+      "added_n": 85409,
+      "artifacts": [
+        "results/tables/cfo_components_cfo_sum1.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "special_w": 0.158,
+            "other_w": -2.337
+          },
+          "fit_observations": 164076,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/cfo_components_cfo_sum1.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "special_w": 0.067,
+            "other_w": -2.154
+          },
+          "p_values": {
+            "special_w": "0.529",
+            "other_w": "<0.001"
+          },
+          "original_period_observations": 164076,
+          "added_period_observations": 85409,
+          "location": "work/tables/cfo_components_cfo_sum1.csv"
+        },
+        "note": "The predecessor and current replay have the same original-period fit N for this horizon."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:dfbe65e63f57ba5e5e11eb69eba5ea495e2cd31e8dcf0d8577ebc35959c7b4fe",
+        "sha256": "dfbe65e63f57ba5e5e11eb69eba5ea495e2cd31e8dcf0d8577ebc35959c7b4fe",
+        "marker": "EXT_SAMPLE s4 164076 85409 2004"
+      }
+    },
+    {
+      "scope_id": "cfo_components / cfo_components_cfo_sum2",
+      "key": "s5",
+      "label": "Table 3 Panel B — CFO special/other exclusions — cfo_components_cfo_sum2 (2-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native CFO 2-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell cfo_components_cfo_sum2 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 3 Panel B, physical p. 16: CFO_SUM2 outcome and special/other components fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (cfo_components/cfo_components_cfo_sum2); accepted reconstruction fit: work/stata.ipynb cell cfo_components_cfo_sum2; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_cfo_components_cfo_sum2.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 151483,
+      "added_n": 79049,
+      "artifacts": [
+        "results/tables/cfo_components_cfo_sum2.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "special_w": 0.374,
+            "other_w": -4.541
+          },
+          "fit_observations": 151483,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/cfo_components_cfo_sum2.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "special_w": 0.183,
+            "other_w": -4.084
+          },
+          "p_values": {
+            "special_w": "0.464",
+            "other_w": "<0.001"
+          },
+          "original_period_observations": 151483,
+          "added_period_observations": 79049,
+          "location": "work/tables/cfo_components_cfo_sum2.csv"
+        },
+        "note": "The predecessor and current replay have the same original-period fit N for this horizon."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:cd3ce070f43a500350b2262771ef2e9eb9d8822f8e2423c5ba0000fb7bf8c0b3",
+        "sha256": "cd3ce070f43a500350b2262771ef2e9eb9d8822f8e2423c5ba0000fb7bf8c0b3",
+        "marker": "EXT_SAMPLE s5 151483 79049 2004"
+      }
+    },
+    {
+      "scope_id": "cfo_components / cfo_components_cfo_sum3",
+      "key": "s6",
+      "label": "Table 3 Panel B — CFO special/other exclusions — cfo_components_cfo_sum3 (3-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native CFO 3-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell cfo_components_cfo_sum3 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 3 Panel B, physical p. 16: CFO_SUM3 outcome and special/other components fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (cfo_components/cfo_components_cfo_sum3); accepted reconstruction fit: work/stata.ipynb cell cfo_components_cfo_sum3; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_cfo_components_cfo_sum3.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 140146,
+      "added_n": 72946,
+      "artifacts": [
+        "results/tables/cfo_components_cfo_sum3.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "special_w": 0.538,
+            "other_w": -6.6
+          },
+          "fit_observations": 140138,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/cfo_components_cfo_sum3.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "special_w": 0.272,
+            "other_w": -5.879
+          },
+          "p_values": {
+            "special_w": "0.515",
+            "other_w": "<0.001"
+          },
+          "original_period_observations": 140146,
+          "added_period_observations": 72946,
+          "location": "work/tables/cfo_components_cfo_sum3.csv"
+        },
+        "note": "The three-year prior fit used Compustat through 2002. The pooled rebuild reads through 2007 and thereby adds eight newly complete 1988–1999 t observations to this 12-quarter fit; the counts above come from the current joint replay."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:e570ac121fcec0d163ffa613ab094b5549113360fcb00238f5c4aba5fbe0a074",
+        "sha256": "e570ac121fcec0d163ffa613ab094b5549113360fcb00238f5c4aba5fbe0a074",
+        "marker": "EXT_SAMPLE s6 140146 72946 2004"
+      }
+    },
+    {
+      "scope_id": "fcf_total / fcf_total_fcf_sum1",
+      "key": "s7",
+      "label": "Table 4 Panel A — FCF total exclusions — fcf_total_fcf_sum1 (1-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native FCF 1-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell fcf_total_fcf_sum1 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 4 Panel A, physical p. 17: FCF_SUM1 outcome and total exclusions fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (fcf_total/fcf_total_fcf_sum1); accepted reconstruction fit: work/stata.ipynb cell fcf_total_fcf_sum1; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_fcf_total_fcf_sum1.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 166806,
+      "added_n": 83919,
+      "artifacts": [
+        "results/tables/fcf_total_fcf_sum1.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "total_w": -0.955
+          },
+          "fit_observations": 166806,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/fcf_total_fcf_sum1.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "total_w": -0.919
+          },
+          "p_values": {
+            "total_w": "<0.001"
+          },
+          "original_period_observations": 166806,
+          "added_period_observations": 83919,
+          "location": "work/tables/fcf_total_fcf_sum1.csv"
+        },
+        "note": "The predecessor and current replay have the same original-period fit N for this horizon."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:a088fe3d14f70fe35fc6a25c2e28a797565aa12b534ffbcf5e4c66ff7018d057",
+        "sha256": "a088fe3d14f70fe35fc6a25c2e28a797565aa12b534ffbcf5e4c66ff7018d057",
+        "marker": "EXT_SAMPLE s7 166806 83919 2004"
+      }
+    },
+    {
+      "scope_id": "fcf_total / fcf_total_fcf_sum2",
+      "key": "s8",
+      "label": "Table 4 Panel A — FCF total exclusions — fcf_total_fcf_sum2 (2-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native FCF 2-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell fcf_total_fcf_sum2 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 4 Panel A, physical p. 17: FCF_SUM2 outcome and total exclusions fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (fcf_total/fcf_total_fcf_sum2); accepted reconstruction fit: work/stata.ipynb cell fcf_total_fcf_sum2; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_fcf_total_fcf_sum2.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 151390,
+      "added_n": 77404,
+      "artifacts": [
+        "results/tables/fcf_total_fcf_sum2.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "total_w": -1.768
+          },
+          "fit_observations": 151390,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/fcf_total_fcf_sum2.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "total_w": -1.643
+          },
+          "p_values": {
+            "total_w": "<0.001"
+          },
+          "original_period_observations": 151390,
+          "added_period_observations": 77404,
+          "location": "work/tables/fcf_total_fcf_sum2.csv"
+        },
+        "note": "The predecessor and current replay have the same original-period fit N for this horizon."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:bc5cfac40273150db712f1060d3143479e2f717b2ea093132545e4b5389a0b48",
+        "sha256": "bc5cfac40273150db712f1060d3143479e2f717b2ea093132545e4b5389a0b48",
+        "marker": "EXT_SAMPLE s8 151390 77404 2004"
+      }
+    },
+    {
+      "scope_id": "fcf_total / fcf_total_fcf_sum3",
+      "key": "s9",
+      "label": "Table 4 Panel A — FCF total exclusions — fcf_total_fcf_sum3 (3-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native FCF 3-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell fcf_total_fcf_sum3 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 4 Panel A, physical p. 17: FCF_SUM3 outcome and total exclusions fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (fcf_total/fcf_total_fcf_sum3); accepted reconstruction fit: work/stata.ipynb cell fcf_total_fcf_sum3; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_fcf_total_fcf_sum3.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 137551,
+      "added_n": 71232,
+      "artifacts": [
+        "results/tables/fcf_total_fcf_sum3.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "total_w": -2.502
+          },
+          "fit_observations": 137543,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/fcf_total_fcf_sum3.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "total_w": -2.253
+          },
+          "p_values": {
+            "total_w": "<0.001"
+          },
+          "original_period_observations": 137551,
+          "added_period_observations": 71232,
+          "location": "work/tables/fcf_total_fcf_sum3.csv"
+        },
+        "note": "The three-year prior fit used Compustat through 2002. The pooled rebuild reads through 2007 and thereby adds eight newly complete 1988–1999 t observations to this 12-quarter fit; the counts above come from the current joint replay."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:c7c7c09a8cd24b6af09349127f6b80e72ef13d4ab0a9039eccd101231f3e0d54",
+        "sha256": "c7c7c09a8cd24b6af09349127f6b80e72ef13d4ab0a9039eccd101231f3e0d54",
+        "marker": "EXT_SAMPLE s9 137551 71232 2004"
+      }
+    },
+    {
+      "scope_id": "fcf_components / fcf_components_fcf_sum1",
+      "key": "s10",
+      "label": "Table 4 Panel B — FCF special/other exclusions — fcf_components_fcf_sum1 (1-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native FCF 1-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell fcf_components_fcf_sum1 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 4 Panel B, physical p. 17: FCF_SUM1 outcome and special/other components fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (fcf_components/fcf_components_fcf_sum1); accepted reconstruction fit: work/stata.ipynb cell fcf_components_fcf_sum1; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_fcf_components_fcf_sum1.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 158782,
+      "added_n": 83901,
+      "artifacts": [
+        "results/tables/fcf_components_fcf_sum1.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "special_w": 0.597,
+            "other_w": -2.079
+          },
+          "fit_observations": 158782,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/fcf_components_fcf_sum1.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "special_w": 0.462,
+            "other_w": -1.896
+          },
+          "p_values": {
+            "special_w": "<0.001",
+            "other_w": "<0.001"
+          },
+          "original_period_observations": 158782,
+          "added_period_observations": 83901,
+          "location": "work/tables/fcf_components_fcf_sum1.csv"
+        },
+        "note": "The predecessor and current replay have the same original-period fit N for this horizon."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:1ea6b90b8ddee6dc993061f89d4150dfb3fe50d9917e1e981d7655c51e7340b9",
+        "sha256": "1ea6b90b8ddee6dc993061f89d4150dfb3fe50d9917e1e981d7655c51e7340b9",
+        "marker": "EXT_SAMPLE s10 158782 83901 2004"
+      }
+    },
+    {
+      "scope_id": "fcf_components / fcf_components_fcf_sum2",
+      "key": "s11",
+      "label": "Table 4 Panel B — FCF special/other exclusions — fcf_components_fcf_sum2 (2-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native FCF 2-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell fcf_components_fcf_sum2 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 4 Panel B, physical p. 17: FCF_SUM2 outcome and special/other components fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (fcf_components/fcf_components_fcf_sum2); accepted reconstruction fit: work/stata.ipynb cell fcf_components_fcf_sum2; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_fcf_components_fcf_sum2.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 145192,
+      "added_n": 77389,
+      "artifacts": [
+        "results/tables/fcf_components_fcf_sum2.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "special_w": 1.358,
+            "other_w": -3.86
+          },
+          "fit_observations": 145192,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/fcf_components_fcf_sum2.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "special_w": 1.077,
+            "other_w": -3.434
+          },
+          "p_values": {
+            "special_w": "<0.001",
+            "other_w": "<0.001"
+          },
+          "original_period_observations": 145192,
+          "added_period_observations": 77389,
+          "location": "work/tables/fcf_components_fcf_sum2.csv"
+        },
+        "note": "The predecessor and current replay have the same original-period fit N for this horizon."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:e7606d78aa247ab55f122995ebe3383bc324dcf0a1c6119daf6c1472254c9bfc",
+        "sha256": "e7606d78aa247ab55f122995ebe3383bc324dcf0a1c6119daf6c1472254c9bfc",
+        "marker": "EXT_SAMPLE s11 145192 77389 2004"
+      }
+    },
+    {
+      "scope_id": "fcf_components / fcf_components_fcf_sum3",
+      "key": "s12",
+      "label": "Table 4 Panel B — FCF special/other exclusions — fcf_components_fcf_sum3 (3-year horizon)",
+      "sample_ids": [
+        "full_sample"
+      ],
+      "status": "extended_full",
+      "reason": "A fresh current-vintage reconstruction and native FCF 3-year cash-flow fit jointly use original and 2000–2004 firm-quarter observations. The accepted fit in Stata cell fcf_components_fcf_sum3 retains its Table 3/4 Equation (1) regressors and Fama–MacBeth/Newey–West estimator; its native e(sample) marker and aggregate CSV are bound below.",
+      "source_evidence": [
+        "Paper Table 4 Panel B, physical p. 17: FCF_SUM3 outcome and special/other components fit; original paper period is full_sample 1988–1999, physical p. 11.",
+        "Assigned model/result-set record: output/models/records/W3121262606.json (fcf_components/fcf_components_fcf_sum3); accepted reconstruction fit: work/stata.ipynb cell fcf_components_fcf_sum3; original attempt review: work/design.md and output/reproductions/packages/W3121262606/attempt_02/review.md.",
+        "Accepted construction in work/build.sas uses COMP.FUNDQ quarter t, IBES.ACTU_EPSUS actuals, WRDSAPPS.IBCRSPHIST and CRSP.CCMXPF_LINKTABLE; extension bounds are lines 14, 282, and 378, with t+1 through t+12 outcome construction. The working handoff preserves numeric cal_year (calendar year) and fmb_q (calendar quarter index).",
+        "Current source date coverage and SHA-256 checks: work/preflight_coverage.json; native aggregate coverage and year-by-year fit eligibility: work/runtime/20261118T075604160729Z/build.lst pages 16–18; model-specific EXT_SAMPLE marker: work/runtime/20261118T075604160729Z/cell_fcf_components_fcf_sum3.log."
+      ],
+      "original_begin": "1988",
+      "original_end": "1999",
+      "requested_end": "2004",
+      "supported_end": "2004",
+      "last_added": "2004",
+      "count_unit": "firm-quarter estimation observations in this model’s Stata xtfmb e(sample), after its model-specific horizon and regressor completeness screen",
+      "original_n": 133155,
+      "added_n": 71219,
+      "artifacts": [
+        "results/tables/fcf_components_fcf_sum3.csv"
+      ],
+      "comparison": {
+        "unit": "Dimensionless regression slope: the future per-share CFO/FCF sum and current exclusion variables are each scaled by initial-quarter total assets per share (ATQ/CSHPRQ).",
+        "original": {
+          "period": "1988–1999",
+          "focal_estimates": {
+            "special_w": 2.111,
+            "other_w": -5.548
+          },
+          "fit_observations": 133147,
+          "location": "output/reproductions/packages/W3121262606/attempt_02/review.md, Regression results; output/reproductions/packages/W3121262606/attempt_02/tables/fcf_components_fcf_sum3.csv"
+        },
+        "extended": {
+          "period": "1988–2004",
+          "focal_estimates": {
+            "special_w": 1.739,
+            "other_w": -4.847
+          },
+          "p_values": {
+            "special_w": "<0.001",
+            "other_w": "<0.001"
+          },
+          "original_period_observations": 133155,
+          "added_period_observations": 71219,
+          "location": "work/tables/fcf_components_fcf_sum3.csv"
+        },
+        "note": "The three-year prior fit used Compustat through 2002. The pooled rebuild reads through 2007 and thereby adds eight newly complete 1988–1999 t observations to this 12-quarter fit; the counts above come from the current joint replay."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:292bf9fff8660d8d64945dceb2ab2654871914d424c37e3bfb1a0d4fe7497f54",
+        "sha256": "292bf9fff8660d8d64945dceb2ab2654871914d424c37e3bfb1a0d4fe7497f54",
+        "marker": "EXT_SAMPLE s12 133155 71219 2004"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 12
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1ed9c-9ef3-7e22-a82f-8b463ef1b7aa",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3121262606.json",
+    "models": "output/models/records/W3121262606.json",
+    "predecessor": "output/reproductions/packages/W3121262606/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3121262606.json"
+  },
+  "input_hashes": {
+    "sample": "a9ebbd7d9149086353490d47660cf34e915c29cce67943e8e89f3e7743f65a64",
+    "models": "c2c9aac7d844619e2a26fe2314d4b5b393cc575fdd6712d983fcbfe6f5ed75f5",
+    "predecessor": "03e7dec9ba34eed2b2baf2dd3765b01556797cf1362b70e9bfa8f0788cd6e555",
+    "feasibility": "cae69cb6c918db4c3a2d2ccd0524632be712b452f69119261fddb0302de88c94"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:d9ed788ea8ff171f6906a59bdc4bdd42dc3024e1bc2f2ac2770cbda8120ca58a",
+    "sha256": "d9ed788ea8ff171f6906a59bdc4bdd42dc3024e1bc2f2ac2770cbda8120ca58a",
+    "ok": true,
+    "state_sha256": "ccea400d31a7a2a5af2b7293c8cef3933ff3c12726762cd0e195c1285f39175e",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDQ",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/fundq.sas7bdat",
+        "bytes": 11168514048,
+        "mtime_ns": 1784706315462178578
+      },
+      {
+        "dataset": "IBES.ACTU_EPSUS",
+        "path": "${ACCTREPL_SAS_ROOT}/ibes/actu_epsus.sas7bdat",
+        "bytes": 138018816,
+        "mtime_ns": 1784976471729604650
+      },
+      {
+        "dataset": "WRDSAPPS.IBCRSPHIST",
+        "path": "${ACCTREPL_SAS_ROOT}/wrdsapps/linking/iclink/ibcrsphist.sas7bdat",
+        "bytes": 1966080,
+        "mtime_ns": 1786794228524345880
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "488a65f4efc851388ec10f53ae624461bc7f46ba8ea5a66cd2b4a85955af3cec",
+      "work/stata.ipynb": "9a41a8897cdf69a1020b08f935052f5782c6e53478aec78d391351f9175164c2",
+      "work/submission.json": "56cdfa3bd21ca356963884b294a8009bee1cf7d381f782685f1b869c7effcb4b"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "5c4ff41f8211b77b4fb606439dbd9b9c7643166f9e98369dc0fb64ccb45c9965",
+      "predecessor": "output/reproductions/packages/W3121262606/attempt_02/build.sas",
+      "predecessor_sha256": "bda9c73972ea3f28ca2aa6f989be62615428f9fc1bed7aa8b107197463aaaa15",
+      "executed_sha256": "488a65f4efc851388ec10f53ae624461bc7f46ba8ea5a66cd2b4a85955af3cec",
+      "historical_predecessor_sha256": "a9b5244adffb0d3157194d8bcdb0bcf91b1008e881cb93b1062854a298c1f0ae"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "6d6572e6914abf571cc018059ece44e98df3d24525161a81a246f0af1aba1251",
+      "predecessor": "output/reproductions/packages/W3121262606/attempt_02/stata.ipynb",
+      "predecessor_sha256": "8928c8185804e8d6b7054135ac1c9006779513f735e340fe9c4a82f6c288f0ef",
+      "executed_sha256": "9a41a8897cdf69a1020b08f935052f5782c6e53478aec78d391351f9175164c2",
+      "historical_predecessor_sha256": "ed8cbf47342b1e15c0d87e2448a1212b4531e90297f05094464d90cd03327dc1"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "56cdfa3bd21ca356963884b294a8009bee1cf7d381f782685f1b869c7effcb4b",
+      "predecessor": "output/reproductions/packages/W3121262606/attempt_02/submission.json",
+      "predecessor_sha256": "a9ce59c6c2697f67463f58be706aa751eb527711117d772ad84478ac657a0c19"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "b076cb7db1bd837e5b451b95b9ef97468c082d7f1a533aa40823d25ec9ae28e3",
+    "predecessor": "ad94358a66e462cc2e51a43dad05e2c436369e0bf208fd1c4116904cd70e163c",
+    "feasibility": "91a2599536eca06d464c123569faaaa5ef6f397bda985d2acb349442ced17e1d"
+  }
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "phase": "sweep",
+  "title": "The Persistence and Pricing of Earnings, Accruals, and Cash Flows When Firms Have Large Book-Tax Differences",
+  "doi": "10.2308/accr.2005.80.1.137",
+  "route": "reconstruction",
+  "paper_id": "W3121890812",
+  "years": 5,
+  "sources_checked": [
+    "COMP.FUNDA: ${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat; catalog PROC CONTENTS source catalog lines 26943–26966 records the July 22, 2026 source vintage and 941,340 rows. A bounded read of fiscal year, report date, standard annual report filters and update code found 9,808 UPD=3 standard annual reports at fiscal year 2005 (datadate 2005-06-30 to 2006-05-31) and 9,635 at fiscal year 2006 (datadate 2006-06-30 to 2007-05-31). The exact accepted-code GVKEY/fiscal-year and vintage-tie keys have zero duplicate groups in the 1993–2006 source window.",
+    "CRSP.CCMXPF_LINKTABLE: ${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat; catalog PROC CONTENTS source catalog lines 79864–79887 records the August 14, 2026 vintage and 92,711 rows. Bounded link-date field checks found LINKDT 1946-01-01 through 2025-12-31, LINKENDDT 1950-05-30 through 2026-01-30, and 14,750 open-ended links; the accepted effective-date join was replayed.",
+    "CRSP.DSF: ${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat; catalog PROC CONTENTS source catalog lines 80318–80341 records the December 6, 2025 vintage and 107,663,470 rows. A read of DATE only found coverage 1925-12-31 through 2024-12-31 and 1,736,814 daily records during calendar 2006.",
+    "Fresh Stata handoff metadata: work/data/book_tax_firm_years/reg.dta has 22,035 rows and 22 columns. The diagnostic variable is lowercase fyear, type int16, format %10.0g, label “Data Year - Fiscal”; it is an annual fiscal-year label, not a Stata-formatted daily date. Aggregate fyear counts are 15,609 for 1994–2000 and 6,426 for 2001–2005, maximum 2005.",
+    "Controller native receipt and work/runtime/20261118T081647519317Z/cell_table3_panel_b.log: the single fresh SAS-to-Stata run completed with code and inputs unchanged; the e(sample) marker is EXT_SAMPLE s1 15609 6426 2005. The aggregate fit is in work/tables/table3_panel_b.md."
+  ],
+  "changes": [
+    "Rebuilt the accepted sample jointly over fiscal years 1994–2005. The Compustat source window is fiscal years 1993–2006 to supply the original t−1 and t+1 inputs; t_base is 1994–2005. CCM link-date and CRSP daily bounds now extend through December 31, 2006. Current local source coverage supports FY2006 leads and CRSP matching through the requested FY2005 endpoint.",
+    "Retained the accepted Equation (2) construction and estimator: the same annual within-year temporary-BTD quintile ranks, screens, adjacent-year currency requirement, average-assets scaling, pooled 1st/99th percentile resets, full-sample interacted OLS terms, and conventional OLS inference. Construction, historical and added years were rebuilt together from the named current local sources.",
+    "Added an e(sample)-based diagnostic to the existing table3_panel_b cell. It counts firm-year rows for original fiscal years 1994–2000 and added fiscal years 2001–2005, then prints the maximum added fyear. fyear was retained in the handoff and its case, numeric type, format, and fiscal-year units were checked."
+  ],
+  "limitations": [
+    "The source reports 14,106 firm-years and 4,048 firms for its 1994–2000 final sample. The accepted predecessor local reconstruction had 15,609 firm-years and 4,572 firms in those years; the fresh pooled replay has 22,035 observations including 6,426 added firm-years. The predecessor local interaction estimates (−0.0904 and −0.2239) also differed from the paper estimates (−0.100 and −0.212). These sample and estimate differences are carried forward without tuning.",
+    "The source screens Compustat-identified NOLs. The accepted construction uses observed positive TLCF as a best-effort NOL flag because the current catalog does not verify a separate NOL field; missing TLCF remains unknown rather than zero. The predecessor final sample had 5,687 rows with missing TLCF, so exact NOL exclusion remains unresolved in the extension.",
+    "The accepted current-tax screen follows the paper item formula TXT−TXDI and retains unavailable formula inputs as unknown. In the predecessor comparison, direct TXC differed from TXT−TXDI in 3,627 of 69,578 observed rows (5.21%); 29 predecessor final rows had unknown formula status. The formula and unknown-status policy were kept.",
+    "Other inherited specification limits remain: the paper does not give exact average-assets timing, numeric SIC cutoffs, the CRSP link-selection rules, the current-vintage mapping for the NOL screen, or a covariance correction. The accepted construction uses the mean of AT(t−1,t) and AT(t,t+1), SIC 4900–4999 and 6000–6999, time-valid P/C and LC/LU links with daily CRSP presence, and conventional OLS standard errors.",
+    "Pooled winsorization cutoffs were recalculated on the joint 1994–2005 eligible sample, as required by the accepted construction. The coefficient comparison therefore reflects both added years and the refreshed pooled cutoffs."
+  ],
+  "analyses": [
+    {
+      "scope_id": "h1_pretax_earnings_persistence / table3_panel_b",
+      "key": "s1",
+      "label": "Equation (2), Table 3 Panel B: full-sample pre-tax earnings persistence",
+      "sample_ids": [
+        "book_tax_firm_years"
+      ],
+      "status": "extended_full",
+      "reason": "The assigned result is the annual firm-year interacted OLS fit in Table 3 Panel B. The accepted sample clock is fiscal year 1994–2000, and the five-year target is FY2005. The named local Compustat, CCM, and CRSP sources support the original years, FY2001–2005 additions, and the FY2006 Compustat lead. The fresh e(sample) marker verifies 15,609 original-period and 6,426 added-period firm-years, with the last added observation in FY2005; the pooled fit has N=22,035.",
+      "source_evidence": [
+        "output/samples/records/W3121890812.json: sample_period 1994–2000 and Section IV sample-selection evidence, pp. 8–9; the paper identifies post-SFAS 109 firm-years and final screens.",
+        "output/models/records/W3121890812.json: Equation (2), p. 9, and Table 3 Panel B, p. 16; defines the full-sample interacted OLS fit and future PTBI outcome.",
+        "output/reproductions/packages/W3121890812/attempt_02/outcome.json: predecessor scope was executed; output/reproductions/packages/W3121890812/attempt_02/design.md:37 and output/reproductions/packages/W3121890812/attempt_02/runtime/20261102T184107671788Z/cell_table3_panel_b.log preserve the 1994–2000 local estimates.",
+        "work/build.sas: lines 80–90 establish the sample fiscal-year clock and CRSP interval; lines 181–195 join t−1 and t+1 Compustat records; lines 284–363 retain the accepted screens, within-year ranks, winsorization, and fyear handoff.",
+        "work/stata.ipynb, cell table3_panel_b: preserves the accepted regression terms and adds computed e(sample) counts by fyear; work/runtime/20261118T081647519317Z/cell_table3_panel_b.log contains the native EXT_SAMPLE marker and coefficient output.",
+        "PROC CONTENTS source catalog: COMP.FUNDA lines 26943–26966, CRSP.CCMXPF_LINKTABLE lines 79864–79887, and CRSP.DSF lines 80318–80341 identify the exact local catalog datasets and vintages; bounded field checks verify required coverage."
+      ],
+      "original_begin": "1994",
+      "original_end": "2000",
+      "requested_end": "2005",
+      "supported_end": "2005",
+      "last_added": "2005",
+      "count_unit": "firm-year observations in the active Stata e(sample); each row is one GVKEY fiscal-year label",
+      "original_n": 15609,
+      "added_n": 6426,
+      "artifacts": [
+        "results/tables/table3_panel_b.md"
+      ],
+      "comparison": {
+        "unit": "Dimensionless OLS interaction slope: PTBI(t+1) scaled by average total assets on PTBI(t) scaled by average total assets interacted with the large-BTD indicator.",
+        "original": {
+          "period": "1994–2000",
+          "n": 15609,
+          "estimates": {
+            "PTBI(t) × LNBTD": -0.0904,
+            "PTBI(t) × LPBTD": -0.2239
+          },
+          "t_statistics": {
+            "PTBI(t) × LNBTD": -4.09,
+            "PTBI(t) × LPBTD": -8.37
+          },
+          "location": "output/reproductions/packages/W3121890812/attempt_02/design.md:37; saved native log at output/reproductions/packages/W3121890812/attempt_02/runtime/20261102T184107671788Z/cell_table3_panel_b.log"
+        },
+        "extended": {
+          "period": "1994–2005",
+          "n": 22035,
+          "adjusted_r_squared": 0.2864,
+          "estimates": {
+            "PTBI(t) × LNBTD": -0.051298,
+            "PTBI(t) × LPBTD": -0.1750447
+          },
+          "t_statistics": {
+            "PTBI(t) × LNBTD": -2.87,
+            "PTBI(t) × LPBTD": -8.23
+          },
+          "location": "work/tables/table3_panel_b.md; exact coefficients and t statistics in work/runtime/20261118T081647519317Z/cell_table3_panel_b.log"
+        },
+        "note": "The extension uses the same interacted fit over a jointly rebuilt pooled sample. Its accepted pooled 1st/99th-percentile cutoffs are recalculated over 1994–2005, so estimate movement reflects added observations and the refreshed cutoffs."
+      },
+      "native_evidence": {
+        "path": "urn:sha256:91be33b0b4f046a21a461634b92e28825b43a47c3d7cc9668b217f19892e08b7",
+        "sha256": "91be33b0b4f046a21a461634b92e28825b43a47c3d7cc9668b217f19892e08b7",
+        "marker": "EXT_SAMPLE s1 15609 6426 2005"
+      }
+    }
+  ],
+  "outcome": "extended_full",
+  "counts": {
+    "extended_full": 1
+  },
+  "prior_gaps": [],
+  "worker": {
+    "agent": "codex:01a1edb3-4ca2-7ba0-8b80-88057cf408cd",
+    "model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "fresh_context": true
+  },
+  "inputs": {
+    "sample": "output/samples/records/W3121890812.json",
+    "models": "output/models/records/W3121890812.json",
+    "predecessor": "output/reproductions/packages/W3121890812/attempt_02/outcome.json",
+    "feasibility": "output/feasibility_reproduction/records/W3121890812.json"
+  },
+  "input_hashes": {
+    "sample": "afca8aa783f3cc3550fea81a6c287b285d98fb26d40b9d3c7149de3415ce3bf1",
+    "models": "0911b5d4aa043630b186d1df9f6c078feb428f7070f1c57a48ca5e53a9a298fb",
+    "predecessor": "d2d6f466ebd95afbdbef09ea5ff1fef9a4d54679a45ec69255116df3d034ffc4",
+    "feasibility": "0998774f2c789b228c38850c1a9a87d4a62d04d77bef0faf54723d194537a2e2"
+  },
+  "skill_files": {
+    "SKILL.md": "9afe22082c7743386e8c60b7e3c2f2bc6d5130139c79c61b2d0e0d98dd04c1b6",
+    "references/report.md": "c5dc2b636a61e0d04602786f27b5656d93eaf1b62c741e4b7c6dad61e71c6458"
+  },
+  "native_receipt": {
+    "path": "urn:sha256:e9067d7faf3eca3a4cf013c1a752e75a67edbf3668360d38a689964eb8bd6c41",
+    "sha256": "e9067d7faf3eca3a4cf013c1a752e75a67edbf3668360d38a689964eb8bd6c41",
+    "ok": true,
+    "state_sha256": "245682ebe0dcdfb80ec9e4589c04a1a7976eed62d0c8660f22ee04f7896f4e6d",
+    "code_unchanged": true,
+    "inputs_unchanged": true,
+    "source_vintages": [
+      {
+        "dataset": "COMP.FUNDA",
+        "path": "${ACCTREPL_SAS_ROOT}/comp/d_na/funda.sas7bdat",
+        "bytes": 7258374144,
+        "mtime_ns": 1784706285269454991
+      },
+      {
+        "dataset": "CRSP.CCMXPF_LINKTABLE",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_ccm/ccmxpf_linktable.sas7bdat",
+        "bytes": 5373952,
+        "mtime_ns": 1786704782418825038
+      },
+      {
+        "dataset": "CRSP.DSF",
+        "path": "${ACCTREPL_SAS_ROOT}/crsp/a_stock/dsf.sas7bdat",
+        "bytes": 17251565568,
+        "mtime_ns": 1764950931963294339
+      }
+    ],
+    "working_code_hashes": {
+      "work/build.sas": "6fbf5b3731fcdc157b26f215823542e754dcfc040a490963f57d3fdf248b1a82",
+      "work/stata.ipynb": "05e848aa395ebc211d1fc9b7acbfc378c980281d9313b26b2ab0617372b856c1",
+      "work/submission.json": "538072e175b4b36e1076ff547a949979f4d8beac58b6bb7dac05104a97113531"
+    }
+  },
+  "native_run_launched": true,
+  "replay_code": [
+    {
+      "path": "code/build.sas",
+      "working_path": "work/build.sas",
+      "sha256": "722425ea5240906daeb6b0cd34c56b63d14bb46dbe30b7f091ed53051bd8155b",
+      "predecessor": "output/reproductions/packages/W3121890812/attempt_02/build.sas",
+      "predecessor_sha256": "0ba90b9e4946684a4ae880eb942325c9e2e183677b25b039a4053d111286dd19",
+      "executed_sha256": "6fbf5b3731fcdc157b26f215823542e754dcfc040a490963f57d3fdf248b1a82",
+      "historical_predecessor_sha256": "e5e9a44fe1926de5e0a85e9c718377ac2fae5e93fb56f40172c2f5077a9a14d2"
+    },
+    {
+      "path": "code/stata.ipynb",
+      "working_path": "work/stata.ipynb",
+      "sha256": "05e848aa395ebc211d1fc9b7acbfc378c980281d9313b26b2ab0617372b856c1",
+      "predecessor": "output/reproductions/packages/W3121890812/attempt_02/stata.ipynb",
+      "predecessor_sha256": "495e9819df882e9c8f10f1f68040105bae3401f3bc995198fa1dd1c07c5b110b",
+      "historical_predecessor_sha256": "f17bfcce6aa41758d9235876e0b15c4aed6e70f9b4e6eae576648ea6d4f4ea56"
+    },
+    {
+      "path": "code/submission.json",
+      "working_path": "work/submission.json",
+      "sha256": "538072e175b4b36e1076ff547a949979f4d8beac58b6bb7dac05104a97113531",
+      "predecessor": "output/reproductions/packages/W3121890812/attempt_02/submission.json",
+      "predecessor_sha256": "fe6299dca6055d1c68fc822608635bf83db94def31efbd980607b5840b2f646e"
+    }
+  ],
+  "historical_input_hashes": {
+    "models": "94351af3e71ee7a61602e2912ed0f18f5fb01117608f5d645fa35a38dbf97da5",
+    "predecessor": "4249330725aa1d0cf5562c17a9e0caa0983d741b08f19631d98fd7f58297f4f5",
+    "feasibility": "58585b2a87f6e01e92e832c070edf19e7693d026f17aa694d62657d13b366093"
+  }
+}
