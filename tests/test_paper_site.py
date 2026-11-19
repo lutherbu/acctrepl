@@ -80,7 +80,7 @@ class PaperBrowserTests(unittest.TestCase):
         site_assets = {f.relative_to(ROOT).as_posix() for f in (ROOT/'site').rglob('*') if f.is_file()}
         files = tracked_files()
         cls.server.public_files = {p for p in files if p.startswith(('docs/', 'output/', 'skills/', 'utils/'))}
-        cls.server.public_files.update(site_assets | {'index.html', 'papers.html', 'README.md'})
+        cls.server.public_files.update(site_assets | {'index.html', 'README.md', 'LICENSE'})
         cls.base = f'http://127.0.0.1:{cls.server.server_port}/acctrepl/'
         Thread(target=cls.server.serve_forever, daemon=True).start()
         cls.addClassCleanup(cls.server.server_close)
@@ -104,10 +104,15 @@ class PaperBrowserTests(unittest.TestCase):
         self.assertTrue(all(url.startswith(self.base) for url in self.requests), self.requests)
 
     def visit(self, **params):
-        self.page.goto(self.base+'papers.html?'+urlencode(params))
+        self.page.goto(self.base+'index.html?'+urlencode(params))
 
     def test_homepage_links_and_responsive_alignment(self):
         self.page.goto(self.base)
+        papers = self.page.locator('#papers')
+        papers.get_by_role('heading', name=f'{len(self.rows)} papers', exact=True).wait_for()
+        self.assertEqual(self.page.locator('#top > section').evaluate_all('(items) => items.map(el => el.id)'),
+                         ['project', 'deliverables', 'papers'])
+        self.assertEqual(self.page.evaluate('scrollY'), 0)
         for width in [1600, 390]:
             self.page.set_viewport_size({'width': width, 'height': 900})
             stats = self.page.locator('#top > .stats').bounding_box()
@@ -116,15 +121,60 @@ class PaperBrowserTests(unittest.TestCase):
         for i, workflow, skill in [(3, 'reproductions', 'reproduce-accounting-models'),
                                    (4, 'feasibility_execution', 'check-execution-feasibility')]:
             self.assertEqual(cards.nth(i).locator('.number').inner_text(), f'{i+1:02}')
-            self.assertEqual(cards.nth(i).locator('a').first.get_attribute('href'), 'papers.html?workflow='+workflow)
+            self.assertEqual(cards.nth(i).locator('a').first.get_attribute('href'), 'index.html?workflow='+workflow+'#papers')
             self.assertIn(skill, cards.nth(i).locator('a').last.get_attribute('href'))
         self.assertEqual(self.page.locator('a[href*="github.com"]').all_text_contents(), ['GitHub ↗', 'Source repository'])
         self.page.get_by_role('link', name='Browse the paper catalog').click()
-        self.page.get_by_role('heading', name=f'{len(self.rows)} papers', exact=True).wait_for()
+        self.page.wait_for_url(self.base+'#papers')
+        catalog_at_top = 'Math.abs(document.querySelector("#papers").getBoundingClientRect().top) < 2'
+        self.page.wait_for_function(catalog_at_top)
+        self.assertEqual(self.requests.count(self.base+'docs/papers.jsonl'), 1)
         self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth <= innerWidth'))
         self.page.get_by_role('link', name='Next page →').click()
         self.page.get_by_text('Page 2 of', exact=False).wait_for()
+        self.page.wait_for_function(catalog_at_top)
         self.assertFalse(any('/output/' in url or 'site/files.json' in url for url in self.requests))
+
+    def test_homepage_deep_links_open_filters_packages_and_guide_sections(self):
+        row = next(r for r in self.rows if r['feasibility_execution_path'])
+        package = urlencode({'paper': row['paper_id'], 'view': 'feasibility_execution', 'file': 'patch_proposal.md'})
+        for suffix, selector in [
+                ('#papers', '#papers .catalog-table'),
+                ('?workflow=models&page=2#papers', '#papers .catalog-table'),
+                ('?' + package, '.reading .prose'),
+                ('?doc=README.md#build-a-local-resource-catalog', '#build-a-local-resource-catalog')]:
+            with self.subTest(link=suffix):
+                url = self.base+'index.html'+suffix
+                self.page.goto(url)
+                self.page.locator(selector).wait_for()
+                self.assertEqual(self.page.url, url)
+        self.assertFalse(self.page.locator('#project').is_visible())
+        self.page.get_by_role('navigation', name='Main navigation').get_by_role('link', name='Papers').click()
+        self.page.wait_for_url(self.base+'index.html#papers')
+        self.page.locator('#papers .catalog-table').wait_for()
+        self.assertTrue(self.page.locator('#project').is_visible())
+
+    def test_footer_license_matches_published_file(self):
+        self.page.goto(self.base)
+        footer = self.page.locator('footer')
+        self.assertIn('© 2026 Luther Bu', footer.inner_text())
+        footer.get_by_role('link', name='MIT License', exact=True).click()
+        self.page.get_by_role('heading', name='MIT License', exact=True).wait_for()
+        license_text = (ROOT/'LICENSE').read_text()
+        self.assertEqual(self.page.locator('.reading .prose').inner_text().split(), license_text.split())
+        self.assertEqual(self.page.get_by_role('link', name='Download file').get_attribute('href'), 'LICENSE')
+        self.assertTrue(footer.get_by_role('link', name='MIT License').is_visible())
+
+    def test_catalog_downloads_without_javascript(self):
+        context = self.browser.new_context(java_script_enabled=False)
+        self.addCleanup(context.close)
+        page = context.new_page()
+        page.goto(self.base+'index.html#papers')
+        catalog = page.locator('#papers')
+        self.assertIn('Enable JavaScript', catalog.inner_text())
+        for label in ['CSV', 'JSONL']:
+            self.assertEqual(catalog.get_by_role('link', name=label).get_attribute('href'), 'docs/papers.'+label.lower())
+        self.assertEqual(page.locator('footer [rel=license]').get_attribute('href'), 'LICENSE')
 
     def test_filter_shared_doi_and_navigation(self):
         by_doi = defaultdict(list)

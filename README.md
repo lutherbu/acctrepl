@@ -1,6 +1,6 @@
 # Accounting-paper extraction and reproduction
 
-This repository pairs accounting papers with their extracted samples and reported regressions, assessments of data access, and results obtained from running code. The searchable paper catalog links each paper to its published outputs. Its 898 rows cover the original 500 citation-ranked papers and 407 JAR package units, with nine overlaps. Some package units share a DOI. The CSV and JSONL give result paths relative to the repository root. [Browse papers on GitHub Pages](https://lutherbu.github.io/acctrepl/papers.html) · [CSV catalog](docs/papers.csv) · [JSONL catalog](docs/papers.jsonl)
+This repository pairs accounting papers with their extracted samples and reported regressions, assessments of data access, and results obtained from running code. The searchable paper catalog links each paper to its published outputs. Its 898 rows cover the original 500 citation-ranked papers and 407 JAR package units, with nine overlaps. Some package units share a DOI. The CSV and JSONL give result paths relative to the repository root. [Browse papers on GitHub Pages](https://lutherbu.github.io/acctrepl/#papers) · [CSV catalog](docs/papers.csv) · [JSONL catalog](docs/papers.jsonl)
 
 ## Per-paper publications
 
@@ -29,7 +29,7 @@ python3 scripts/verify_current_outputs.py
 
 Each workflow gets one Git-ignored `index.json`. Its records contain the stable ID, repository-relative primary result path and SHA-256, sorted by ID. For a reproduction, the builder follows `accepted.json` and checks the outcome hash. `output/manifest.json` lists the workflow directories, indexes and counts found in this checkout. Rebuilding after adding a paper picks it up automatically. Use `rebuild_indexes.py --check` to detect stale indexes and `update_paper_catalog.py` to refresh catalog links.
 
-The HTML catalog reads `docs/papers.jsonl` directly. The package and documentation reader uses a separate list of published filenames. After staging additions, renames or removals in those directories, run `python3 scripts/rebuild_site_inventory.py` and include `site/files.json` in the commit. Use `--check` to verify the list. To preview Pages locally, serve a public checkout with `python3 -m http.server --bind 127.0.0.1` and open `papers.html` through the server.
+The paper catalog appears below Deliverables on the homepage and reads `docs/papers.jsonl` directly. The package and documentation reader uses a separate list of published filenames. After staging additions, renames or removals in those directories, run `python3 scripts/rebuild_site_inventory.py` and include `site/files.json` in the commit. Use `--check` to verify the list. To preview Pages locally, serve a public checkout with `python3 -m http.server --bind 127.0.0.1` and open `index.html#papers` through the server.
 
 The export helper writes one JSONL each for samples, models, both feasibility workflows and executions under `.local/exports/`. Pass a workflow name to export just that workflow. The complete sample export is `.local/exports/samples/sample_extractions.jsonl`. Open it in the [manual reviewer](utils/review.html) or the [source filter](utils/filter.html). Both utilities run as standalone HTML files.
 

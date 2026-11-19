@@ -16,7 +16,7 @@ else:
 def inventory(root):
     package_dirs = [f'output/{name}/packages/' for name, (subdir, *_) in WORKFLOWS.items()
                     if subdir == 'packages']
-    docs = ['README.md', 'docs/requirements.txt', 'skills/*/SKILL.md',
+    docs = ['README.md', 'LICENSE', 'docs/requirements.txt', 'skills/*/SKILL.md',
             'skills/*/references/*', 'skills/*/scripts/*.py']
     tracked = subprocess.check_output(
         ['git', 'ls-files', '--stage', '-z', '--', *package_dirs, *docs], cwd=root)

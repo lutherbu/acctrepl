@@ -61,17 +61,10 @@ function catalog(rows) {
     select("Year", "year", years.map(y => [y, y]), "All years"),
     select("Workflow", "workflow", workflows.map(w => [w.id, w.name]), "All workflows"));
   form.setAttribute("role", "search");
-  const countLine = el("h2", "list-count");
+  const countLine = el("h3", "list-count");
   countLine.setAttribute("aria-live", "polite");
-  const downloads = el("div", "downloads", "Download catalog");
-  for (const [label, path] of [["CSV", "docs/papers.csv"], ["JSONL", "docs/papers.jsonl"]]) {
-    const a = link(label, path);
-    a.download = path.split("/").at(-1);
-    downloads.append(a);
-  }
   const results = el("div");
-  main.replaceChildren(el("div", "page-head", el("h1", "", "Paper catalog"), downloads), form,
-    el("div", "list-heading", countLine, link("Clear filters", "papers.html", "reset-link")), results);
+  main.replaceChildren(form, el("div", "list-heading", countLine, link("Clear filters", route(), "reset-link")), results);
 
   function render() {
     const filters = filtersFrom(new URLSearchParams(location.search));
@@ -162,7 +155,7 @@ function tabs(row, values, view) {
 function resolveReference(href, sourcePath, files, currentPackage) {
   if (href.startsWith("#")) return href;
   // The README links to the hosted catalog for people reading it on GitHub.
-  if (href === "https://lutherbu.github.io/acctrepl/papers.html") return route();
+  if (href === "https://lutherbu.github.io/acctrepl/#papers") return route();
   let url;
   try {
     url = new URL(href, new URL(asset(sourcePath), site));
@@ -179,7 +172,7 @@ function resolveReference(href, sourcePath, files, currentPackage) {
   }
   const workflow = workflows.find(w => [`output/${w.id}/packages/`, `output/${w.id}/records/`].includes(path));
   if (workflow) return route({workflow: workflow.id});
-  if (["docs/papers.csv", "docs/papers.jsonl", "utils/review.html", "utils/filter.html", "index.html", "papers.html"].includes(path)) {
+  if (["docs/papers.csv", "docs/papers.jsonl", "utils/review.html", "utils/filter.html", "index.html"].includes(path)) {
     return asset(path) + url.search + url.hash;
   }
   return null;
@@ -188,7 +181,7 @@ function resolveReference(href, sourcePath, files, currentPackage) {
 function showHash() {
   let id;
   try { id = decodeURIComponent(location.hash.slice(1)); } catch { return; }
-  if (id) document.getElementById(id)?.scrollIntoView();
+  if (id) main.querySelector("#" + CSS.escape(id))?.scrollIntoView();
 }
 
 async function documentation(path) {
@@ -292,13 +285,25 @@ async function paper(rows, params) {
 
 function errorMessage(error) {
   const section = el("section", "reading", el("h2", "", "Unable to open this view"),
-    el("p", "", error.message), link("Return to the paper catalog", "papers.html"));
+    el("p", "", error.message), link("Return to the paper catalog", route()));
   section.setAttribute("role", "alert");
   return section;
 }
 
 async function start() {
   const params = new URLSearchParams(location.search);
+  const section = document.getElementById("papers");
+  if (params.has("paper") || params.has("doc")) {
+    document.getElementById("top").classList.add("reader-view");
+    section.removeAttribute("aria-labelledby");
+    for (const a of document.querySelectorAll('.topbar a[href^="#"], .footer a[href^="#"]')) {
+      a.href = "index.html" + a.hash;
+    }
+  }
+  document.querySelector("footer a[rel=license]").href = route({doc: "LICENSE"});
+  const loading = el("p", "muted", "Loading…");
+  loading.setAttribute("role", "status");
+  main.replaceChildren(loading);
   if (params.has("doc")) return documentation(params.get("doc"));
   const text = await loadText("docs/papers.jsonl");
   const rows = text.split("\n").filter(line => line.trim()).map(line => JSON.parse(line));
@@ -310,6 +315,12 @@ async function start() {
   }
   if (params.has("paper")) return paper(rows, params);
   catalog(rows);
+  // The browser can reach the fragment before the list gives the page its full height.
+  const requestedCatalog = location.hash === "#papers" ||
+    (!location.hash && [...formFields, "page"].some(key => params.has(key)));
+  if (requestedCatalog && performance.getEntriesByType("navigation")[0]?.type !== "back_forward") {
+    requestAnimationFrame(() => section.scrollIntoView({behavior: "instant"}));
+  }
 }
 
 start().catch(error => main.replaceChildren(errorMessage(error)));

@@ -29,7 +29,8 @@ export function route(values = {}) {
   for (const [key, value] of Object.entries(values)) {
     if (value !== "" && value != null) params.set(key, value);
   }
-  return "papers.html" + (params.size ? "?" + params : "");
+  const section = params.has("paper") || params.has("doc") ? "" : "#papers";
+  return "index.html" + (params.size ? "?" + params : "") + section;
 }
 
 export function asset(path) {

@@ -98,6 +98,10 @@ function delimitedPreview(text, delimiter) {
 const textFormats = new Set(["do", "ado", "m", "r", "sas", "py", "sh", "txt", "log", "lst", "tex", "yml", "yaml"]);
 
 export async function previewFile(path, resolveLink) {
+  if (path === "LICENSE") {
+    const [title, ...paragraphs] = (await loadText(path)).trim().split(/\r?\n\s*\r?\n/);
+    return el("div", "prose", el("h1", "", title), ...paragraphs.map(p => el("p", "", p)));
+  }
   const extension = path.split(".").at(-1).toLowerCase();
   if (extension === "png") {
     const img = el("img", "figure");
