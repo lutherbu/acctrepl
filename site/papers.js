@@ -1,6 +1,7 @@
 import {asset, count, element as el, facts, link, loadText, route, workflows} from "./ui.js";
 import {fileActions, fileTree, jsonTree, previewFile} from "./files.js";
 import {summaries} from "./results.js";
+import {showCohortProgress} from "./progress.js";
 
 const main = document.querySelector("#content");
 const site = new URL("./", document.baseURI);
@@ -305,6 +306,7 @@ async function start() {
   loading.setAttribute("role", "status");
   main.replaceChildren(loading);
   if (params.has("doc")) return documentation(params.get("doc"));
+  const chartsReady = params.has("paper") ? null : showCohortProgress();
   const text = await loadText("docs/papers.jsonl");
   const rows = text.split("\n").filter(line => line.trim()).map(line => JSON.parse(line));
   const doiCounts = new Map();
@@ -315,6 +317,7 @@ async function start() {
   }
   if (params.has("paper")) return paper(rows, params);
   catalog(rows);
+  await chartsReady;
   // The browser can reach the fragment before the list gives the page its full height.
   const requestedCatalog = location.hash === "#papers" ||
     (!location.hash && [...formFields, "page"].some(key => params.has(key)));

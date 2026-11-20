@@ -9,9 +9,12 @@ import subprocess
 import tempfile
 from threading import Thread
 import unittest
+from unittest.mock import patch
 from urllib.parse import parse_qs, quote, unquote, urlencode, urlsplit
 
 from scripts.rebuild_site_inventory import inventory
+from scripts import site_progress
+from scripts.site_progress import cohort_progress
 from scripts.update_paper_catalog import RESULT_FIELDS, read_jsonl
 from test_reviewer import BROWSER, HAS_PLAYWRIGHT, ROOT
 
@@ -37,6 +40,23 @@ class InventoryTests(unittest.TestCase):
         for file in links | package_files | set(published['documents']):
             self.assertTrue((ROOT/file).is_file(), file)
 
+    def test_site_progress_matches_publications(self):
+        progress = json.loads((ROOT/'site/progress.json').read_bytes())
+        self.assertEqual(progress, cohort_progress(ROOT))
+        rows = read_jsonl(ROOT/'docs/papers.jsonl')
+        totals = {'cited': sum('top_100_cited' in row['cohorts'] for row in rows),
+                  'jar': len({p['package_id'] for row in rows for p in row['jar_packages']})}
+        schema = ROOT/'skills/check-replication-feasibility/references/feasibility_classification.schema.json'
+        categories = set(json.loads(schema.read_bytes())['$defs']['data_status']['enum'])
+        for cohort, total in totals.items():
+            data = progress[cohort]
+            self.assertEqual(set(data['classes']), categories | {'unclassified'})
+            self.assertEqual(data['total'], total)
+            self.assertEqual(sum(sum(counts.values()) for counts in data['classes'].values()), total)
+            for category, assignments in data['manual_verdicts'].items():
+                self.assertIn(category, categories)
+                self.assertLessEqual(assignments, sum(data['classes'][category].values()))
+
     def test_inventory_follows_git_index(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -51,6 +71,82 @@ class InventoryTests(unittest.TestCase):
             self.assertEqual(inventory(root)['packages'], {path: ['code with spaces.do', 'report.json']})
             subprocess.run(['git', 'mv', path+'/code with spaces.do', path+'/next.do'], cwd=root, check=True)
             self.assertEqual(inventory(root)['packages'], {path: ['next.do', 'report.json']})
+
+
+class ManualVerdictTests(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        schema = Path('skills/check-replication-feasibility/references/feasibility_classification.schema.json')
+        (self.root/schema.parent).mkdir(parents=True)
+        (self.root/schema).write_bytes((ROOT/schema).read_bytes())
+        (self.root/'site').mkdir()
+        (self.root/'docs').mkdir()
+        rows = [
+            {'paper_id': 'W100', 'cohorts': ['top_100_cited'], 'jar_packages': []},
+            {'paper_id': 'W101', 'cohorts': ['top_100_cited'], 'jar_packages': []},
+        ]
+        for package_id, verdict in [('jar-111111111111', 'undetermined'), ('jar-222222222222', 'local_available')]:
+            rows.append({'paper_id': package_id, 'cohorts': ['jar_package'],
+                         'jar_packages': [{'package_id': package_id}]})
+            folder = self.root/'output/feasibility_execution/packages'/package_id
+            folder.mkdir(parents=True)
+            (folder/'assessment.json').write_text(json.dumps({
+                'package_id': package_id, 'scopes': [{'id': 'full_pipeline', 'data_status': verdict}]}))
+        (self.root/'docs/papers.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
+        overrides = {'cited': {'ids_by_verdict': {'access_blocked': ['W100']}},
+                     'jar': {'reclassify': {'undetermined': 'public_acquisition_required'}}}
+        (self.root/'site/progress_overrides.json').write_text(json.dumps(overrides))
+
+    def test_id_assignments_and_scope_rule_are_distinct(self):
+        before = {p: p.read_bytes() for p in (self.root/'output').rglob('assessment.json')}
+        data = cohort_progress(self.root)
+        cited, jar = data['cited'], data['jar']
+        self.assertEqual(cited['classes']['access_blocked']['unexecuted'], 1)
+        self.assertEqual(cited['classes']['unclassified']['unexecuted'], 1)
+        self.assertEqual(cited['manual_verdicts']['access_blocked'], 1)
+        self.assertEqual(jar['classes']['public_acquisition_required']['unexecuted'], 1)
+        self.assertEqual(jar['classes']['local_available']['unexecuted'], 1)
+        self.assertEqual(jar['manual_verdicts']['public_acquisition_required'], 1)
+        self.assertEqual(sum(jar['manual_verdicts'].values()), 1)
+        self.assertEqual(before, {p: p.read_bytes() for p in before})
+
+    def test_two_confirmations_before_writing(self):
+        for responses in (['no'], [EOFError()], ['yes', 'no'], ['yes', EOFError()], ['yes', 'yes']):
+            with (self.subTest(responses=responses), patch.object(site_progress, 'PROJECT', self.root),
+                  patch('sys.argv', ['site_progress.py']), patch('sys.stdin.isatty', return_value=True),
+                  patch('builtins.input', side_effect=responses) as ask, patch.object(site_progress, '_atomic_write') as write):
+                if responses == ['yes', 'yes']:
+                    site_progress.main()
+                    write.assert_called_once_with(self.root/'site/progress.json',
+                                                  site_progress.encoded(cohort_progress(self.root)))
+                else:
+                    with self.assertRaises(SystemExit):
+                        site_progress.main()
+                    write.assert_not_called()
+                self.assertEqual(ask.call_count, len(responses))
+
+    def test_noninteractive_write_refuses_before_prompting(self):
+        with (patch.object(site_progress, 'PROJECT', self.root), patch('sys.argv', ['site_progress.py']),
+              patch('sys.stdin.isatty', return_value=False), patch('builtins.input') as ask,
+              patch.object(site_progress, '_atomic_write') as write):
+            with self.assertRaises(SystemExit):
+                site_progress.main()
+            ask.assert_not_called()
+            write.assert_not_called()
+
+    def test_check_is_unattended_and_read_only(self):
+        snapshot = self.root/'site/progress.json'
+        snapshot.write_bytes(site_progress.encoded(cohort_progress(self.root)))
+        with patch.object(site_progress, 'PROJECT', self.root), patch('sys.argv', ['site_progress.py', '--check']), \
+                patch('builtins.input') as ask, patch.object(site_progress, '_atomic_write') as write:
+            site_progress.main()
+            snapshot.write_text('{}')
+            with self.assertRaises(SystemExit):
+                site_progress.main()
+            ask.assert_not_called()
+            write.assert_not_called()
 
 
 class PagesHandler(SimpleHTTPRequestHandler):
@@ -175,6 +271,47 @@ class PaperBrowserTests(unittest.TestCase):
         for label in ['CSV', 'JSONL']:
             self.assertEqual(catalog.get_by_role('link', name=label).get_attribute('href'), 'docs/papers.'+label.lower())
         self.assertEqual(page.locator('footer [rel=license]').get_attribute('href'), 'LICENSE')
+        self.assertTrue(page.locator('#project a[href="site/progress.json"]').is_visible())
+
+    def test_cohort_composition_and_responsive_bars(self):
+        self.page.goto(self.base)
+        charts = self.page.locator('#project figure.cohort-chart')
+        charts.first.wait_for()
+        self.assertEqual(charts.count(), 2)
+        progress = json.loads((ROOT/'site/progress.json').read_bytes())
+        self.assertEqual(self.requests.count(self.base+'site/progress.json'), 1)
+        for cohort, data in progress.items():
+            chart = self.page.locator(f'#project figure.cohort-chart[data-cohort="{cohort}"]')
+            with self.subTest(cohort=cohort):
+                self.assertTrue(chart.locator('figcaption').is_visible())
+                rows = chart.locator('.cohort-table tbody tr[data-category]')
+                rows.first.wait_for(state='attached')
+                entries = rows.evaluate_all("""items => items.map(el => [el.dataset.category,
+                    ...Array.from(el.querySelectorAll('td'), cell => Number(cell.innerText.replaceAll(',', '')))])""")
+                expected = {category: [counts['executed'], counts['unexecuted']]
+                            for category, counts in data['classes'].items()
+                            if category != 'unclassified' or sum(counts.values())}
+                self.assertEqual({category: counts for category, *counts in entries}, expected)
+                if cohort == 'cited' and data['manual_verdicts'].get('access_blocked'):
+                    blocked = chart.locator('tr[data-category="access_blocked"] th')
+                    self.assertIn(f"{data['manual_verdicts']['access_blocked']} manually excluded",
+                                  blocked.inner_text().lower())
+                segments = {(category, state): count for category, counts in data['classes'].items()
+                            for state, count in counts.items() if count}
+                for width in (1600, 390):
+                    self.page.set_viewport_size({'width': width, 'height': 900})
+                    track = chart.locator('.cohort-track')
+                    sizes = track.locator('[data-count]').evaluate_all("""items => items.map(el => [
+                        el.dataset.category, el.dataset.state, Number(el.dataset.count), el.getBoundingClientRect().width,
+                        getComputedStyle(el).backgroundImage])""")
+                    self.assertEqual({(category, state): count for category, state, count, _, _ in sizes}, segments)
+                    track_width = track.bounding_box()['width']
+                    for _, state, count, size, background in sizes:
+                        self.assertAlmostEqual(size, track_width * count / data['total'], delta=2)
+                        self.assertEqual(background != 'none', state == 'unexecuted')
+                    box = chart.bounding_box()
+                    self.assertGreaterEqual(box['x'], 0)
+                    self.assertLessEqual(box['x'] + box['width'], width)
 
     def test_filter_shared_doi_and_navigation(self):
         by_doi = defaultdict(list)

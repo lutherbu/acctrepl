@@ -31,6 +31,12 @@ Each workflow gets one Git-ignored `index.json`. Its records contain the stable 
 
 The paper catalog appears below Deliverables on the homepage and reads `docs/papers.jsonl` directly. The package and documentation reader uses a separate list of published filenames. After staging additions, renames or removals in those directories, run `python3 scripts/rebuild_site_inventory.py` and include `site/files.json` in the commit. Use `--check` to verify the list. To preview Pages locally, serve a public checkout with `python3 -m http.server --bind 127.0.0.1` and open `index.html#papers` through the server.
 
+The two homepage bars read `site/progress.json`. Colors identify the five feasibility classes, and stripes identify unexecuted work. Each cohort retains its own denominator. Partial runs count as executed when at least one selected scope or required analysis stage succeeded.
+
+The homepage applies the project author's [manual verdicts](site/progress_overrides.json) to the assessed data classes. In the citation cohort, the listed paper IDs set the data class and blocked includes manual exclusions. For JAR, the rule assigns undetermined package scopes to public acquisition. Individual verdicts take precedence over cohort rules. The JSON snapshot reports how many entries in each class received a manual verdict. Execution counts always come from the run records.
+
+After updating the catalog, assessments, runs, or manual verdicts, run `python3 scripts/site_progress.py` in a terminal. When manual verdicts exist, the script asks twice before writing: first to apply the verdicts, then to write the counts. Enter `yes` separately at each prompt. Use `python3 scripts/site_progress.py --check` for an unattended, read-only freshness check.
+
 The export helper writes one JSONL each for samples, models, both feasibility workflows and executions under `.local/exports/`. Pass a workflow name to export just that workflow. The complete sample export is `.local/exports/samples/sample_extractions.jsonl`. Open it in the [manual reviewer](utils/review.html) or the [source filter](utils/filter.html). Both utilities run as standalone HTML files.
 
 ## Paper inputs and licensed resources
