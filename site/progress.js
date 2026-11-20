@@ -8,17 +8,16 @@ const legacyLabels = {
   no_observed_data_required: "No observed data required",
   unclassified: "Outside classification",
 };
-const titles = {cited: "Citation-selected papers · from-scratch reconstructions", jar: "JAR packages · author code"};
+const titles = {cited: "Citation-selected papers · from-scratch reconstructions", jar: "JAR packages"};
 const percent = new Intl.NumberFormat("en-US", {style: "percent", maximumFractionDigits: 1});
 
 function showProjectTotals(project) {
   const card = document.getElementById("project-run-summary");
-  if (!card || !Number.isSafeInteger(project?.attempted_papers) || !Number.isSafeInteger(project.executed_papers)
-      || project.executed_papers < 0 || project.attempted_papers < project.executed_papers) return;
+  const executed = project?.executed_papers;
+  if (!card || !Number.isSafeInteger(executed) || executed < 0) return;
   card.replaceChildren(
-    el("p", "stat-heading", el("strong", "", count(project.executed_papers), " of ", count(project.attempted_papers)),
-      " attempted papers executed"),
-    el("p", "", "A paper counts as executed when at least one required analysis succeeds for the original period."));
+    el("p", "stat-heading", el("strong", "", count(executed)), executed === 1 ? " successful execution" : " successful executions"),
+    el("p", "", "Each paper counts once when at least one required analysis succeeds for the original period."));
 }
 
 function cohortChart(id, data, contract) {
@@ -68,7 +67,7 @@ function cohortChart(id, data, contract) {
   table.setAttribute("aria-label", title + " by " + heading.toLowerCase() + " and execution");
   const note = id === "cited"
     ? "Each executed paper ran independently reconstructed code for the original period."
-    : "Packages with a retained author-code run use its execution scope. Other packages use the analysis-only assessment when available, or the full workflow otherwise.";
+    : "A package counts as executed when a required analysis succeeds using the authors’ code or newly written code with data from that package.";
   const figure = el("figure", "cohort-chart", caption, track, table, el("p", "cohort-note", note));
   figure.dataset.cohort = id;
   return figure;

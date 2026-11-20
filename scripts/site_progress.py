@@ -168,13 +168,19 @@ def cohort_progress(root, overrides=None):
     by_id, rules = _overrides(overrides.get('cited', {}), cited_ids, statuses)
     feasibility = _publications(root, 'feasibility_reproduction')
     attempted, executed, from_scratch_ran = set(), set(), set()
+    executed_deposits = set()
     for paper_id, path in _publications(root, 'reproductions').items():
         run = json.loads(path.read_bytes())
         identity = papers[paper_id]
+        uses_deposit = run.get('route') == 'author_deposit'
+        if uses_deposit and packages.get(run.get('package_id')) != identity:
+            raise ValueError(f'Author deposit does not match the catalog paper for {paper_id}')
         attempted.add(identity)
         if _reconstruction_ran(run):
             executed.add(identity)
-            if run.get('route') != 'author_deposit':
+            if uses_deposit:
+                executed_deposits.add(run['package_id'])
+            else:
                 from_scratch_ran.add(paper_id)
     for paper_id in sorted(cited_ids):
         assessment = _record(feasibility, paper_id)
@@ -211,7 +217,8 @@ def cohort_progress(root, overrides=None):
             attempted.add(identity)
         if ran:
             executed.add(identity)
-        _count(jar, category, ran, individual is not None or data_override is not None)
+        _count(jar, category, ran or package_id in executed_deposits,
+               individual is not None or data_override is not None)
 
     return {'project': {'attempted_papers': len(attempted), 'executed_papers': len(executed)},
             'cited': cited, 'jar': jar}

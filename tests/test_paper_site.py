@@ -132,19 +132,23 @@ class ManualVerdictTests(unittest.TestCase):
         # Two catalog IDs and two routes describe the same paper.
         rows[0]['doi'] = '10.1234/SHARED'
         rows[2]['doi'] = '10.1234/shared'
-        rows.append({'paper_id': 'W102', 'cohorts': ['top_100_cited'], 'jar_packages': []})
+        rows[1]['doi'] = rows[3]['doi'] = '10.1234/deposit'
+        # A second deposit for the same article has never been used.
+        rows[3]['jar_packages'].append({'package_id': 'jar-333333333333'})
+        rows.append({'paper_id': 'W102', 'cohorts': ['top_100_cited', 'jar_package'],
+                     'jar_packages': [{'package_id': 'jar-444444444444'}]})
         catalog.write_text(''.join(json.dumps(row) + '\n' for row in rows))
 
-        for paper_id, ran, status, route in [
-            ('W100', 1, 'partial', None), ('W101', 2, 'executed', 'author_deposit'),
-            ('W102', 0, 'blocked', 'author_deposit'),
+        for paper_id, ran, status, deposit in [
+            ('W100', 1, 'partial', None), ('W101', 2, 'executed', 'jar-222222222222'),
+            ('W102', 0, 'blocked', 'jar-444444444444'),
         ]:
             attempt = self.root/'output/reproductions/packages'/paper_id/'attempt_01'
             attempt.mkdir(parents=True)
             outcome = {'paper_id': paper_id, 'attempt': 1, 'executed_scopes': ran,
                        'total_scopes': 2, 'status': status}
-            if route:
-                outcome['route'] = route
+            if deposit:
+                outcome.update(route='author_deposit', package_id=deposit)
             raw = site_progress.encoded(outcome)
             (attempt/'outcome.json').write_bytes(raw)
             (attempt.parent/'accepted.json').write_text(json.dumps({
@@ -164,8 +168,10 @@ class ManualVerdictTests(unittest.TestCase):
         progress = cohort_progress(self.root)
         self.assertEqual(progress['project'], {'attempted_papers': 3, 'executed_papers': 2})
         self.assertEqual(progress['project'], cohort_progress(self.root, overrides={})['project'])
-        for cohort in ('cited', 'jar'):
-            self.assertEqual(sum(c['executed'] for c in progress[cohort]['classes'].values()), 1)
+        self.assertEqual(sum(c['executed'] for c in progress['cited']['classes'].values()), 1)
+        self.assertEqual(progress['jar']['classes']['ready'], {'executed': 1, 'unexecuted': 0})
+        self.assertEqual(progress['jar']['classes']['preparation_required'], {'executed': 1, 'unexecuted': 0})
+        self.assertEqual(progress['jar']['classes']['unclassified'], {'executed': 0, 'unexecuted': 2})
 
     def test_partial_author_run_needs_a_result_from_a_successful_analysis(self):
         report = {'package_id': 'jar-example', 'outcome': 'partial', 'run_receipt': {'path': 'run.json'},
@@ -306,8 +312,8 @@ class PaperBrowserTests(unittest.TestCase):
         progress = json.loads((ROOT/'site/progress.json').read_bytes())
         self.page.locator('#project-run-summary strong').wait_for()
         self.assertEqual(summary.locator('strong').all_text_contents(),
-                         [str(len(self.rows)), f"{progress['project']['executed_papers']} of {progress['project']['attempted_papers']}"])
-        self.assertIn('A paper counts as executed when at least one required analysis succeeds', summary.inner_text())
+                         [str(len(self.rows)), str(progress['project']['executed_papers'])])
+        self.assertIn('Each paper counts once when at least one required analysis succeeds', summary.inner_text())
         overlap = sum('top_100_cited' in row['cohorts'] and bool(row['jar_packages']) for row in self.rows)
         self.assertIn(f"{progress['cited']['total']} top-cited papers + {progress['jar']['total']} JAR packages "
                       f"− {overlap} overlaps", summary.inner_text())
@@ -341,8 +347,8 @@ class PaperBrowserTests(unittest.TestCase):
         self.page.route(self.base+'site/progress.json', lambda route: route.fulfill(json=progress))
         self.page.goto(self.base)
         card = self.page.locator('#project-run-summary')
-        card.get_by_text('58 of 71', exact=True).wait_for()
-        self.assertEqual(card.locator('.stat-heading').text_content(), '58 of 71 attempted papers executed')
+        card.get_by_text('58', exact=True).wait_for()
+        self.assertEqual(card.locator('.stat-heading').text_content(), '58 successful executions')
         self.page.locator('#cohort-charts figure').last.wait_for()
         self.assertEqual(self.requests.count(self.base+'site/progress.json'), 1)
 
@@ -415,6 +421,9 @@ class PaperBrowserTests(unittest.TestCase):
             chart = self.page.locator(f'#project figure.cohort-chart[data-cohort="{cohort}"]')
             with self.subTest(cohort=cohort):
                 self.assertTrue(chart.locator('figcaption').is_visible())
+                if cohort == 'jar':
+                    self.assertIn('the authors’ code or newly written code with data from that package',
+                                  chart.locator('.cohort-note').inner_text())
                 rows = chart.locator('.cohort-table tbody tr[data-category]')
                 rows.first.wait_for(state='attached')
                 entries = rows.evaluate_all("""items => items.map(el => [el.dataset.category,
