@@ -286,5 +286,75 @@ class CommonClassificationTests(unittest.TestCase):
         self.assertEqual(len(header),len(cells(table[1])))
 
 
+class CombinedVerdictTests(unittest.TestCase):
+    def test_all_execution_cells_and_ready_routes(self):
+        from scripts.feasibility_verdict import execution_verdict
+        codes = ['ready_to_attempt', 'preparation_required', 'blocked', 'undetermined', 'no_runnable_code']
+        expected = {
+            'local_available': ['ready', 'ready', 'undetermined', 'undetermined', 'ready'],
+            'public_acquisition_required': ['preparation_required', 'preparation_required', 'undetermined',
+                                             'undetermined', 'preparation_required'],
+            'restricted_access_required': ['blocked'] * 5,
+            'undetermined': ['undetermined'] * 5,
+            'not_applicable': ['not_applicable'] * 5,
+        }
+        routes = dict(ready_to_attempt='execute', preparation_required='prepare_and_execute',
+                      no_runnable_code='reproduce')
+        for data, row in expected.items():
+            for code, verdict in zip(codes, row, strict=True):
+                with self.subTest(data=data, code=code):
+                    self.assertEqual(execution_verdict(data, code),
+                                     (verdict, routes[code] if verdict == 'ready' else None))
+
+    def test_scope_selection_and_paper_precedence(self):
+        from scripts.feasibility_verdict import classify
+        doc = execution([scope('undetermined'), scope('local_available', sid='analysis_only', readiness='no_runnable_code')])
+        result = classify(doc)
+        self.assertEqual((result['classification'], result['route'], result['classification_scope']),
+                         ('ready', 'reproduce', 'analysis_only'))
+        self.assertEqual(result['scopes'][0]['classification'], 'undetermined')
+        for statuses, paper_class, reason in [
+                (['no_observed_data_required'], 'not_applicable', 'synthetic_only'),
+                ([], 'not_applicable', 'no_baseline'),
+                (['local_ready', 'no_observed_data_required'], 'ready', None),
+                (['public_acquisition_required', 'local_ready'], 'preparation_required', None),
+                (['public_acquisition_required', 'undetermined'], 'undetermined', None),
+                (['undetermined', 'access_blocked'], 'blocked', None)]:
+            with self.subTest(statuses=statuses):
+                doc = classify(replication([fit(s) for s in statuses], eligibility='eligible' if statuses else 'no_baseline'))
+                self.assertEqual((doc['classification'], doc['na_reason']), (paper_class, reason))
+
+    def test_old_publication_binding_checks_original_and_derived_fields(self):
+        import hashlib
+        from scripts.feasibility_verdict import classify, reviewed_bytes
+        old = replication([fit('undetermined')])
+        raw = (json.dumps(old, indent=2, ensure_ascii=False) + '\n').encode()
+        published = classify(old)
+        published['preclassification_sha256'] = hashlib.sha256(raw).hexdigest()
+        self.assertEqual(reviewed_bytes(published), raw)
+        from scripts.feasibility_verdict import matches_frozen_input
+        with tempfile.TemporaryDirectory() as folder:
+            project = Path(folder)
+            published_path = project/'output/feasibility_reproduction/records/W1.json'
+            published_path.parent.mkdir(parents=True)
+            published_path.write_text(json.dumps(published))
+            old_digest = hashlib.sha256(raw).hexdigest()
+            self.assertTrue(matches_frozen_input(published_path, old_digest, project, n.sha256))
+            self.assertFalse(matches_frozen_input(published_path, '0' * 64, project, n.sha256))
+            outside = project/'different.json'
+            outside.write_bytes(published_path.read_bytes())
+            self.assertFalse(matches_frozen_input(outside, old_digest, project, n.sha256))
+        for path, bad in [(('classification',), 'ready'), (('assessments', 0, 'classification'), 'ready'),
+                          (('paper_id',), 'W2')]:
+            with self.subTest(path=path):
+                changed = copy.deepcopy(published)
+                obj = changed
+                for step in path[:-1]:
+                    obj = obj[step]
+                obj[path[-1]] = bad
+                with self.assertRaises(ValueError):
+                    reviewed_bytes(changed)
+
+
 if __name__=='__main__':
     unittest.main()

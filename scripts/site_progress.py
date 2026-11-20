@@ -7,9 +7,11 @@ from pathlib import Path
 import sys
 
 if __package__:
+    from .feasibility_verdict import LABELS, execution_verdict, reproduction_verdict
     from .rebuild_indexes import PROJECT, encoded, index_workflow
     from .update_paper_catalog import _atomic_write
 else:
+    from feasibility_verdict import LABELS, execution_verdict, reproduction_verdict
     from rebuild_indexes import PROJECT, encoded, index_workflow
     from update_paper_catalog import _atomic_write
 
@@ -69,16 +71,17 @@ def _author_ran(report):
     return True
 
 
-def _package_class(assessment, report, mapping):
+def _package_inputs(assessment, report, mapping):
     if assessment is None:
-        return 'unassessed'
-    scopes = {scope['id']: scope['data_status'] for scope in assessment['scopes']}
+        return None
+    scopes = {scope['id']: scope for scope in assessment['scopes']}
     if len(scopes) != len(assessment['scopes']) or 'full_pipeline' not in scopes:
         raise ValueError(f"Invalid feasibility scopes for {assessment['package_id']}")
     scope = report['scope_id'] if report else ('analysis_only' if 'analysis_only' in scopes else 'full_pipeline')
     if scope not in scopes:
         raise ValueError(f"Missing assessment for execution scope {scope} in {assessment['package_id']}")
-    return mapping[scopes[scope]]
+    selected = scopes[scope]
+    return mapping[selected['data_status']], selected['execution_readiness']
 
 
 def _empty_cohort(statuses):
@@ -106,7 +109,7 @@ def _overrides(settings, ids, statuses):
         raise ValueError('Unknown feasibility class in a manual reclassification rule.')
     by_id = {}
     for verdict, selected in settings.get('ids_by_verdict', {}).items():
-        if verdict not in statuses or not isinstance(selected, list):
+        if verdict not in {*statuses, *LABELS} or not isinstance(selected, list):
             raise ValueError(f'Invalid manual selection for {verdict}.')
         for subject in selected:
             if subject not in ids or subject in by_id:
@@ -116,10 +119,9 @@ def _overrides(settings, ids, statuses):
 
 
 def _count(cohort, category, ran, manual):
-    if manual is not None:
-        category = manual
+    if manual:
         counts = cohort['manual_verdicts']
-        counts[manual] = counts.get(manual, 0) + 1
+        counts[category] = counts.get(category, 0) + 1
     if category in cohort['unclassified_reasons']:
         cohort['unclassified_reasons'][category] += 1
         category = 'unclassified'
@@ -148,25 +150,41 @@ def cohort_progress(root, overrides=None):
                 cited_ids.add(row['paper_id'])
             package_ids.update(item['package_id'] for item in row['jar_packages'])
 
-    cited = _empty_cohort(statuses)
+    cited = _empty_cohort(LABELS)
     by_id, rules = _overrides(overrides.get('cited', {}), cited_ids, statuses)
     feasibility = _publications(root, 'feasibility_reproduction')
     reproductions = _publications(root, 'reproductions')
     for paper_id in sorted(cited_ids):
         assessment = _record(feasibility, paper_id)
-        ran = _reconstruction_ran(_record(reproductions, paper_id))
+        run = _record(reproductions, paper_id)
+        ran = bool(run and run.get('route') != 'author_deposit' and _reconstruction_ran(run))
         status = _paper_class(assessment, mappings['independent_reconstruction'])
-        _count(cited, status, ran, by_id.get(paper_id, rules.get(status)))
+        override = by_id.get(paper_id, rules.get(status))
+        selected = override or status
+        if selected in LABELS or selected == 'unassessed':
+            category = selected
+        else:
+            category = reproduction_verdict(selected)
+        _count(cited, category, ran, override is not None)
 
-    jar = _empty_cohort(statuses)
+    jar = _empty_cohort(LABELS)
     by_id, rules = _overrides(overrides.get('jar', {}), package_ids, statuses)
     feasibility = _publications(root, 'feasibility_execution')
     executions = _publications(root, 'executions')
     for package_id in sorted(package_ids):
         assessment = _record(feasibility, package_id)
         report = _record(executions, package_id)
-        status = _package_class(assessment, report, mappings['author_package'])
-        _count(jar, status, _author_ran(report), by_id.get(package_id, rules.get(status)))
+        selected = _package_inputs(assessment, report, mappings['author_package'])
+        data, code = selected or ('unassessed', 'undetermined')
+        individual = by_id.get(package_id)
+        data_override = rules.get(data)
+        if individual in LABELS:
+            category = individual
+        elif selected or individual:
+            category, _ = execution_verdict(individual or data_override or data, code)
+        else:
+            category = 'unassessed'
+        _count(jar, category, _author_ran(report), individual is not None or data_override is not None)
 
     return {'cited': cited, 'jar': jar}
 

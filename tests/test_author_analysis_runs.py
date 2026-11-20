@@ -174,7 +174,52 @@ class AuthorAnalysisControllerTests(unittest.TestCase):
         attempt,plan=self.ready(pid,phase,case);self.approve(attempt);c.execute(attempt);self.finish(attempt)
         return attempt
 
+    def test_ready_package_has_one_attempt_and_frozen_scope(self):
+        unit = self.units[0]
+        assessment = Path(unit['source_assessment']['path'])
+        scope = {'id': 'full_pipeline', 'entry_points': ['analysis.R'],
+                 'data_status': 'local_available', 'execution_readiness': 'preparation_required'}
+        c.write(assessment, {'package_id': 'pkg-0', 'scopes': [scope]})
+        targets = self.base / 'targets.json'
+        c.write(targets, {'main': 'Table 2 coefficient and sample size'})
+        with patch.object(c, 'BASE', self.base/'single'):
+            result = c.initialize_paper(unit['source_work_item']['path'], assessment, targets)
+            campaign = result['campaign']
+            attempt = Path(c.prepare('pkg-0', 'full', 1, campaign=campaign)['attempt'])
+            item = c.read(attempt/'work_item.json')
+            self.assertEqual(item['scope_id'], 'full_pipeline')
+            self.assertEqual(item['unit']['baseline_targets'], c.read(targets))
+            self.assertEqual(c.read(attempt/'report_template.json')['scope_id'], 'full_pipeline')
+            self.assign(attempt)
+            with self.assertRaisesRegex(ValueError, 'Preparation is open'):
+                c.finalize(attempt, 'report_template.json')
+            self.assertEqual(c.read(Path(campaign)/'campaign.json')['attempts'][item['attempt_id']]['status'], 'assigned')
+            for mode, number in [('full', 1), ('full', 2), ('pilot', 1)]:
+                with self.assertRaisesRegex(ValueError, 'One author-code attempt'):
+                    c.prepare('pkg-0', mode, number, campaign=campaign)
+
+    def test_baseline_handoff_uses_numerical_coverage(self):
+        targets = {'main': 'Numerical result for Table 2'}
+        review = {'main': {'verified': True, 'evidence': 'Coefficient and SE in native output',
+                           'stage_id': 'estimate'}}
+        partial = {'outcome': 'partial', 'stage_results': [
+            {'stage_id': 'estimate', 'status': 'succeeded', 'log_check': 'passed'},
+            {'stage_id': 'format', 'status': 'failed', 'log_check': 'failed'}]}
+        self.assertIsNone(c.baseline_handoff(targets, review, partial)['next_skill'])
+        self.assertRaises(ValueError, c.baseline_handoff, targets, {}, partial)
+        self.assertRaises(ValueError, c.baseline_handoff, targets, review, {'outcome': 'blocked', 'stage_results': []})
+        missing = {'main': {'verified': False, 'evidence': 'Estimation blocked before launch'}}
+        with self.assertRaisesRegex(ValueError, 'Preparation is open'):
+            c.baseline_handoff(targets, missing, {'outcome': 'not_run', 'stage_results': []})
+        self.assertEqual(c.baseline_handoff(targets, missing, {'outcome': 'blocked', 'stage_results': []})['uncovered_baselines'], ['main'])
+
     def test_promote_one_accepted_package_replays_nested_inputs(self):
+        self.check_promoted_package('analysis_only')
+
+    def test_promote_full_pipeline_preserves_reviewed_scope(self):
+        self.check_promoted_package('full_pipeline')
+
+    def check_promoted_package(self, scope_id):
         import io
         import zipfile
         sha = c.sha
@@ -189,6 +234,16 @@ class AuthorAnalysisControllerTests(unittest.TestCase):
         unit=self.units[0];file=Path(unit['source_work_item']['path'])
         src=c.read(file);src['output_header']['provenance']={'package_files':[{'path':'paper.zip','sha256':sha(archive)}]}
         c.write(file,src);unit['source_work_item']['sha256']=sha(file)
+        if scope_id == 'full_pipeline':
+            unit['scope_id'] = unit['analysis_scope']['id'] = scope_id
+            unit['analysis_scope']['execution_readiness'] = 'preparation_required'
+            unit['baseline_targets'] = {'table': 'Main table'}
+            assessed = Path(unit['source_assessment']['path'])
+            c.write(assessed, {'package_id': 'pkg-0', 'scopes': [unit['analysis_scope']]})
+            unit['source_assessment']['sha256'] = sha(assessed)
+            policy = c.read(self.policy)
+            policy['scope_id'] = scope_id
+            c.write(self.policy, policy)
         c.write(self.manifest,{'units':self.units})
         self.campaign=self.base/'promotion campaign'
         c.initialize(self.manifest,self.campaign,fixture=True)
@@ -196,12 +251,13 @@ class AuthorAnalysisControllerTests(unittest.TestCase):
         report=self.report(attempt);c.write(attempt/'draft.json',report);c.finalize(attempt,'draft.json')
         items=[{'path':str(attempt/'work'/name),'sha256':sha(attempt/'work'/name),'kind':kind}
                for name,kind in [('analysis.R','code'),('result.txt','result')]]
-        c.write(attempt/'note.json',{'source_checked':True,'execution_checked':True,'notes':['Test review.'],'publish_files':items})
+        c.write(attempt/'note.json',{'source_checked':True,'execution_checked':True,'notes':['Test review.'],'publish_files':items,
+            'baseline_coverage':{'table':{'verified':True,'stage_id':'table','evidence':'Reviewed fresh table.'}}})
         c.review(attempt,'/root/reviewer','note.json')
         template=self.base/'recipe/code/main.R';template.parent.mkdir(parents=True)
         shutil.copyfile(attempt/'work/analysis.R',template)
         recipe=template.parent.parent/'local_inputs.json'
-        r={'schema_version':'2.0','package_id':'pkg-0','scope_id':'analysis_only','attempt_id':report['attempt_id'],
+        r={'schema_version':'2.0','package_id':'pkg-0','scope_id':scope_id,'attempt_id':report['attempt_id'],
            'accepted_outcome':report['outcome'],'archive':{'path':archive.relative_to(project).as_posix(),
            'bytes':archive.stat().st_size,'sha256':sha(archive)},'files':[
            {'role':'data','path':'work/data.txt','input_id':next(i['id'] for i in report['inputs'] if i['role']=='data'),

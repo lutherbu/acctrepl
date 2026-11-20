@@ -1,6 +1,6 @@
 import {count, element as el, loadText} from "./ui.js";
 
-const labels = {
+const legacyLabels = {
   local_available: "Available locally",
   public_acquisition_required: "Public acquisition required",
   access_blocked: "Access blocked",
@@ -11,8 +11,11 @@ const labels = {
 const titles = {cited: "Citation-selected papers", jar: "JAR author packages"};
 const percent = new Intl.NumberFormat("en-US", {style: "percent", maximumFractionDigits: 1});
 
-function cohortChart(id, data) {
+function cohortChart(id, data, contract) {
   const title = titles[id];
+  const legacy = Object.hasOwn(data.classes, "local_available");
+  const labels = legacy ? legacyLabels : {...contract.x_class_labels, unclassified: "Outside classification"};
+  const heading = legacy ? "Data availability (previous classification)" : "Feasibility";
   const executed = Object.values(data.classes).reduce((n, row) => n + row.executed, 0);
   const rate = data.total ? " · " + percent.format(executed / data.total) : "";
   const caption = el("figcaption", "", el("h4", "", title),
@@ -20,7 +23,7 @@ function cohortChart(id, data) {
   const track = el("div", "cohort-track");
   track.setAttribute("aria-hidden", "true");
   const head = el("tr");
-  for (const text of ["Data availability", "Executed", "Unexecuted"]) {
+  for (const text of [heading, "Executed", "Unexecuted"]) {
     const th = el("th", "", text);
     th.scope = "col";
     head.append(th);
@@ -52,10 +55,10 @@ function cohortChart(id, data) {
     body.append(row);
   }
   const table = el("table", "cohort-table", el("thead", "", head), body);
-  table.setAttribute("aria-label", title + " by data availability and execution");
+  table.setAttribute("aria-label", title + " by " + heading.toLowerCase() + " and execution");
   const note = id === "cited"
     ? "Execution counts come from the independent reconstruction runs."
-    : "Each package uses the scope actually run. Unexecuted packages use the analysis-only assessment when available, otherwise the full workflow.";
+    : "Packages with a retained run use its execution scope. Other packages use the analysis-only assessment when available, or the full workflow otherwise.";
   const figure = el("figure", "cohort-chart", caption, track, table, el("p", "cohort-note", note));
   figure.dataset.cohort = id;
   return figure;
@@ -64,8 +67,10 @@ function cohortChart(id, data) {
 export async function showCohortProgress() {
   const container = document.getElementById("cohort-charts");
   try {
-    const stats = JSON.parse(await loadText("site/progress.json"));
-    container.replaceChildren(...Object.keys(titles).map(id => cohortChart(id, stats[id])));
+    const [stats, contract] = await Promise.all(["site/progress.json",
+      "skills/check-replication-feasibility/references/feasibility_classification.schema.json"]
+      .map(async path => JSON.parse(await loadText(path))));
+    container.replaceChildren(...Object.keys(titles).map(id => cohortChart(id, stats[id], contract)));
     const updated = document.getElementById("progress-updated");
     const date = new Date(stats.updated_at);
     if (stats.updated_at && Number.isFinite(date.getTime())) {

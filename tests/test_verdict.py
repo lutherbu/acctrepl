@@ -44,8 +44,9 @@ def make_checkout(root):
             row.update({'cohorts': ['top_100_cited', 'jar_package'] if n == 100 else ['jar_package'],
                         'jar_packages': [{'package_id': pkg}], 'feasibility_execution_path': path})
             write_json(root/path, {'package_id': pkg, 'scopes': [
-                {'id': 'full_pipeline', 'data_status': 'local_available'},
-                {'id': 'analysis_only', 'data_status': 'undetermined'}]})
+                {'id': 'full_pipeline', 'data_status': 'local_available', 'execution_readiness': 'ready_to_attempt'},
+                {'id': 'analysis_only', 'data_status': 'undetermined',
+                 'execution_readiness': 'preparation_required' if n == 100 else 'blocked'}]})
         if n == 100:
             path = f'output/feasibility_reproduction/records/{pid}.json'
             row.update({'feasibility_reproduction_path': path, 'pdf_path': f'papers/pdf/{pid}.pdf'})
@@ -113,31 +114,65 @@ class VerdictTests(unittest.TestCase):
         self.page.locator('#search').fill(PAPER)
         cited = self.select('cited', PAPER)
         jar = self.select('jar', PACKAGE)
-        self.expect(cited).to_have_value('access_blocked')
-        self.expect(jar.locator('option[value=""]')).to_contain_text(re.compile('public', re.I))
+        self.expect(cited.locator('option:checked')).to_have_text('Blocked (imported data verdict)')
+        self.expect(jar.locator('option[value=""]')).to_contain_text('Preparation required (cohort rule)')
         schema = json.loads((self.root/SCHEMA).read_bytes())
         options = jar.locator('option').evaluate_all('(opts) => opts.map(o => o.value).filter(Boolean)')
-        self.assertEqual(set(options), set(schema['$defs']['data_status']['enum']))
+        self.assertEqual(set(options), set(schema['x_class_labels']))
         original = (self.root/'site/progress_overrides.json').read_bytes()
-        cited.select_option('no_observed_data_required')
-        jar.select_option('access_blocked')
+        cited.select_option('not_applicable')
+        jar.select_option('blocked')
         edited = self.download()
         counts = cohort_progress(self.root, edited)
-        self.assertEqual(counts['cited']['classes']['no_observed_data_required']['unexecuted'], 1)
-        self.assertEqual(counts['cited']['classes']['access_blocked']['unexecuted'], 1)
-        self.assertEqual(counts['jar']['classes']['public_acquisition_required']['unexecuted'], 1)
-        self.assertEqual(counts['jar']['classes']['access_blocked']['unexecuted'], 1)
+        self.assertEqual(counts['cited']['classes']['not_applicable']['unexecuted'], 1)
+        self.assertEqual(counts['cited']['classes']['blocked']['unexecuted'], 1)
+        self.assertEqual(counts['jar']['classes']['undetermined']['unexecuted'], 1)
+        self.assertEqual(counts['jar']['classes']['blocked']['unexecuted'], 1)
         self.assertEqual((self.root/'site/progress_overrides.json').read_bytes(), original)
         jar.select_option('')
-        self.expect(jar.locator('option:checked')).to_contain_text(re.compile('public', re.I))
+        self.expect(jar.locator('option:checked')).to_contain_text('Preparation required')
         restored = self.download()
         self.assertEqual(cohort_progress(self.root, restored)['jar']['classes']
-                         ['public_acquisition_required']['unexecuted'], 2)
+                         ['preparation_required']['unexecuted'], 1)
         self.page.locator('#import-verdicts').set_input_files({
             'name': 'saved.json', 'mimeType': 'application/json', 'buffer': json.dumps(edited).encode()})
         self.page.locator('#search').fill(PAPER)
-        self.expect(jar).to_have_value('access_blocked')
-        self.expect(cited).to_have_value('no_observed_data_required')
+        self.expect(jar).to_have_value('blocked')
+        self.expect(cited).to_have_value('not_applicable')
+
+    def test_legacy_local_data_and_final_verdicts_use_different_precedence(self):
+        legacy = {'jar': {'ids_by_verdict': {'local_available': [PACKAGE, SECOND]}}}
+        self.page.locator('#import-verdicts').set_input_files({
+            'name': 'legacy.json', 'mimeType': 'application/json', 'buffer': json.dumps(legacy).encode()})
+        self.expect(self.select('jar', PACKAGE).locator('option:checked')).to_have_text('Ready (imported data verdict)')
+        second = self.select('jar', SECOND)
+        self.expect(second.locator('option:checked')).to_have_text('Undetermined (imported data verdict)')
+        self.assertEqual(self.download(), legacy)
+        second.select_option('ready')
+        self.select('jar', PACKAGE).select_option('undetermined')
+        final = self.download()
+        self.assertEqual(final['jar']['ids_by_verdict'], {'ready': [SECOND], 'undetermined': [PACKAGE]})
+        counts = cohort_progress(self.root, final)['jar']['classes']
+        self.assertEqual(counts['ready']['unexecuted'], 1)
+        self.assertEqual(counts['undetermined']['unexecuted'], 1)
+
+    def test_chart_renders_final_classes_from_a_new_progress_snapshot(self):
+        progress = cohort_progress(self.root)
+        self.page.route(self.base + 'site/progress.json', lambda route: route.fulfill(json=progress))
+        self.page.route(self.base + 'index.html', lambda route: route.fulfill(content_type='text/html', body="""
+            <link rel="stylesheet" href="site/site.css"><div id="cohort-charts"></div><time id="progress-updated"></time>
+            <script type="module">import {showCohortProgress} from './site/progress.js'; showCohortProgress();</script>
+        """))
+        self.page.goto(self.base + 'index.html')
+        jar = self.page.locator('figure[data-cohort="jar"]')
+        self.expect(jar.locator('thead th').first).to_have_text('Feasibility')
+        labels = jar.locator('tbody th').all_text_contents()
+        self.assertEqual(labels, ['Ready', 'Preparation required', 'Blocked', 'Undetermined', 'N/A'])
+        for category in ('preparation_required', 'undetermined'):
+            segment = jar.locator(f'.cohort-track [data-category="{category}"][data-state="unexecuted"]')
+            self.expect(segment).to_have_attribute('data-count', '1')
+            self.assertNotEqual(segment.evaluate('el => getComputedStyle(el).backgroundColor'), 'rgba(0, 0, 0, 0)')
+            self.assertNotEqual(segment.evaluate('el => getComputedStyle(el).backgroundImage'), 'none')
 
     def test_catalog_navigation_and_paper_links(self):
         rows = self.page.locator('tr[data-paper-id]')
@@ -170,13 +205,13 @@ class VerdictTests(unittest.TestCase):
 
     def test_invalid_import_preserves_unsaved_verdicts(self):
         editor = self.select('cited', PAPER)
-        editor.select_option('local_available')
+        editor.select_option('ready')
         duplicate = {'cited': {'ids_by_verdict': {'local_available': [PAPER], 'undetermined': [PAPER]}}}
         self.page.locator('#import-verdicts').set_input_files({
             'name': 'invalid.json', 'mimeType': 'application/json', 'buffer': json.dumps(duplicate).encode()})
         self.expect(self.page.locator('#status')).to_contain_text('Could not import verdicts')
-        self.expect(editor).to_have_value('local_available')
-        self.assertIn(PAPER, self.download()['cited']['ids_by_verdict']['local_available'])
+        self.expect(editor).to_have_value('ready')
+        self.assertIn(PAPER, self.download()['cited']['ids_by_verdict']['ready'])
 
     def test_file_mode_reads_only_selected_checkout(self):
         paths = ['docs/papers.jsonl', 'site/progress_overrides.json', SCHEMA.as_posix(), f'papers/pdf/{PAPER}.pdf']
@@ -195,6 +230,6 @@ class VerdictTests(unittest.TestCase):
         """ % json.dumps(files))
         self.page.goto((self.root/'utils/verdict.html').as_uri())
         self.page.get_by_role('button', name='Open local checkout').click()
-        self.expect(self.select('cited', PAPER)).to_have_value('access_blocked')
+        self.expect(self.select('cited', PAPER).locator('option:checked')).to_have_text('Blocked (imported data verdict)')
         row = self.page.locator(f'tr[data-paper-id="{PAPER}"]')
         self.expect(row.get_by_role('link', name='Local PDF')).to_have_attribute('href', re.compile('^blob:'))

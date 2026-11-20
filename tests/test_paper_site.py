@@ -60,7 +60,7 @@ class InventoryTests(unittest.TestCase):
         totals = {'cited': sum('top_100_cited' in row['cohorts'] for row in rows),
                   'jar': len({p['package_id'] for row in rows for p in row['jar_packages']})}
         schema = ROOT/'skills/check-replication-feasibility/references/feasibility_classification.schema.json'
-        categories = set(json.loads(schema.read_bytes())['$defs']['data_status']['enum'])
+        categories = set(json.loads(schema.read_bytes())['$defs']['classification']['enum'])
         for cohort, total in totals.items():
             data = progress[cohort]
             self.assertEqual(set(data['classes']), categories | {'unclassified'})
@@ -106,7 +106,7 @@ class ManualVerdictTests(unittest.TestCase):
             folder = self.root/'output/feasibility_execution/packages'/package_id
             folder.mkdir(parents=True)
             (folder/'assessment.json').write_text(json.dumps({
-                'package_id': package_id, 'scopes': [{'id': 'full_pipeline', 'data_status': verdict}]}))
+                'package_id': package_id, 'scopes': [{'id': 'full_pipeline', 'data_status': verdict, 'execution_readiness': 'preparation_required'}]}))
         (self.root/'docs/papers.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
         overrides = {'cited': {'ids_by_verdict': {'access_blocked': ['W100']}},
                      'jar': {'reclassify': {'undetermined': 'public_acquisition_required'}}}
@@ -116,12 +116,12 @@ class ManualVerdictTests(unittest.TestCase):
         before = {p: p.read_bytes() for p in (self.root/'output').rglob('assessment.json')}
         data = cohort_progress(self.root)
         cited, jar = data['cited'], data['jar']
-        self.assertEqual(cited['classes']['access_blocked']['unexecuted'], 1)
+        self.assertEqual(cited['classes']['blocked']['unexecuted'], 1)
         self.assertEqual(cited['classes']['unclassified']['unexecuted'], 1)
-        self.assertEqual(cited['manual_verdicts']['access_blocked'], 1)
-        self.assertEqual(jar['classes']['public_acquisition_required']['unexecuted'], 1)
-        self.assertEqual(jar['classes']['local_available']['unexecuted'], 1)
-        self.assertEqual(jar['manual_verdicts']['public_acquisition_required'], 1)
+        self.assertEqual(cited['manual_verdicts']['blocked'], 1)
+        self.assertEqual(jar['classes']['preparation_required']['unexecuted'], 1)
+        self.assertEqual(jar['classes']['ready']['unexecuted'], 1)
+        self.assertEqual(jar['manual_verdicts']['preparation_required'], 1)
         self.assertEqual(sum(jar['manual_verdicts'].values()), 1)
         self.assertEqual(before, {p: p.read_bytes() for p in before})
 
@@ -438,19 +438,19 @@ class PaperBrowserTests(unittest.TestCase):
         self.assertNotIn(self.base+'README.md', self.requests)
 
     def test_table_preview_download_and_year_filter(self):
-        row = next(r for r in self.rows if r['execution_path'] and any(f.endswith('.csv')
-                   for f in self.inventory['packages'][r['execution_path'].rsplit('/', 1)[0]]))
-        base = row['execution_path'].rsplit('/', 1)[0]
+        row = next(r for r in self.rows if r['reproduction_path'] and any(f.endswith('.csv')
+                   for f in self.inventory['packages'][r['reproduction_path'].rsplit('/', 2)[0]]))
+        base = row['reproduction_path'].rsplit('/', 2)[0]
         file = next(f for f in self.inventory['packages'][base] if f.endswith('.csv'))
-        self.visit(workflow='executions')
+        self.visit(workflow='reproductions')
         self.page.get_by_label('Year', exact=True).select_option(str(row['publication_year']))
-        n = sum(bool(r['execution_path']) and r['publication_year'] == row['publication_year'] for r in self.rows)
+        n = sum(bool(r['reproduction_path']) and r['publication_year'] == row['publication_year'] for r in self.rows)
         self.page.get_by_role('heading', name=f'{n} catalog record' + ('s' if n != 1 else ''), exact=True).wait_for()
         self.page.get_by_role('searchbox').fill('missing-paper-example-000')
         self.page.get_by_text('No catalog records match these filters.').wait_for()
         self.page.get_by_role('link', name='Clear filters').click()
         self.page.get_by_role('heading', name=f'{len(self.rows)} catalog records', exact=True).wait_for()
-        self.visit(paper=row['paper_id'], view='executions', file=file)
+        self.visit(paper=row['paper_id'], view='reproductions', file=file)
         self.page.locator('.reading .data-table').wait_for()
         with (ROOT/base/file).open(encoding='utf-8-sig', newline='') as f:
             self.assertEqual(self.page.locator('.reading th').all_text_contents(), next(csv.reader(f)))

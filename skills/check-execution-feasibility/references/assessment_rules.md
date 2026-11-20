@@ -138,12 +138,7 @@ packages need an explicit missing-code issue. Incomplete dependency closure need
 an unresolved issue. Scripts in unsupported languages are code, not no-code;
 record the language/runtime/parser limitation as an issue.
 
-The shared [classification contract](../../check-replication-feasibility/references/feasibility_classification.schema.json)
-defines the common reporting vocabulary. Export native results through the shared
-normalizer: `restricted_access_required` becomes `access_blocked`, and scope data
-`not_applicable` becomes `no_observed_data_required`. Preserve the native verdict,
-workflow scope and evidence profile. This reporting conversion adds no evidence,
-reassesses no input and changes no execution-readiness verdict.
+The shared [classification contract](../../check-replication-feasibility/references/feasibility_classification.schema.json) defines the data-by-code matrix and the three Ready routes. The finalizer classifies each scope, then publishes the analysis-only scope when present or the full pipeline otherwise. Retain all underlying data and code observations for review.
 
 Python computes each native requirement outcome:
 

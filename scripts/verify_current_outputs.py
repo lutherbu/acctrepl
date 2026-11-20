@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT))
 from scripts import rebuild_indexes as ix
 from scripts import update_paper_catalog as catalog
 from scripts import publication as pub
+from scripts.feasibility_verdict import reviewed_bytes, classify, matches_frozen_input
 from project_layout import PATHS
 
 
@@ -32,6 +33,11 @@ def verify(project=ROOT, *, with_data=False, catalog_snapshots=()):
         p = ix.plain(root, p)
         if not p.is_file() or digest(p) != expected:
             raise ValueError(f'File differs from its recorded checksum: {p}')
+    def check_frozen_input(path, expected):
+        path = ix.plain(root, path)
+        if not matches_frozen_input(path, expected, root, digest):
+            raise ValueError(f'Pinned study input changed: {path}')
+
     def portable_file(file, pid):
         if file.suffix.lower() in pub.TEXT:
             data = file.read_bytes()
@@ -64,6 +70,11 @@ def verify(project=ROOT, *, with_data=False, catalog_snapshots=()):
                 portable_file(f,item['id'])
             else:
                 verify_package(parent.parent if wf=='reproductions' else parent,item['id'])
+            if wf in ('feasibility_execution', 'feasibility_reproduction'):
+                if 'preclassification_sha256' in d:
+                    reviewed_bytes(d)
+                elif classify(read(f)) != d:
+                    raise ValueError(f'Missing or inconsistent published feasibility verdict: {f}')
             if wf == 'models':
                 for key in ('reading','pdf'):
                     source = d['source_inputs'][key]
@@ -76,6 +87,13 @@ def verify(project=ROOT, *, with_data=False, catalog_snapshots=()):
                 check(f, review['assessment_sha256'])
                 check(parent / 'patch_proposal.md', review['proposal_sha256'])
             elif wf == 'reproductions':
+                if d.get('route') == 'author_deposit':
+                    from scripts.deposit_reproduction import verify_publication
+                    verify_publication(root, parent, d, with_data=with_data)
+                    counts['deposit_reproductions'] += 1
+                    for fit in d['fits']:
+                        counts['deposit_' + fit['execution_status']] += 1
+                    continue
                 work = read(parent/'work_item.json')
                 for name, expected in work['source_hashes'].items():
                     if name == resource_catalog:
@@ -91,7 +109,7 @@ def verify(project=ROOT, *, with_data=False, catalog_snapshots=()):
                         continue
                     path = pub.inside(root,name)
                     if with_data or not name.startswith('papers/'):
-                        check(path,expected)
+                        check_frozen_input(path,expected)
                 for key in ('template_path','skill_path','catalog_path','feasibility_path','ado_path','pdf_path','reading_json'):
                     if key == 'catalog_path' and work.get(key) == resource_catalog:
                         if resource_catalog not in work['source_hashes']:
@@ -141,7 +159,7 @@ def verify(project=ROOT, *, with_data=False, catalog_snapshots=()):
                         check(pub.inside(parent,entry['path']),entry['sha256'])
             elif wf == 'replications':
                 for key, relative in d['inputs'].items():
-                    check(pub.inside(root,relative),d['input_hashes'][key])
+                    check_frozen_input(pub.inside(root,relative),d['input_hashes'][key])
                 for row in d.get('replay_code',[]):
                     check(pub.inside(parent,row['path']),row['sha256'])
                 for row in d.get('independent_evidence_review',{}).get('fits',[]):

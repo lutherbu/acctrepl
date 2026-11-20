@@ -1,0 +1,4 @@
+| Mean-split group | N consistent | N inconsistent | Expected per cell | Chi-square (1 df) | p |
+|---|---:|---:|---:|---:|---:|
+| Above mean |  23 |  10 |  16.50 |  5.1212 |  0.0236 |
+| Below mean |  17 |  10 |  13.50 |  1.8148 |  0.1779 |

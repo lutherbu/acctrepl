@@ -20,6 +20,7 @@ if (_layout_root / "project_layout.py").is_file():
 from urllib.parse import urlparse
 
 from resources import load, sha256
+from verdicts import classify
 
 STATUSES = ("local_ready", "public_acquisition_required", "access_blocked", "undetermined",
             "no_observed_data_required")
@@ -431,6 +432,8 @@ def finalize(document, item_path, catalog, project):
     item_path, project = Path(item_path), Path(project).resolve()
     item = load(item_path)
     document = copy.deepcopy(document)
+    if 'preclassification_sha256' in document:
+        raise ValueError('A new assessment cannot claim a historical publication checksum')
     header = output_header(item, item_path)
     for key in ("schema_version", "paper_id", "doi", "eligibility", "provenance"):
         if key in document and key != "provenance" and document[key] != header[key]:
@@ -580,4 +583,7 @@ def finalize(document, item_path, catalog, project):
     if errors:
         raise ValueError("\n".join(errors[:40]))
     document["summary"] = calculate_summary(document)
-    return document
+    record = item.get('classification_contract')
+    if record and sha256(record['path']) != record['sha256']:
+        raise ValueError('Shared classification contract differs from the frozen record')
+    return classify(document, load(record['path']) if record else None)

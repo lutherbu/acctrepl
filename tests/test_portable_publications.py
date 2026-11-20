@@ -155,11 +155,15 @@ def test_paths_quotes_and_verified_review(tmp_path):
     item=write(tmp_path/'item.json',{'output_header':{'package_id':'p'},'sources':[ref]})
     proposal=tmp_path/'patch_proposal.md';proposal.write_text('Switch away from ~/private/input.csv.')
     ev={'id':'one','file':'main.do','line_begin':2,'line_end':2,'quote':source.read_text().splitlines()[1],'kind':'source'}
-    assessment=write(tmp_path/'assessment.json',{'package_id':'p','evidence':[ev],'patch_proposal':{'sha256':pub.sha(proposal)}})
+    scope={'id':'full_pipeline','data_status':'local_available','execution_readiness':'preparation_required'}
+    assessment=write(tmp_path/'assessment.json',{'package_id':'p','scopes':[scope],'evidence':[ev],
+                                                'patch_proposal':{'sha256':pub.sha(proposal)}})
     review=write(tmp_path/'review.json',{'package_id':'p','accepted':True,'assessment_sha256':pub.sha(assessment),
         'proposal_sha256':pub.sha(proposal),'work_item_sha256':pub.sha(item)})
     root=tmp_path/'public';publish_record.publish(root,'feasibility_execution',assessment,item=item,review=review)
     package=root/'output/feasibility_execution/packages/p';pub.verify_receipt(package)
+    released=json.loads((package/'assessment.json').read_bytes())
+    assert (released['classification'], released['route']) == ('ready', 'prepare_and_execute')
     proof=json.loads((package/'publication_receipt.json').read_bytes())['source_quotes'][0]
     assert proof['source_sha256']==ref['content_sha256']
     assert proof['quote_sha256']!=proof['public_quote_sha256']

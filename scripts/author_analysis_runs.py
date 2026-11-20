@@ -209,10 +209,12 @@ def _policy(path=None):
             executable = layout.runtime_executable(language, required=False)
             if executable:
                 value['allowed_executables'][language] = [executable]
-    for key in ('network','package_installation','raw_data_pipeline','source_credentials'):
+    for key in ('network','package_installation','source_credentials'):
         if value.get(key) is not False:raise ValueError('Execution policy cannot enable excluded actions')
-    if value.get('scope_id')!='analysis_only' or value.get('sandbox_profiles') not in (['bwrap'],['host']):
-        raise ValueError('Policy must retain the analysis-only sandbox boundary')
+    if value.get('scope_id') not in {'analysis_only', 'full_pipeline'} or value.get('sandbox_profiles') not in (['bwrap'],['host']):
+        raise ValueError('Policy must declare an assessed scope and runtime profile')
+    if type(value.get('raw_data_pipeline')) is not bool or (value['raw_data_pipeline'] and value['scope_id'] != 'full_pipeline'):
+        raise ValueError('Raw input preparation requires an assigned full pipeline')
     for key in ('max_wall_seconds','max_memory_bytes','max_threads','max_staging_bytes'):
         if type(value.get(key)) is not int or value[key]<=0:raise ValueError('Invalid resource policy')
     if not isinstance(value.get('allowed_library_roots'),list) or not isinstance(value.get('allowed_executables'),dict):
@@ -244,8 +246,9 @@ def _manifest(path,fixture):
             raise ValueError('Unsafe package identity')
         ids.append(pid)
         scope=unit.get('analysis_scope',{})
-        if unit.get('scope_id',scope.get('id'))!='analysis_only' or scope.get('id')!='analysis_only':
-            raise ValueError('Every unit must be a frozen analysis-only scope')
+        allowed = {'analysis_only', 'full_pipeline'} if unit.get('baseline_targets') else {'analysis_only'}
+        if scope.get('id') not in allowed or unit.get('scope_id', scope['id']) != scope['id']:
+            raise ValueError('Every unit must identify its frozen assessed scope')
         entries=scope.get('entry_points')
         if not isinstance(entries,list) or not entries or any(not isinstance(x,str) or not x for x in entries):
             raise ValueError('Analysis scope needs source entrypoints')
@@ -264,27 +267,47 @@ def _manifest(path,fixture):
     return path,units
 
 
-def initialize_paper(item_path, assessment_path):
+def initialize_paper(item_path, assessment_path, targets_path=None):
     item_path=plain(item_path,file=True)
     assessment_path=plain(assessment_path,file=True)
     item, assessment=read(item_path),read(assessment_path)
     pid=assessment['package_id']
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]*',pid):
         raise ValueError('Invalid package ID')
-    scope=next((x for x in assessment['scopes'] if x['id']=='analysis_only'),None)
-    if scope is None:
-        raise ValueError('Assessment has no reviewed analysis-only entry point')
+    scopes = {scope['id']: scope for scope in assessment['scopes']}
+    scope = scopes.get('analysis_only', scopes.get('full_pipeline'))
+    if not scope:
+        raise ValueError('Assessment has no reviewed execution scope')
+    targets = None
+    if 'execution_readiness' in scope:
+        from scripts.feasibility_verdict import execution_verdict
+        _, route = execution_verdict(scope['data_status'], scope['execution_readiness'])
+        if route not in {'execute', 'prepare_and_execute'}:
+            raise ValueError('The selected scope has no Ready author-code route')
+        if not targets_path:
+            raise ValueError('Provide --baseline-targets before the one author-code attempt')
+    if targets_path:
+        targets = read(plain(targets_path, file=True))
+        if not isinstance(targets, dict) or not targets or not all(
+                isinstance(k, str) and k.strip() and isinstance(v, str) and v.strip()
+                for k, v in targets.items()):
+            raise ValueError('Baseline targets must map each target ID to its expected numerical output')
     campaign=BASE/pid
     unit={'package_id':pid,'analysis_scope':scope,'package_root':item['package_root'],
           'source_assessment':{'path':str(assessment_path),'sha256':sha(assessment_path)},
           'source_work_item':{'path':str(item_path),'sha256':sha(item_path)}}
+    if targets is not None:
+        unit['baseline_targets'] = targets
     proposal=assessment_path.parent/'patch_proposal.md'
     if proposal.is_file():
         unit['source_proposal']={'path':str(proposal),'sha256':sha(proposal)}
     manifest=campaign/'source.json'
-    if manifest.is_file() and read(manifest)!={'units':[unit]}:
-        raise ValueError('An existing assignment uses different source material')
-    write(manifest,{'units':[unit]})
+    with locked(campaign):
+        if manifest.is_file():
+            if read(manifest) != {'units': [unit]}:
+                raise ValueError('An existing assignment uses different source material')
+        else:
+            write(manifest, {'units': [unit]})
     return initialize(manifest,campaign)
 
 
@@ -355,6 +378,14 @@ def prepare(package_id,phase,case,*,campaign=BASE,policy_path=None):
             raise ValueError('After publication, an earlier full wave cannot reopen')
         if package_id not in state['units']:raise ValueError('Package is outside the frozen 17-scope inventory')
         unit=state['units'][package_id]
+        if policy_path and policy['scope_id'] != unit['analysis_scope']['id']:
+            raise ValueError('Execution policy must match the selected scope')
+        if 'baseline_targets' in unit:
+            if phase != 'full' or case != 1 or any(r['package_id'] == package_id for r in state['attempts'].values()):
+                raise ValueError('One author-code attempt is allowed for this Ready package')
+            policy['scope_id'] = unit['analysis_scope']['id']
+            if not policy_path:
+                policy['raw_data_pipeline'] = policy['scope_id'] == 'full_pipeline'
         if phase=='pilot':
             if case>LIMITS['pilot_cases']:raise ValueError('Six pilot tests are the authorized maximum')
             prior=state['pilot_cases'].get(str(case))
@@ -413,7 +444,7 @@ def prepare(package_id,phase,case,*,campaign=BASE,policy_path=None):
             frozen.extend([{'path':str(unit_path),'sha256':sha(unit_path)}, {'path':str(policy_file),'sha256':sha(policy_file)},
                            {'path':str(runtime_file),'sha256':sha(runtime_file)}])
             item={'schema_version':'1.0','attempt_id':aid,'campaign_root':str(campaign),
-                  'package_id':package_id,'scope_id':'analysis_only','phase':phase,'case':case,
+                  'package_id':package_id,'scope_id':unit['analysis_scope']['id'],'phase':phase,'case':case,
                   'attempt_number':number,'directory':str(directory),'working_directory':str(directory/'work'),
                   'input_root':str(plain(unit['package_root'],directory=True)),'analysis_scope':unit['analysis_scope'],
                   'unit':unit,'frozen_files':frozen,'policy':{'path':str(policy_file),'sha256':sha(policy_file)},
@@ -718,7 +749,7 @@ def _file_ref(attempt,reference,expected=None):
 
 def output_header(item,work_item_path):
     header={'schema_version':'1.0','attempt_id':item['attempt_id'],'package_id':item['package_id'],
-            'scope_id':'analysis_only','phase':item['phase'],'case':item['case'],'attempt_number':item['attempt_number'],
+            'scope_id':item['scope_id'],'phase':item['phase'],'case':item['case'],'attempt_number':item['attempt_number'],
             'provenance':{'work_item_sha256':sha(work_item_path),'skill_sha256':item['skill_sha256'],
                           'policy_sha256':item['policy']['sha256'],
                           'source_assessment_sha256':item['unit']['source_assessment']['sha256'],
@@ -906,11 +937,16 @@ def finalize(attempt,report_path):
         if not record.get('agent'):raise ValueError('Only an assigned fresh-agent attempt can submit')
         if record.get('report'):
             assert_file(record['report']['path'],record['report']['sha256'])
-        source=inside(attempt,report_path,file=True);number=len(record['report_trials'])+1
+        source=inside(attempt,report_path,file=True)
+        if 'baseline_targets' in item['unit'] and read(source).get('outcome') == 'not_run':
+            raise ValueError('Preparation is open; complete the attempt or document a terminal blocker')
+        number=len(record['report_trials'])+1
         frozen=_ref(source,attempt/'frozen/report_inputs'/f'report_{number:03d}.json')
         trial={'submitted_at':now(),'input':frozen}
         try:
             draft=read(frozen['path']);_validate_report(attempt,item,record,draft)
+            if 'baseline_targets' in item['unit'] and draft['outcome'] == 'not_run':
+                raise ValueError('Preparation is open; complete the attempt or document a terminal blocker')
             output=inside(attempt,'output/report.json')
             if output.exists():
                 history=inside(attempt,Path('output_history')/f'report_{number-1:03d}.json')
@@ -1006,6 +1042,29 @@ def _publication_files(attempt,record,draft,items):
     return selected
 
 
+def baseline_handoff(targets, coverage, draft):
+    """Tie independently reviewed numerical coverage to the targets declared before launch."""
+    if draft['outcome'] == 'not_run':
+        raise ValueError('Preparation is open; complete the attempt or document a terminal blocker')
+    if not isinstance(coverage, dict) or coverage.keys() != targets.keys():
+        raise ValueError('Review all and only the declared baseline targets')
+    passed = {s['stage_id'] for s in draft['stage_results']
+              if s['status'] == 'succeeded' and s['log_check'] == 'passed'}
+    missing = []
+    for target, check in coverage.items():
+        if not isinstance(check, dict) or not isinstance(check.get('evidence'), str) or not check['evidence'].strip():
+            raise ValueError('Each baseline target needs a review finding')
+        if check.get('verified') is True:
+            if check.get('stage_id') not in passed:
+                raise ValueError('Verified baseline output needs a successful reviewed stage')
+        elif check.get('verified') is False:
+            missing.append(target)
+        else:
+            raise ValueError('Each target needs a boolean verified status')
+    return {'next_skill': 'reproduce-accounting-models' if missing else None,
+            'uncovered_baselines': missing, 'coverage': coverage}
+
+
 def review(attempt,reviewer,note_path):
     attempt,campaign,_,_,_=_attempt(attempt)
     with locked(campaign):
@@ -1023,10 +1082,17 @@ def review(attempt,reviewer,note_path):
             assert_file(record['review']['path'],record['review']['sha256'])
             return {'attempt_id':item['attempt_id'],'status':'accepted','outcome':record['outcome'],'unchanged':True}
         publish_files=_publication_files(attempt,record,draft,value.get('publish_files',[]))
+        if 'baseline_targets' in item['unit']:
+            handoff = baseline_handoff(item['unit']['baseline_targets'], value.get('baseline_coverage'), draft)
         frozen=_ref(note,attempt/'output/source_review.json')
         accepted={'reviewed_at':now(),'reviewer':reviewer,'report':record['report'],'source_review':frozen,
                   'outcome':draft['outcome'],'execution_verified':draft['execution_verified'],
                   'publish_files':publish_files}
+        if 'baseline_targets' in item['unit']:
+            if item['analysis_scope'].get('execution_readiness') == 'preparation_required':
+                accepted['handoff'] = handoff
+            else:
+                accepted['baseline_coverage'] = handoff['coverage']
         path=attempt/'output/review.json';write(path,accepted,exclusive=True);path.chmod(0o444)
         record.update(status='accepted',accepted_at=now(),review={'path':str(path),'sha256':sha(path)})
         _save(campaign,state)
@@ -1161,7 +1227,7 @@ def publish(campaign=BASE):
             paper_rows=''.join(f'| [{paper_label(r.get("title") or r["package_id"])}]({package_dir}/{r["package_id"]}/report.json) | '
                                f'{r["outcome"]} | {r["comparison"]["status"]} |\n' for r in rows)
             (reports/'summary.md').write_text('# Author analysis execution\n\n'+
-                f'{len(rows)} selected analysis-only scopes; {summary["assigned_attempts"]} fresh-agent assignments.\n\n'+
+                f'{len(rows)} selected scopes; {summary["assigned_attempts"]} fresh-agent assignments.\n\n'+
                 '\n'.join(f'- {key}: {value}' for key,value in sorted(Counter(r['outcome'] for r in rows).items()))+
                 '\n\nExecution completion and numerical agreement are reported separately. Raw working data/logs remain in the attempt directories.\n\n'+
                 '| Paper | Execution | Comparison |\n| --- | --- | --- |\n'+paper_rows)
@@ -1214,7 +1280,7 @@ def promote(campaign, package_id, recipe):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
-    p=sub.add_parser('init-paper');p.add_argument('--item',required=True);p.add_argument('--assessment',required=True)
+    p=sub.add_parser('init-paper');p.add_argument('--item',required=True);p.add_argument('--assessment',required=True);p.add_argument('--baseline-targets',help='JSON object mapping each required baseline ID to the expected numerical output')
     p=sub.add_parser('init');p.add_argument('--manifest',default=str(DEFAULT_MANIFEST));p.add_argument('--campaign',default=str(BASE));p.add_argument('--fixture',action='store_true')
     p=sub.add_parser('prepare');p.add_argument('--campaign',default=str(BASE));p.add_argument('--package-id',required=True);p.add_argument('--phase',choices=['pilot','full'],required=True);p.add_argument('--case',type=int,required=True);p.add_argument('--policy')
     p=sub.add_parser('assign');p.add_argument('--attempt',required=True);p.add_argument('--agent',required=True)
@@ -1230,7 +1296,7 @@ def main():
     for command in ('status','publish'):
         p=sub.add_parser(command);p.add_argument('--campaign',default=str(BASE))
     a=parser.parse_args()
-    if a.command=='init-paper':result=initialize_paper(a.item,a.assessment)
+    if a.command=='init-paper':result=initialize_paper(a.item,a.assessment,a.baseline_targets)
     elif a.command=='init':result=initialize(a.manifest,a.campaign,fixture=a.fixture)
     elif a.command=='prepare':result=prepare(a.package_id,a.phase,a.case,campaign=a.campaign,policy_path=a.policy)
     elif a.command=='assign':result=assign(a.attempt,a.agent,model=a.model,reasoning_effort=a.reasoning_effort,fork_turns=a.fork_turns)

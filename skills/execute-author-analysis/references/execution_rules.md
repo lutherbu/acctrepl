@@ -3,14 +3,14 @@
 ## Authorization and target
 
 The assigned work item is the authority for this attempt. It binds one accepted
-analysis-only feasibility scope to a package, its input hashes, approved readers,
+feasibility scope to a package, its input hashes, approved readers,
 native runtimes, output tree and resource limits. Actual execution of that branch
 is authorized through the controlled runner. Prior feasibility documents remain
 historical evidence; their static-only permissions do not govern this new task.
 
-The branch starts from the approved author-prepared analysis inputs. A matching
+An analysis-only branch starts from approved author-prepared inputs. An assigned full workflow may include the authors’ documented preparation of pinned local files. A matching
 basename, similar field list or available raw database does not authorize a
-substitute dataset. A new raw-data build, download, external connection, author
+substitute dataset. Preparation beyond the assigned scope, a download, external connection, author
 credential, installation, missing commercial license or change of runtime is a
 coordinator issue. Do not replace MATLAB with Octave or translate its estimator
 to R. A PATH miss alone does not prove that a runtime is absent everywhere.

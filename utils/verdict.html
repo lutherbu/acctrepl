@@ -40,7 +40,7 @@
 <main class="wrap browser">
   <header class="verdict-head">
     <h1>Feasibility verdicts</h1>
-    <p>Choose a data class for a paper or author package. Export your edits to <code>site/progress_overrides.json</code> to use them in the progress bars.</p>
+    <p>Choose a feasibility class for a paper or author package. An individual choice overrides the assessed class and any cohort rule. Export your edits to <code>site/progress_overrides.json</code> to use them in the progress bars.</p>
   </header>
   <div class="tools">
     <button id="export-verdicts" class="button" disabled>Export verdicts</button>
@@ -64,13 +64,6 @@
 </main>
 <script>
 "use strict";
-const labels = {
-  local_available: "Available locally",
-  public_acquisition_required: "Public acquisition required",
-  access_blocked: "Access blocked",
-  undetermined: "Undetermined",
-  no_observed_data_required: "No observed data required",
-};
 const sources = {cited: "Reconstruction", jar: "Author package"};
 
 function validSubjectId(id) {
@@ -94,8 +87,9 @@ function isSettingsObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function validateOverrides(obj, rows) {
+function validateOverrides(obj, rows, contract) {
   if (!isSettingsObject(obj)) throw new Error("Verdicts must be a JSON object.");
+  const dataClasses = contract.$defs.data_status.enum;
   const ids = {cited: new Set(), jar: new Set()};
   for (const row of rows) {
     for (const {cohort, id} of subjectsFor(row)) ids[cohort].add(id);
@@ -108,7 +102,7 @@ function validateOverrides(obj, rows) {
     if (Object.hasOwn(settings, "reclassify")) {
       if (!isSettingsObject(settings.reclassify)) throw new Error("Invalid cohort rules for " + cohort);
       for (const [from, to] of Object.entries(settings.reclassify)) {
-        if (!Object.hasOwn(labels, from) || typeof to !== "string" || !Object.hasOwn(labels, to)) {
+        if (!dataClasses.includes(from) || !dataClasses.includes(to)) {
           throw new Error("Invalid reclassification rule for " + cohort + ": " + from);
         }
       }
@@ -117,7 +111,9 @@ function validateOverrides(obj, rows) {
       if (!isSettingsObject(settings.ids_by_verdict)) throw new Error("Invalid individual verdicts for " + cohort);
       const seen = new Set();
       for (const [verdict, selected] of Object.entries(settings.ids_by_verdict)) {
-        if (!Object.hasOwn(labels, verdict) || !Array.isArray(selected)) throw new Error("Invalid verdict group: " + verdict);
+        if ((!Object.hasOwn(contract.x_class_labels, verdict) && !dataClasses.includes(verdict)) || !Array.isArray(selected)) {
+          throw new Error("Invalid verdict group: " + verdict);
+        }
         for (const id of selected) {
           if (!ids[cohort].has(id) || seen.has(id)) throw new Error("Unknown or repeated " + cohort + " ID: " + id);
           seen.add(id);
@@ -137,7 +133,7 @@ function explicitVerdict(overrides, cohort, id) {
 
 function setVerdict(overrides, cohort, id, value) {
   if (!Object.hasOwn(sources, cohort) || !validSubjectId(id) ||
-      (value !== "" && (typeof value !== "string" || !Object.hasOwn(labels, value)))) {
+      (value !== "" && (typeof value !== "string" || !Object.hasOwn(contract.x_class_labels, value)))) {
     throw new Error("Invalid individual verdict.");
   }
   const current = explicitVerdict(overrides, cohort, id);
@@ -157,29 +153,30 @@ function setVerdict(overrides, cohort, id, value) {
   if (!Object.keys(groups).length) delete settings.ids_by_verdict;
 }
 
-async function assessedClass(row, subject, contract, readJSON) {
+async function readAssessment(row, subject, contract, readJSON) {
   const subjects = subjectsFor(row);
   const {cohort, id} = subject;
   if (!subjects.some(s => s.cohort === cohort && s.id === id)) throw new Error("Subject does not belong to this paper.");
   const approach = cohort === "cited" ? "independent_reconstruction" : "author_package";
   const mapping = contract.x_status_mappings[approach];
   function mapped(status) {
-    if (!Object.hasOwn(mapping, status) || !Object.hasOwn(labels, mapping[status])) {
+    if (!Object.hasOwn(mapping, status)) {
       throw new Error("Unknown assessment class for " + id);
     }
     return mapping[status];
   }
   if (cohort === "cited") {
-    if (!row.feasibility_reproduction_path) return null;
+    if (!row.feasibility_reproduction_path) return {};
     const path = "output/feasibility_reproduction/records/" + id + ".json";
     if (row.feasibility_reproduction_path !== path) throw new Error("Assessment path does not match " + id);
     const assessment = await readJSON(path);
     if (assessment.paper_id !== id) throw new Error("Assessment ID does not match " + id);
-    if (assessment.eligibility === "no_baseline") return null;
+    if (assessment.eligibility === "no_baseline") return {noBaseline: true};
     if (assessment.eligibility !== "eligible" || !assessment.assessments?.length) throw new Error("Missing baseline fits for " + id);
     const statuses = new Set(assessment.assessments.map(fit => mapped(fit.data_status)));
-    return ["access_blocked", "undetermined", "public_acquisition_required", "local_available", "no_observed_data_required"]
+    const data = ["access_blocked", "undetermined", "public_acquisition_required", "local_available", "no_observed_data_required"]
       .find(status => statuses.has(status));
+    return {data};
   }
   // A catalog row with multiple packages can have one link to a sibling or no unique link.
   const packages = subjects.filter(s => s.cohort === "jar");
@@ -199,13 +196,24 @@ async function assessedClass(row, subject, contract, readJSON) {
     return record;
   }
   const assessment = await packageFile(row.feasibility_execution_path, "feasibility_execution", "assessment.json");
-  if (!assessment) return null;
-  const scopes = new Map(assessment.scopes.map(scope => [scope.id, scope.data_status]));
+  if (!assessment) return {};
+  const scopes = new Map(assessment.scopes.map(scope => [scope.id, scope]));
   if (!scopes.has("full_pipeline") || scopes.size !== assessment.scopes.length) throw new Error("Invalid package scopes for " + id);
   const report = await packageFile(row.execution_path, "executions", "report.json");
   const scope = report ? report.scope_id : scopes.has("analysis_only") ? "analysis_only" : "full_pipeline";
   if (!scopes.has(scope)) throw new Error("Execution scope is absent from the assessment for " + id);
-  return mapped(scopes.get(scope));
+  const selected = scopes.get(scope);
+  const data = mapped(selected.data_status);
+  const code = selected.execution_readiness;
+  if (!Object.hasOwn(contract.x_execution_matrix[data], code)) throw new Error("Unknown code readiness for " + id);
+  return {data, code};
+}
+
+function classify(cohort, assessment, assignedData) {
+  const data = assignedData || assessment.data;
+  if (!data) return assessment.noBaseline ? "not_applicable" : null;
+  if (cohort === "cited") return contract.x_reproduction_classes[data];
+  return contract.x_execution_matrix[data][assessment.code || "undetermined"];
 }
 
 const $ = id => document.getElementById(id);
@@ -214,7 +222,7 @@ const localFiles = location.protocol === "file:";
 const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname) || location.hostname.endsWith(".localhost");
 let checkout = null;
 let rows = [], overrides, contract, saved, page = 1, selectedPDFs = null;
-const rawClasses = new Map(), pdfLinks = new Map();
+const assessments = new Map(), pdfLinks = new Map();
 const pageSize = 25;
 
 function el(tag, className, ...children) {
@@ -325,28 +333,42 @@ function verdictField(row, subject) {
   label.htmlFor = select.id;
   const inherited = new Option("Use inherited verdict", "");
   select.add(inherited);
+  const labels = contract.x_class_labels;
   for (const [key, name] of Object.entries(labels)) select.add(new Option(name, key));
-  select.value = explicitVerdict(overrides, cohort, id) || "";
+  const manual = explicitVerdict(overrides, cohort, id);
+  const legacy = manual && !Object.hasOwn(labels, manual);
+  let importedOption;
+  if (legacy) {
+    importedOption = new Option("Loading imported data verdict…", manual);
+    importedOption.disabled = true;
+    select.add(importedOption);
+    if (cohort === "cited") importedOption.text = labels[classify(cohort, {}, manual)] + " (imported data verdict)";
+  }
+  select.value = manual || "";
 
   async function loadInherited() {
     const cacheKey = cohort + ":" + id;
-    if (!rawClasses.has(cacheKey)) rawClasses.set(cacheKey, assessedClass(row, subject, contract, readJSON));
+    if (!assessments.has(cacheKey)) assessments.set(cacheKey, readAssessment(row, subject, contract, readJSON));
     if (!select.value) inherited.text = "Loading inherited verdict…";
     try {
-      const raw = await rawClasses.get(cacheKey);
-      const assigned = raw && overrides[cohort]?.reclassify?.[raw];
-      const text = assigned ? labels[assigned] + " (cohort rule)" : raw ? labels[raw] + " (assessed)" : "No assessed class";
+      const assessment = await assessments.get(cacheKey);
+      const assigned = overrides[cohort]?.reclassify?.[assessment.data];
+      const inheritedClass = classify(cohort, assessment, assigned);
+      const text = inheritedClass ? labels[inheritedClass] + (assigned ? " (cohort rule)" : " (assessed)") : "No assessed class";
       inherited.text = "Inherit · " + text;
+      if (legacy) importedOption.text = labels[classify(cohort, assessment, manual)] + " (imported data verdict)";
     } catch (e) {
-      rawClasses.delete(cacheKey);
+      assessments.delete(cacheKey);
       inherited.text = "Inherit · assessment unavailable";
+      if (legacy && cohort === "jar") importedOption.text = "Imported data verdict · assessment unavailable";
       select.title = e.message;
     }
   }
-  if (!select.value) loadInherited();
+  if (!select.value || legacy) loadInherited();
   else select.addEventListener("focus", loadInherited, {once:true});
   select.addEventListener("change", () => {
     setVerdict(overrides, cohort, id, select.value);
+    if (importedOption) importedOption.remove();
     if (!select.value) loadInherited();
     message(changed() ? "Unsaved verdict edits. Export verdicts to keep your changes." : "No pending edits.");
   });
@@ -400,11 +422,7 @@ async function start() {
   const [catalog, settings, schema] = await Promise.all([readText("docs/papers.jsonl"), loadOverrides(),
     readJSON("skills/check-replication-feasibility/references/feasibility_classification.schema.json")]);
   const records = catalog.split(/\r?\n/).filter(line => line.trim()).map(line => JSON.parse(line));
-  validateOverrides(settings, records);
-  const classes = schema.$defs?.data_status?.enum;
-  if (!Array.isArray(classes) || classes.length !== Object.keys(labels).length || !classes.every(k => Object.hasOwn(labels,k))) {
-    throw new Error("The feasibility schema does not match the editor’s classes.");
-  }
+  validateOverrides(settings, records, schema);
   for (const row of records) {
     row.searchText = normalize([row.title, row.authors, row.doi, row.paper_id, ...row.jar_packages.map(p => p.package_id)].join(" "));
   }
@@ -448,7 +466,7 @@ $("import-verdicts").onchange = async e => {
   e.target.value = "";
   if (!file) return;
   try {
-    const settings = validateOverrides(JSON.parse((await file.text()).replace(/^\uFEFF/, "")), rows);
+    const settings = validateOverrides(JSON.parse((await file.text()).replace(/^\uFEFF/, "")), rows, contract);
     if (changed() && !confirm("Replace your unsaved verdict edits with this file?")) return;
     overrides = settings; saved = JSON.stringify(settings);
     render();

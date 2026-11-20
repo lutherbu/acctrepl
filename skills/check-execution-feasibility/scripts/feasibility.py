@@ -98,6 +98,13 @@ def prepare(args):
     if sha(classification_path)!=classification_sha or sha(classification_source)!=classification_sha:
         raise ValueError('Shared classification schema changed during freezing')
     classification_contract={'path':str(classification_path),'sha256':classification_sha}
+    rules_source = classification_source.parents[1] / 'scripts/verdicts.py'
+    rules_path = classification_path.parents[1] / 'scripts/verdicts.py'
+    rules_hash = sha(rules_source)
+    rules_path.parent.mkdir()
+    shutil.copy2(rules_source, rules_path)
+    if sha(rules_path) != rules_hash:
+        raise ValueError('Shared classification helper changed during freezing')
     # Keep the shared probe implementation portable without altering the skill
     # tree hash or importing a mutable sibling skill from a frozen snapshot.
     resource_helper=out/'frozen_resources/resources.py'
@@ -171,6 +178,7 @@ def prepare(args):
     item['frozen_files'].append(resource_record)
     item['classification_contract']=classification_contract
     item['frozen_files'].append(classification_contract)
+    item['frozen_files'].append({'path':str(rules_path),'sha256':rules_hash})
     if archive_record:
         item['static_archive_inspection']=archive_record
         item['frozen_files'].append(archive_record)

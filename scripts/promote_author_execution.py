@@ -75,7 +75,7 @@ def install(root, attempt, record, report, review, reviewed_files, recipe_path):
     pid = report['package_id']
     if (recipe.get('schema_version'), recipe.get('package_id'), recipe.get('scope_id'),
             recipe.get('attempt_id'), recipe.get('accepted_outcome')) != (
-                '2.0', pid, 'analysis_only', record['attempt_id'], report['outcome']):
+                '2.0', pid, report['scope_id'], record['attempt_id'], report['outcome']):
         raise ValueError('Recipe does not identify the accepted analysis')
     if not report.get('plan') or not record.get('plan_reviews'):
         raise ValueError('The selected execution has no reviewed replay plan')

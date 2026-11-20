@@ -95,13 +95,7 @@ a successful exact-resource probe for the same requested columns.
 
 ## Verification dimensions and statuses
 
-The shared [classification contract](feasibility_classification.schema.json)
-defines the common reporting vocabulary. The normalizer maps native `local_ready`
-to `local_available` and preserves this skill's verification requirements as its
-evidence profile. Keep native paper-level `not_applicable` under eligibility;
-it does not mean that observed data are unnecessary. Common author-workflow
-execution readiness is `not_assessed` for these records; retain `attempt_ready`
-as a separate independent-reconstruction flag.
+The shared [classification contract](feasibility_classification.schema.json) maps each native fit verdict to one of five classes. The paper verdict applies the most restrictive observed-data fit in the order Blocked, Undetermined, Preparation required, Ready. N/A covers an absent baseline or a paper with exclusively synthetic fits. Preserve the reason, eligibility, native data status and independent attempt readiness.
 
 Each route records access, fields, mapping, coverage and identifiers separately.
 fields means live column presence; mapping means semantic correspondence to the

@@ -1,0 +1,4 @@
+| Median-split group | N consistent | N inconsistent | Expected per cell | Chi-square (1 df) | p |
+|---|---:|---:|---:|---:|---:|
+| Above median |  21 |   9 |  15.00 |  4.8000 |  0.0285 |
+| Below median |  19 |  11 |  15.00 |  2.1333 |  0.1441 |

@@ -9,14 +9,16 @@ This repository pairs accounting papers with their extracted samples and reporte
 | [Samples](output/samples/records/) | Baseline sample sizes, units, periods, data sources and supporting text | 506 |
 | [Models](output/models/records/) | Specifications, variable definitions, reported estimates, inference and descriptive statistics | 173 |
 | [Reproduction feasibility](output/feasibility_reproduction/records/) | Assessment of independently reconstructing each baseline fit with the resources available when it was assessed | 167 |
-| [Reproductions](output/reproductions/packages/) | An accepted attempt, SAS construction code, Stata notebook, and native results | 47 |
+| [Reproductions](output/reproductions/packages/) | Reviewed builds or documented blockers for 47 historical reconstructions and two follow-ups using author deposits | 49 |
 | [Execution feasibility](output/feasibility_execution/packages/) | An assessment, proposed patch and review for each author package | 159 |
-| [Executions](output/executions/packages/) | A reviewed author analysis, code, available results and a recipe for its minimal inputs | 6 |
-| [Extended-sample replications](output/replications/packages/) | Paper-level reports, replay code and results for the default five-year extension | 53 |
+| [Executions](output/executions/packages/) | A reviewed author analysis, code, available results and a recipe for its minimal inputs | 3 |
+| [Extended-sample replications](output/replications/packages/) | Paper-level reports, replay code and results for the default five-year extension | 50 |
 
-The project ran code for 53 studies. Of those, 47 used independently reconstructed code and six used author packages. Three author analyses completed all required stages and three completed part of the analysis. These six packages contain 70 published result files.
+The release retains 50 historical original-period workflows. Of these, 47 used independently reconstructed code and three ran the authors’ analyses to completion. The three completed packages contain six published result files. Three exploratory partial author runs and their derivative extension reports were excluded from this release.
 
-The two feasibility skills share one [classification contract](skills/check-replication-feasibility/references/feasibility_classification.schema.json). Read the target and scope alongside the data label. A package can supply the data needed to run its final analysis while a researcher independently rebuilding the panel still needs access to a licensed source. A completed execution establishes that code ran. Each comparison records separately which published estimates it could check.
+Two follow-ups used newly written code with author-deposited inputs. For Chen, Jermias, and Panggabean, the two Table 5 chi-square tests and all seven Table 6 F-tests agreed at the published precision. One ancillary mean-square cell differed. For Daske et al., the build could not verify the historical firm listing assignments needed for the nine fully specified Table 6 regressions. The follow-ups are recorded separately from the historical execution and extension counts.
+
+Both feasibility skills assign **Ready**, **Preparation required**, **Blocked**, **Undetermined**, or **N/A**. For author packages, Ready requires local data. Ready-to-attempt and preparation-required code go to author execution. For the preparation route, one attempt is followed by independent review, and any uncovered baseline passes to reconstruction. Local data without runnable author code goes directly to reconstruction. The assessment retains the underlying data and code verdicts for each scope. [Shared classification contract](skills/check-replication-feasibility/references/feasibility_classification.schema.json)
 
 ## Generate indexes and exports
 
@@ -33,9 +35,9 @@ Each workflow gets one Git-ignored `index.json`. Its records contain the stable 
 
 The paper catalog appears below Deliverables on the homepage and reads `docs/papers.jsonl` directly. The package and documentation reader uses a separate list of published filenames. After staging additions, renames or removals in those directories, run `python3 scripts/rebuild_site_inventory.py` and include `site/files.json` in the commit. Use `--check` to verify the list. To preview Pages locally, serve a public checkout with `python3 -m http.server --bind 127.0.0.1` and open `index.html#papers` through the server.
 
-The two homepage bars read `site/progress.json` and display the UTC time of its most recent update. Colors identify the five feasibility classes, and stripes identify unexecuted work. The chart denominators are 500 citation-ranked papers and 159 JAR packages. Partial runs count as executed when at least one selected scope or required analysis stage succeeded.
+The two homepage bars read `site/progress.json` and display the UTC time of its most recent update. Colors identify the five feasibility classes, and stripes identify unexecuted work. The chart denominators are 500 citation-ranked papers and 159 JAR packages. The citation bar counts retained from-scratch runs. The JAR bar counts retained author-code runs. Follow-up reconstructions using an author deposit are reported separately.
 
-The homepage applies the project author's [manual verdicts](site/progress_overrides.json) to the assessed data classes. In the citation cohort, the listed paper IDs set the data class and blocked includes manual exclusions. For JAR, the rule assigns undetermined package scopes to public acquisition. Individual verdicts take precedence over cohort rules. The JSON snapshot reports how many entries in each class received a manual verdict. Execution counts always come from the run records.
+The homepage applies the project author's [manual verdicts](site/progress_overrides.json) to the assessed scopes. In the citation cohort, individual paper verdicts include manual exclusions under Blocked. For JAR, the existing cohort rule sets undetermined data availability to public acquisition before combining it with code readiness. Explicit individual final classifications take precedence. The JSON snapshot reports how many entries in each class received a manual verdict. Execution counts always come from the run records.
 
 After updating the catalog, assessments, runs, or manual verdicts, run `python3 scripts/site_progress.py` in a terminal. When manual verdicts exist, the script asks twice before writing: first to apply the verdicts, then to write the counts. Enter `yes` separately at each prompt. Use `python3 scripts/site_progress.py --check` for an unattended, read-only freshness check.
 
@@ -83,6 +85,8 @@ Published runs record the checksum of the catalog they used. Keep a copy if you 
 | [Check execution feasibility](skills/check-execution-feasibility/SKILL.md) | The author archive, its bibliographic identity and a local resource catalog |
 | [Execute author analysis](skills/execute-author-analysis/SKILL.md) | A reviewed analysis scope and its author package |
 | [Replicate on an extended sample](skills/replicate-extended-samples/SKILL.md) | A completed predecessor, sample period and sources supporting additional observations |
+
+For a Ready package with local data and no runnable author code, freeze the deposited files with `python3 scripts/deposit_reproduction.py prepare --package-id PACKAGE_ID --work-dir .local/deposit/PACKAGE_ID`. For a prepare-and-execute fallback, supply the accepted execution review using `--execution-review`. The [reproduction skill](skills/reproduce-accounting-models/SKILL.md) covers the build, independent review, and publication for this route.
 
 For a published author package, use its `local_inputs.json` to restore the minimum required data from an authorized ZIP. The recipe gives its expected archive checksum and exact members, including nested archives. It also identifies the template for each executable file. Running the materializer twice reuses verified inputs. This example stages a reviewed Stata plan without launching it.
 

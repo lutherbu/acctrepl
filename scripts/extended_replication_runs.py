@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import project_layout as layout
 from scripts import reproduction_runs as reproduction
+from scripts.feasibility_verdict import matches_frozen_input
 
 BASE = ROOT / '.local/runs/extended_replications'
 SKILL = ROOT / 'skills/replicate-extended-samples'
@@ -114,13 +115,16 @@ def inventory():
     result = []
     for row in selected:
         pid = row['paper_id']
-        rebuilt = bool(row['reproduction_path'])
-        need(rebuilt != bool(row['execution_path']), 'Expected one accepted route per package')
+        previous = read(inside(ROOT, row['reproduction_path'])) if row['reproduction_path'] else None
+        # The extended-sample campaign covers historical reconstructions and author-code executions.
+        rebuilt = previous is not None and previous.get('route') != 'author_deposit'
+        if not rebuilt and not row['execution_path']:
+            continue
+        need(rebuilt != bool(row['execution_path']), 'Expected one historical route per package')
         paths = {'sample': row['sample_path'], 'models': row['model_path'],
                  'predecessor': row['reproduction_path'] if rebuilt else row['execution_path'],
                  'feasibility': row['feasibility_reproduction_path'] if rebuilt else row['feasibility_execution_path']}
         hashes = {key: sha(inside(ROOT, rel)) for key, rel in paths.items()}
-        previous = read(ROOT / paths['predecessor'])
         if rebuilt:
             need(previous['paper_id'] == pid, 'Reconstruction ID mismatch')
             accepted = read((ROOT / paths['predecessor']).parents[1] / 'accepted.json')
@@ -129,6 +133,7 @@ def inventory():
                        'table': f['table_basename'], 'worked': f['execution_status'] == 'executed',
                        'previous_note': f.get('blocked_reason') or None} for f in previous['fits']]
         else:
+            previous = read(ROOT / paths['predecessor'])
             need(previous['package_id'] == pid, 'Execution ID mismatch')
             review = read((ROOT / paths['predecessor']).parent / 'review.json')
             need(hashes['predecessor'] == review['report']['sha256'], 'Accepted author report hash changed')
@@ -244,7 +249,7 @@ def prepare(phase, pid, years):
         job.mkdir(parents=True)
         try:
             for k, p in item['sources'].items():
-                need(sha(inside(ROOT, p)) == item['hashes'][k], 'Pinned source changed: ' + p)
+                need(matches_frozen_input(inside(ROOT, p), item['hashes'][k], ROOT, sha), 'Pinned source changed: ' + p)
             shutil.copytree(skill, job / 'skill', ignore=shutil.ignore_patterns('__pycache__'))
             work = job / 'work'
             work.mkdir()
@@ -306,7 +311,7 @@ def register(job, agent, model, effort):
 
 def source_checks(job, task):
     for key, rel in task['sources'].items():
-        need(sha(inside(ROOT,rel)) == task['hashes'][key], 'Pinned source changed: '+rel)
+        need(matches_frozen_input(inside(ROOT, rel), task['hashes'][key], ROOT, sha), 'Pinned source changed: '+rel)
     for source in task['base_code'].values():
         need(sha(inside(ROOT,source['path'])) == source['sha256'], 'Accepted code changed: '+source['path'])
     if task['phase'] == 'sweep':

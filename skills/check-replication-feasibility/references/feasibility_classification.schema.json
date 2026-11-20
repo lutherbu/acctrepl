@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://local.invalid/accounting/feasibility-classification-1.0.schema.json",
+  "$id": "https://local.invalid/accounting/feasibility-classification-2.0.schema.json",
   "title": "Common feasibility classification",
   "description": "A reporting projection of saved assessments. Original verdicts, assessment targets and verification profiles are preserved; this schema does not supply new evidence or certify execution.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["classification_version", "approach", "subject_id", "paper_id", "package_id", "doi", "model_id", "result_set_id", "scope", "eligibility", "data_status", "execution_readiness", "execution_verified", "independent_attempt_ready", "evidence_profile", "original", "source"],
+  "required": ["classification_version", "approach", "subject_id", "paper_id", "package_id", "doi", "model_id", "result_set_id", "scope", "eligibility", "classification", "route", "na_reason", "data_status", "execution_readiness", "execution_verified", "independent_attempt_ready", "evidence_profile", "original", "source"],
   "properties": {
-    "classification_version": {"const": "1.0"},
+    "classification_version": {"const": "2.0"},
     "approach": {"enum": ["independent_reconstruction", "author_package"]},
     "subject_id": {"type": "string", "minLength": 1},
     "paper_id": {"type": ["string", "null"]},
@@ -17,6 +17,9 @@
     "result_set_id": {"type": ["string", "null"]},
     "scope": {"enum": ["baseline_fit", "full_pipeline", "analysis_only", "paper_eligibility"]},
     "eligibility": {"enum": ["in_scope", "no_baseline"]},
+    "classification": {"$ref": "#/$defs/classification"},
+    "route": {"enum": ["execute", "prepare_and_execute", "reproduce", null]},
+    "na_reason": {"enum": ["no_baseline", "synthetic_only", "no_observed_data_required", null]},
     "data_status": {"anyOf": [{"$ref": "#/$defs/data_status"}, {"type": "null"}]},
     "execution_readiness": {"$ref": "#/$defs/execution_readiness"},
     "execution_verified": {"type": ["boolean", "null"]},
@@ -46,6 +49,7 @@
     }
   },
   "$defs": {
+    "classification": {"enum": ["ready", "preparation_required", "blocked", "undetermined", "not_applicable"]},
     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "data_status": {
       "enum": ["local_available", "public_acquisition_required", "access_blocked", "undetermined", "no_observed_data_required"],
@@ -105,6 +109,62 @@
       }}
     }
   ],
+  "x_class_labels": {
+    "ready": "Ready",
+    "preparation_required": "Preparation required",
+    "blocked": "Blocked",
+    "undetermined": "Undetermined",
+    "not_applicable": "N/A"
+  },
+  "x_reproduction_classes": {
+    "local_available": "ready",
+    "public_acquisition_required": "preparation_required",
+    "access_blocked": "blocked",
+    "undetermined": "undetermined",
+    "no_observed_data_required": "not_applicable"
+  },
+  "x_ready_routes": {
+    "ready_to_attempt": "execute",
+    "preparation_required": "prepare_and_execute",
+    "no_runnable_code": "reproduce"
+  },
+  "x_execution_matrix": {
+    "local_available": {
+      "ready_to_attempt": "ready",
+      "preparation_required": "ready",
+      "blocked": "undetermined",
+      "undetermined": "undetermined",
+      "no_runnable_code": "ready"
+    },
+    "public_acquisition_required": {
+      "ready_to_attempt": "preparation_required",
+      "preparation_required": "preparation_required",
+      "blocked": "undetermined",
+      "undetermined": "undetermined",
+      "no_runnable_code": "preparation_required"
+    },
+    "access_blocked": {
+      "ready_to_attempt": "blocked",
+      "preparation_required": "blocked",
+      "blocked": "blocked",
+      "undetermined": "blocked",
+      "no_runnable_code": "blocked"
+    },
+    "undetermined": {
+      "ready_to_attempt": "undetermined",
+      "preparation_required": "undetermined",
+      "blocked": "undetermined",
+      "undetermined": "undetermined",
+      "no_runnable_code": "undetermined"
+    },
+    "no_observed_data_required": {
+      "ready_to_attempt": "not_applicable",
+      "preparation_required": "not_applicable",
+      "blocked": "not_applicable",
+      "undetermined": "not_applicable",
+      "no_runnable_code": "not_applicable"
+    }
+  },
   "x_status_mappings": {
     "independent_reconstruction": {
       "local_ready": "local_available",

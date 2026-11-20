@@ -95,12 +95,15 @@ function models(data) {
   return panel;
 }
 
-function reconstructionFeasibility(data, dataLabels) {
+const routeNames = {execute: "Execute author code", prepare_and_execute: "Prepare and execute author code once",
+  reproduce: "Write reproduction code"};
+
+function reconstructionFeasibility(data, {dataLabels, verdicts}) {
   const summary = data.summary;
-  const panel = el("div", "", facts([["Paper assessment", words(summary.outcome)], ["Eligibility", words(data.eligibility)], ["Baseline models", count(summary.baseline_models)],
+  const panel = el("div", "", facts([["Classification", verdicts[data.classification]], ["Paper assessment", words(summary.outcome)], ["Eligibility", words(data.eligibility)], ["Baseline models", count(summary.baseline_models)],
     ["Baseline fits", count(summary.baseline_fits)], ["Ready to attempt", count(summary.attempt_ready_count)]]));
-  if (data.assessments.length) panel.append(table(["Model", "Result set", "Data status", "Ready to attempt"],
-    data.assessments.map(a => [a.model_id, a.result_set_id, words(dataLabels[a.data_status]), a.attempt_ready ? "Yes" : "No"])));
+  if (data.assessments.length) panel.append(table(["Model", "Result set", "Classification", "Data status", "Ready to attempt"],
+    data.assessments.map(a => [a.model_id, a.result_set_id, verdicts[a.classification], words(dataLabels[a.data_status]), a.attempt_ready ? "Yes" : "No"])));
   const reasons = data.requirements.filter(r => r.blocked_reason || r.unresolved_reason);
   if (reasons.length) panel.append(el("h3", "", "Data requirements"), table(["Requirement", "Status", "Reason"],
     reasons.map(r => [r.description, words(dataLabels[r.data_status]), r.blocked_reason || r.unresolved_reason])));
@@ -109,19 +112,19 @@ function reconstructionFeasibility(data, dataLabels) {
   return panel;
 }
 
-function authorFeasibility(data, dataLabels) {
+function authorFeasibility(data, {dataLabels, verdicts}) {
   const panel = el("div");
   for (const scope of data.scopes) {
     const issues = data.issues.filter(issue => scope.issue_ids.includes(issue.id));
     panel.append(el("article", "result-block", el("h3", "", words(scope.id)), el("p", "", scope.description),
-      facts([["Data status", words(dataLabels[scope.data_status])], ["Execution readiness", words(scope.execution_readiness)]]),
+      facts([["Classification", verdicts[scope.classification]], ["Next step", routeNames[scope.route] || "—"], ["Data status", words(dataLabels[scope.data_status])], ["Execution readiness", words(scope.execution_readiness)]]),
       notes("Issues affecting this scope", issues.map(i => i.description))));
   }
   return panel;
 }
 
 function reproductions(data) {
-  return el("div", "", facts([["Accepted attempt", data.attempt], ["Status", words(data.status)],
+  return el("div", "", facts([["Route", data.route === "author_deposit" ? "New code with author-deposited inputs" : "Independent sample reconstruction"], ["Accepted attempt", data.attempt], ["Status", words(data.status)],
     ["Executed scopes", `${count(data.executed_scopes)} of ${count(data.total_scopes)}`]]),
     table(["Model", "Result set", "Execution", "Fidelity", "Recorded limitation"],
       data.fits.map(f => [f.model_id, f.result_set_id, words(f.execution_status), words(f.fidelity), f.blocked_reason || f.execution_detail])),

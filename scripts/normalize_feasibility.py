@@ -22,6 +22,7 @@ from jsonschema.validators import validator_for
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 import project_layout as layout
+from scripts.feasibility_verdict import execution_verdict, reproduction_verdict
 DEFAULT_REPLICATION = layout.resolve_path('output/feasibility_reproduction/feasibility_checks.jsonl',ROOT)
 DEFAULT_EXECUTION = layout.resolve_path('output/feasibility_execution/assessments.jsonl',ROOT)
 DEFAULT_SCHEMA = ROOT/'skills/check-replication-feasibility/references/feasibility_classification.schema.json'
@@ -93,6 +94,20 @@ def load_schema(path):
         if (not isinstance(mapping, dict) or not mapping or any(not isinstance(x,str) for x in mapping.values())
                 or not set(mapping.values()) <= set(labels)):
             raise ValueError('Common schema mapping targets must be declared data labels')
+    classes = set(schema['$defs']['classification']['enum'])
+    if set(schema['x_class_labels']) != classes:
+        raise ValueError('Every shared verdict needs a display label')
+    matrix = schema['x_execution_matrix']
+    codes = set(schema['$defs']['execution_readiness']['enum']) - {'not_assessed'}
+    if (set(matrix) != set(labels) or any(set(row) != codes or not set(row.values()) <= classes
+                                          for row in matrix.values())):
+        raise ValueError('Invalid execution feasibility matrix')
+    routed_codes = {code for row in matrix.values() for code, verdict in row.items() if verdict == 'ready'}
+    if set(schema['x_ready_routes']) != routed_codes:
+        raise ValueError('Every Ready code disposition needs a route')
+    reconstruction = schema['x_reproduction_classes']
+    if set(reconstruction) != set(labels) or not set(reconstruction.values()) <= classes:
+        raise ValueError('Invalid reconstruction verdict mapping')
     return path, raw, schema, validator_class(schema)
 
 
@@ -135,6 +150,7 @@ def _base(document, approach, provenance, schema):
             'package_id': subject if approach == APPROACHES[1] else None,
             'doi': doi, 'model_id': None, 'result_set_id': None,
             'scope': None, 'eligibility': 'in_scope', 'data_status': None,
+            'classification': None, 'route': None, 'na_reason': None,
             'execution_readiness': 'not_assessed', 'execution_verified': None,
             'independent_attempt_ready': None,
             'evidence_profile': ('reconstruction_dimensions' if approach == APPROACHES[0]
@@ -157,6 +173,7 @@ def _replication_rows(document, provenance, schema):
         if fits or requirements or paper_outcome != 'not_applicable':
             raise ValueError('No-baseline document must have no fits/data requirements and its eligibility summary')
         return [{**base, 'scope': 'paper_eligibility', 'eligibility': 'no_baseline',
+                 'classification': 'not_applicable', 'na_reason': 'no_baseline',
                  'original': {**base['original'], 'paper_outcome': paper_outcome}}]
     if eligibility != 'eligible' or not fits or paper_outcome == 'not_applicable':
         raise ValueError('Eligible replication document requires baseline fits')
@@ -175,6 +192,8 @@ def _replication_rows(document, provenance, schema):
             raise ValueError('No-observed-data status conflicts with saved data mode')
         rows.append({**base, 'model_id': model, 'result_set_id': result, 'scope': 'baseline_fit',
                      'data_status': _status(status, APPROACHES[0], schema),
+                     'classification': reproduction_verdict(status, schema),
+                     'na_reason': 'synthetic_only' if mode == 'synthetic_only' else None,
                      'independent_attempt_ready': attempt,
                      'original': {'data_status': status, 'execution_readiness': None,
                                   'attempt_ready': attempt, 'paper_outcome': paper_outcome}})
@@ -204,7 +223,9 @@ def _execution_rows(document, provenance, schema):
             raise ValueError('No-code readiness conflicts with saved code presence')
         if scope.get('execution_verified') is not False:
             raise ValueError('Static author-package assessments must retain execution_verified=false')
-        rows.append({**base, 'scope': scope['id'],
+        classification, route = execution_verdict(_status(status, APPROACHES[1], schema), readiness, schema)
+        rows.append({**base, 'scope': scope['id'], 'classification': classification, 'route': route,
+                     'na_reason': 'no_observed_data_required' if not data_required else None,
                      'data_status': _status(status, APPROACHES[1], schema),
                      'execution_readiness': readiness, 'execution_verified': False,
                      'original': {'data_status': status, 'execution_readiness': readiness,
@@ -270,11 +291,13 @@ def summarize(rows, sources, schema):
         groups.append({'approach': approach, 'scope': scope, 'records': len(values),
                        'subjects': len({v['subject_id'] for v in values}),
                        'eligibility': dict(sorted(Counter(v['eligibility'] for v in values).items())),
+                       'classification': dict(Counter(v['classification'] for v in values)),
                        'data_status': {label: data[label] for label in labels},
                        'execution_readiness': {label: ready[label] for label in readiness},
                        'independent_attempt_ready': {k: attempts[k] for k in ('true','false','not_assessed')}})
     return {'classification_version': schema['properties']['classification_version']['const'],
             'normalized_records': len(rows), 'source_documents': sources, 'groups': groups,
+            'classification_labels': schema['x_class_labels'],
             'data_status_order': labels,
             'data_labels': schema['x_data_labels'], 'evidence_profiles': schema['x_evidence_profiles'],
             'notes': ['Labels are harmonized from saved verdicts; no paper, evidence, probe or model was reassessed.',
@@ -293,6 +316,13 @@ def _summary_markdown(summary):
         c = group['data_status']
         values = ['—']*len(summary['data_status_order']) if group['scope'] == 'paper_eligibility' else [str(c[k]) for k in summary['data_status_order']]
         lines.append('| '+' | '.join([group['approach'],group['scope'],str(group['records']),str(group['subjects']),*values])+' |')
+    labels = summary['classification_labels']
+    lines += ['', '## Feasibility verdicts', '',
+              '| Approach | Scope | ' + ' | '.join(labels.values()) + ' |',
+              '|---|---|' + '---:|' * len(labels)]
+    for group in summary['groups']:
+        counts = [str(group['classification'].get(k, 0)) for k in labels]
+        lines.append('| ' + ' | '.join([group['approach'], group['scope'], *counts]) + ' |')
     lines += ['', '## Shared data labels', '']
     for label, definition in summary['data_labels'].items():
         lines.append(f'- `{label}`: {definition}')

@@ -11,6 +11,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from scripts import publication as pub, rebuild_indexes
+from scripts.feasibility_verdict import classify
 
 
 def read(path):
@@ -100,6 +101,7 @@ def publish(project, workflow, source, *, item=None, review=None):
                 originals[name]=pub.sha(archive(root,workflow,pid,file))
             pub.transform_file(proposal,package/'patch_proposal.md',policy)
             clean['patch_proposal']['sha256'] = pub.sha(package/'patch_proposal.md')
+            classify(clean)
             (package/'assessment.json').write_bytes(pub.encode(clean))
             note.update(assessment_sha256=pub.sha(package/'assessment.json'),proposal_sha256=clean['patch_proposal']['sha256'])
             (package/'review.json').write_bytes(pub.encode(policy.document(note)))

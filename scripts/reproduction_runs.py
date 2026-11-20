@@ -24,6 +24,7 @@ PROJECT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT))
 import project_layout as layout
 from scripts import publish_reproduction
+from scripts.feasibility_verdict import matches_frozen_input
 Path = layout.path_class(PROJECT)
 PROJECT = Path(str(PROJECT))
 RUNS = Path(layout.work_root('reproduction', PROJECT))
@@ -371,7 +372,7 @@ def validate(attempt, verify_sources=True):
         errors.append("Assigned template changed")
     if verify_sources:
         for p, expected in work["source_hashes"].items():
-            if not (PROJECT / p).is_file() or sha(PROJECT / p) != expected:
+            if not matches_frozen_input(PROJECT / p, expected, PROJECT, sha):
                 errors.append("Input changed: " + p)
     expected = {(s["model_id"], s["result_set_id"]) for s in work["expected_scopes"]}
     fits = sub.get("fits", [])

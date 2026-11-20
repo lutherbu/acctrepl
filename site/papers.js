@@ -249,13 +249,13 @@ async function output(row, workflow, values, requestedFile) {
   }
   if (selected === primary) {
     const data = JSON.parse(await loadText(primary));
-    let dataLabels;
+    let labels;
     if (workflow.id.startsWith("feasibility_")) {
       const schema = JSON.parse(await loadText("skills/check-replication-feasibility/references/feasibility_classification.schema.json"));
       const approach = workflow.id === "feasibility_execution" ? "author_package" : "independent_reconstruction";
-      dataLabels = schema.x_status_mappings[approach];
+      labels = {dataLabels: schema.x_status_mappings[approach], verdicts: schema.x_class_labels};
     }
-    article.append(summaries[workflow.id](data, dataLabels), fileActions(primary), jsonTree("Full JSON", data));
+    article.append(summaries[workflow.id](data, labels), fileActions(primary), jsonTree("Full JSON", data));
   }
   return tree ? el("div", "package-layout", tree, article) : article;
 }

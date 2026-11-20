@@ -4,6 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
@@ -197,9 +198,9 @@ def render_proposal(assessment):
         lines += [f"DOI: {d['doi']}", '']
     lines += ['Status: proposal only. No author code has been changed or executed.', '',
              '## Target and readiness', '',
-             '| Scope | Data access | Execution readiness |', '|---|---|---|']
+             '| Scope | Classification | Ready route | Data access | Execution readiness |', '|---|---|---|---|---|']
     for scope in d['scopes']:
-        lines.append(f"| {scope['id']} | {scope['data_status']} | {scope['execution_readiness']} |")
+        lines.append(f"| {scope['id']} | {scope['classification']} | {scope['route'] or '—'} | {scope['data_status']} | {scope['execution_readiness']} |")
     for scope in d['scopes']:
         lines += ['', f"### {scope['id']}", '', scope['description'], '',
                   'Entry points: ' + (', '.join(f'`{p}`' for p in scope['entry_points']) or 'No runnable entry point established.'),
@@ -415,6 +416,23 @@ def finalize(item, draft, output_dir=None):
     for rid, claim in claimed_requirements.items():
         if requirements[rid]['outcome'] != claim:
             raise ValueError(f'{rid}: submitted data claim differs from evidence-computed outcome')
+    if 'preclassification_sha256' in d:
+        raise ValueError('A new assessment cannot claim a historical publication checksum')
+    # The prepared skill carries the same sibling layout as an installed checkout.
+    contract_record = raw_item.get('classification_contract')
+    if contract_record:
+        expected = workdir / 'check-replication-feasibility/references/feasibility_classification.schema.json'
+        if contract_record != {'path': str(expected), 'sha256': sha256(expected)}:
+            raise ValueError('Invalid frozen classification contract')
+        rules_path = expected.parents[1] / 'scripts/verdicts.py'
+        if {'path': str(rules_path), 'sha256': sha256(rules_path)} not in raw_item['frozen_files']:
+            raise ValueError('Missing frozen classification helper')
+    else:
+        rules_path = SCHEMA.parents[2] / 'check-replication-feasibility/scripts/verdicts.py'
+    spec = importlib.util.spec_from_file_location('author_feasibility_verdicts', rules_path)
+    rules = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rules)
+    rules.classify(d)
     proposal_text = render_proposal(d)
     d['patch_proposal'] = {'path': 'patch_proposal.md', 'sha256': hashlib.sha256(proposal_text.encode()).hexdigest(), 'applied': False}
     jsonschema.Draft202012Validator(json.loads(SCHEMA.read_text())).validate(d)
