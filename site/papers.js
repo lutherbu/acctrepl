@@ -173,7 +173,7 @@ function resolveReference(href, sourcePath, files, currentPackage) {
   }
   const workflow = workflows.find(w => [`output/${w.id}/packages/`, `output/${w.id}/records/`].includes(path));
   if (workflow) return route({workflow: workflow.id});
-  if (["docs/papers.csv", "docs/papers.jsonl", "utils/review.html", "utils/filter.html", "index.html"].includes(path)) {
+  if (["docs/papers.csv", "docs/papers.jsonl", "utils/review.html", "utils/filter.html", "utils/verdict.html", "index.html"].includes(path)) {
     return asset(path) + url.search + url.hash;
   }
   return null;

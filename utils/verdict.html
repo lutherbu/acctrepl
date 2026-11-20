@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feasibility verdicts · Accounting Paper Replications</title>
+<link rel="stylesheet" href="../site/site.css">
+<style>
+  .verdict-head { border-top:1px solid var(--line); padding:34px 0 18px }
+  .verdict-head h1 { margin:0 0 8px; font-size:clamp(36px,5vw,54px) }
+  .verdict-head p { color:var(--muted); max-width:760px; margin:0 }
+  .tools { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:16px 0 8px }
+  .tools button,.file-label { cursor:pointer; font-family:inherit }
+  .file-label { position:relative }
+  .file-label input { position:absolute; width:1px; height:1px; opacity:0 }
+  .file-label:focus-within { outline:2px solid var(--green); outline-offset:2px }
+  .tools button:disabled,.file-label:has(input:disabled) { opacity:.5; cursor:default }
+  #status { min-height:1.5em; margin:6px 0 16px; font-size:14px; color:var(--muted) }
+  #status.error { color:#99412e }
+  .browser .filters { grid-template-columns:minmax(185px,2.5fr) repeat(3,minmax(110px,1fr)) }
+  .catalog-table th:first-child { width:48% }
+  .catalog-table th:nth-child(2), .catalog-table th:nth-child(3) { width:8% }
+  .links { display:flex; flex-wrap:wrap; gap:6px 13px; margin-top:5px; font-size:13px }
+  .empty-pdf,.origin { color:var(--muted); font-size:12px }
+  .verdict-field { display:grid; gap:4px; margin-bottom:8px }
+  .verdict-field label { color:var(--muted); font-size:13px }
+  .verdict-field select { width:100%; min-width:0; padding:6px; color:var(--ink); border:1px solid #bdcabe; border-radius:5px; background:white; font:inherit; font-size:14px }
+  .pager { align-items:center }
+  .pager button:disabled { opacity:.5 }
+  .browser { padding-bottom:40px }
+  @media(max-width:840px){.browser .filters { grid-template-columns:1fr 1fr }}
+  @media(max-width:680px){.output-cell { margin-top:7px }.verdict-field { max-width:420px }}
+</style>
+</head>
+<body>
+<header class="wrap topbar">
+  <a class="brand" href="../index.html"><span class="mark" aria-hidden="true">A</span>Accounting Paper Replications</a>
+  <nav aria-label="Navigation"><a href="../index.html#papers">Paper catalog</a></nav>
+</header>
+<main class="wrap browser">
+  <header class="verdict-head">
+    <h1>Feasibility verdicts</h1>
+    <p>Choose a data class for a paper or author package. Export your edits to <code>site/progress_overrides.json</code> to use them in the progress bars.</p>
+  </header>
+  <div class="tools">
+    <button id="export-verdicts" class="button" disabled>Export verdicts</button>
+    <label class="button secondary file-label">Import verdicts<input id="import-verdicts" type="file" accept=".json,application/json" disabled></label>
+    <label class="button secondary file-label">Choose PDF folder<input id="pdf-folder" type="file" webkitdirectory multiple aria-label="Choose local PDF folder"></label>
+    <button id="open-checkout" class="button secondary" hidden>Open local checkout</button>
+  </div>
+  <p id="status" role="status" aria-live="polite"></p>
+  <noscript>Enable JavaScript to edit feasibility verdicts.</noscript>
+  <div id="workspace" hidden>
+    <form class="filters" role="search" id="filters">
+      <div class="field search"><label for="search">Search papers</label><input id="search" type="search" placeholder="Title, author, DOI, or paper ID"></div>
+      <div class="field"><label for="journal">Journal</label><select id="journal"><option value="">All journals</option></select></div>
+      <div class="field"><label for="year">Year</label><select id="year"><option value="">All years</option></select></div>
+      <div class="field"><label for="cohort">Cohort</label><select id="cohort"><option value="">Both cohorts</option><option value="cited">Citation-selected papers</option><option value="jar">JAR author packages</option></select></div>
+    </form>
+    <div class="list-heading"><h2 id="count" class="list-count" aria-live="polite"></h2><button id="clear" class="small-button" hidden>Clear filters</button></div>
+    <table class="catalog-table"><thead><tr><th scope="col">Paper</th><th scope="col">Journal</th><th scope="col">Year</th><th scope="col">Feasibility verdict</th></tr></thead><tbody id="rows"></tbody></table>
+    <nav class="pager" id="pager" aria-label="Catalog pages"><button class="small-button" id="previous">← Previous page</button><span id="page"></span><button class="small-button" id="next">Next page →</button></nav>
+  </div>
+</main>
+<script>
+"use strict";
+const labels = {
+  local_available: "Available locally",
+  public_acquisition_required: "Public acquisition required",
+  access_blocked: "Access blocked",
+  undetermined: "Undetermined",
+  no_observed_data_required: "No observed data required",
+};
+const sources = {cited: "Reconstruction", jar: "Author package"};
+
+function validSubjectId(id) {
+  return typeof id === "string" && /^[a-zA-Z0-9_-]+$/.test(id);
+}
+
+function subjectsFor(row) {
+  if (!validSubjectId(row.paper_id) || !Array.isArray(row.cohorts) || !Array.isArray(row.jar_packages)) {
+    throw new Error("Invalid catalog row or paper ID.");
+  }
+  const subjects = [];
+  if (row.cohorts.includes("top_100_cited")) subjects.push({cohort: "cited", id: row.paper_id});
+  for (const unit of row.jar_packages) {
+    if (!validSubjectId(unit?.package_id)) throw new Error("Invalid package ID for " + row.paper_id);
+    subjects.push({cohort: "jar", id: unit.package_id});
+  }
+  return subjects;
+}
+
+function isSettingsObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function validateOverrides(obj, rows) {
+  if (!isSettingsObject(obj)) throw new Error("Verdicts must be a JSON object.");
+  const ids = {cited: new Set(), jar: new Set()};
+  for (const row of rows) {
+    for (const {cohort, id} of subjectsFor(row)) ids[cohort].add(id);
+  }
+  for (const [cohort, settings] of Object.entries(obj)) {
+    if (!Object.hasOwn(sources, cohort)) throw new Error("Unknown verdict cohort: " + cohort);
+    if (!isSettingsObject(settings) || Object.keys(settings).some(key => !["ids_by_verdict", "reclassify"].includes(key))) {
+      throw new Error("Invalid verdict settings for " + cohort);
+    }
+    if (Object.hasOwn(settings, "reclassify")) {
+      if (!isSettingsObject(settings.reclassify)) throw new Error("Invalid cohort rules for " + cohort);
+      for (const [from, to] of Object.entries(settings.reclassify)) {
+        if (!Object.hasOwn(labels, from) || typeof to !== "string" || !Object.hasOwn(labels, to)) {
+          throw new Error("Invalid reclassification rule for " + cohort + ": " + from);
+        }
+      }
+    }
+    if (Object.hasOwn(settings, "ids_by_verdict")) {
+      if (!isSettingsObject(settings.ids_by_verdict)) throw new Error("Invalid individual verdicts for " + cohort);
+      const seen = new Set();
+      for (const [verdict, selected] of Object.entries(settings.ids_by_verdict)) {
+        if (!Object.hasOwn(labels, verdict) || !Array.isArray(selected)) throw new Error("Invalid verdict group: " + verdict);
+        for (const id of selected) {
+          if (!ids[cohort].has(id) || seen.has(id)) throw new Error("Unknown or repeated " + cohort + " ID: " + id);
+          seen.add(id);
+        }
+      }
+    }
+  }
+  return obj;
+}
+
+function explicitVerdict(overrides, cohort, id) {
+  for (const [verdict, ids] of Object.entries(overrides[cohort]?.ids_by_verdict || {})) {
+    if (ids.includes(id)) return verdict;
+  }
+  return null;
+}
+
+function setVerdict(overrides, cohort, id, value) {
+  if (!Object.hasOwn(sources, cohort) || !validSubjectId(id) ||
+      (value !== "" && (typeof value !== "string" || !Object.hasOwn(labels, value)))) {
+    throw new Error("Invalid individual verdict.");
+  }
+  const current = explicitVerdict(overrides, cohort, id);
+  if ((current || "") === value) return;
+  const settings = overrides[cohort] ??= {};
+  const groups = settings.ids_by_verdict ??= {};
+  if (current) {
+    const ids = groups[current];
+    ids.splice(ids.indexOf(id), 1);
+    if (!ids.length) delete groups[current];
+  }
+  if (value) {
+    const ids = groups[value] ??= [];
+    ids.push(id);
+    ids.sort();
+  }
+  if (!Object.keys(groups).length) delete settings.ids_by_verdict;
+}
+
+async function assessedClass(row, subject, contract, readJSON) {
+  const subjects = subjectsFor(row);
+  const {cohort, id} = subject;
+  if (!subjects.some(s => s.cohort === cohort && s.id === id)) throw new Error("Subject does not belong to this paper.");
+  const approach = cohort === "cited" ? "independent_reconstruction" : "author_package";
+  const mapping = contract.x_status_mappings[approach];
+  function mapped(status) {
+    if (!Object.hasOwn(mapping, status) || !Object.hasOwn(labels, mapping[status])) {
+      throw new Error("Unknown assessment class for " + id);
+    }
+    return mapping[status];
+  }
+  if (cohort === "cited") {
+    if (!row.feasibility_reproduction_path) return null;
+    const path = "output/feasibility_reproduction/records/" + id + ".json";
+    if (row.feasibility_reproduction_path !== path) throw new Error("Assessment path does not match " + id);
+    const assessment = await readJSON(path);
+    if (assessment.paper_id !== id) throw new Error("Assessment ID does not match " + id);
+    if (assessment.eligibility === "no_baseline") return null;
+    if (assessment.eligibility !== "eligible" || !assessment.assessments?.length) throw new Error("Missing baseline fits for " + id);
+    const statuses = new Set(assessment.assessments.map(fit => mapped(fit.data_status)));
+    return ["access_blocked", "undetermined", "public_acquisition_required", "local_available", "no_observed_data_required"]
+      .find(status => statuses.has(status));
+  }
+  // A catalog row with multiple packages can have one link to a sibling or no unique link.
+  const packages = subjects.filter(s => s.cohort === "jar");
+  async function packageFile(declared, workflow, file) {
+    const pathFor = unit => "output/" + workflow + "/packages/" + unit + "/" + file;
+    const path = pathFor(id);
+    if (declared && !packages.some(s => pathFor(s.id) === declared)) throw new Error("Package path does not match this paper.");
+    if (!declared && packages.length === 1) return null;
+    let record;
+    try {
+      record = await readJSON(path);
+    } catch (error) {
+      if (declared !== path && (error?.status === 404 || error?.name === "NotFoundError")) return null;
+      throw error;
+    }
+    if (record?.package_id !== id) throw new Error("Package ID does not match " + id);
+    return record;
+  }
+  const assessment = await packageFile(row.feasibility_execution_path, "feasibility_execution", "assessment.json");
+  if (!assessment) return null;
+  const scopes = new Map(assessment.scopes.map(scope => [scope.id, scope.data_status]));
+  if (!scopes.has("full_pipeline") || scopes.size !== assessment.scopes.length) throw new Error("Invalid package scopes for " + id);
+  const report = await packageFile(row.execution_path, "executions", "report.json");
+  const scope = report ? report.scope_id : scopes.has("analysis_only") ? "analysis_only" : "full_pipeline";
+  if (!scopes.has(scope)) throw new Error("Execution scope is absent from the assessment for " + id);
+  return mapped(scopes.get(scope));
+}
+
+const $ = id => document.getElementById(id);
+const rootURL = new URL("../", location.href);
+const localFiles = location.protocol === "file:";
+const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname) || location.hostname.endsWith(".localhost");
+let checkout = null;
+let rows = [], overrides, contract, saved, page = 1, selectedPDFs = null;
+const rawClasses = new Map(), pdfLinks = new Map();
+const pageSize = 25;
+
+function el(tag, className, ...children) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  node.append(...children);
+  return node;
+}
+function link(text, url, cls) {
+  const a = el("a", cls, text);
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  return a;
+}
+function message(text, error = false) {
+  $("status").textContent = text;
+  $("status").classList.toggle("error", error);
+}
+function changed() { return overrides !== undefined && JSON.stringify(overrides) !== saved; }
+
+async function checkoutFile(path) {
+  const parts = path.split("/");
+  let dir = checkout;
+  for (const subdir of parts.slice(0, -1)) dir = await dir.getDirectoryHandle(subdir);
+  return (await dir.getFileHandle(parts.at(-1))).getFile();
+}
+async function readText(path) {
+  if (checkout) return (await checkoutFile(path)).text();
+  const response = await fetch(new URL(path, rootURL));
+  if (!response.ok) {
+    const error = new Error("Could not read " + path + " (HTTP " + response.status + ").");
+    error.status = response.status;
+    throw error;
+  }
+  return response.text();
+}
+async function readJSON(path) { return JSON.parse(await readText(path)); }
+async function loadOverrides() {
+  try { return await readJSON("site/progress_overrides.json"); }
+  catch (e) {
+    if (e.status === 404 || e.name === "NotFoundError") return {};
+    throw e;
+  }
+}
+
+function paperReader(id) {
+  const base = localFiles ? "https://lutherbu.github.io/acctrepl/" : rootURL;
+  const url = new URL("index.html", base);
+  url.searchParams.set("paper", id);
+  return url;
+}
+function pdfNames(row) {
+  const names = new Set();
+  if (typeof row.pdf_path === "string" && /^papers\/pdf\/[^/\\?#%\x00-\x1f]+\.pdf$/i.test(row.pdf_path)) {
+    names.add(row.pdf_path.split("/").at(-1));
+  }
+  names.add(row.paper_id + ".pdf");
+  return names;
+}
+async function pdfLink(row) {
+  for (const name of pdfNames(row)) {
+    if (selectedPDFs) {
+      const file = selectedPDFs.get(name);
+      if (file) return URL.createObjectURL(file);
+    } else if (checkout) {
+      try { return URL.createObjectURL(await checkoutFile("papers/pdf/" + name)); }
+      catch (e) { if (e.name !== "NotFoundError") throw e; }
+    } else if (loopback) {
+      const url = new URL("papers/pdf/" + encodeURIComponent(name), rootURL);
+      const response = await fetch(url, {method:"HEAD"});
+      if (response.ok && !/text\/html/i.test(response.headers.get("Content-Type") || "")) return url.href;
+      if (!response.ok && response.status !== 404) throw new Error("PDF lookup failed.");
+    }
+  }
+  return null;
+}
+function addPDF(row, links) {
+  if (!selectedPDFs && !checkout && !loopback) {
+    links.append(el("span", "empty-pdf", "Choose a folder for local PDFs"));
+    return;
+  }
+  const place = el("span", "empty-pdf", "Checking local PDF…");
+  links.append(place);
+  if (!pdfLinks.has(row.paper_id)) pdfLinks.set(row.paper_id, pdfLink(row));
+  pdfLinks.get(row.paper_id).then(url => {
+    if (url) place.replaceWith(link("Local PDF", url));
+    else place.textContent = "No local PDF";
+  }).catch(() => {
+    place.textContent = "PDF unavailable";
+    pdfLinks.delete(row.paper_id);
+  });
+}
+function resetPDFLinks() {
+  for (const pending of pdfLinks.values()) {
+    pending.then(url => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); }).catch(() => {});
+  }
+  pdfLinks.clear();
+}
+
+function verdictField(row, subject) {
+  const {cohort, id} = subject;
+  const field = el("div", "verdict-field");
+  const select = el("select");
+  Object.assign(select.dataset, {cohort, id});
+  select.id = "verdict-" + cohort + "-" + id;
+  const label = el("label", "", sources[cohort] + " · " + id);
+  label.htmlFor = select.id;
+  const inherited = new Option("Use inherited verdict", "");
+  select.add(inherited);
+  for (const [key, name] of Object.entries(labels)) select.add(new Option(name, key));
+  select.value = explicitVerdict(overrides, cohort, id) || "";
+
+  async function loadInherited() {
+    const cacheKey = cohort + ":" + id;
+    if (!rawClasses.has(cacheKey)) rawClasses.set(cacheKey, assessedClass(row, subject, contract, readJSON));
+    if (!select.value) inherited.text = "Loading inherited verdict…";
+    try {
+      const raw = await rawClasses.get(cacheKey);
+      const assigned = raw && overrides[cohort]?.reclassify?.[raw];
+      const text = assigned ? labels[assigned] + " (cohort rule)" : raw ? labels[raw] + " (assessed)" : "No assessed class";
+      inherited.text = "Inherit · " + text;
+    } catch (e) {
+      rawClasses.delete(cacheKey);
+      inherited.text = "Inherit · assessment unavailable";
+      select.title = e.message;
+    }
+  }
+  if (!select.value) loadInherited();
+  else select.addEventListener("focus", loadInherited, {once:true});
+  select.addEventListener("change", () => {
+    setVerdict(overrides, cohort, id, select.value);
+    if (!select.value) loadInherited();
+    message(changed() ? "Unsaved verdict edits. Export verdicts to keep your changes." : "No pending edits.");
+  });
+  field.append(label, select);
+  return field;
+}
+
+function paperRow(row) {
+  const tr = el("tr");
+  tr.dataset.paperId = row.paper_id;
+  const paper = el("td", "paper-cell", link(row.title, paperReader(row.paper_id), "paper-title"),
+    el("div", "byline", row.authors || ""));
+  const links = el("div", "links");
+  if (row.doi) links.append(link("DOI", "https://doi.org/" + row.doi.split("/").map(encodeURIComponent).join("/")));
+  addPDF(row, links);
+  paper.append(links);
+  const controls = el("td", "output-cell");
+  for (const subject of subjectsFor(row)) {
+    if (!$("cohort").value || subject.cohort === $("cohort").value) controls.append(verdictField(row, subject));
+  }
+  tr.append(paper, el("td", "journal-cell", row.journal), el("td", "year-cell", String(row.publication_year ?? "")), controls);
+  return tr;
+}
+
+function normalize(value) { return String(value ?? "").normalize("NFKD").replace(/\p{M}/gu,"").toLowerCase(); }
+function render() {
+  const terms = normalize($("search").value).trim().split(/\s+/).filter(Boolean);
+  const journal = $("journal").value, year = $("year").value, cohort = $("cohort").value;
+  const matches = rows.filter(row => (!journal || row.journal === journal) &&
+    (!year || String(row.publication_year) === year) && (!cohort || subjectsFor(row).some(s => s.cohort === cohort)) &&
+    terms.every(term => row.searchText.includes(term)));
+  const pages = Math.max(1, Math.ceil(matches.length / pageSize));
+  page = Math.min(Math.max(1, page), pages);
+  const start = (page - 1) * pageSize;
+  $("count").textContent = matches.length + (matches.length === 1 ? " paper" : " papers");
+  $("rows").replaceChildren(...matches.slice(start, start + pageSize).map(paperRow));
+  if (!matches.length) {
+    const cell = el("td", "empty", "No papers match these filters.");
+    cell.colSpan = 4;
+    $("rows").append(el("tr", "", cell));
+  }
+  $("clear").hidden = !(terms.length || journal || year || cohort);
+  $("pager").hidden = pages === 1;
+  $("page").textContent = "Page " + page + " of " + pages;
+  $("previous").disabled = page === 1;
+  $("next").disabled = page === pages;
+}
+
+async function start() {
+  message("Loading the catalog and current verdicts…");
+  const [catalog, settings, schema] = await Promise.all([readText("docs/papers.jsonl"), loadOverrides(),
+    readJSON("skills/check-replication-feasibility/references/feasibility_classification.schema.json")]);
+  const records = catalog.split(/\r?\n/).filter(line => line.trim()).map(line => JSON.parse(line));
+  validateOverrides(settings, records);
+  const classes = schema.$defs?.data_status?.enum;
+  if (!Array.isArray(classes) || classes.length !== Object.keys(labels).length || !classes.every(k => Object.hasOwn(labels,k))) {
+    throw new Error("The feasibility schema does not match the editor’s classes.");
+  }
+  for (const row of records) {
+    row.searchText = normalize([row.title, row.authors, row.doi, row.paper_id, ...row.jar_packages.map(p => p.package_id)].join(" "));
+  }
+  rows = records; overrides = settings; contract = schema; saved = JSON.stringify(settings);
+  for (const j of [...new Set(rows.map(r => r.journal))].filter(Boolean).sort()) $("journal").add(new Option(j,j));
+  for (const y of [...new Set(rows.map(r => r.publication_year))].filter(Boolean).sort((a,b) => b-a)) $("year").add(new Option(y,y));
+  $("workspace").hidden = false;
+  $("import-verdicts").disabled = $("export-verdicts").disabled = false;
+  $("open-checkout").hidden = true;
+  message("Current verdicts loaded.");
+  render();
+}
+
+$("filters").onsubmit = e => e.preventDefault();
+$("search").oninput = () => { page = 1; render(); };
+for (const key of ["journal","year","cohort"]) $(key).onchange = () => { page = 1; render(); };
+$("clear").onclick = () => { $("filters").reset(); page = 1; render(); };
+function movePage(n) { page += n; render(); $("count").scrollIntoView({block:"start"}); }
+$("previous").onclick = () => movePage(-1);
+$("next").onclick = () => movePage(1);
+
+$("pdf-folder").onchange = e => {
+  const files = [...e.target.files];
+  e.target.value = "";
+  if (!files.length) return;
+  const next = new Map(), duplicates = new Set();
+  for (const file of files) {
+    if (!/\.pdf$/i.test(file.name)) continue;
+    if (next.has(file.name)) duplicates.add(file.name);
+    next.set(file.name, file);
+  }
+  for (const name of duplicates) next.delete(name);
+  selectedPDFs = next;
+  resetPDFLinks();
+  if (overrides) render();
+  message(next.size + " local PDF files available." + (duplicates.size ? " Duplicate filenames were skipped." : "") +
+    (changed() ? " You have unsaved verdict edits." : ""));
+};
+$("import-verdicts").onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  try {
+    const settings = validateOverrides(JSON.parse((await file.text()).replace(/^\uFEFF/, "")), rows);
+    if (changed() && !confirm("Replace your unsaved verdict edits with this file?")) return;
+    overrides = settings; saved = JSON.stringify(settings);
+    render();
+    message("Imported " + file.name + ".");
+  } catch (err) { message("Could not import verdicts. " + err.message, true); }
+};
+$("export-verdicts").onclick = () => {
+  const url = URL.createObjectURL(new Blob([JSON.stringify(overrides, null, 2) + "\n"], {type:"application/json"}));
+  const a = el("a"); a.href = url; a.download = "progress_overrides.json";
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  saved = JSON.stringify(overrides);
+  message("Download requested. Place the saved progress_overrides.json in site/ to use these verdicts.");
+};
+window.addEventListener("beforeunload", e => { if (changed()) { e.preventDefault(); e.returnValue = ""; } });
+
+if (localFiles) {
+  if (typeof window.showDirectoryPicker === "function") {
+    $("open-checkout").hidden = false;
+    $("open-checkout").onclick = async () => {
+      try {
+        checkout = await window.showDirectoryPicker({mode:"read"});
+        await start();
+      } catch (e) {
+        if (e.name !== "AbortError") message("Choose the repository folder containing docs/, site/, and papers/, or serve the checkout on localhost. " + e.message, true);
+      }
+    };
+    message("Open the local checkout to load its catalog, verdicts, and PDFs.");
+  } else {
+    message("Serve the repository with python3 -m http.server --bind 127.0.0.1 and open http://127.0.0.1:8000/utils/verdict.html.");
+  }
+} else {
+  start().catch(err => message("Unable to load the editor. " + err.message, true));
+}
+</script>
+</body>
+</html>

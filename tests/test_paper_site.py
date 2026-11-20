@@ -1,6 +1,7 @@
 """Check the public Pages inventory and its reader under a project-site URL."""
 from collections import defaultdict
 import csv
+from datetime import datetime
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -42,6 +43,8 @@ class InventoryTests(unittest.TestCase):
 
     def test_site_progress_matches_publications(self):
         progress = json.loads((ROOT/'site/progress.json').read_bytes())
+        stamp = progress.pop('updated_at')
+        self.assertEqual(datetime.fromisoformat(stamp).isoformat(timespec='seconds'), stamp.removesuffix('Z') + '+00:00')
         self.assertEqual(progress, cohort_progress(ROOT))
         rows = read_jsonl(ROOT/'docs/papers.jsonl')
         totals = {'cited': sum('top_100_cited' in row['cohorts'] for row in rows),
@@ -119,8 +122,12 @@ class ManualVerdictTests(unittest.TestCase):
                   patch('builtins.input', side_effect=responses) as ask, patch.object(site_progress, '_atomic_write') as write):
                 if responses == ['yes', 'yes']:
                     site_progress.main()
-                    write.assert_called_once_with(self.root/'site/progress.json',
-                                                  site_progress.encoded(cohort_progress(self.root)))
+                    write.assert_called_once()
+                    target, raw = write.call_args.args
+                    self.assertEqual(target, self.root/'site/progress.json')
+                    saved = json.loads(raw)
+                    self.assertRegex(saved.pop('updated_at'), r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$')
+                    self.assertEqual(saved, cohort_progress(self.root))
                 else:
                     with self.assertRaises(SystemExit):
                         site_progress.main()
@@ -138,15 +145,37 @@ class ManualVerdictTests(unittest.TestCase):
 
     def test_check_is_unattended_and_read_only(self):
         snapshot = self.root/'site/progress.json'
-        snapshot.write_bytes(site_progress.encoded(cohort_progress(self.root)))
+        counts = cohort_progress(self.root)
+        current = {'updated_at': '2025-02-27T08:43:12Z', **counts}
+        snapshot.write_bytes(site_progress.encoded(current))
         with patch.object(site_progress, 'PROJECT', self.root), patch('sys.argv', ['site_progress.py', '--check']), \
                 patch('builtins.input') as ask, patch.object(site_progress, '_atomic_write') as write:
             site_progress.main()
-            snapshot.write_text('{}')
-            with self.assertRaises(SystemExit):
-                site_progress.main()
+            for invalid in (counts, {**current, 'updated_at': '2025-02-30T08:43:12Z'},
+                            {**current, 'updated_at': '2025-02-27T08:43:12'}, {**current, 'cited': {}}):
+                snapshot.write_bytes(site_progress.encoded(invalid))
+                with self.assertRaises(SystemExit):
+                    site_progress.main()
             ask.assert_not_called()
             write.assert_not_called()
+
+    def test_update_time_changes_only_when_counts_change(self):
+        path = self.root/'site/progress.json'
+        old_stamp = '2020-01-15T09:20:04Z'
+        old = {'updated_at': old_stamp, **cohort_progress(self.root)}
+        path.write_bytes(site_progress.encoded(old))
+        with (patch.object(site_progress, 'PROJECT', self.root), patch('sys.argv', ['site_progress.py']),
+              patch('sys.stdin.isatty', return_value=True), patch('builtins.input', return_value='yes') as ask):
+            site_progress.main()
+            self.assertEqual(json.loads(path.read_bytes()), old)
+            self.assertEqual(ask.call_count, 2)
+            with (self.root/'docs/papers.jsonl').open('a') as catalog:
+                catalog.write(json.dumps({'paper_id': 'W102', 'cohorts': ['top_100_cited'], 'jar_packages': []}) + '\n')
+            site_progress.main()
+            new = json.loads(path.read_bytes())
+            self.assertNotEqual(new.pop('updated_at'), old_stamp)
+            self.assertEqual(new, cohort_progress(self.root))
+            self.assertEqual(ask.call_count, 4)
 
 
 class PagesHandler(SimpleHTTPRequestHandler):
@@ -279,6 +308,10 @@ class PaperBrowserTests(unittest.TestCase):
         charts.first.wait_for()
         self.assertEqual(charts.count(), 2)
         progress = json.loads((ROOT/'site/progress.json').read_bytes())
+        updated = self.page.locator('time#progress-updated')
+        self.assertTrue(updated.is_visible())
+        self.assertEqual(updated.get_attribute('datetime'), progress.pop('updated_at'))
+        self.assertTrue(updated.inner_text().strip())
         self.assertEqual(self.requests.count(self.base+'site/progress.json'), 1)
         for cohort, data in progress.items():
             chart = self.page.locator(f'#project figure.cohort-chart[data-cohort="{cohort}"]')
@@ -292,10 +325,7 @@ class PaperBrowserTests(unittest.TestCase):
                             for category, counts in data['classes'].items()
                             if category != 'unclassified' or sum(counts.values())}
                 self.assertEqual({category: counts for category, *counts in entries}, expected)
-                if cohort == 'cited' and data['manual_verdicts'].get('access_blocked'):
-                    blocked = chart.locator('tr[data-category="access_blocked"] th')
-                    self.assertIn(f"{data['manual_verdicts']['access_blocked']} manually excluded",
-                                  blocked.inner_text().lower())
+                self.assertEqual(rows.locator('th small').count(), int('unclassified' in expected))
                 segments = {(category, state): count for category, counts in data['classes'].items()
                             for state, count in counts.items() if count}
                 for width in (1600, 390):

@@ -37,11 +37,6 @@ function cohortChart(id, data) {
         no_baseline && count(no_baseline) + " without an eligible baseline"].filter(Boolean);
       name.append(el("small", "", reasons.join(" · ")));
     }
-    const manual = data.manual_verdicts[key];
-    if (manual) {
-      const description = id === "cited" && key === "access_blocked" ? " manually excluded" : " by manual verdict";
-      name.append(el("small", "", count(manual) + description));
-    }
     const row = el("tr", "", name);
     row.dataset.category = key;
     for (const state of ["executed", "unexecuted"]) {
@@ -59,8 +54,8 @@ function cohortChart(id, data) {
   const table = el("table", "cohort-table", el("thead", "", head), body);
   table.setAttribute("aria-label", title + " by data availability and execution");
   const note = id === "cited"
-    ? "Data classes include the project author’s paper selections. Execution counts come from the saved reconstruction runs."
-    : "The author assigns undetermined assessments to public acquisition. Each package uses the scope run, or its analysis-only assessment when available, otherwise the full workflow.";
+    ? "Execution counts come from the independent reconstruction runs."
+    : "Each package uses the scope actually run. Unexecuted packages use the analysis-only assessment when available, otherwise the full workflow.";
   const figure = el("figure", "cohort-chart", caption, track, table, el("p", "cohort-note", note));
   figure.dataset.cohort = id;
   return figure;
@@ -71,6 +66,15 @@ export async function showCohortProgress() {
   try {
     const stats = JSON.parse(await loadText("site/progress.json"));
     container.replaceChildren(...Object.keys(titles).map(id => cohortChart(id, stats[id])));
+    const updated = document.getElementById("progress-updated");
+    const date = new Date(stats.updated_at);
+    if (stats.updated_at && Number.isFinite(date.getTime())) {
+      updated.dateTime = stats.updated_at;
+      const format = new Intl.DateTimeFormat("en-GB", {day: "numeric", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit", timeZone: "UTC", timeZoneName: "short"});
+      updated.textContent = "Last updated " + format.format(date);
+      updated.hidden = false;
+    }
   } catch {
     container.replaceChildren(el("p", "muted", "The cohort counts could not be loaded."));
   }

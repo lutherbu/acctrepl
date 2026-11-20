@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build GitHub Pages cohort counts from the catalog and published feasibility and run records."""
 import argparse
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys
@@ -170,6 +171,26 @@ def cohort_progress(root, overrides=None):
     return {'cited': cited, 'jar': jar}
 
 
+def _current_timestamp(path, progress):
+    """Return the published UTC timestamp when the stored counts still match."""
+    try:
+        saved = json.loads(path.read_bytes())
+        if not isinstance(saved, dict):
+            return None
+        stamp = saved.pop('updated_at', None)
+        if not isinstance(stamp, str) or not stamp.endswith('Z'):
+            return None
+        parsed = datetime.fromisoformat(stamp)
+        if parsed.isoformat(timespec='seconds').replace('+00:00', 'Z') != stamp:
+            return None
+        # Compare JSON values strictly, including the distinction between 0 and false.
+        if json.dumps(saved, sort_keys=True) == json.dumps(progress, sort_keys=True):
+            return stamp
+    except (FileNotFoundError, ValueError):
+        pass
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='Report a stale snapshot without writing.')
@@ -178,9 +199,9 @@ def main():
     try:
         overrides = read_overrides(PROJECT)
         progress = cohort_progress(PROJECT, overrides)
-        data = encoded(progress)
+        stamp = _current_timestamp(path, progress)
         if args.check:
-            if not path.is_file() or path.read_bytes() != data:
+            if stamp is None:
                 parser.exit(1, 'Site progress is stale. Run scripts/site_progress.py.\n')
         else:
             if any(s.get('reclassify') or any(s.get('ids_by_verdict', {}).values()) for s in overrides.values()):
@@ -197,7 +218,9 @@ def main():
                         answer = ''
                     if answer.strip().lower() != 'yes':
                         parser.exit(1, 'Refresh cancelled.\n')
-            _atomic_write(path, data)
+            if stamp is None:
+                stamp = datetime.now(timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')
+            _atomic_write(path, encoded({'updated_at': stamp, **progress}))
     except (OSError, ValueError, KeyError) as exc:
         parser.exit(1, f'{exc}\n')
 
