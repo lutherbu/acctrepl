@@ -238,10 +238,16 @@ class PaperBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#top > section').evaluate_all('(items) => items.map(el => el.id)'),
                          ['project', 'deliverables', 'papers'])
         self.assertEqual(self.page.evaluate('scrollY'), 0)
+        summary = self.page.get_by_role('group', name='Project at a glance')
+        progress = json.loads((ROOT/'site/progress.json').read_bytes())
+        executed = sum(counts['executed'] for key in ('cited', 'jar') for counts in progress[key]['classes'].values())
+        self.assertEqual(summary.locator('strong').all_text_contents(), [str(len(self.rows)), str(executed)])
         for width in [1600, 390]:
             self.page.set_viewport_size({'width': width, 'height': 900})
-            stats = self.page.locator('#top > .stats').bounding_box()
+            stats = summary.bounding_box()
             self.assertAlmostEqual(stats['x']*2 + stats['width'], width, delta=1)
+            first, second = [box.bounding_box() for box in summary.locator('.stat').all()]
+            self.assertEqual(first['y'] == second['y'], width == 1600)
         cards = self.page.locator('#deliverables article')
         for i, workflow, skill in [(3, 'reproductions', 'reproduce-accounting-models'),
                                    (4, 'feasibility_execution', 'check-execution-feasibility')]:
