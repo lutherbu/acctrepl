@@ -3,6 +3,7 @@ from collections import defaultdict
 import csv
 from datetime import datetime
 from functools import partial
+from hashlib import sha256
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
@@ -124,6 +125,59 @@ class ManualVerdictTests(unittest.TestCase):
         self.assertEqual(jar['manual_verdicts']['preparation_required'], 1)
         self.assertEqual(sum(jar['manual_verdicts'].values()), 1)
         self.assertEqual(before, {p: p.read_bytes() for p in before})
+
+    def test_project_counts_success_once_per_paper_across_routes(self):
+        catalog = self.root/'docs/papers.jsonl'
+        rows = read_jsonl(catalog)
+        # Two catalog IDs and two routes describe the same paper.
+        rows[0]['doi'] = '10.1234/SHARED'
+        rows[2]['doi'] = '10.1234/shared'
+        rows.append({'paper_id': 'W102', 'cohorts': ['top_100_cited'], 'jar_packages': []})
+        catalog.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+
+        for paper_id, ran, status, route in [
+            ('W100', 1, 'partial', None), ('W101', 2, 'executed', 'author_deposit'),
+            ('W102', 0, 'blocked', 'author_deposit'),
+        ]:
+            attempt = self.root/'output/reproductions/packages'/paper_id/'attempt_01'
+            attempt.mkdir(parents=True)
+            outcome = {'paper_id': paper_id, 'attempt': 1, 'executed_scopes': ran,
+                       'total_scopes': 2, 'status': status}
+            if route:
+                outcome['route'] = route
+            raw = site_progress.encoded(outcome)
+            (attempt/'outcome.json').write_bytes(raw)
+            (attempt.parent/'accepted.json').write_text(json.dumps({
+                'attempt': 1, 'path': attempt.relative_to(self.root).as_posix(),
+                'outcome_sha256': sha256(raw).hexdigest()}))
+
+        for row, outcome in [(rows[2], 'completed'), (rows[3], 'not_run')]:
+            package_id = row['jar_packages'][0]['package_id']
+            folder = self.root/'output/executions/packages'/package_id
+            folder.mkdir(parents=True)
+            report = {'package_id': package_id, 'scope_id': 'full_pipeline', 'outcome': outcome}
+            if outcome == 'completed':
+                report.update(run_receipt={'path': 'run.json'}, stage_results=[
+                    {'required': True, 'status': 'succeeded', 'log_check': 'passed'}])
+            (folder/'report.json').write_text(json.dumps(report))
+
+        progress = cohort_progress(self.root)
+        self.assertEqual(progress['project'], {'attempted_papers': 3, 'executed_papers': 2})
+        self.assertEqual(progress['project'], cohort_progress(self.root, overrides={})['project'])
+        for cohort in ('cited', 'jar'):
+            self.assertEqual(sum(c['executed'] for c in progress[cohort]['classes'].values()), 1)
+
+    def test_partial_author_run_needs_a_result_from_a_successful_analysis(self):
+        report = {'package_id': 'jar-example', 'outcome': 'partial', 'run_receipt': {'path': 'run.json'},
+                  'stage_results': [{'stage_id': 's1', 'required': True, 'status': 'succeeded',
+                                     'log_check': 'passed', 'output_ids': ['out1']}], 'artifacts': []}
+        for kind, freshness, stage_id, counts in [('other', 'new', 's1', False),
+                                                 ('result_table', 'unchanged', 's1', False),
+                                                 ('model_result', 'new', 's2', False),
+                                                 ('native_result_log', 'changed', 's1', True)]:
+            with self.subTest(kind=kind, freshness=freshness, stage_id=stage_id):
+                report['artifacts'] = [{'id': 'out1', 'stage_id': stage_id, 'kind': kind, 'freshness': freshness}]
+                self.assertEqual(site_progress._author_ran(report), counts)
 
     def test_two_confirmations_before_writing(self):
         for responses in (['no'], [EOFError()], ['yes', 'no'], ['yes', EOFError()], ['yes', 'yes']):
@@ -250,8 +304,10 @@ class PaperBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('scrollY'), 0)
         summary = self.page.get_by_role('group', name='Project at a glance')
         progress = json.loads((ROOT/'site/progress.json').read_bytes())
-        executed = sum(counts['executed'] for key in ('cited', 'jar') for counts in progress[key]['classes'].values())
-        self.assertEqual(summary.locator('strong').all_text_contents(), [str(len(self.rows)), str(executed)])
+        self.page.locator('#project-run-summary strong').wait_for()
+        self.assertEqual(summary.locator('strong').all_text_contents(),
+                         [str(len(self.rows)), f"{progress['project']['executed_papers']} of {progress['project']['attempted_papers']}"])
+        self.assertIn('A paper counts as executed when at least one required analysis succeeds', summary.inner_text())
         overlap = sum('top_100_cited' in row['cohorts'] and bool(row['jar_packages']) for row in self.rows)
         self.assertIn(f"{progress['cited']['total']} top-cited papers + {progress['jar']['total']} JAR packages "
                       f"− {overlap} overlaps", summary.inner_text())
@@ -278,6 +334,25 @@ class PaperBrowserTests(unittest.TestCase):
         self.page.get_by_text('Page 2 of', exact=False).wait_for()
         self.page.wait_for_function(catalog_at_top)
         self.assertFalse(any('/output/' in url or 'site/files.json' in url for url in self.requests))
+
+    def test_project_headline_uses_snapshot_independently_of_cohort_counts(self):
+        progress = json.loads((ROOT/'site/progress.json').read_bytes())
+        progress['project'] = {'attempted_papers': 71, 'executed_papers': 58}
+        self.page.route(self.base+'site/progress.json', lambda route: route.fulfill(json=progress))
+        self.page.goto(self.base)
+        card = self.page.locator('#project-run-summary')
+        card.get_by_text('58 of 71', exact=True).wait_for()
+        self.assertEqual(card.locator('.stat-heading').text_content(), '58 of 71 attempted papers executed')
+        self.page.locator('#cohort-charts figure').last.wait_for()
+        self.assertEqual(self.requests.count(self.base+'site/progress.json'), 1)
+
+    def test_project_headline_fallback_when_counts_cannot_load(self):
+        self.page.route(self.base+'site/progress.json', lambda route: route.fulfill(status=503, body=''))
+        self.page.goto(self.base)
+        self.page.get_by_text('The cohort counts could not be loaded.').wait_for()
+        card = self.page.locator('#project-run-summary')
+        self.assertTrue(card.get_by_role('link', name='View project totals (JSON)').is_visible())
+        self.assertEqual(card.locator('strong').count(), 0)
 
     def test_homepage_deep_links_open_filters_packages_and_guide_sections(self):
         row = next(r for r in self.rows if r['feasibility_execution_path'])
@@ -320,6 +395,9 @@ class PaperBrowserTests(unittest.TestCase):
             self.assertEqual(catalog.get_by_role('link', name=label).get_attribute('href'), 'docs/papers.'+label.lower())
         self.assertEqual(page.locator('footer [rel=license]').get_attribute('href'), 'LICENSE')
         self.assertTrue(page.locator('#project a[href="site/progress.json"]').is_visible())
+        summary = page.locator('#project-run-summary')
+        self.assertEqual(summary.get_by_role('link', name='View project totals (JSON)').get_attribute('href'),
+                         'site/progress.json')
 
     def test_cohort_composition_and_responsive_bars(self):
         self.page.goto(self.base)
@@ -329,10 +407,11 @@ class PaperBrowserTests(unittest.TestCase):
         progress = json.loads((ROOT/'site/progress.json').read_bytes())
         updated = self.page.locator('time#progress-updated')
         self.assertTrue(updated.is_visible())
-        self.assertEqual(updated.get_attribute('datetime'), progress.pop('updated_at'))
+        self.assertEqual(updated.get_attribute('datetime'), progress['updated_at'])
         self.assertTrue(updated.inner_text().strip())
         self.assertEqual(self.requests.count(self.base+'site/progress.json'), 1)
-        for cohort, data in progress.items():
+        for cohort in ('cited', 'jar'):
+            data = progress[cohort]
             chart = self.page.locator(f'#project figure.cohort-chart[data-cohort="{cohort}"]')
             with self.subTest(cohort=cohort):
                 self.assertTrue(chart.locator('figcaption').is_visible())
