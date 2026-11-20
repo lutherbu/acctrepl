@@ -29,26 +29,34 @@ def case(tmp_path,monkeypatch):
     attempt=tmp_path/'attempt';(attempt/'work').mkdir(parents=True)
     script=attempt/'work/analysis.R'
     script.write_text("from pathlib import Path\nPath('table.txt').write_text('fictional results')\n")
+    # These executable markers identify distinct approved paths. Only the synthetic
+    # Python backend below launches a process in these tests.
+    tools = {}
+    for name in ('bwrap', 'Rscript', 'stata'):
+        executable = tmp_path / name
+        executable.touch(mode=0o700)
+        tools[name] = str(executable)
+    monkeypatch.setattr(r, 'BWRAP', tools['bwrap'])
     plan={'schema_version':'1.0','attempt_id':'fixture-attempt-01',
-          'sandbox':{'profile':'bwrap','executable':'/usr/bin/bwrap','read_only_paths':[]},
+          'sandbox':{'profile':'bwrap','executable':r.BWRAP,'read_only_paths':[]},
           'limits':{'wall_seconds':10,'memory_bytes':512*1024**2,'threads':2},'inputs':[],
-          'stages':[{'id':'analysis','language':'r','executable':'/usr/bin/Rscript',
+          'stages':[{'id':'analysis','language':'r','executable':tools['Rscript'],
                      'script':'work/analysis.R','script_sha256':digest(script),'cwd':'work',
                      'args':[],'depends_on':[],'expected_outputs':['work/table.txt'],
                      'native_logs':[],'source_entry_points':['author analysis.R']}]}
     path=attempt/'frozen/plan.json';save(path,plan)
     policy_path=attempt/'frozen/runtime_policy.json'
     save(policy_path,{'schema_version':'1.0','sandbox_profile':'bwrap','allowed_read_only_roots':[],
-                     'runtime_paths':{'stata':['/usr/local/bin/stata'],'r':['/usr/bin/Rscript'],'matlab':[]},
+                     'runtime_paths':{'stata':[tools['stata']],'r':[tools['Rscript']],'matlab':[]},
                      'limits':plan['limits'],'stata_ado_paths':[]})
     save(attempt/'work_item.json',{'runtime_policy':{'path':str(policy_path),'sha256':digest(policy_path)}})
     def fixture_sandbox(attempt,plan,argv,readonly,**kwargs):
         # A test-local replacement runs ONLY the saved fictional Python fixture.
-        if argv==['/usr/bin/true']:return [sys.executable,'-I','-c','pass']
-        if argv[0]==str(Path('/usr/bin/Rscript').resolve()):return [sys.executable,'-I',argv[2],*argv[3:]]
+        if argv==[r.SANDBOX_PROBE]:return [sys.executable,'-I','-c','pass']
+        if argv[0]==tools['Rscript']:return [sys.executable,'-I',argv[2],*argv[3:]]
         return argv
     monkeypatch.setattr(r,'sandbox_command',fixture_sandbox)
-    return {'attempt':attempt,'script':script,'plan':plan,'path':path,'sandbox':fixture_sandbox,'policy':policy_path}
+    return {'attempt':attempt,'script':script,'plan':plan,'path':path,'sandbox':fixture_sandbox,'policy':policy_path,'stata':tools['stata']}
 
 
 def update(case,code=None):
@@ -156,6 +164,14 @@ def test_writable_home_symlink_refused(case,tmp_path):
     with pytest.raises(ValueError,match='symlink'):r.run(case['attempt'],case['path'])
 
 
+def test_plan_cannot_replace_trusted_sandbox_with_another_executable(case):
+    case['plan']['sandbox']['executable'] = case['stata']
+    update(case)
+    with pytest.raises(ValueError, match='Trusted bubblewrap'):
+        r.run(case['attempt'], case['path'])
+    assert not (case['attempt']/'runtime/intent.json').exists()
+
+
 def test_runtime_cannot_be_arbitrary_shell(case):
     case['plan']['stages'][0]['executable']='/bin/sh';update(case)
     with pytest.raises(ValueError,match='native language'):r.run(case['attempt'],case['path'])
@@ -213,7 +229,7 @@ def test_r_native_error_with_zero_host_exit_is_failure(case):
 
 
 def test_stata_marker_failure_detected_without_stata_execution(case,monkeypatch):
-    case['plan']['stages'][0].update(language='stata',executable='/usr/local/bin/stata',native_logs=['work/native.log'])
+    case['plan']['stages'][0].update(language='stata',executable=case['stata'],native_logs=['work/native.log'])
     update(case,"from pathlib import Path\nPath('table.txt').write_text('partial')\nPath('native.log').write_text('r(198);\\n__AUTHOR_ANALYSIS_RC__ 198\\n')\n")
     monkeypatch.setattr(r,'_native_command',lambda stage,attempt,folder,limits:([sys.executable,'-I',str(stage['_script'])],None,None))
     report=r.run(case['attempt'],case['path'])
@@ -222,7 +238,7 @@ def test_stata_marker_failure_detected_without_stata_execution(case,monkeypatch)
 
 
 def test_stata_caught_error_is_recorded_without_overriding_success_marker(case,monkeypatch):
-    case['plan']['stages'][0].update(language='stata',executable='/usr/local/bin/stata',native_logs=['work/native.log'])
+    case['plan']['stages'][0].update(language='stata',executable=case['stata'],native_logs=['work/native.log'])
     update(case,"from pathlib import Path\nPath('table.txt').write_text('complete fixture')\nPath('native.log').write_text('r(111);\\n__AUTHOR_ANALYSIS_RC__ 0\\n')\n")
     monkeypatch.setattr(r,'_native_command',lambda stage,attempt,folder,limits:([sys.executable,'-I',str(stage['_script'])],None,None))
     report=r.run(case['attempt'],case['path'])
@@ -259,8 +275,8 @@ def test_minimal_sandbox_builder_keeps_host_home_storage_unmounted(tmp_path):
     for name in r.WRITABLE_DIRS:(attempt/name).mkdir()
     data=tmp_path/'package';data.mkdir()
     immutable=attempt/'work/data.txt';immutable.write_text('fixture')
-    plan={'sandbox':{'profile':'bwrap','executable':'/usr/bin/bwrap'},'limits':{'threads':2}}
-    argv=r.sandbox_command(attempt,plan,['/usr/bin/true'],[data,immutable])
+    plan={'sandbox':{'profile':'bwrap','executable':r.BWRAP},'limits':{'threads':2}}
+    argv=r.sandbox_command(attempt,plan,[r.SANDBOX_PROBE],[data,immutable])
     assert '--unshare-net' in argv and '--unshare-pid' in argv and '--clearenv' in argv
     mounts=[tuple(argv[i+1:i+3]) for i,x in enumerate(argv) if x=='--ro-bind']
     assert ('/','/') not in mounts and ('/home','/home') not in mounts and ('/storage','/storage') not in mounts
@@ -274,8 +290,8 @@ def test_minimal_sandbox_builder_keeps_host_home_storage_unmounted(tmp_path):
 def test_native_tempdir_is_short_private_sandbox_tmpfs(tmp_path):
     attempt=tmp_path/'long-attempt-path-to-exercise-native-unix-socket-limits';attempt.mkdir()
     for name in r.WRITABLE_DIRS:(attempt/name).mkdir()
-    plan={'sandbox':{'profile':'bwrap','executable':'/usr/bin/bwrap'},'limits':{'threads':2}}
-    argv=r.sandbox_command(attempt,plan,['/usr/bin/true'],[])
+    plan={'sandbox':{'profile':'bwrap','executable':r.BWRAP},'limits':{'threads':2}}
+    argv=r.sandbox_command(attempt,plan,[r.SANDBOX_PROBE],[])
     assert any(argv[i:i+2]==['--tmpfs','/tmp'] for i in range(len(argv)-1))
     environment={argv[i+1]:argv[i+2] for i,item in enumerate(argv) if item=='--setenv'}
     assert environment['TMPDIR']=='/tmp'
@@ -295,7 +311,7 @@ def test_status_is_metadata_only_and_unrun_is_explicit(case):
 
 
 def test_trusted_stata_launcher_preserves_author_script_and_checks_completion(case):
-    case['plan']['stages'][0].update(language='stata',executable='/usr/local/bin/stata')
+    case['plan']['stages'][0].update(language='stata',executable=case['stata'])
     update(case);validated=r.validate_plan(case['attempt'],case['path'])
     folder=case['attempt']/'runtime/stages/analysis';folder.mkdir(parents=True)
     before=case['script'].read_bytes()
@@ -307,7 +323,7 @@ def test_trusted_stata_launcher_preserves_author_script_and_checks_completion(ca
 
 
 def test_stata_macro_in_argument_refused(case):
-    case['plan']['stages'][0].update(language='stata',executable='/usr/local/bin/stata',args=['$danger'])
+    case['plan']['stages'][0].update(language='stata',executable=case['stata'],args=['$danger'])
     update(case)
     with pytest.raises(ValueError,match='quoting or macros'):r.validate_plan(case['attempt'],case['path'])
 
@@ -345,7 +361,7 @@ def test_stata_ado_paths_require_mount_and_launcher_uses_frozen_order(case,tmp_p
     policy=json.loads(case['policy'].read_text());policy['allowed_read_only_roots']=[str(library)];policy['stata_ado_paths']=[str(library)]
     save(case['policy'],policy)
     save(case['attempt']/'work_item.json',{'runtime_policy':{'path':str(case['policy']),'sha256':digest(case['policy'])}})
-    case['plan']['stages'][0].update(language='stata',executable='/usr/local/bin/stata');update(case)
+    case['plan']['stages'][0].update(language='stata',executable=case['stata']);update(case)
     with pytest.raises(ValueError,match='ado path'):r.validate_plan(case['attempt'],case['path'])
     case['plan']['sandbox']['read_only_paths']=[str(library)];update(case)
     validated=r.validate_plan(case['attempt'],case['path'])
@@ -415,7 +431,7 @@ def test_startup_or_control_text_cannot_be_log_only_results(case,markers):
 
 def test_stata_command_echo_is_not_a_result_marker(case,monkeypatch):
     configure_log_only(case,"from pathlib import Path\nPath('native.log').write_text('. display Number of obs = 123\\n. display R-squared = 0.456\\n__AUTHOR_ANALYSIS_RC__ 0\\n')\n")
-    case['plan']['stages'][0].update(language='stata',executable='/usr/local/bin/stata',native_logs=['work/native.log']);update(case)
+    case['plan']['stages'][0].update(language='stata',executable=case['stata'],native_logs=['work/native.log']);update(case)
     monkeypatch.setattr(r,'_native_command',lambda stage,attempt,folder,limits:([sys.executable,'-I',str(stage['_script'])],None,None))
     report=r.run(case['attempt'],case['path']);stage=report['stages'][0]
     assert report['status']=='failed' and not stage['log_only_verified']
@@ -424,7 +440,7 @@ def test_stata_command_echo_is_not_a_result_marker(case,monkeypatch):
 
 def test_stata_fresh_estimation_log_can_be_sole_result(case,monkeypatch):
     configure_log_only(case,"from pathlib import Path\nPath('native.log').write_text('Number of obs = 123\\nR-squared = 0.456\\n__AUTHOR_ANALYSIS_RC__ 0\\n')\n")
-    case['plan']['stages'][0].update(language='stata',executable='/usr/local/bin/stata',native_logs=['work/native.log']);update(case)
+    case['plan']['stages'][0].update(language='stata',executable=case['stata'],native_logs=['work/native.log']);update(case)
     monkeypatch.setattr(r,'_native_command',lambda stage,attempt,folder,limits:([sys.executable,'-I',str(stage['_script'])],None,None))
     report=r.run(case['attempt'],case['path']);stage=report['stages'][0]
     assert report['execution_verified'] and stage['log_only_verified']
@@ -441,7 +457,7 @@ def test_log_only_native_error_still_fails(case):
 def test_generated_stata_log_cannot_quarantine_genuine_input(case):
     p=case['attempt']/'work/analysis__author_capture.log';p.write_text('genuine warmstart input')
     case['plan']['inputs']=[{'path':'work/analysis__author_capture.log','sha256':digest(p)}]
-    case['plan']['stages'][0].update(language='stata',executable='/usr/local/bin/stata');update(case)
+    case['plan']['stages'][0].update(language='stata',executable=case['stata']);update(case)
     with pytest.raises(ValueError,match='immutable'):r.run(case['attempt'],case['path'])
     assert p.read_text()=='genuine warmstart input' and not (case['attempt']/'runtime/intent.json').exists()
 
@@ -524,7 +540,7 @@ def test_host_profile_refuses_non_matlab_stages(host_case,language):
 
 
 @pytest.mark.parametrize('sandbox',[{'profile':'host','read_only_paths':['/tmp']},
-    {'profile':'host','read_only_paths':[],'executable':'/usr/bin/bwrap'},
+    {'profile':'host','read_only_paths':[],'executable':'fixture-bwrap'},
     {'profile':'host','read_only_paths':[],'filesystem_isolation':True},{'profile':'host'}])
 def test_host_profile_refuses_mount_or_isolation_claims(host_case,sandbox):
     host_case['plan']['sandbox']=sandbox;update(host_case)
@@ -575,7 +591,7 @@ def test_bwrap_policy_cannot_be_reinterpreted_as_host(case):
 
 def test_bwrap_builder_refuses_explicit_host_profile_without_launching():
     with pytest.raises(ValueError,match='cannot execute a host profile'):
-        r.sandbox_command(Path('/fictional/attempt'),{'sandbox':{'profile':'host'}},['/usr/bin/true'],[])
+        r.sandbox_command(Path('/fictional/attempt'),{'sandbox':{'profile':'host'}},[r.SANDBOX_PROBE],[])
 
 
 def test_host_timeout_terminates_fixture_group_without_retry(host_case,monkeypatch):

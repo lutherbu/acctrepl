@@ -41,6 +41,16 @@ class InventoryTests(unittest.TestCase):
         for file in links | package_files | set(published['documents']):
             self.assertTrue((ROOT/file).is_file(), file)
 
+    def test_catalog_publication_windows(self):
+        jar_volumes = {f'JAR-Volume {v}' for v in range(51, 59)}
+        rows = read_jsonl(ROOT/'docs/papers.jsonl')
+        for row in rows:
+            if 'top_100_cited' in row['cohorts']:
+                self.assertIn(row['publication_year'], range(2000, 2021), row['paper_id'])
+            for package in row['jar_packages']:
+                directory = Path(package['directory_path'])
+                self.assertIn(directory.parts[2], jar_volumes, package['package_id'])
+
     def test_site_progress_matches_publications(self):
         progress = json.loads((ROOT/'site/progress.json').read_bytes())
         stamp = progress.pop('updated_at')
@@ -234,7 +244,7 @@ class PaperBrowserTests(unittest.TestCase):
     def test_homepage_links_and_responsive_alignment(self):
         self.page.goto(self.base)
         papers = self.page.locator('#papers')
-        papers.get_by_role('heading', name=f'{len(self.rows)} papers', exact=True).wait_for()
+        papers.get_by_role('heading', name=f'{len(self.rows)} catalog records', exact=True).wait_for()
         self.assertEqual(self.page.locator('#top > section').evaluate_all('(items) => items.map(el => el.id)'),
                          ['project', 'deliverables', 'papers'])
         self.assertEqual(self.page.evaluate('scrollY'), 0)
@@ -242,6 +252,9 @@ class PaperBrowserTests(unittest.TestCase):
         progress = json.loads((ROOT/'site/progress.json').read_bytes())
         executed = sum(counts['executed'] for key in ('cited', 'jar') for counts in progress[key]['classes'].values())
         self.assertEqual(summary.locator('strong').all_text_contents(), [str(len(self.rows)), str(executed)])
+        overlap = sum('top_100_cited' in row['cohorts'] and bool(row['jar_packages']) for row in self.rows)
+        self.assertIn(f"{progress['cited']['total']} top-cited papers + {progress['jar']['total']} JAR packages "
+                      f"− {overlap} overlaps", summary.inner_text())
         for width in [1600, 390]:
             self.page.set_viewport_size({'width': width, 'height': 900})
             stats = summary.bounding_box()
@@ -357,7 +370,7 @@ class PaperBrowserTests(unittest.TestCase):
         self.visit()
         search = self.page.get_by_role('searchbox')
         search.fill(doi)
-        self.page.get_by_role('heading', name='2 papers', exact=True).wait_for()
+        self.page.get_by_role('heading', name='2 catalog records', exact=True).wait_for()
         variants = self.page.locator('.variant').all_text_contents()
         self.assertEqual(len(set(variants)), 2)
         self.page.get_by_label('Journal', exact=True).select_option(matches[0]['journal'])
@@ -385,7 +398,7 @@ class PaperBrowserTests(unittest.TestCase):
             with self.subTest(workflow=view):
                 self.visit(workflow=view)
                 n = sum(bool(row[field]) for row in self.rows)
-                self.page.get_by_role('heading', name=f'{n} papers', exact=True).wait_for()
+                self.page.get_by_role('heading', name=f'{n} catalog records', exact=True).wait_for()
                 row = next(row for row in self.rows if row[field])
                 self.page.locator('.output-links').first.locator('a[href*="view='+view+'"]').click()
                 full = self.page.get_by_text('Full JSON', exact=True)
@@ -432,11 +445,11 @@ class PaperBrowserTests(unittest.TestCase):
         self.visit(workflow='executions')
         self.page.get_by_label('Year', exact=True).select_option(str(row['publication_year']))
         n = sum(bool(r['execution_path']) and r['publication_year'] == row['publication_year'] for r in self.rows)
-        self.page.get_by_role('heading', name=f'{n} paper' + ('s' if n != 1 else ''), exact=True).wait_for()
+        self.page.get_by_role('heading', name=f'{n} catalog record' + ('s' if n != 1 else ''), exact=True).wait_for()
         self.page.get_by_role('searchbox').fill('missing-paper-example-000')
-        self.page.get_by_text('No papers match these filters.').wait_for()
+        self.page.get_by_text('No catalog records match these filters.').wait_for()
         self.page.get_by_role('link', name='Clear filters').click()
-        self.page.get_by_role('heading', name=f'{len(self.rows)} papers', exact=True).wait_for()
+        self.page.get_by_role('heading', name=f'{len(self.rows)} catalog records', exact=True).wait_for()
         self.visit(paper=row['paper_id'], view='executions', file=file)
         self.page.locator('.reading .data-table').wait_for()
         with (ROOT/base/file).open(encoding='utf-8-sig', newline='') as f:

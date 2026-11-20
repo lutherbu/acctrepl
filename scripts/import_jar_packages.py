@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy original JAR downloads into the ignored package cache and verify every byte."""
+"""Import and verify JAR issue volumes 51–58 (2013–2020) from a download collection."""
 from __future__ import annotations
 
 import argparse
@@ -14,6 +14,7 @@ import shutil
 import tempfile
 
 PROJECT = Path(__file__).resolve().parents[1]
+VOLUME_DIRS = {f"Volume {number}" for number in range(51, 59)}
 
 
 def sha256(path: Path) -> str:
@@ -39,9 +40,9 @@ def relative_path(value: str | Path) -> Path:
 
 def destination_relative(value: str | Path) -> Path:
     rel = relative_path(value)
-    if re.fullmatch(r"Volume \d+", rel.parts[0]):
-        return Path("JAR-" + rel.parts[0], *rel.parts[1:])
-    return Path("_provenance", "JAR", rel)
+    if rel.parts[0] not in VOLUME_DIRS:
+        raise ValueError(f"Outside the selected JAR issue volumes: {rel}")
+    return Path("JAR-" + rel.parts[0], *rel.parts[1:])
 
 
 def plain_target(root: Path, relative: Path) -> Path:
@@ -90,7 +91,10 @@ def copy_verified(source: Path, target: Path, verify_only: bool = False) -> tupl
 
 def package_index(source: Path, audit_manifest: Path) -> list[dict]:
     raw = json.loads(audit_manifest.read_text(encoding="utf-8"))
-    units = [u for u in raw["units"] if u.get("collection") == "jar"]
+    units = [u for u in raw["units"] if u.get("collection") == "jar"
+             and relative_path(u["paper"]).parts[0] in VOLUME_DIRS]
+    if not units:
+        raise ValueError("The audit manifest has no JAR package units in volumes 51–58.")
     by_doi: dict[str, set[str]] = defaultdict(set)
     titles: dict[str, set[str]] = defaultdict(set)
     for unit in units:
@@ -98,8 +102,10 @@ def package_index(source: Path, audit_manifest: Path) -> list[dict]:
         titles[unit.get("doi", "")].add(unit.get("title", ""))
     result = []
     for unit in units:
-        original = Path(unit["path"]).relative_to(source)
+        original = relative_path(Path(unit["path"]).relative_to(source))
         directory = relative_path(unit["paper"])
+        if not original.is_relative_to(directory):
+            raise ValueError(f"Audit unit is outside its paper directory: {original}")
         if not (source / original).exists():
             raise FileNotFoundError(f"Audit unit no longer exists: {original}")
         material_files = [destination_relative(p.relative_to(source)).as_posix()
@@ -127,17 +133,25 @@ def package_index(source: Path, audit_manifest: Path) -> list[dict]:
     return result
 
 
-def import_packages(source: Path, destination: Path, audit_manifest: Path, verify_only: bool = False) -> dict:
-    source, destination, audit_manifest = source.resolve(), destination.resolve(), audit_manifest.resolve()
-    if not source.is_dir() or destination == source or destination.is_relative_to(source) or source.is_relative_to(destination):
-        raise ValueError("Source and destination must be separate directory trees")
+def selected_files(source: Path) -> list[Path]:
     sources = []
     for folder, directories, names in os.walk(source, followlinks=False):
         for name in directories + names:
             if (Path(folder) / name).is_symlink():
                 raise ValueError(f"Source contains a symlink: {Path(folder) / name}")
+        if Path(folder) == source:
+            directories[:] = [name for name in directories if name in VOLUME_DIRS]
+            # Top-level download logs describe the full acquisition, including later volumes.
+            continue
         sources.extend(Path(folder) / name for name in names)
-    sources.sort()
+    return sorted(sources)
+
+
+def import_packages(source: Path, destination: Path, audit_manifest: Path, verify_only: bool = False) -> dict:
+    source, destination, audit_manifest = source.resolve(), destination.resolve(), audit_manifest.resolve()
+    if not source.is_dir() or destination == source or destination.is_relative_to(source) or source.is_relative_to(destination):
+        raise ValueError("Source and destination must be separate directory trees")
+    sources = selected_files(source)
     packages = package_index(source, audit_manifest)
     initial = {p.relative_to(source).as_posix(): metadata(p) for p in sources}
     files, copied = [], 0
@@ -156,7 +170,7 @@ def import_packages(source: Path, destination: Path, audit_manifest: Path, verif
                       "bytes": initial[original.as_posix()][0], "sha256": checksum})
         if index % 100 == 0:
             print(f"Verified {index}/{len(sources)} files", flush=True)
-    final = {p.relative_to(source).as_posix(): metadata(p) for p in source.rglob("*") if p.is_file()}
+    final = {p.relative_to(source).as_posix(): metadata(p) for p in selected_files(source)}
     if final != initial:
         raise RuntimeError("Source file inventory or metadata changed during import")
     report = {

@@ -700,7 +700,7 @@ class AuthorAnalysisControllerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Host authorization'):c._policy(self.policy)
         c.write(authorization,original);c.write(self.policy,policy)
         for mutate in [lambda p:p.pop('host_execution_authorization'),
-                       lambda p:p['allowed_executables'].update(r=['/usr/bin/Rscript']),
+                       lambda p:p['allowed_executables'].update(r=['fixture-Rscript']),
                        lambda p:p.update(sandbox_profiles=['bwrap','host']),
                        lambda p:p.update(network=True),lambda p:p.update(host_home='/tmp')]:
             candidate=copy.deepcopy(policy);mutate(candidate);c.write(self.policy,candidate)
@@ -724,9 +724,9 @@ class AuthorAnalysisControllerTests(unittest.TestCase):
     def test_host_plan_rejects_mount_claims_bwrap_and_non_matlab_stages(self):
         attempt,plan=self.host_ready()
         for mutate in [lambda p:p['sandbox'].update(read_only_paths=[str(self.base)]),
-                       lambda p:p['sandbox'].update(executable='/usr/bin/bwrap'),
+                       lambda p:p['sandbox'].update(executable='fixture-bwrap'),
                        lambda p:p['sandbox'].update(profile='bwrap'),
-                       lambda p:p['stages'][0].update(language='r',executable='/usr/bin/Rscript')]:
+                       lambda p:p['stages'][0].update(language='r',executable='fixture-Rscript')]:
             candidate=copy.deepcopy(plan);mutate(candidate)
             with self.assertRaises(ValueError):self.approve(attempt,candidate)
         self.approve(attempt,plan)

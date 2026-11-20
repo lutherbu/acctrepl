@@ -1,18 +1,20 @@
 # Accounting-paper extraction and reproduction
 
-This repository pairs accounting papers with their extracted samples and reported regressions, assessments of data access, and results obtained from running code. The searchable paper catalog links each paper to its published outputs. Its 898 rows cover the original 500 citation-ranked papers and 407 JAR package units, with nine overlaps. Some package units share a DOI. The CSV and JSONL give result paths relative to the repository root. [Browse papers on GitHub Pages](https://lutherbu.github.io/acctrepl/#papers) · [CSV catalog](docs/papers.csv) · [JSONL catalog](docs/papers.jsonl)
+This repository pairs accounting papers with their extracted samples and reported regressions, assessments of data access, and results obtained from running code. The catalog covers 500 citation-ranked papers published in 2000–2020 and 159 author packages from the Journal of Accounting Research (JAR), volumes 51–58, issue years 2013–2020. Nine packages overlap the citation cohort. One JAR paper has two separately archived packages, giving 650 catalog records and 649 distinct DOIs. The CSV and JSONL link each record to its outputs using repository-relative paths. [Browse papers on GitHub Pages](https://lutherbu.github.io/acctrepl/#papers) · [CSV catalog](docs/papers.csv) · [JSONL catalog](docs/papers.jsonl)
 
 ## Per-paper publications
 
 | Workflow | Contents | Papers or packages |
 | --- | --- | ---: |
-| [Samples](output/samples/records/) | Baseline sample sizes, units, periods, data sources and supporting text | 517 |
-| [Models](output/models/records/) | Specifications, variable definitions, reported estimates, inference and descriptive statistics | 184 |
+| [Samples](output/samples/records/) | Baseline sample sizes, units, periods, data sources and supporting text | 506 |
+| [Models](output/models/records/) | Specifications, variable definitions, reported estimates, inference and descriptive statistics | 173 |
 | [Reproduction feasibility](output/feasibility_reproduction/records/) | Assessment of independently reconstructing each baseline fit with the resources available when it was assessed | 167 |
 | [Reproductions](output/reproductions/packages/) | An accepted attempt, SAS construction code, Stata notebook, and native results | 47 |
-| [Execution feasibility](output/feasibility_execution/packages/) | An assessment, proposed patch and review for each author package | 407 |
-| [Executions](output/executions/packages/) | A reviewed author analysis, code, available results and a recipe for its minimal inputs | 17 |
-| [Extended-sample replications](output/replications/packages/) | Paper-level reports, replay code and results for the default five-year extension | 64 |
+| [Execution feasibility](output/feasibility_execution/packages/) | An assessment, proposed patch and review for each author package | 159 |
+| [Executions](output/executions/packages/) | A reviewed author analysis, code, available results and a recipe for its minimal inputs | 6 |
+| [Extended-sample replications](output/replications/packages/) | Paper-level reports, replay code and results for the default five-year extension | 53 |
+
+The project ran code for 53 studies. Of those, 47 used independently reconstructed code and six used author packages. Three author analyses completed all required stages and three completed part of the analysis. These six packages contain 70 published result files.
 
 The two feasibility skills share one [classification contract](skills/check-replication-feasibility/references/feasibility_classification.schema.json). Read the target and scope alongside the data label. A package can supply the data needed to run its final analysis while a researcher independently rebuilding the panel still needs access to a licensed source. A completed execution establishes that code ran. Each comparison records separately which published estimates it could check.
 
@@ -31,7 +33,7 @@ Each workflow gets one Git-ignored `index.json`. Its records contain the stable 
 
 The paper catalog appears below Deliverables on the homepage and reads `docs/papers.jsonl` directly. The package and documentation reader uses a separate list of published filenames. After staging additions, renames or removals in those directories, run `python3 scripts/rebuild_site_inventory.py` and include `site/files.json` in the commit. Use `--check` to verify the list. To preview Pages locally, serve a public checkout with `python3 -m http.server --bind 127.0.0.1` and open `index.html#papers` through the server.
 
-The two homepage bars read `site/progress.json` and display the UTC time of its most recent update. Colors identify the five feasibility classes, and stripes identify unexecuted work. Each cohort retains its own denominator. Partial runs count as executed when at least one selected scope or required analysis stage succeeded.
+The two homepage bars read `site/progress.json` and display the UTC time of its most recent update. Colors identify the five feasibility classes, and stripes identify unexecuted work. The chart denominators are 500 citation-ranked papers and 159 JAR packages. Partial runs count as executed when at least one selected scope or required analysis stage succeeded.
 
 The homepage applies the project author's [manual verdicts](site/progress_overrides.json) to the assessed data classes. In the citation cohort, the listed paper IDs set the data class and blocked includes manual exclusions. For JAR, the rule assigns undetermined package scopes to public acquisition. Individual verdicts take precedence over cohort rules. The JSON snapshot reports how many entries in each class received a manual verdict. Execution counts always come from the run records.
 
@@ -45,7 +47,7 @@ The export helper writes one JSONL each for samples, models, both feasibility wo
 
 ## Paper inputs and licensed resources
 
-Place authorized PDFs under `papers/pdf/`, parsed readings under `papers/parsed/`, and author archives under `papers/packages/`. These directories and the working data directories are Git-ignored. Published tables, descriptive statistics, code and the bibliographic paper catalog are versioned. Install the relevant Python dependencies from [docs/requirements.txt](docs/requirements.txt).
+Place authorized PDFs under `papers/pdf/`, parsed readings under `papers/parsed/`, and author archives under `papers/packages/`. The JAR importer, `scripts/import_jar_packages.py`, selects volumes 51 through 58 inclusive by default. These directories and the working data directories are Git-ignored. Published tables, descriptive statistics, code and the bibliographic paper catalog are versioned. Install the relevant Python dependencies from [docs/requirements.txt](docs/requirements.txt).
 
 ```sh
 python3 scripts/pdf_to_json.py --help
@@ -85,9 +87,9 @@ Published runs record the checksum of the catalog they used. Keep a copy if you 
 For a published author package, use its `local_inputs.json` to restore the minimum required data from an authorized ZIP. The recipe gives its expected archive checksum and exact members, including nested archives. It also identifies the template for each executable file. Running the materializer twice reuses verified inputs. This example stages a reviewed Stata plan without launching it.
 
 ```sh
-python3 scripts/materialize_execution_inputs.py --package-id jar-61d59a577016
-python3 scripts/materialize_execution_inputs.py --package-id jar-61d59a577016 --check
-python3 scripts/prepare_author_replay.py jar-61d59a577016
+python3 scripts/materialize_execution_inputs.py --package-id jar-5b21d99d25c5
+python3 scripts/materialize_execution_inputs.py --package-id jar-5b21d99d25c5 --check
+python3 scripts/prepare_author_replay.py jar-5b21d99d25c5
 ```
 
 Use `--archive PATH` for a ZIP stored elsewhere and `--verify-archive` to check every selected member even when working data already exist. Each recipe lists software dependencies and the working directory for each stage. Install authorized local R and Stata packages in `output/executions/resources/` and reconstruction ado files in `output/reproductions/resources/ado/`. Configure installed executables with `ACCTREPL_STATA`, `ACCTREPL_R`, `ACCTREPL_MATLAB` or `ACCTREPL_SAS` when they are outside PATH.

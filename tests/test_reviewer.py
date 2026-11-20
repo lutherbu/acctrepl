@@ -6,6 +6,7 @@ itself has no dependencies. Run: python -m unittest discover -s tests -p test_re
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import tempfile
@@ -15,9 +16,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_INDEX = ROOT / 'output/samples/records'
-BROWSER = shutil.which('chromium') or shutil.which('google-chrome')
-if BROWSER is None and Path('/usr/bin/chromium').exists():
-    BROWSER = '/usr/bin/chromium'
+BROWSER = (shutil.which('chromium') or shutil.which('google-chrome')
+           or shutil.which('chromium-browser') or shutil.which('chromium', path=os.defpath))
 HAS_PLAYWRIGHT = importlib.util.find_spec('playwright') is not None
 
 

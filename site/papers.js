@@ -74,11 +74,11 @@ function catalog(rows) {
     const pages = Math.max(1, Math.ceil(matches.length / pageSize));
     const page = Math.min(pages, Math.max(1, Math.trunc(Number(filters.page)) || 1));
     const offset = (page - 1) * pageSize;
-    countLine.textContent = `${count(matches.length)} ${matches.length === 1 ? "paper" : "papers"}`;
+    countLine.textContent = `${count(matches.length)} ${matches.length === 1 ? "catalog record" : "catalog records"}`;
     main.querySelector(".reset-link").hidden = !formFields.some(k => filters[k]);
     results.replaceChildren();
     if (!matches.length) {
-      results.append(el("p", "empty", "No papers match these filters."));
+      results.append(el("p", "empty", "No catalog records match these filters."));
       return;
     }
     const head = el("tr");

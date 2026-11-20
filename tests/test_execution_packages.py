@@ -154,7 +154,7 @@ def test_software_probe_accepts_internal_extension_name(tmp_path,monkeypatch):
     import packages
     from types import SimpleNamespace
     output=tmp_path/'egen_xtile.json'
-    monkeypatch.setattr(packages.shutil,'which',lambda name:'/usr/bin/stata')
+    monkeypatch.setattr(packages.shutil,'which',lambda name:str(tmp_path/'fixture-bin'/name))
     def fake_run(command,**kwargs):
         script=Path(command[-1]).read_text()
         assert 'capture which _gxtile\n' in script

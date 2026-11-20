@@ -26,7 +26,10 @@ import sys
 import time
 
 SYSTEM_ROOTS = ('/usr', '/bin', '/sbin', '/lib', '/lib64', '/etc')
-RUNTIMES = {'stata': ('/usr/local/bin/stata',), 'r': ('/usr/bin/Rscript',), 'matlab': ()}
+SUPPORTED_LANGUAGES = {'stata', 'r', 'matlab'}
+# Fixed system tools for the Linux sandbox; an execution plan cannot select alternatives.
+BWRAP = '/usr/bin/bwrap'
+SANDBOX_PROBE = '/usr/bin/true'
 WRITABLE_DIRS = ('work', 'home', 'tmp', 'outputs')
 ENV_KEYS = {'R_LIBS', 'R_LIBS_USER', 'JAVA_HOME', 'LANG', 'LC_ALL', 'TZ'}
 ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$')
@@ -202,8 +205,8 @@ def validate_plan(attempt, plan_path):
     if profile not in {'bwrap','host'} or profile!=policy['sandbox_profile']:
         raise ValueError('Plan profile must match the frozen runtime policy; no host fallback')
     if profile=='bwrap':
-        bwrap = _plain(sandbox.get('executable', '/usr/bin/bwrap'))
-        if bwrap != _plain('/usr/bin/bwrap') or not bwrap.is_file() or not os.access(bwrap, os.X_OK):
+        bwrap = _plain(sandbox.get('executable', BWRAP))
+        if bwrap != _plain(BWRAP) or not bwrap.is_file() or not os.access(bwrap, os.X_OK):
             raise ValueError('Trusted bubblewrap executable is unavailable')
     elif set(sandbox)!={'profile','read_only_paths'}:
         raise ValueError('Host profile requires only profile and an explicit empty read_only_paths list; no executable/isolation claims')
@@ -272,7 +275,7 @@ def validate_plan(attempt, plan_path):
         if not isinstance(stage, dict) or not isinstance(stage.get('id'), str) or not ID.fullmatch(stage['id']) or stage['id'] in seen:
             raise ValueError('Stage IDs must be unique safe names')
         sid = stage['id']
-        if stage.get('language') not in RUNTIMES:
+        if stage.get('language') not in SUPPORTED_LANGUAGES:
             raise ValueError('Unsupported native stage language')
         if profile=='host' and stage['language']!='matlab':
             raise ValueError('Host execution is authorized only for MATLAB stages; never Stata or R')
@@ -391,7 +394,7 @@ def sandbox_command(attempt, plan, child_argv, readonly_paths, *, cwd=None):
     """Build a minimal root: no host home/storage, no network, bounded writes."""
     if plan.get('sandbox',{}).get('profile')!='bwrap':
         raise ValueError('The bwrap builder cannot execute a host profile')
-    result = [plan['sandbox'].get('executable', '/usr/bin/bwrap'), '--die-with-parent', '--new-session',
+    result = [plan['sandbox'].get('executable', BWRAP), '--die-with-parent', '--new-session',
               '--unshare-net', '--unshare-pid', '--unshare-ipc', '--clearenv']
     for root in SYSTEM_ROOTS:
         if Path(root).exists():
@@ -616,7 +619,7 @@ def run(attempt, plan_path):
             shutil.copy2(runtime/'run.json',old);old.chmod(0o444)
         if profile=='bwrap':
             preflight = runtime/'preflights'/f'check_{time.time_ns()}';preflight.mkdir(parents=True)
-            probe_argv = sandbox_command(attempt,plan,['/usr/bin/true'],readonly)
+            probe_argv = sandbox_command(attempt,plan,[SANDBOX_PROBE],readonly)
             try:
                 probe = _spawn(probe_argv,attempt,preflight/'stdout.bin',preflight/'stderr.bin',15,limits['memory_bytes'])
             except OSError as error:
@@ -774,16 +777,17 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''Plan v1 (freeze under ATTEMPT/frozen; pin runtime policy in work_item.json):
   {"schema_version":"1.0","attempt_id":"ID",
-   "sandbox":{"profile":"bwrap","executable":"/usr/bin/bwrap","read_only_paths":[]},
+   "sandbox":{"profile":"bwrap","read_only_paths":[]},
    "limits":{"wall_seconds":3600,"memory_bytes":8589934592,"threads":2},
    "inputs":[{"path":"inputs/data","sha256":"64 lowercase hex characters"}],
-   "stages":[{"id":"main","language":"r","executable":"/usr/bin/Rscript",
+   "stages":[{"id":"main","language":"r","executable":"<approved absolute Rscript path>",
      "script":"work/main.R","script_sha256":"64 lowercase hex characters","cwd":"work",
      "args":[],"depends_on":[],"required":true,"source_entry_points":["original.R"],
      "expected_outputs":["work/table.txt"],"native_logs":[]}],"scope_gaps":[]}
 Log-only stage: expected_outputs [], log_only true, success_markers with at least
 2 distinct source-reviewed estimation-result tokens. Mandatory frozen controller
-policy controls executable, readonly roots, limits and Stata ado paths. No host fallback.
+policy supplies approved absolute native executable paths, readonly roots, limits
+and Stata ado paths. Copy the Rscript path from that policy into the plan.
 Explicit MATLAB host mode instead requires sandbox {"profile":"host","read_only_paths":[]}
 and a frozen user authorization; it has normal user filesystem/network access.
 Commands: run --attempt ATTEMPT --plan FROZEN_PLAN; status --attempt ATTEMPT.''')

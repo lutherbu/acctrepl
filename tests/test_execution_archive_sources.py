@@ -26,7 +26,7 @@ def archive(tmp_path,monkeypatch):
     def run(argv,scratch,limit,timeout=15):
         calls.append(argv)
         return (json.dumps(listing).encode() if '-j' in argv else source),{'argv':argv,'return_code':0}
-    monkeypatch.setattr(module.shutil,'which',lambda name:'/usr/bin/'+name)
+    monkeypatch.setattr(module.shutil,'which',lambda name:str(tmp_path/'fixture-bin'/name))
     monkeypatch.setattr(module,'_run',run)
     return tmp_path,p,source,listing,calls
 

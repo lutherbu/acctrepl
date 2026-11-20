@@ -27,11 +27,11 @@ def fixture(tmp_path):
 def test_copy_and_repeat_are_verified(tmp_path):
     source, destination, audit = fixture(tmp_path)
     first = module.import_packages(source, destination, audit)
-    assert first['verification']['files'] == first['verification']['copied'] == 4
+    assert first['verification']['files'] == first['verification']['copied'] == 2
     assert first['packages'][0]['package_id'] == 'jar-existing-id'
     assert first['packages'][0]['package_path'] == 'JAR-Volume 51/Issue 3/paper/code.zip'
     assert first['packages'][0]['material_files'] == ['JAR-Volume 51/Issue 3/paper/datasheet.pdf']
-    assert (destination / '_provenance/JAR/.download_tasks.json').is_file()
+    assert {p.name for p in (destination / '_provenance/JAR').iterdir()} == {'import_manifest.json'}
     assert (destination / '.gitkeep').is_file()
     copied = destination / 'JAR-Volume 51/Issue 3/paper/code.zip'
     original = source / 'Volume 51/Issue 3/paper/code.zip'
@@ -41,10 +41,10 @@ def test_copy_and_repeat_are_verified(tmp_path):
     assert copied.stat().st_mtime_ns == original.stat().st_mtime_ns
     second = module.import_packages(source, destination, audit)
     assert second['verification']['copied'] == 0
-    assert second['verification']['skipped_identical'] == 4
+    assert second['verification']['skipped_identical'] == 2
     before = (destination / '_provenance/JAR/import_manifest.json').read_bytes()
     verified = module.import_packages(source, destination, audit, verify_only=True)
-    assert verified['verification']['sha256_verified'] == 4
+    assert verified['verification']['sha256_verified'] == 2
     assert (destination / '_provenance/JAR/import_manifest.json').read_bytes() == before
 
 
@@ -98,3 +98,38 @@ def test_duplicate_doi_folders_are_retained(tmp_path):
     assert all(len(p['identity_notes']) == 2 for p in result['packages'])
     assert result['verification']['paper_directories'] == 2
     assert result['verification']['unique_dois'] == 1
+
+
+def test_volume_cutoff_preserves_variants_and_excludes_later_materials(tmp_path):
+    source, destination, audit = fixture(tmp_path)
+    raw = json.loads(audit.read_bytes())
+    for volume in (50, 58, 59):
+        directory = Path(f'Volume {volume}/Issue 1/variants')
+        paper = source / directory
+        paper.mkdir(parents=True)
+        for variant in ('original', 'correction'):
+            archive = paper / f'{variant}.zip'
+            archive.write_bytes(variant.encode())
+            raw['units'].append({'id': f'jar-{volume}-{variant}', 'collection': 'jar', 'path': str(archive),
+                                 'archive': True, 'paper': str(directory), 'doi': '10/variants', 'title': 'Study'})
+    audit.write_text(json.dumps(raw))
+    report = module.import_packages(source, destination, audit)
+    assert {u['package_id'] for u in report['packages']} == {'jar-existing-id', 'jar-58-original', 'jar-58-correction'}
+    assert {p.name for p in destination.glob('JAR-Volume *')} == {'JAR-Volume 51', 'JAR-Volume 58'}
+    assert {f['destination_path'] for f in report['files']} == {
+        f.relative_to(destination).as_posix() for root in destination.glob('JAR-Volume *') for f in root.rglob('*') if f.is_file()
+    }
+    assert report['verification']['files'] == 4
+    assert report['verification']['paper_directories'] == report['verification']['unique_dois'] == 2
+    variants = [u for u in report['packages'] if u['doi'] == '10/variants']
+    assert all(len(u['identity_notes']) == 1 and 'archive variants' in u['identity_notes'][0] for u in variants)
+
+
+def test_audit_path_must_belong_to_its_paper_directory(tmp_path):
+    source, destination, audit = fixture(tmp_path)
+    raw = json.loads(audit.read_bytes())
+    raw['units'][0]['path'] = str(source / 'Volume 59/Issue 3/foreign.zip')
+    audit.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match='outside its paper directory'):
+        module.import_packages(source, destination, audit)
+    assert not destination.exists()
