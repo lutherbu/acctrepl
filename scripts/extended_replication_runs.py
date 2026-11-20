@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import project_layout as layout
 from scripts import reproduction_runs as reproduction
+from scripts import deposit_reproduction
 from scripts.feasibility_verdict import matches_frozen_input
 
 BASE = ROOT / '.local/runs/extended_replications'
@@ -107,31 +108,43 @@ def locked(path):
         yield
 
 
-def inventory():
+def inventory(paper=None):
     with layout.active_path('papers_jsonl').open('rb') as f:
-        selected = [row for row in map(json.loads, f) if row.get('reproduction_path') or row.get('execution_path')]
+        selected = [row for row in map(json.loads, f)
+                    if (paper is None or row['paper_id'] == paper)
+                    and (row.get('reproduction_path') or row.get('execution_path'))]
     ids = [row['paper_id'] for row in selected]
     need(len(ids) == len(set(ids)) and all(ID.fullmatch(x) for x in ids), 'Expected distinct paper IDs')
     result = []
     for row in selected:
         pid = row['paper_id']
         previous = read(inside(ROOT, row['reproduction_path'])) if row['reproduction_path'] else None
-        # The extended-sample campaign covers historical reconstructions and author-code executions.
-        rebuilt = previous is not None and previous.get('route') != 'author_deposit'
+        # Keep separate deposit follow-ups out of the historical batch inventory.
+        deposit = previous is not None and previous.get('route') == 'author_deposit'
+        rebuilt = previous is not None and (not deposit or paper is not None)
         if not rebuilt and not row['execution_path']:
             continue
-        need(rebuilt != bool(row['execution_path']), 'Expected one historical route per package')
+        need(not (rebuilt and row['execution_path'] and not deposit), 'Expected one historical route per package')
         paths = {'sample': row['sample_path'], 'models': row['model_path'],
                  'predecessor': row['reproduction_path'] if rebuilt else row['execution_path'],
-                 'feasibility': row['feasibility_reproduction_path'] if rebuilt else row['feasibility_execution_path']}
+                 'feasibility': row['feasibility_reproduction_path'] if rebuilt and not deposit else row['feasibility_execution_path']}
+        need(all(paths.values()), f'Missing sample, model or feasibility record for {pid}')
         hashes = {key: sha(inside(ROOT, rel)) for key, rel in paths.items()}
         if rebuilt:
             need(previous['paper_id'] == pid, 'Reconstruction ID mismatch')
             accepted = read((ROOT / paths['predecessor']).parents[1] / 'accepted.json')
             need(hashes['predecessor'] == accepted['outcome_sha256'], 'Accepted reconstruction hash changed')
-            scopes = [{'scope_id': f"{f['model_id']} / {f['result_set_id']}", 'cell': f['cell_id'],
-                       'table': f['table_basename'], 'worked': f['execution_status'] == 'executed',
-                       'previous_note': f.get('blocked_reason') or None} for f in previous['fits']]
+            if deposit:
+                scopes = [{'scope_id': f"{f['model_id']} / {f['result_set_id']}", 'cell': None,
+                           'table': f.get('evidence_path'), 'worked': f['execution_status'] == 'executed',
+                           'previous_note': f['execution_detail']} for f in previous['fits']]
+                work_item = Path(paths['predecessor']).with_name('work_item.json')
+                paths['deposit_inventory'] = work_item.as_posix()
+                hashes['deposit_inventory'] = previous['files']['work_item.json']
+            else:
+                scopes = [{'scope_id': f"{f['model_id']} / {f['result_set_id']}", 'cell': f['cell_id'],
+                           'table': f['table_basename'], 'worked': f['execution_status'] == 'executed',
+                           'previous_note': f.get('blocked_reason') or None} for f in previous['fits']]
         else:
             previous = read(ROOT / paths['predecessor'])
             need(previous['package_id'] == pid, 'Execution ID mismatch')
@@ -142,9 +155,10 @@ def inventory():
             scopes = [{'scope_id': s['stage_id'], 'cell': s['stage_id'], 'worked': s['status'] == 'succeeded',
                        'previous_note': s.get('note')} for s in previous['stage_results']]
         need(scopes and len({s['scope_id'] for s in scopes}) == len(scopes), 'Missing or duplicate predecessor scope')
-        result.append({'paper_id': pid, 'doi': row['doi'], 'title': row['title'],
-                       'route': 'reconstruction' if rebuilt else 'author', 'sources': paths, 'hashes': hashes,
-                       'scopes': scopes, 'prior_gaps': previous.get('gaps', [])})
+        route = ('author_deposit' if deposit else 'reconstruction') if rebuilt else 'author'
+        result.append({'paper_id': pid, 'doi': row['doi'], 'title': row['title'], 'route': route,
+                       'sources': paths, 'hashes': hashes, 'scopes': scopes,
+                       'prior_gaps': previous.get('limitations' if route == 'author_deposit' else 'gaps', [])})
     return sorted(result, key=lambda row: row['paper_id'])
 
 
@@ -229,16 +243,19 @@ def initial_row(scope, i):
 
 def prepare(phase, pid, years):
     root = root_for(years)
-    need(ID.fullmatch(pid) and phase in ('pilot', 'sweep'), 'Invalid paper or phase')
-    items = read(root / 'inventory.json') if (root / 'inventory.json').exists() else prepare_inventory(years)
+    need(ID.fullmatch(pid) and phase in ('paper', 'pilot', 'sweep'), 'Invalid paper or phase')
+    if phase == 'paper':
+        items = inventory(pid)
+    else:
+        items = read(root / 'inventory.json') if (root / 'inventory.json').exists() else prepare_inventory(years)
     item = next((r for r in items if r['paper_id'] == pid), None)
     need(item is not None, 'Unknown package')
     job = root / phase / pid
     with locked(root / 'control.lock'):
         if (job / 'task.json').exists():
             return job
-        if phase == 'pilot':
-            need(not (root / 'freeze.json').exists(), 'Pilot selection or quota exceeded, or sweep frozen')
+        if phase in ('paper', 'pilot'):
+            need(phase == 'paper' or not (root / 'freeze.json').exists(), 'Pilot selection or quota exceeded, or sweep frozen')
             skill = SKILL
         else:
             frozen = read(root / 'freeze.json')
@@ -254,12 +271,20 @@ def prepare(phase, pid, years):
             work = job / 'work'
             work.mkdir()
             predecessor = (ROOT / item['sources']['predecessor']).parent
-            previous = read(predecessor / ('outcome.json' if item['route'] == 'reconstruction' else 'report.json'))
+            previous = read(ROOT / item['sources']['predecessor'])
             base_code = {}
             if item['route'] == 'reconstruction':
                 stage_reconstruction(work, predecessor)
                 for name in ['build.sas', 'stata.ipynb', 'submission.json']:
                     base_code['work/'+name] = {'path': (predecessor / name).relative_to(ROOT).as_posix(), 'sha256': sha(predecessor / name)}
+            elif item['route'] == 'author_deposit':
+                deposit_reproduction.verify_publication(ROOT, predecessor, previous, with_data=True)
+                for name, digest in previous['files'].items():
+                    if Path(name).suffix.lower() in deposit_reproduction.CODE:
+                        target = inside(work, name)
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(inside(predecessor, name), target)
+                        base_code['work/'+name] = {'path': (predecessor/name).relative_to(ROOT).as_posix(), 'sha256': digest}
             else:
                 stage_author(job, predecessor, previous)
                 for f in read(predecessor / 'local_inputs.json')['files']:
@@ -284,7 +309,7 @@ def prepare(phase, pid, years):
 
 def context(job):
     job = Path(os.path.abspath(job))
-    need(job == job.resolve() and job.parents[2] == BASE and job.parent.name in ('pilot','sweep')
+    need(job == job.resolve() and job.parents[2] == BASE and job.parent.name in ('paper','pilot','sweep')
          and ID.fullmatch(job.name), 'Expected a prepared campaign job')
     task = read(job / 'task.json')
     identity = read(job / 'identity.json')
@@ -314,6 +339,8 @@ def source_checks(job, task):
         need(matches_frozen_input(inside(ROOT, rel), task['hashes'][key], ROOT, sha), 'Pinned source changed: '+rel)
     for source in task['base_code'].values():
         need(sha(inside(ROOT,source['path'])) == source['sha256'], 'Accepted code changed: '+source['path'])
+    if task['route'] == 'author_deposit':
+        deposit_reproduction.verify_work(ROOT, read(ROOT / task['sources']['deposit_inventory']), with_data=True)
     if task['phase'] == 'sweep':
         frozen = read(job.parents[1]/'freeze.json')
         need(frozen['skill'] == task['skill_files'] and frozen['runtime_files'] == runtime_hashes(),
@@ -445,6 +472,8 @@ def preflight_stata_setup(work, task, cells):
 def validate(job):
     job, task = context(job)
     source_checks(job,task)
+    if task['route'] == 'author_deposit':
+        return {'valid': True, 'route': task['route'], 'native_plan': None}
     if task['route'] == 'reconstruction':
         work = job / 'work'
         need(not (work/'runtime/latest.json').exists() or (job/'launch.json').exists(), 'Found a predecessor run in the fresh work area')
@@ -511,6 +540,9 @@ def execute(job):
             raise ValueError('Scientific launch already reserved; inspect receipt/status. No automatic retry.')
         need((job/'worker.json').is_file() and not (job/'report.json').exists(), 'A fresh assigned, unfinished job is required')
         validate(job)
+        need(task['route'] != 'author_deposit',
+             'This deposit outcome has no registered native stages for an extension. '
+             'A runnable extension needs a reviewed replay plan binding the accepted tests to native stages.')
         if task['route'] == 'reconstruction':
             work = job / 'work'
             need(selected_cells(job,task), 'No previously executed analysis cell is eligible for a native replay')
@@ -651,7 +683,7 @@ def finish(job):
         rows = draft['analyses']
         ids = {s['sample_id'] for s in task['samples']}
         need(set(scopes)=={r['scope_id'] for r in rows} and len({r['key'] for r in rows})==len(rows), 'Every assigned scope must have a disposition and unique keys')
-        if task['route']=='reconstruction':
+        if task['route'] in ('reconstruction', 'author_deposit'):
             need(len(rows)==len(scopes),'One row is required per reconstruction model/result-set pair')
         need(isinstance(draft['sources_checked'],list) and draft['sources_checked'], 'Record the examined inputs/source vintages')
         receipt = read(job/'receipt.json') if (job/'receipt.json').exists() else None
@@ -775,17 +807,23 @@ def publish(years, paper=None):
     """Publish completed papers separately and keep past package versions locally."""
     from scripts import publication as public, rebuild_indexes
     root = root_for(years)
-    items = read(root / 'inventory.json')
     if paper:
-        items = [item for item in items if item['paper_id'] == paper]
+        need(bool(ID.fullmatch(paper)), 'Invalid paper ID')
+    if paper and (root/'paper'/paper/'task.json').is_file():
+        items = [{'paper_id': paper}]
+    else:
+        items = read(root / 'inventory.json')
+        if paper:
+            items = [item for item in items if item['paper_id'] == paper]
     need(items, 'No matching extended-sample assignment')
     PUBLIC.mkdir(exist_ok=True, parents=True)
     with locked(BASE / 'publication.lock'):
         papers = []
         for item in items:
             pid = item['paper_id']
-            job = root / 'sweep' / pid
-            if paper and not (job/'report.json').is_file():
+            standalone = root/'paper'/pid
+            job = standalone if paper and (standalone/'task.json').is_file() else root/'sweep'/pid
+            if paper and job != standalone and not (job/'report.json').is_file():
                 job = root / 'pilot' / pid
             need((job/'report.json').is_file(), 'Finish the assigned paper before publication: ' + pid)
             with public.staged_package(ROOT,'replications',pid) as stage:
@@ -797,7 +835,7 @@ def publish(years, paper=None):
 def status(years):
     root = root_for(years)
     result = {}
-    for phase in ('pilot','sweep'):
+    for phase in ('paper','pilot','sweep'):
         states = {}
         for p in sorted((root/phase).glob('*/task.json')):
             d = p.parent
@@ -816,7 +854,7 @@ def main():
         p.add_argument('--years',type=bounded_years,default=5)
         if name=='publish':p.add_argument('--paper')
         if name=='prepare':
-            p.add_argument('--phase',choices=('pilot','sweep'),required=True)
+            p.add_argument('--phase',choices=('paper','pilot','sweep'),required=True)
             p.add_argument('--paper',required=True)
     for name in ('register','validate','execute','finish','reconcile'):
         p = subs.add_parser(name)

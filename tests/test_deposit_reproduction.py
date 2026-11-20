@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import patch
 
 from scripts import deposit_reproduction as deposit
+from scripts import extended_replication_runs as extension
 from scripts import author_analysis_runs as controller
 from scripts import publication as pub
 
@@ -78,6 +79,54 @@ class DepositReproductionTests(unittest.TestCase):
         (installed.parent / 'analysis.do').write_text('regress y z\n')
         with self.assertRaisesRegex(ValueError, 'Checksum mismatch'):
             deposit.verify(self.root, self.paper, False)
+
+    def test_fixed_deposit_extension_pins_one_paper_and_preserves_the_frozen_batch(self):
+        deposit.prepare(self.root, self.pid, self.case)
+        self.results()
+        outcome = deposit.publish(self.root, self.case, self.review_file)
+        catalog = self.root/'docs/papers.jsonl'
+        row = json.loads(catalog.read_text())
+        sample = self.root/'output/samples/records'/f'{self.paper}.json'
+        models = self.root/'output/models/records'/f'{self.paper}.json'
+        save(sample, {'paper_id': self.paper, 'samples': [{'sample_id': 'participants',
+             'sample_label': 'Experiment', 'sample_unit': 'participant',
+             'sample_period': {'begin': None, 'end': None, 'years': []}, 'period_detail': 'Undated'}]})
+        save(models, {'paper_id': self.paper, 'models': []})
+        row.update(sample_path=sample.relative_to(self.root).as_posix(), model_path=models.relative_to(self.root).as_posix(),
+                   reproduction_path=outcome.relative_to(self.root).as_posix(), execution_path=None,
+                   feasibility_execution_path=self.assessment.relative_to(self.root).as_posix())
+        catalog.write_text(json.dumps(row) + '\n' + json.dumps({'paper_id': 'unrelated', 'jar_packages': [],
+                           'reproduction_path': 'unavailable.json'}) + '\n')
+        base = self.root/'.local/runs/extended_replications'
+        frozen = base/'years_5'
+        save(frozen/'inventory.json', [{'paper_id': 'unrelated'}])
+        save(frozen/'freeze.json', {'historical': True})
+        with (patch.object(extension, 'ROOT', self.root), patch.object(extension, 'BASE', base),
+              patch.object(extension, 'PUBLIC', self.root/'output/replications/packages'),
+              patch.object(extension.layout, 'active_path', return_value=catalog)):
+            job = extension.prepare('paper', self.paper, 5)
+            task = extension.read(job/'task.json')
+            self.assertEqual(task['route'], 'author_deposit')
+            self.assertEqual([s['scope_id'] for s in task['scopes']], ['main / published'])
+            self.assertIsNone(task['scopes'][0]['cell'])
+            self.assertEqual(task['hashes']['deposit_inventory'], pub.sha(outcome.parent/'work_item.json'))
+            extension.register(job, 'fixture-worker', extension.MODEL, 'max')
+            self.assertTrue(extension.validate(job)['valid'])
+            draft = extension.read(job/'draft.json')
+            draft.update(sources_checked=['Source workbook, fixed participants.'])
+            draft['analyses'][0].update(status='not_applicable', reason='Fixed experimental cohort.',
+                   source_evidence=['Reviewed deposit workbook and design.'], sample_ids=['participants'])
+            save(job/'draft.json', draft)
+            self.assertEqual(extension.finish(job)['counts'], {'not_applicable': 1})
+            self.assertEqual(extension.publish(5, self.paper)['published'], 1)
+            report = extension.read(extension.PUBLIC/self.paper/'report.json')
+            self.assertFalse(report['native_run_launched'])
+            self.assertEqual(report['route'], 'author_deposit')
+            self.assertEqual(extension.read(frozen/'inventory.json'), [{'paper_id': 'unrelated'}])
+            self.assertEqual(extension.read(frozen/'freeze.json'), {'historical': True})
+            self.raw.write_bytes(b'changed after preflight')
+            with self.assertRaisesRegex(ValueError, 'differs from its frozen inputs'):
+                extension.validate(job)
 
     def test_review_rejects_changed_results_secrets_and_existing_publication(self):
         self.catalog(self.raw)

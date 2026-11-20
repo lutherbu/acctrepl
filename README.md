@@ -6,17 +6,17 @@ This repository pairs accounting papers with their extracted samples and reporte
 
 | Workflow | Contents | Papers or packages |
 | --- | --- | ---: |
-| [Samples](output/samples/records/) | Baseline sample sizes, units, periods, data sources and supporting text | 506 |
-| [Models](output/models/records/) | Specifications, variable definitions, reported estimates, inference and descriptive statistics | 173 |
+| [Samples](output/samples/records/) | Baseline sample sizes, units, periods, data sources and supporting text | 507 |
+| [Models](output/models/records/) | Specifications, variable definitions, reported estimates, inference and descriptive statistics | 174 |
 | [Reproduction feasibility](output/feasibility_reproduction/records/) | Assessment of independently reconstructing each baseline fit with the resources available when it was assessed | 167 |
 | [Reproductions](output/reproductions/packages/) | Reviewed builds or documented blockers for 47 historical reconstructions and two follow-ups using author deposits | 49 |
 | [Execution feasibility](output/feasibility_execution/packages/) | An assessment, proposed patch and review for each author package | 159 |
 | [Executions](output/executions/packages/) | A reviewed author analysis, code, available results and a recipe for its minimal inputs | 3 |
-| [Extended-sample replications](output/replications/packages/) | Paper-level reports, replay code and results for the default five-year extension | 50 |
+| [Extended-sample replications](output/replications/packages/) | Paper-level reports, replay code and results for the default five-year extension | 51 |
 
 The release retains 50 historical original-period workflows. Of these, 47 used independently reconstructed code and three ran the authors’ analyses to completion. The three completed packages contain six published result files. Three exploratory partial author runs and their derivative extension reports were excluded from this release.
 
-Two follow-ups used newly written code with author-deposited inputs. For Chen, Jermias, and Panggabean, the two Table 5 chi-square tests and all seven Table 6 F-tests agreed at the published precision. One ancillary mean-square cell differed. For Daske et al., the build could not verify the historical firm listing assignments needed for the nine fully specified Table 6 regressions. The follow-ups are recorded separately from the historical execution and extension counts.
+Two follow-ups used newly written code with author-deposited inputs. For Chen, Jermias, and Panggabean, the two Table 5 chi-square tests and all seven Table 6 F-tests agreed at the published precision. One ancillary mean-square cell differed. The five-year extension was inapplicable to all nine tests because the authors collected data from 60 participants in a one-time experiment. For Daske et al., the build could not verify the historical firm listing assignments needed for the nine fully specified Table 6 regressions.
 
 Both feasibility skills assign **Ready**, **Preparation required**, **Blocked**, **Undetermined**, or **N/A**. For author packages, Ready requires local data. Ready-to-attempt and preparation-required code go to author execution. For the preparation route, one attempt is followed by independent review, and any uncovered baseline passes to reconstruction. Local data without runnable author code goes directly to reconstruction. The assessment retains the underlying data and code verdicts for each scope. [Shared classification contract](skills/check-replication-feasibility/references/feasibility_classification.schema.json)
 
